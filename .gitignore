@@ -1,0 +1,5 @@
+.remember/
+.env*
+.DS_Store
+refs/
+data/
