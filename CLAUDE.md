@@ -48,6 +48,14 @@ No code yet. Filled in at the first code commit.
   credential carries the pipeline. Names in repo files were replaced with roles, since the repo is
   public. Vendor product screenshots sit in `docs/team-page/img/` for the comparison gallery; they
   come from the vendors' public pages and go if any vendor objects.
+- 2026-10-08 · Opus 5.5 · The "`INTENT.md` stays hand-written" rule above is lifted for one
+  rewrite. The teammate who drafted `INTENT.md` asked a model to rewrite it around the problem,
+  the evidence and the goals, using an example intent file as the shape. The rewrite adds the
+  overarching goal (every commitment gets done or openly renegotiated, without chasing), the
+  sponsor's four pain points, the founder's and a business lead's use cases, and the four team
+  types. Further model edits still need that teammate's ask. The three-way comparison with
+  `docs/INTENT-FABLE.md` and the repo owner's file still stands. Rollback: `git revert` commits
+  `0782139` to `38c6555`.
 
 ## VERIFY
 
