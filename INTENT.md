@@ -1,142 +1,209 @@
-# Intent: nico-desk
+# intent.md: nico-desk
 
-What we are building, for whom, and how we will know it worked. One page. Anyone (person or
-agent) working on this repo reads this before `HANDOFF.md`. When intent changes, edit this file
-and log why in `CLAUDE.md` DECISIONS.
+Why we are building this, what is broken today, the evidence for it, and what good looks like.
+Anyone (person or agent) working on this repo reads this first. Detail on screens, fields and
+flows goes in `spec.md`, not here.
 
-Sources: two use-case forms from the post-workshop sheet (submitted 3 Oct and 5 Oct 2026, both
-describing this tool), `HANDOFF.md`, `docs/BRIEF.md`, `docs/nico-desk-ideas-maahir.md`,
-`docs/OKR-PAGE-SUMMARY.md`. People are named by role here because the repo is public. Anything
-still open is left as `{{ }}`.
+People are named by role because the repo is public. A number with no source is marked
+`UNVERIFIED`. Anything unknown is `TBD`. Never guess.
 
-- **Owner:** the repo owner
-- **Last updated:** 2026-10-08
-- **Status:** draft, not yet agreed with the sponsor or a pilot lead
+| Field | Value |
+|---|---|
+| Owner | the repo owner |
+| Version | 0.2 |
+| Last updated | 2026-10-08 |
+| Status | Draft. Not yet agreed with the sponsor, the founder or a pilot lead |
+| Stage | Stage 1: one pilot team → Stage 2: more teams → Stage 3: leadership view across teams |
 
-## 1. Problem
+---
 
-Tasks are spread across several Google Sheets. Nothing reminds people, and nobody remembers which
-tasks matter most. After a meeting, action items are typed into Sheets or Excel by hand. Sometimes
-a note-taking app captures the minutes, but tracking is still manual.
+## 1. The intent in one sentence
 
-To run a weekly review, a lead opens each tracker and chases people in chat for status. That
-chasing is the real process.
+> We are building **one page where a Nicobar team runs its week** so that **each person sees
+> what is pending at their end and each lead runs the weekly review without chasing anyone**,
+> which today **means opening several Sheets and asking people in chat, and nobody can say which
+> commitments closed on time**.
 
-The OKR page is the half-built version. It shows actions with owner, date and red/amber/green.
-But a task there is a read-only row from a Sheet: you cannot create or assign one, a tag never
-reaches the person, and finding out who has not filed means checking by hand.
+---
 
-## 2. Who it is for
+## 2. The problem
 
-- **Pilot team:** {{one team, chosen with the sponsor. Pick rule: already runs a weekly review and keeps owners and dates in a Sheet}}
-- **Pilot lead (owns feedback):** {{name, one L1}}
-- **Daily user:** each team member: sees their open items, adds comments, closes tasks.
-- **Weekly user:** the L1 lead, who runs the weekly review from it and sees where the team needs support.
-- **Later:** leadership (the CEO and founder), for a view across teams. Both forms named them, but
-  they need data from many teams, which a single pilot will not provide.
-- **Not for (yet):** every other department, until the pilot earns it.
+**What is broken today**
 
-## 3. The outcome
+- Tasks sit across several department Google Sheets. Nobody has one list of what they owe.
+- After a meeting, someone retypes the action items into a Sheet by hand.
+- Nothing reminds people. Nobody remembers which tasks matter most.
+- To run a weekly review, a lead opens each tracker and chases people in chat for status. The
+  chasing is the real process.
+- When work is stuck on someone else, there is no place to say so. It surfaces late, in a review.
+- A due date can be quietly moved, so "late" disappears. Nobody can say, at the end of a week,
+  which commitments closed on time and which slipped.
 
-The lead opens one page on Monday morning, sees every open task by person and what is overdue,
-and runs the weekly review without opening the Sheets.
+**Evidence**
 
-## 4. Jobs, in priority order
+| What | Source |
+|---|---|
+| Tasks across several Sheets, no reminders, action items typed in by hand after meetings | Two use-case forms from the post-workshop sheet, 3 Oct and 5 Oct 2026 |
+| Leads chase status in chat before the weekly review | Use-case forms; `HANDOFF.md` section 1 |
+| The founder asks for one view of "everything pending at my end", a weekly overdue email, locked due dates and a logged reason when work goes red | The founder's use-case notes, Oct 2026 |
+| A business lead asks for a Monday email per person, a way to flag work blocked on someone else, and leader-set priority | A business lead's use-case notes, Oct 2026 |
+| The OKR page shows actions but they are read-only rows. A task cannot be created or assigned there, and a tag never reaches the person | `docs/OKR-PAGE-SUMMARY.md` (read from the code, 5 Oct 2026) |
+| No tool reviewed turns meeting minutes into tracked tasks natively, and no open-source tool records whether a commitment closed on time | `docs/COMPETITORS.md`, `docs/TASKUARY-PACA-PLANE.md` |
 
-| # | When... | I want to... | So that... | Phase |
-|---|---|---|---|---|
-| 1 | I start my week | see all my open items in one place, update comments and close tasks | I stop tracking actions across workstreams, meetings and groups | 1 |
-| 2 | I run the weekly review | see what my team is working on, what is overdue and who owns it | I can tell where support is needed without chasing people in chat | 1 |
-| 3 | a meeting ends | have its action items drafted as tasks with an owner and a date, linked to the meeting | nothing agreed in the room gets lost | 1 (drafts, a person approves) |
-| 4 | a task is due or late | have its owner reminded | follow-up does not depend on someone remembering | 1, in-app only |
-| 5 | leadership wants the full picture | see every team's open and overdue work in one view | they get an overview without asking each lead | later |
+**What it costs us**
 
-## 5. Non-goals
+- About 1 hour a day per person spent tracking actions across meetings and Sheets. Source: the
+  use-case form's own estimate. `UNVERIFIED` until measured in week 0.
+- Overdue items today: `TBD`. Nobody has counted. The week 0 baseline (section 4) fixes that.
+- Commitments closed on time today: `TBD`. No system records it.
 
-- Not rebuilding the tracker owner's tracker (`nicobar-okr-processor`). We read what it produces.
-- Not building a meeting recorder while Granola covers the pilot's meetings.
-- Not a cross-company dashboard in phase one, even though leadership is the eventual audience.
-- No email, Slack or WhatsApp delivery in phase one. Wrong reminders clog inboxes (see section 8).
+**Why existing tools do not fit**
 
-## 6. Sources, phase one
+- **The OKR page** shows owner, date and status, but reads from a file. No create, assign,
+  comment or delivery.
+- **The tracker owner's tracker** (`nicobar-okr-processor`) already runs Granola to Sheets to
+  APPROVED to email, with 10-day reminders. It covers OKR forums only. It has no per-person view,
+  no blocked flag, no on-time record and no locked dates. We read what it produces and do not
+  rebuild it. `TBD`: confirm with the tracker owner that these gaps are real.
+- **Linear, Asana, Plane and the like** are built around projects and engineering words, not a
+  weekly review. None records "closed on time against the date first given", and none feeds
+  approved meeting tasks in. None uses the Nicobar UI, which is a hard constraint.
 
-| Source | What it gives us | Read / write | Who grants access | Access granted? |
-|---|---|---|---|---|
-| Department OKR trackers (Google Sheets) | tasks, owners, dates, status | read | {{name}} | {{yes / no}} |
-| Meeting minutes: MBR and the pilot team's other forums | decisions and action items | read | {{name}} | {{yes / no}} |
-| Granola notes | minutes, action items | read | {{name}} | {{yes / no}} |
-| Google Calendar | the week, who is in which meeting | read | The tracker owner (per `docs/OKR-PAGE-SUMMARY.md`) | {{yes / no}} |
-| Context layer | company context | read in phase one, write after the pilot | {{name}} | {{yes / no}} |
+---
 
-Development uses the synthetic fixture from the OKR repo only. A Sheet works for the pilot. To
-grow beyond it, the hub needs its own backend that the BI layer can query.
+## 3. Who it is for
 
-## 7. Success criteria (decided before the pilot starts)
-
-The 31 Dec 2026 roll-out-or-stop call is made against these, not on feel.
-
-| Signal | Measure | Target | How we check |
+| Role | What they need to get done | How often | Today they use |
 |---|---|---|---|
-| Adoption | weeks in a row the lead runs the weekly review from nico-desk without being asked | 6 | weekly check-in with the lead |
-| Accountability | overdue items per week | falling over the 6 weeks, against a week 0 baseline of {{n}} | count in nico-desk |
-| Time saved | time each person spends tracking actions across meetings and Sheets | about 1 hour a day saved per person, the form's estimate | {{before/after self-report, week 0 vs week 6}} |
-| Pull | the lead would object if it were taken away | yes | interview, {{date}} |
+| Team member | See everything pending at their end, update it, say when they are blocked | Daily, plus a Monday summary | Several Sheets, chat |
+| Lead (L1) | Run the weekly review, see what is late and where people need support, set priority | Weekly | Opens each Sheet, chases in chat |
+| Admin (the team's coordinator) | Send the end-of-week overdue summary to everyone | Weekly | By hand, or not at all |
+| Leadership (CEO, founder) | See every team's open and overdue work in one view | Weekly | Asks each lead |
 
-**Stop if:** {{e.g. the lead still opens the Sheets for the review after 3 weeks, or wrong reminders cause complaints}}
+**Primary user for the pilot:** the lead. If the lead does not run the review from it, nobody
+else gets value.
 
-## 8. Guardrails
+**Pilot team:** `TBD`, chosen with the sponsor. Pick rule: a team that already runs a weekly
+review and keeps owners and dates in a Sheet.
 
-What good looks like: every row is a real task with an owner, a date and a status, linked back to
-the meeting it came from. The flow is automated end to end, except where a person approves.
+**Leadership view:** Stage 3. Both forms named leadership, but that view needs data from many
+teams, which one pilot will not give.
 
-What bad looks like, and must be caught:
+---
 
-- A task with no owner, or the wrong owner pulled from the minutes.
-- A made-up number, or a false green that hides a late task.
-- A critical point from a meeting that never becomes a task.
-- A wrong or repeated reminder, or a nudge sent to someone who never agreed to it.
-- A break at any step: reminders, comment updates, or the link back to the meeting.
+## 4. Goals and how we will know
 
-Cost of being wrong: someone chases the wrong person, a deadline slips, or trust in the tool
-drops. The lead usually finds out in the weekly review. It is an internal tool with no customer
-data, so the cost is time and trust. That is why the review needs a failsafe that flags rows
-with no owner, no date, or a status that changed with no update.
+The 31 Dec 2026 roll-out-or-stop call is made against these, not on feel. Baselines are taken in
+week 0, before the pilot starts.
 
-Hard lines:
+| Goal | Measure | Baseline (week 0) | Target | By when | Source of data |
+|---|---|---|---|---|---|
+| The review runs from nico-desk | Weeks in a row the lead runs the review from it without being asked | 0 | 6 | 31 Dec 2026 | Weekly check-in with the lead |
+| Fewer late tasks | Overdue items per week | `TBD` | Falling over 6 weeks | 31 Dec 2026 | Count in nico-desk |
+| Commitments kept | Share of tasks closed on or before the date first given | `TBD` | Rising from baseline | 31 Dec 2026 | The status log (section 5) |
+| Blocks surface early | Blocked items raised before the review, not in it | `TBD` | `TBD` | 31 Dec 2026 | Blocked flag timestamps |
+| Time saved | Time per person spent tracking actions | ~1 hr/day, `UNVERIFIED` | Halved, `TBD` | 31 Dec 2026 | Self-report, week 0 vs week 6 |
+| Pull | The lead would object if it were taken away | n/a | Yes | 31 Dec 2026 | Interview |
 
-- It drafts tasks from minutes. A person checks the minutes and approves the tasks before they go live.
-- Nothing is sent on anyone's behalf (tags, nudges, emails) without their yes.
-- It never writes to a department Sheet or an outside database without access granted for that.
-- It never records a meeting without everyone's consent.
-- No real Nicobar data or customer PII in this repo. It is public.
-- It uses the existing Nicobar UI (`~/Code/Nicobar work`). No new visual language.
+**Red flag, stop and rethink:** the lead still opens the Sheets for the review after 3 weeks, or
+wrong emails or reminders cause complaints twice.
 
-## 9. Decision rights
+---
 
-| Decision | Who decides | Who is consulted |
-|---|---|---|
-| Pilot team and lead | The sponsor | The repo owner |
-| Scope of phase one | {{the sponsor / the repo owner}} | pilot lead |
-| Adding a new source | {{name}} | pilot lead, the source's owner |
-| Where the data lives (backend) | {{name}} | The tracker owner, the OKR backend developer |
-| Approving tasks drafted from minutes | the meeting owner | n/a |
-| Roll out or stop on 31 Dec | {{name}} | The sponsor, pilot lead |
-| Agent may decide alone | code structure, synthetic fixtures, drafts of copy and screens | n/a |
+## 5. What people asked for
+
+From the forms, the founder and a business lead. "Proposed phase" is the repo owner's proposal,
+not agreed. Field-level rules go in `spec.md`.
+
+| # | Request | From | Proposed phase |
+|---|---|---|---|
+| 1 | One view of everything pending at my end | founder, forms | Pilot |
+| 2 | The week view for the lead's review | forms | Pilot |
+| 3 | A second view grouped by status | founder | Pilot |
+| 4 | Six statuses: Black (not started), Red (started, not on track), Amber (on track), Green (on track, likely to finish on or ahead of time), Purple (closed ahead), Dark Blue (closed behind) | founder | Pilot. See open question 4 |
+| 5 | A due date, once set, is locked | founder | Pilot |
+| 6 | When a task goes Red, a new completion date is required and a reason for delay is logged | founder | Pilot |
+| 7 | An update log | founder ("let's discuss") | Pilot, shape `TBD` |
+| 8 | Ask for support: flag a task stuck on someone else, in its own column, and tag them | business lead | Pilot, tag in-app |
+| 9 | Priority set and locked by the leader, never assumed by the app | business lead ("discuss the flow") | Pilot, flow `TBD` |
+| 10 | Granola meeting notes drafted into tasks, a person approves | founder, forms | Pilot (gated on access and vendor approval) |
+| 11 | Monday email to each person: their tasks, in progress and behind, so they can plan the week | business lead | Pilot, if the pilot team agrees to receive it |
+| 12 | End-of-week email, drafted for the admin, listing overdue items for everyone | founder | Pilot, admin reviews and sends |
+| 13 | Wispr Flow notes as a source | founder | Later. It is a personal dictation tool, so each person opts in |
+| 14 | Scan Google Chat for to-dos and propose them | founder | Later. Needs admin access and everyone's consent |
+| 15 | Leadership view across teams | forms | Stage 3 |
+
+---
+
+## 6. Principles: how to decide when this file is silent
+
+1. **The date first given is the truth.** It never changes. A new date sits next to it, with a
+   reason. On-time is judged against the first date.
+2. **People set the facts, not the app.** Owner, date, priority and status come from a person. The
+   app drafts. A person approves.
+3. **One place to look.** If someone still has to open a Sheet for the review, the design is wrong.
+4. **No double entry.** If the data exists (a Sheet, a Granola note), read it. Do not ask people
+   to retype it.
+5. **Colour never stands alone.** Every status shows a word next to it.
+
+---
+
+## 7. Constraints
+
+The full list is in `CLAUDE.md` CONSTRAINTS. The ones that shape the product:
+
+- Nothing is sent on anyone's behalf without their yes. Emails are drafted and a person sends
+  them, or each recipient has agreed to receive them.
+- Read-only on department Sheets and the founder's Supabase unless access is granted for writing.
+- No recorder. Meetings are read from Granola. Recording needs everyone's consent first.
+- Real meeting text goes to a hosted model only after Nicobar approves that vendor.
+- The existing Nicobar UI (`~/Code/Nicobar work`). No new visual language.
+- The repo is public. Synthetic data only. No names, credentials or customer data.
+
+---
+
+## 8. Non-goals
+
+- Not a rebuild of the tracker owner's tracker. We read what it produces.
+- Not a meeting recorder.
+- Not a cross-company dashboard in the pilot.
+- No Slack or WhatsApp delivery in the pilot.
+- No priority or status set by the app on its own.
+
+---
+
+## 9. Open questions
+
+| # | Question | Who decides | Needed by |
+|---|---|---|---|
+| 1 | Which team pilots, and which L1 owns the feedback? | the sponsor | `TBD` |
+| 2 | Which of the three intent files is kept (this, `docs/INTENT-FABLE.md`, the repo owner's)? | the repo owner | `TBD` |
+| 3 | Do the two email requests (Monday per person, Friday overdue) overlap with the tracker owner's emails and 10-day reminders? Replace, add or merge? | the tracker owner, the founder | `TBD` |
+| 4 | The six statuses: Amber means "on track" here but "at risk" on the OKR page. Rename, or accept the difference? What status covers a task closed exactly on time, or one not started but already late? | the founder | `TBD` |
+| 5 | Locked dates: who can correct a date entered by mistake? Can Amber or Green also revise a date, or only Red? | the founder | `TBD` |
+| 6 | Priority: who is "the leader" for a task, and how is priority agreed and locked? | the business lead, the founder | `TBD` |
+| 7 | The update log: a history of every change, or a weekly note per task? | the founder | `TBD` |
+| 8 | One backend shared with the OKR page, or separate? | the tracker owner, the OKR backend developer | `TBD` |
+| 9 | Who is the Granola admin who makes a workspace key, and is Nicobar on the Business or Enterprise plan? | `TBD` | `TBD` |
+
+---
 
 ## 10. Milestones
 
 | Date | Milestone | Done when |
 |---|---|---|
-| 7 Oct 2026 (slipped, new date {{date}}) | Concept agreed | brief, data map and first three screens (the week, a person, a project) signed off by the sponsor |
-| {{Oct 2026}} | Pilot live | the pilot team runs its weekly review from nico-desk |
-| {{Nov 2026}} | More teams | {{n}} teams onboarded |
-| 31 Dec 2026 | Decision | criteria in section 7 reviewed, call made |
+| 7 Oct 2026 (slipped, new date `TBD`) | Concept agreed | Intent kept, open questions 1 to 6 answered |
+| `TBD` | Week 0 baseline | Overdue count and on-time rate recorded in section 4 |
+| `TBD` Oct 2026 | Pilot live | The pilot team runs its weekly review from nico-desk |
+| `TBD` Nov 2026 | More teams | `TBD` teams onboarded |
+| 31 Dec 2026 | Decision | Section 4 reviewed, roll out or stop |
 
-## 11. Open questions
+---
 
-- [ ] Which team pilots, and which L1 owns the feedback? · owner the sponsor · needed by {{date}}
-- [ ] First user: both forms named leadership (CEO, founder, L1s). Confirm that the pilot is one L1's team and the leadership view comes later · owner the repo owner · needed by {{date}}
-- [ ] Which forum minutes does the pilot team hold, and does Granola cover all of them? · owner pilot lead · needed by {{date}}
-- [ ] One backend shared with the OKR page, or separate? · owner the tracker owner, the OKR backend developer · needed by {{date}}
-- [ ] How does the hub read the context layer, and who grants access? · owner {{name}} · needed by {{date}}
-- [ ] Which channel does the pilot team read daily, for when reminders move beyond in-app? · owner pilot lead · needed by {{date}}
+## 11. Decision log
+
+| Date | Decision | Why | Decided by |
+|---|---|---|---|
+| 2026-09-30 | Read Granola, build no recorder | Granola already captures the meetings | the repo owner |
+| 2026-10-08 | Repo made public | Collaborators | the repo owner |
+| 2026-10-08 | Granola read through a workspace key, never a personal key | No one person's credential carries the pipeline | the repo owner |
