@@ -12,7 +12,7 @@
   --ink-74:rgb(var(--ink-rgb) / .74);--ink-65:rgb(var(--ink-rgb) / .65);
   --ink-28:rgb(var(--ink-rgb) / .28);--ink-14:rgb(var(--ink-rgb) / .14);
   --digital:#2d41e2;--brand:#a530c3;--retail:#ba430b;--retention:#c42e4c;
-  --red:#b03a00;--amber:#8f6200;--green:#00705a;
+  --red:#b03a00;--amber:#8f6200;--green:#00705a;--purple:#9a3f7c;--navy:#005a8f;
   --shadow-sheet:0 2px 4px rgb(26 23 18 / .12),0 24px 42px rgb(26 23 18 / .16);
   --ghost-1:0 1px 2px rgb(26 23 18 / .16);--ghost-2:0 1px 2px rgb(26 23 18 / .14);
   color-scheme:light;
@@ -22,7 +22,7 @@
     --desk:#100f0d;--sheet-1:#1d1c17;--sheet-2:#191814;--sheet:#22201a;
     --ink:#ece5d5;--ink-rgb:236 229 213;
     --digital:#808dff;--brand:#d377ea;--retail:#f38e4c;--retention:#f4738c;
-    --red:#ff6f3b;--amber:#ffae16;--green:#1acd9e;
+    --red:#ff6f3b;--amber:#ffae16;--green:#1acd9e;--purple:#e592c4;--navy:#56b4e9;
     --shadow-sheet:0 0 0 1px rgb(236 229 213 / .09),0 28px 56px rgb(0 0 0 / .6);
     --ghost-1:none;--ghost-2:none;
     color-scheme:dark;
@@ -32,7 +32,7 @@
   --desk:#100f0d;--sheet-1:#1d1c17;--sheet-2:#191814;--sheet:#22201a;
   --ink:#ece5d5;--ink-rgb:236 229 213;
   --digital:#808dff;--brand:#d377ea;--retail:#f38e4c;--retention:#f4738c;
-  --red:#ff6f3b;--amber:#ffae16;--green:#1acd9e;
+  --red:#ff6f3b;--amber:#ffae16;--green:#1acd9e;--purple:#e592c4;--navy:#56b4e9;
   --shadow-sheet:0 0 0 1px rgb(236 229 213 / .09),0 28px 56px rgb(0 0 0 / .6);
   --ghost-1:none;--ghost-2:none;
   color-scheme:dark;
@@ -113,6 +113,55 @@ section.sub{margin-top:36px}
 .fl{fill:var(--ink-14)}
 .fr{fill:var(--red)}.fa{fill:var(--amber)}.fg{fill:var(--green)}.fk{fill:var(--ink)}.fm{fill:var(--ink-65)}
 
+/* Pull quote */
+.pull{margin-top:28px;padding-top:16px;border-top:1.5px solid var(--ink);max-width:36ch}
+.pull blockquote{font-weight:300;font-size:28px;line-height:1.22;letter-spacing:-.02em;text-wrap:balance}
+.pull figcaption{margin-top:12px}
+@media (max-width:640px){.pull blockquote{font-size:23px}}
+
+/* Four ways teams work */
+.types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:20px}
+.tp{background:var(--sheet-1);box-shadow:var(--ghost-1);padding:14px 12px 12px;display:flex;flex-direction:column;gap:12px;min-width:0;border-top:2px solid var(--ink)}
+.tp.pilot{outline:1.5px solid var(--ink);outline-offset:-1.5px}
+.tp .sk{max-width:200px}
+.tp h3{font-weight:400;font-size:22px;line-height:1.2;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.tag{border:1.5px solid var(--ink);padding:0 6px;color:var(--ink)}
+.tag.later{border:1px dashed var(--ink-65);color:var(--ink-65)}
+.tp dl{margin-top:auto;border-top:1px solid var(--ink-14)}
+.tp dl>div{padding:7px 0;border-bottom:1px solid var(--ink-14)}
+.tp dl>div:last-child{border-bottom:0}
+.tp dt{color:var(--ink-65)}
+.tp dd{font-size:14px;line-height:1.4;color:var(--ink);margin-top:1px}
+@media (max-width:799px){
+  .types{grid-template-columns:1fr}
+  .tp dl>div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:0 12px;align-items:baseline}
+  .tp dd{margin-top:0}
+}
+.core{margin-top:12px;background:var(--sheet-1);box-shadow:var(--ghost-1);padding:14px 16px 12px}
+.core ul{display:flex;flex-wrap:wrap;gap:8px}
+.core li{border:1.5px solid var(--ink);padding:5px 10px;font:400 12px/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase}
+.core .cap{margin-top:12px}
+
+/* Status strip */
+.stat{display:grid;grid-template-columns:4fr 2fr;gap:0 16px;margin-top:20px;align-items:start}
+.sg{min-width:0}
+.sts{display:grid;background:var(--sheet-1);box-shadow:var(--ghost-1)}
+.g4 .sts{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2 .sts{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sts li{padding:14px 12px 12px;display:grid;gap:12px;align-content:start;border-left:1px solid var(--ink-14)}
+.sts li:first-child{border-left:0}
+.sw{display:block;height:14px;background:var(--c)}
+.sts .st{white-space:normal;align-items:baseline}
+.sts .st::before{display:none}
+.br{margin-top:6px;height:8px;border:1.5px solid var(--ink);border-top:0}
+.brl{margin-top:8px;color:var(--ink-65)}
+@media (max-width:820px){
+  .stat{grid-template-columns:1fr;gap:24px 0}
+  .g4 .sts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g4 .sts li:nth-child(odd){border-left:0}
+  .g4 .sts li:nth-child(n+3){border-top:1px solid var(--ink-14)}
+}
+
 /* Tool gallery */
 .shots{display:grid;grid-template-columns:1fr 1fr;gap:30px 24px;margin-top:22px}
 .shot{min-width:0;display:flex;flex-direction:column}
@@ -148,7 +197,7 @@ section.sub{margin-top:36px}
 .st{display:inline-flex;align-items:baseline;gap:8px;font:400 12px/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--c,var(--ink-65));white-space:nowrap}
 .st::before{content:"";width:8px;height:8px;background:var(--c,var(--ink-65));flex:none;align-self:center}
 .st.c{letter-spacing:.08em;gap:6px}
-.red{--c:var(--red)}.amber{--c:var(--amber)}.green{--c:var(--green)}.grey{--c:var(--ink-65)}
+.red{--c:var(--red)}.amber{--c:var(--amber)}.green{--c:var(--green)}.grey{--c:var(--ink-65)}.purple{--c:var(--purple)}.navy{--c:var(--navy)}.black{--c:var(--ink)}
 .dept{display:inline-flex;align-items:center;gap:8px}
 .dept::before{content:"";width:7px;height:7px;background:var(--c);flex:none}
 .d-digital{--c:var(--digital)}.d-brand{--c:var(--brand)}.d-retail{--c:var(--retail)}.d-retention{--c:var(--retention)}
@@ -240,6 +289,7 @@ td.t{color:var(--ink)}
 .flow .stw{font:400 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase}
 .flow .ar{stroke:var(--ink-65);stroke-width:1;fill:none}
 .flow .ar.d{stroke-dasharray:4 3}
+.flow .xs{fill:var(--ink-65);text-decoration:line-through;text-decoration-thickness:1.5px}
 .flow .c-green{fill:var(--green)}.flow .c-red{fill:var(--red)}.flow .c-amber{fill:var(--amber)}.flow .c-grey{fill:var(--ink-65)}.flow .c-ink{fill:var(--ink)}
 .rules{margin-top:20px}
 .rules li{padding:11px 0;border-bottom:1px solid var(--ink-28);font-size:17.5px;color:var(--ink-74)}
@@ -314,7 +364,11 @@ td.t{color:var(--ink)}
     <header data-stag>
       <h1 class="claim">One page where the team runs its week.</h1>
       <p class="evidence">Tasks, accountability, projects and meetings, for one pilot team first.</p>
-      <p class="invented caps">All data on this page is invented.</p>
+      <figure class="pull">
+        <blockquote>&ldquo;Every commitment gets done, or gets openly renegotiated, without anyone having to chase it.&rdquo;</blockquote>
+        <figcaption class="caps muted">the sponsor, 8 Oct</figcaption>
+      </figure>
+      <p class="invented caps">All task data on this page is invented. The quotes are real.</p>
     </header>
 
     <section id="needs">
@@ -377,8 +431,97 @@ td.t{color:var(--ink)}
       </ol>
     </section>
 
+    <section id="types">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>02</span><i>/</i><span>Four ways teams work</span></h2>
+      <div class="types" data-stag>
+        <article class="tp">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <rect class="fl" x="0" y="3" width="104" height="5"/><rect class="fk" x="0" y="3" width="68" height="5"/>
+            <path class="fk" d="M124 0L129.5 5.5L124 11L118.5 5.5Z"/>
+            <text class="fm t9" x="0" y="24">COUNTDOWN</text>
+            <line class="ln dsh" x1="124.5" y1="14" x2="124.5" y2="72"/>
+            <rect class="fl" x="0" y="38" width="60" height="4"/><rect class="fl" x="0" y="52" width="60" height="4"/><rect class="fl" x="0" y="66" width="60" height="4"/>
+            <path class="ln3" d="M64 40L118 54M64 54H118M64 68L118 54M114 51L118 54L114 57"/>
+            <text class="fk t9" x="140" y="83" text-anchor="end">LAUNCH DATE</text>
+          </svg>
+          <h3>Launch</h3>
+          <dl>
+            <div><dt class="caps">Unit</dt><dd>Task</dd></div>
+            <div><dt class="caps">Grouped by</dt><dd>Function</dd></div>
+            <div><dt class="caps">Time anchor</dt><dd>Launch date</dd></div>
+            <div><dt class="caps">Main view</dt><dd>What blocks launch</dd></div>
+          </dl>
+        </article>
+        <article class="tp pilot">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <rect class="fl" x="0" y="10" width="26" height="4"/><rect class="fl" x="32" y="10" width="40" height="4"/><rect class="fl" x="78" y="10" width="22" height="4"/><path class="ln3 dsh" d="M106 12H136M132 8.5L136 12L132 15.5"/>
+            <rect class="fl" x="0" y="30" width="44" height="4"/><rect class="fl" x="50" y="30" width="18" height="4"/><rect class="fl" x="74" y="30" width="34" height="4"/><path class="ln3 dsh" d="M114 32H136M132 28.5L136 32L132 35.5"/>
+            <rect class="fl" x="0" y="50" width="20" height="4"/><rect class="fl" x="26" y="50" width="36" height="4"/><rect class="fl" x="68" y="50" width="30" height="4"/><path class="ln3 dsh" d="M104 52H136M132 48.5L136 52L132 55.5"/>
+            <text class="fm t9" x="0" y="76">NO END DATE</text>
+          </svg>
+          <h3>Run <span class="tag caps">Pilot shape</span></h3>
+          <dl>
+            <div><dt class="caps">Unit</dt><dd>Task</dd></div>
+            <div><dt class="caps">Grouped by</dt><dd>Workstream</dd></div>
+            <div><dt class="caps">Time anchor</dt><dd>None</dd></div>
+            <div><dt class="caps">Main view</dt><dd>My open + overdue</dd></div>
+          </dl>
+        </article>
+        <article class="tp">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <text class="fm t9" x="0" y="17">US</text>
+            <path class="ln2" d="M0 26.5H108L120 42.5"/>
+            <path class="ln3" d="M0 58.5H108L120 42.5"/>
+            <text class="fm t9" x="0" y="75">PARTNER</text>
+            <line class="ln dsh" x1="40.5" y1="16" x2="40.5" y2="68"/><line class="ln dsh" x1="80.5" y1="16" x2="80.5" y2="68"/>
+            <rect class="fk" x="37.5" y="23.5" width="6" height="6"/><rect class="bx2" x="37.75" y="55.75" width="5.5" height="5.5"/>
+            <rect class="fk" x="77.5" y="23.5" width="6" height="6"/><rect class="bx2" x="77.75" y="55.75" width="5.5" height="5.5"/>
+            <path class="fk" d="M126 36L132.5 42.5L126 49L119.5 42.5Z"/>
+            <text class="fm t9" x="140" y="75" text-anchor="end">SHARED END</text>
+          </svg>
+          <h3>Partner</h3>
+          <dl>
+            <div><dt class="caps">Unit</dt><dd>Deliverable</dd></div>
+            <div><dt class="caps">Grouped by</dt><dd>Deliverable</dd></div>
+            <div><dt class="caps">Time anchor</dt><dd>Launch date + checkpoints</dd></div>
+            <div><dt class="caps">Main view</dt><dd>Next two weeks</dd></div>
+          </dl>
+        </article>
+        <article class="tp">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <rect class="fk" x="0" y="2" width="20" height="3"/>
+            <rect class="fl" x="0" y="10" width="20" height="8"/><rect class="fl" x="0" y="21" width="20" height="8"/><rect class="fl" x="0" y="32" width="20" height="8"/><rect class="fl" x="0" y="43" width="20" height="8"/><rect class="fl" x="0" y="54" width="20" height="8"/>
+            <rect class="fk" x="24" y="2" width="20" height="3"/>
+            <rect class="fl" x="24" y="10" width="20" height="8"/><rect class="fl" x="24" y="21" width="20" height="8"/><rect class="fl" x="24" y="32" width="20" height="8"/><rect class="fl" x="24" y="43" width="20" height="8"/>
+            <rect class="fk" x="48" y="2" width="20" height="3"/>
+            <rect class="fl" x="48" y="10" width="20" height="8"/><rect class="fl" x="48" y="21" width="20" height="8"/><rect class="fl" x="48" y="32" width="20" height="8"/>
+            <rect class="fk" x="72" y="2" width="20" height="3"/>
+            <rect class="fl" x="72" y="10" width="20" height="8"/><rect class="fl" x="72" y="21" width="20" height="8"/><rect class="fl" x="72" y="32" width="20" height="8"/>
+            <rect class="fk" x="96" y="2" width="20" height="3"/>
+            <rect class="fl" x="96" y="10" width="20" height="8"/><rect class="fl" x="96" y="21" width="20" height="8"/>
+            <rect class="fk" x="120" y="2" width="20" height="3"/>
+            <rect class="fl" x="120" y="10" width="20" height="8"/>
+            <text class="fm t9" x="0" y="82">STYLES PER STAGE</text>
+          </svg>
+          <h3>Pipeline <span class="tag later caps">Later</span></h3>
+          <dl>
+            <div><dt class="caps">Unit</dt><dd>Style or SKU</dd></div>
+            <div><dt class="caps">Grouped by</dt><dd>Stage</dd></div>
+            <div><dt class="caps">Time anchor</dt><dd>Season or drop</dd></div>
+            <div><dt class="caps">Main view</dt><dd>Styles per stage</dd></div>
+          </dl>
+        </article>
+      </div>
+      <div class="core">
+        <ul>
+          <li>Owner</li><li>Task</li><li>Due date</li><li>Status</li><li>One-line note</li><li>Update log</li>
+        </ul>
+        <p class="cap">Every type shares this core. It is slice one.</p>
+      </div>
+    </section>
+
     <section id="tools">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>02</span><i>/</i><span>What other tools do</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>03</span><i>/</i><span>What other tools do</span></h2>
       <p class="intro">Seven screens from tools we looked at, and what we take from each.</p>
       <p class="capt caps muted">Captured 8 Oct 2026, vendor public page</p>
 
@@ -458,7 +601,7 @@ td.t{color:var(--ink)}
     </section>
 
     <section id="gaps">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>03</span><i>/</i><span>The two gaps</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>04</span><i>/</i><span>The two gaps</span></h2>
       <p class="intro">None of the tools we checked holds both.</p>
       <div class="gaps" data-stag>
         <article>
@@ -559,7 +702,7 @@ td.t{color:var(--ink)}
       </div>
 
       <section class="sub" id="draft-flow">
-        <h3 class="mast s"><span>The two gaps</span><i>/</i><span>03a</span><i>/</i><span>How a draft is made</span></h3>
+        <h3 class="mast s"><span>The two gaps</span><i>/</i><span>04a</span><i>/</i><span>How a draft is made</span></h3>
         <div class="flow" id="flowDraft"></div>
         <ul class="rules">
           <li>The model drafts. Code checks. A person decides.</li>
@@ -569,20 +712,51 @@ td.t{color:var(--ink)}
       </section>
     </section>
 
+    <section id="status">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>05</span><i>/</i><span>What a status says</span></h2>
+      <div class="stat">
+        <div class="sg g4">
+          <ol class="sts">
+            <li class="black"><i class="sw"></i><span class="st">Not started</span></li>
+            <li class="red"><i class="sw"></i><span class="st">Off track</span></li>
+            <li class="amber"><i class="sw"></i><span class="st">On track</span></li>
+            <li class="green"><i class="sw"></i><span class="st">Ahead</span></li>
+          </ol>
+          <div class="br"></div>
+          <p class="brl caps">Health now, picked by the owner</p>
+        </div>
+        <div class="sg g2">
+          <ol class="sts">
+            <li class="purple"><i class="sw"></i><span class="st">Closed early</span></li>
+            <li class="navy"><i class="sw"></i><span class="st">Closed late</span></li>
+          </ol>
+          <div class="br"></div>
+          <p class="brl caps">Outcome, derived from the dates, never picked</p>
+        </div>
+      </div>
+      <p class="cap">The on-time ledger is these last two, counted per person per week.</p>
+    </section>
+
     <section id="week">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>04</span><i>/</i><span>One week</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>06</span><i>/</i><span>One week</span></h2>
       <div class="flow" id="flowWeek"></div>
       <p class="cap">A Monday meeting becomes a Friday number. A person approves before any task exists.</p>
+
+      <section class="sub" id="pushed">
+        <h3 class="mast s"><span>One week</span><i>/</i><span>06a</span><i>/</i><span>A date moves</span></h3>
+        <div class="flow" id="flowPushed"></div>
+        <p class="cap">The first date is never deleted. A new date is an event with a reason.</p>
+      </section>
     </section>
 
     <section id="lives">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>05</span><i>/</i><span>Where a task lives</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>07</span><i>/</i><span>Where a task lives</span></h2>
       <div class="flow" id="flowLives"></div>
       <p class="cap">Each task has one system of record. The app never writes to a Sheet.</p>
     </section>
 
     <section id="ladder">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>06</span><i>/</i><span>Task tool or project tool</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>08</span><i>/</i><span>Task tool or project tool</span></h2>
       <div class="ladder" data-stag>
         <div class="rung r1">
           <svg class="sk" viewBox="0 0 140 40" aria-hidden="true">
@@ -617,11 +791,11 @@ td.t{color:var(--ink)}
     </section>
 
     <section id="screens">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>07</span><i>/</i><span>Screens</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>09</span><i>/</i><span>Screens</span></h2>
       <p class="intro">Invented data. These show shape, not a design to sign off.</p>
 
       <section class="sub" id="mock-week">
-        <h3 class="mast s"><span>Screens</span><i>/</i><span>07a</span><i>/</i><span>The week</span></h3>
+        <h3 class="mast s"><span>Screens</span><i>/</i><span>09a</span><i>/</i><span>The week</span></h3>
         <div class="slip">
           <table class="stack">
             <thead><tr><th class="w-own">Owner</th><th>Task</th><th class="w-dept">Department</th><th class="w-due">Due</th><th class="w-st">Status</th></tr></thead>
@@ -641,7 +815,7 @@ td.t{color:var(--ink)}
       </section>
 
       <section class="sub" id="mock-person">
-        <h3 class="mast s"><span>Screens</span><i>/</i><span>07b</span><i>/</i><span>A person</span></h3>
+        <h3 class="mast s"><span>Screens</span><i>/</i><span>09b</span><i>/</i><span>A person</span></h3>
         <div class="slip">
           <div class="person-h"><h4>Owner B</h4><span class="caps muted">Week of 5 Oct</span></div>
           <dl class="nums">
@@ -670,7 +844,7 @@ td.t{color:var(--ink)}
       </section>
 
       <section class="sub" id="mock-project">
-        <h3 class="mast s"><span>Screens</span><i>/</i><span>07c</span><i>/</i><span>A project</span></h3>
+        <h3 class="mast s"><span>Screens</span><i>/</i><span>09c</span><i>/</i><span>A project</span></h3>
         <div class="slip">
           <div class="proj-h"><h4>Festive edit, in-store</h4><span class="st amber">At risk</span></div>
           <p class="proj-meta">Led by Owner A. Due 21 Oct. Eight stores.</p>
@@ -692,7 +866,7 @@ td.t{color:var(--ink)}
     </section>
 
     <section id="questions">
-      <h2 class="mast"><span>nico-desk</span><i>/</i><span>08</span><i>/</i><span>Questions we need answered</span></h2>
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>10</span><i>/</i><span>Questions we need answered</span></h2>
       <p class="intro">Pick one row for each question. Your choices stay in this browser.</p>
       <div id="qs"></div>
 
@@ -774,12 +948,17 @@ td.t{color:var(--ink)}
     ['Who holds the Granola key, and which plan',null,'This needs a named person.'],
     ['Where the data lives and who owns the account',null,'This needs a named account owner.'],
     ['Which model may read real minutes, and when','Synthetic minutes only until the vendor is approved.'],
-    ['Which Sheets we read, and who grants access',null,'This needs a named person who can grant access.']
+    ['Which Sheets we read, and who grants access',null,'This needs a named person who can grant access.'],
+    ['Do we track the partner\'s tasks, or only ours?',null,'A partner collab has an owner on each side.',['Track both sides','Only ours','Not sure']],
+    ['Which words for the four health states?',null,'The status strip above shows a first set of words.',['Use the words shown','Use other words','Not sure']],
+    ['Should the Monday digest and the overdue email be in the pilot, or after?',null,'The digest is opt-in. A person sends the overdue email.',['In the pilot','After the pilot','Not sure']],
+    ['If a locked date was a typo, who may correct it?',null,'The first date is never deleted, so a fix is a new event.'],
+    ['Who is the leader that sets priority for your team?',null,'This needs a named leader for each team.']
   ];
   var A=['Agree with the proposal','Not sure','Disagree'],B=['I can answer this','Not sure','Someone else should answer'];
   var qs=$('#qs');
   Q.forEach(function(q,i){
-    var name='q'+(i+1),has=!!q[1],labels=has?A:B;
+    var name='q'+(i+1),has=!!q[1],labels=q[3]||(has?A:B);
     var w=document.createElement('div');w.className='q';
     var l=document.createElement('div');
     var h=document.createElement('h3');
@@ -803,7 +982,7 @@ td.t{color:var(--ink)}
   function summary(){
     var s=load(),out=['nico-desk ideas, my answers',''];
     Q.forEach(function(q,i){
-      var v=s['q'+(i+1)],labels=q[1]?A:B;
+      var v=s['q'+(i+1)],labels=q[3]||(q[1]?A:B);
       out.push((i+1)+'. '+q[0]+': '+(v?labels[Number(v)-1]:'No answer'));
     });
     out.push('','Anything else: '+(more.value.trim()||'Nothing'));
@@ -873,10 +1052,13 @@ td.t{color:var(--ink)}
       var x=xs[i]+.5,w=s.w||W,my=1+H/2;
       hs.appendChild(el('rect',{x:x,y:1,width:w,height:H,class:'bxs'+(s.p?' p':'')}));
       hs.appendChild(el('text',{x:x+10,y:25,class:'tg'},s.t));
-      s.h.forEach(function(L,k){hs.appendChild(el('text',{x:x+10,y:50+k*16,class:'tx'},L))});
+      s.h.forEach(function(L,k){hs.appendChild(el('text',{x:x+10,y:50+k*16,class:'tx'+(s.x&&s.x.indexOf(k)>-1?' xs':'')},L))});
+      var nh=s.h.length;
+      (s.sub||[]).forEach(function(L,k){hs.appendChild(el('text',{x:x+10,y:50+(nh+k)*16,class:'lb'},L))});
+      nh+=(s.sub?s.sub.length:0);
       (s.out||[]).forEach(function(o,k){
         if(s.os)outRow(hs,x+s.os,50+k*22,o);
-        else outRow(hs,x+10,50+s.h.length*16+6+k*18,o);
+        else outRow(hs,x+10,50+nh*16+6+k*18,o);
       });
       if(i<n-1){
         arrow(hs,x+w+3,my,x+w+G-3,my,true,s);
@@ -892,15 +1074,17 @@ td.t{color:var(--ink)}
     /* phone */
     var y=1,items=[],GAP=cfg.vg||22;
     S.forEach(function(s){
-      var rows=s.v.length+(s.out?s.out.length:0),h=32+rows*19;items.push([y,h,s]);y+=h+GAP;
+      var rows=s.v.length+(s.subv?1:0)+(s.out?s.out.length:0),h=32+rows*19;items.push([y,h,s]);y+=h+GAP;
     });
     var vs=mk(340,y-GAP+2,'v',cfg.aria);
     items.forEach(function(it,i){
       var yy=it[0],h=it[1],s=it[2];
       vs.appendChild(el('rect',{x:.5,y:yy,width:339,height:h,class:'bxs'+(s.p?' p':'')}));
       vs.appendChild(el('text',{x:14,y:yy+21,class:'tg'},s.t));
-      s.v.forEach(function(L,k){vs.appendChild(el('text',{x:14,y:yy+43+k*19,class:'tx',style:'font-size:15px'},L))});
-      (s.out||[]).forEach(function(o,k){outRow(vs,14,yy+43+(s.v.length+k)*19,o)});
+      s.v.forEach(function(L,k){vs.appendChild(el('text',{x:14,y:yy+43+k*19,class:'tx'+(s.x&&s.x.indexOf(k)>-1?' xs':''),style:'font-size:15px'},L))});
+      var nv=s.v.length;
+      if(s.subv){vs.appendChild(el('text',{x:14,y:yy+43+nv*19,class:'lb',style:'font-size:13px'},s.subv));nv++}
+      (s.out||[]).forEach(function(o,k){outRow(vs,14,yy+43+(nv+k)*19,o)});
       if(i<items.length-1){
         var a=yy+h+3,b=yy+h+GAP-3,cx=170;
         arrow(vs,cx,a,cx,b,false,s);
@@ -917,14 +1101,14 @@ td.t{color:var(--ink)}
     var ol=document.createElement('ol');ol.className='sr';
     S.forEach(function(s){
       var li=document.createElement('li');
-      li.textContent=s.v.join(' ')+(s.out?': '+s.out.map(function(o){return o[0]}).join(', '):'');
+      li.textContent=(s.sr||s.v.join(' ')+(s.subv?', '+s.subv:''))+(s.out?': '+s.out.map(function(o){return o[0]}).join(', '):'');
       ol.appendChild(li);
     });
     host.appendChild(ol);
   }
 
-  build($('#flowDraft'),{W:106,G:16,aria:'Eight steps from meeting notes to a task, in order. See the list for the steps.',steps:[
-    {t:'Source',h:['Meeting notes','Granola,','read only'],v:['Meeting notes, Granola, read only']},
+  build($('#flowDraft'),{W:106,G:16,H:132,aria:'Eight steps from meeting notes to a task, in order. See the list for the steps.',steps:[
+    {t:'Source',h:['Any notetaker','Read only'],sub:['Granola','Voice notes','Chat'],v:['Any notetaker, read only'],subv:'Granola, voice notes, chat'},
     {t:'Model',h:['Extract','A schema-bound','model call'],v:['Extract, a schema-bound model call']},
     {t:'Code',h:['Code checks','the quote'],v:['Code checks the quote']},
     {t:'Code',h:['Code matches','the owner to','the roster'],v:['Code matches the owner to the roster']},
@@ -936,11 +1120,17 @@ td.t{color:var(--ink)}
 
   build($('#flowWeek'),{W:134,G:18,aria:'Six steps in one week, from the Monday meeting to the Friday ledger. See the list for the steps.',steps:[
     {t:'Mon',h:['Weekly','meeting'],v:['Weekly meeting']},
-    {t:'Mon',h:['Granola note,','read only'],v:['Granola note, read only']},
+    {t:'Mon',h:['Meeting note,','read only'],v:['Meeting note, read only']},
     {t:'Mon',h:['Drafts wait','in triage'],v:['Drafts wait in triage']},
     {t:'Tue',h:['The owner','approves'],v:['The owner approves'],p:1},
     {t:'Tue to Fri',h:['The week:','tasks, owners,','dates'],v:['The week: tasks, owners, dates']},
     {t:'Fri',w:200,h:['The ledger','per person'],v:['The ledger per person'],os:104,out:[['On time','green'],['Late','red'],['Open','grey']]}
+  ]});
+
+  build($('#flowPushed'),{W:200,G:100,aria:'Three steps when a due date moves. The first date is set and locked. The owner adds a reason and a new date. The task then shows the first date struck through and the new date with its reason.',steps:[
+    {t:'Date set',h:['Due 14 Oct','Locked on 3 Oct'],v:['Due 14 Oct','Locked on 3 Oct'],lab:['Pushed']},
+    {t:'Owner',p:1,h:['Adds a reason','and a new date'],v:['The owner adds a reason','and a new date'],lab:['Logged','as an event']},
+    {t:'The task now',h:['Due 14 Oct','Due 21 Oct'],x:[0],sub:['Reason: late stock'],v:['Due 14 Oct','Due 21 Oct'],subv:'Reason: late stock',sr:'Due 14 Oct, struck through. Due 21 Oct. Reason: late stock',out:[['First date kept','grey']]}
   ]});
 
   build($('#flowLives'),{W:224,G:130,vg:56,aria:'Three boxes. Department Sheets are read by the app and never written. The app is the system of record for the pilot team. The OKR page shares the look and the data contract but not the backend.',steps:[
