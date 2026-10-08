@@ -53,6 +53,6 @@ Base path: `~/Code/Nicobar work/`.
 
 - Reuse the tokens and `components/ui` atoms. Do not start a new visual language.
 - A task and project store is new work. Follow the append-only pattern in `preread/store.ts`.
-- Calendar as roster is the best unbuilt lead for meetings. It needs access from Aashi.
-- Aashi's tracker (Granola to Sheets to APPROVED to email) is an Apps Script that is not in the repo. The hub can only read its output.
+- Calendar as roster is the best unbuilt lead for meetings. It needs access from the tracker owner.
+- The tracker owner's tracker (Granola to Sheets to APPROVED to email) is an Apps Script that is not in the repo. The hub can only read its output.
 - Keep the rule "no invented numbers" on every new surface.

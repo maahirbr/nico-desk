@@ -9,9 +9,9 @@ describing this tool), `HANDOFF.md`, `docs/BRIEF.md`, `docs/nico-desk-ideas-maah
 `docs/OKR-PAGE-SUMMARY.md`. People are named by role here because the repo is public. Anything
 still open is left as `{{ }}`.
 
-- **Owner:** Maahir
+- **Owner:** the repo owner
 - **Last updated:** 2026-10-08
-- **Status:** draft, not yet agreed with Khushi or a pilot lead
+- **Status:** draft, not yet agreed with the sponsor or a pilot lead
 
 ## 1. Problem
 
@@ -28,7 +28,7 @@ reaches the person, and finding out who has not filed means checking by hand.
 
 ## 2. Who it is for
 
-- **Pilot team:** {{one team, chosen with Khushi. Pick rule: already runs a weekly review and keeps owners and dates in a Sheet}}
+- **Pilot team:** {{one team, chosen with the sponsor. Pick rule: already runs a weekly review and keeps owners and dates in a Sheet}}
 - **Pilot lead (owns feedback):** {{name, one L1}}
 - **Daily user:** each team member: sees their open items, adds comments, closes tasks.
 - **Weekly user:** the L1 lead, who runs the weekly review from it and sees where the team needs support.
@@ -53,7 +53,7 @@ and runs the weekly review without opening the Sheets.
 
 ## 5. Non-goals
 
-- Not rebuilding Aashi's tracker (`nicobar-okr-processor`). We read what it produces.
+- Not rebuilding the tracker owner's tracker (`nicobar-okr-processor`). We read what it produces.
 - Not building a meeting recorder while Granola covers the pilot's meetings.
 - Not a cross-company dashboard in phase one, even though leadership is the eventual audience.
 - No email, Slack or WhatsApp delivery in phase one. Wrong reminders clog inboxes (see section 8).
@@ -65,7 +65,7 @@ and runs the weekly review without opening the Sheets.
 | Department OKR trackers (Google Sheets) | tasks, owners, dates, status | read | {{name}} | {{yes / no}} |
 | Meeting minutes: MBR and the pilot team's other forums | decisions and action items | read | {{name}} | {{yes / no}} |
 | Granola notes | minutes, action items | read | {{name}} | {{yes / no}} |
-| Google Calendar | the week, who is in which meeting | read | Aashi (per `docs/OKR-PAGE-SUMMARY.md`) | {{yes / no}} |
+| Google Calendar | the week, who is in which meeting | read | The tracker owner (per `docs/OKR-PAGE-SUMMARY.md`) | {{yes / no}} |
 | Context layer | company context | read in phase one, write after the pilot | {{name}} | {{yes / no}} |
 
 Development uses the synthetic fixture from the OKR repo only. A Sheet works for the pilot. To
@@ -115,28 +115,28 @@ Hard lines:
 
 | Decision | Who decides | Who is consulted |
 |---|---|---|
-| Pilot team and lead | Khushi | Maahir |
-| Scope of phase one | {{Khushi / Maahir}} | pilot lead |
+| Pilot team and lead | The sponsor | The repo owner |
+| Scope of phase one | {{the sponsor / the repo owner}} | pilot lead |
 | Adding a new source | {{name}} | pilot lead, the source's owner |
-| Where the data lives (backend) | {{name}} | Aashi, Sudharshan |
+| Where the data lives (backend) | {{name}} | The tracker owner, the OKR backend developer |
 | Approving tasks drafted from minutes | the meeting owner | n/a |
-| Roll out or stop on 31 Dec | {{name}} | Khushi, pilot lead |
+| Roll out or stop on 31 Dec | {{name}} | The sponsor, pilot lead |
 | Agent may decide alone | code structure, synthetic fixtures, drafts of copy and screens | n/a |
 
 ## 10. Milestones
 
 | Date | Milestone | Done when |
 |---|---|---|
-| 7 Oct 2026 (slipped, new date {{date}}) | Concept agreed | brief, data map and first three screens (the week, a person, a project) signed off by Khushi |
+| 7 Oct 2026 (slipped, new date {{date}}) | Concept agreed | brief, data map and first three screens (the week, a person, a project) signed off by the sponsor |
 | {{Oct 2026}} | Pilot live | the pilot team runs its weekly review from nico-desk |
 | {{Nov 2026}} | More teams | {{n}} teams onboarded |
 | 31 Dec 2026 | Decision | criteria in section 7 reviewed, call made |
 
 ## 11. Open questions
 
-- [ ] Which team pilots, and which L1 owns the feedback? · owner Khushi · needed by {{date}}
-- [ ] First user: both forms named leadership (CEO, founder, L1s). Confirm that the pilot is one L1's team and the leadership view comes later · owner Maahir · needed by {{date}}
+- [ ] Which team pilots, and which L1 owns the feedback? · owner the sponsor · needed by {{date}}
+- [ ] First user: both forms named leadership (CEO, founder, L1s). Confirm that the pilot is one L1's team and the leadership view comes later · owner the repo owner · needed by {{date}}
 - [ ] Which forum minutes does the pilot team hold, and does Granola cover all of them? · owner pilot lead · needed by {{date}}
-- [ ] One backend shared with the OKR page, or separate? · owner Aashi, Sudharshan · needed by {{date}}
+- [ ] One backend shared with the OKR page, or separate? · owner the tracker owner, the OKR backend developer · needed by {{date}}
 - [ ] How does the hub read the context layer, and who grants access? · owner {{name}} · needed by {{date}}
 - [ ] Which channel does the pilot team read daily, for when reminders move beyond in-app? · owner pilot lead · needed by {{date}}

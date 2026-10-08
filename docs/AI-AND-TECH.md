@@ -31,7 +31,7 @@ Jev is a hosted model from TypeSafe AI. It is not a Paca library. Paca calls it 
 - It does not generate text, write code or hold a conversation. [Docs](https://docs.typesafe.ai/introduction/coding-agents.md)
 - Current model: jev-1.13. Price: $0.042 per million input tokens, output free. Context: 64k tokens. Input is text only. English is where accuracy is best. [Models](https://docs.typesafe.ai/models.md)
 - SDKs: `@typesafe-ai/sdk` 0.6.0 on npm (MIT, modified 15 Sep 2026) and `typesafe-sdk` 0.7.2 on PyPI. Secondary sources say minor versions broke the types. **Not verified.**
-- Availability: public sources disagree ("coming soon" against early access from 15 Sep 2026). Maahir has used the API in several other projects and reports it works well. That is first-hand and counts as confirmed for planning. Speed and accuracy figures on the vendor site are still **not independently verified.** Nico-desk needs its own test on synthetic meetings.
+- Availability: public sources disagree ("coming soon" against early access from 15 Sep 2026). The repo owner has used the API in several other projects and reports it works well. That is first-hand and counts as confirmed for planning. Speed and accuracy figures on the vendor site are still **not independently verified.** Nico-desk needs its own test on synthetic meetings.
 - No standalone library named Jev found. An npm package `jev` exists at 0.0.0. **Not checked.**
 
 ### How Paca makes it safe (from its source)
@@ -59,7 +59,7 @@ TypeSafe's own docs list its weak spots: dates, durations and counting, a lean t
 | Classify a task into a project or team | Possible, if the options are fixed. |
 | Work out due dates | No. Code does this. |
 
-**More use cases to test (Maahir's experience says Jev is strong here).** Each is a classify or score job over text we already hold.
+**More use cases to test (the repo owner's experience says Jev is strong here).** Each is a classify or score job over text we already hold.
 
 - Triage inbox: score each draft task as ready, needs owner or needs date. Sort the approver's queue.
 - Duplicate check: "is this draft the same commitment as an open task?" Stops repeat tasks across weekly meetings.
