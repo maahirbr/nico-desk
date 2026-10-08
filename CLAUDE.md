@@ -24,7 +24,9 @@ No code yet. Filled in at the first code commit.
 - Nothing is sent on anyone's behalf (tags, nudges, emails) without their yes.
 - Recording meetings needs consent from everyone recorded, and a stated storage and retention rule,
   before any recorder is built.
-- The repo stays private.
+- The repo is public (decision 2026-10-08, see DECISIONS). So nothing internal beyond what is
+  already in it goes in: no real Nicobar data, no credentials, no customer data, no internal URLs
+  that are not already public.
 
 ## DECISIONS
 
@@ -32,6 +34,11 @@ No code yet. Filled in at the first code commit.
   page) and `~/Code/nicobar-recs`: the hub spans teams and sources, and the OKR page may become
   one part of it (open question 6 in `HANDOFF.md`) rather than the other way round. Meeting
   minutes default to reading Granola, which already feeds the tracker, not building a recorder.
+- 2026-10-08 · Sonnet 5.5 · Repo made public at Maahir's call, replacing the earlier "stays private"
+  rule. I advised keeping it private, since a private repo also takes collaborators. Four teammates
+  will be added as collaborators. Risk: public content can be cached or indexed. Rollback: set the
+  repo private again with `gh repo edit maahirbr/nico-desk --visibility private
+  --accept-visibility-change-consequences`. Copies already taken stay out of our reach.
 
 ## VERIFY
 
