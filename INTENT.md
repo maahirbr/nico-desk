@@ -105,8 +105,37 @@ Each one breaks a part of the goal in section 1.
 **Primary user for the pilot:** the lead. If the lead does not run the review from it, nobody
 else gets value.
 
+### Teams work differently
+
+Nicobar teams do not all run work the same way. Four types so far, from a sample of teams. Every
+type shares one core: **owner, task, due date, status, a one-line note and an update log**. Each
+type switches on what it needs on top.
+
+| Type | What it is | Unit of work | Grouped by | Time anchor | Main view | Needs on top of the core |
+|---|---|---|---|---|---|---|
+| Launch | A product or category going live on a fixed date. Work split by function, one team often waiting on another | Task | Function | Launch date | What blocks launch | Countdown and phase, dependencies, project owner approval |
+| Run | Ongoing work across standing workstreams, no end date. A small team, each person on parts of many projects | Task | Workstream | None | My open and overdue | Pushed-date record, reminders, recurring tasks |
+| Partner | Nicobar and an outside partner deliver together toward a date | Deliverable | Deliverable | Launch date plus checkpoints | Next two weeks | An owner on each side, dated checkpoints, what the partner needs from us, tasks drafted from meeting notes |
+| Pipeline | Styles move through moodboard, sketch, sample, fit, approval, handoff, per season or drop | Style or SKU | Stage | Season or drop | Styles per stage | Stage board, season calendar, design approvals, sourcing dependencies |
+
+What this means for the goal:
+
+- The core is the goal. A commitment, a locked first date, a visible new date with a reason and
+  an update log work the same for every type. Build the core once.
+- The types change the view and the extras, not the commitment. Phase one builds the core and one
+  type's view, not all four.
+- Partner work stretches "every commitment": the partner's side may sit outside Nicobar. See open
+  question 11.
+- Pipeline work may not fit "a task with a date" at all. A style's commitment may be a stage date.
+  It is the least like the others and should not pilot.
+
+Source: "Nicobar Tracker: How Teams Work Differently", Oct 2026. Team and partner names are left
+out because the repo is public.
+
 **Pilot team:** `TBD`, chosen with the sponsor. Pick rule: a team that already runs a weekly
-review and keeps owners and dates in a Sheet.
+review and keeps owners and dates in a Sheet. Proposed: a **Run** team. Its needs (my open and
+overdue, a record of pushed dates, reminders) are the goal in section 1 almost word for word, and
+it needs no dependencies, stages or outside owners.
 
 **Leadership view:** Stage 3. Both forms named leadership, but that view needs data from many
 teams, which one pilot will not give.
@@ -211,10 +240,12 @@ The full list is in `CLAUDE.md` CONSTRAINTS. The ones that shape the product:
 | 4 | The six statuses: Amber means "on track" here but "at risk" on the OKR page. Rename, or accept the difference? What status covers a task closed exactly on time, or one not started but already late? | the founder | `TBD` |
 | 5 | Locked dates: who can correct a date entered by mistake? Can Amber or Green also revise a date, or only Red? | the founder | `TBD` |
 | 6 | Priority: who is "the leader" for a task, and how is priority agreed and locked? | the business lead, the founder | `TBD` |
-| 7 | The update log: a history of every change, or a weekly note per task? | the founder | `TBD` |
+| 7 | The update log is part of the shared core (section 3). Is it a history of every change, a weekly note per task, or both? | the founder | `TBD` |
 | 8 | One backend shared with the OKR page, or separate? | the tracker owner, the OKR backend developer | `TBD` |
 | 9 | Who is the Granola admin who makes a workspace key, and is Nicobar on the Business or Enterprise plan? | `TBD` | `TBD` |
 | 10 | Single source of truth: once nico-desk exists, where does a task made in a Sheet, a note or a WhatsApp chat live? Do teams stop tracking in Sheets for pilot work, or does nico-desk read them? WhatsApp has no read access for personal chats, so commitments made there must be added by hand or forwarded in. | the sponsor, the pilot lead | `TBD` |
+| 11 | Partner work: do we track the partner's tasks too, or only Nicobar's side? If only ours, how is a partner's slip made visible? | the sponsor, the founder | `TBD` |
+| 12 | Which team type pilots first (Launch, Run, Partner, Pipeline)? Proposed: Run | the sponsor | `TBD` |
 
 ---
 
