@@ -1,0 +1,29 @@
+[
+  {
+    "id": "prj_landing",
+    "name": "Autumn landing page",
+    "department": "Digital",
+    "owner_id": "per_ada",
+    "status": "on_track",
+    "status_note": "Copy done, build under way.",
+    "status_at": "2026-09-14T05:00:00Z"
+  },
+  {
+    "id": "prj_shoot",
+    "name": "Campaign shoot plan",
+    "department": "Brand",
+    "owner_id": "per_cy",
+    "status": "at_risk",
+    "status_note": "Shoot date moved. Two tasks closed late.",
+    "status_at": "2026-10-05T05:30:00Z"
+  },
+  {
+    "id": "prj_tiers",
+    "name": "Loyalty tier pilot",
+    "department": "Retention",
+    "owner_id": "per_fay",
+    "status": "on_track",
+    "status_note": "Pilot list agreed.",
+    "status_at": "2026-09-14T05:10:00Z"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "type": "duplicate",
+  "meeting_date": "2026-10-20",
+  "tasks": [
+    {
+      "title": "Build the lapsed customer segment",
+      "owner": "Wren Calloway",
+      "due_on": "2026-10-22",
+      "quote": "I'll build the lapsed customer segment on 22 October.",
+      "critical": false
+    },
+    {
+      "title": "Write the November newsletter lead story",
+      "owner": "Bexley Marsh",
+      "due_on": "2026-10-23",
+      "quote": "I will write the lead story by 23 October.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "Does the newsletter really need a lead story every month?",
+    "Fine. I will be quiet about the lead story."
+  ]
+}

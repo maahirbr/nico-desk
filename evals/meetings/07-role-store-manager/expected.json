@@ -1,0 +1,38 @@
+{
+  "type": "owner-by-role",
+  "meeting_date": "2026-10-19",
+  "tasks": [
+    {
+      "title": "Replace Eastgate fitting room curtain",
+      "owner": "missing",
+      "due_on": "missing",
+      "quote": "The store manager needs to replace it.",
+      "critical": false
+    },
+    {
+      "title": "Reorder hangers for Eastgate",
+      "owner": "missing",
+      "due_on": "missing",
+      "quote": "The store manager should also reorder the hangers",
+      "critical": false
+    },
+    {
+      "title": "Test loyalty sign-up screen on the shop tablet",
+      "owner": "missing",
+      "due_on": "missing",
+      "quote": "Someone from retail should test the loyalty sign-up screen on the shop tablet.",
+      "critical": false
+    },
+    {
+      "title": "Send weekend rota to Alder",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-10-21",
+      "quote": "I will send the weekend rota to Alder on 21 October",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "Honestly, that curtain was ugly from day one.",
+    "I would pay good money to see Alder fit a curtain."
+  ]
+}

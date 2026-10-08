@@ -9,7 +9,11 @@ team first. Nothing is built yet; `HANDOFF.md` is the brief and the reading list
 No code yet. Filled in at the first code commit.
 
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
-- `docs/`: `BRIEF.md` (answers to the open questions) and the data map land here.
+- `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
+- `docs/`: `BRIEF.md`, `RESEARCH-PLAN.md`, `HANDOFF-FABLE.md`, `HOW-TEAMS-WORK.md` (the sponsor's four team types), `USE-CASES-8-OCT.md` (requests mapped to intent, slice one or spec), `DATA-MODEL.md` (Postgres DDL: people, projects, tasks, append-only events; on-time ledger derived, never stored).
+- `docs/team-page/`: the team question page, published as a private Artifact; `img/` holds vendor screenshots.
+- `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly. `denylist.txt` guards against real data.
+- `evals/meetings/`: 20 synthetic transcripts with expected drafts, and `check.py`.
 
 ## CONSTRAINTS
 
@@ -59,5 +63,8 @@ No code yet. Filled in at the first code commit.
 
 ## VERIFY
 
-Nothing to run yet. Until code exists, done means: `docs/BRIEF.md` answers the open questions in
-`HANDOFF.md` section 5, checked with the sponsor.
+```
+python3 -I evals/meetings/check.py
+```
+
+expects `OK: 20 cases`. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

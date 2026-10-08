@@ -1,0 +1,24 @@
+{
+  "type": "duplicate",
+  "meeting_date": "2026-10-22",
+  "tasks": [
+    {
+      "title": "Recount the Eastgate candle wall",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-24",
+      "quote": "I'll do the recount on Saturday.",
+      "critical": false
+    },
+    {
+      "title": "Fix the stock feed mapping for candle codes",
+      "owner": "Orrin Vale",
+      "due_on": "2026-10-26",
+      "quote": "I will fix the stock feed mapping on 26 October.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "The Eastgate candle wall count looks off by about 30 units.",
+    "Honestly the candles smell too sweet this year."
+  ]
+}

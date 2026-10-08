@@ -1,0 +1,38 @@
+{
+  "type": "relative-date",
+  "meeting_date": "2026-10-14",
+  "tasks": [
+    {
+      "title": "Complete stock room checks at all four stores",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-10-31",
+      "quote": "I will complete the stock room checks at all four stores by the end of the month.",
+      "critical": false
+    },
+    {
+      "title": "Update the visual merchandising guide",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-31",
+      "quote": "I will update the visual merchandising guide by the end of the month.",
+      "critical": false
+    },
+    {
+      "title": "Build the holiday pages on the site",
+      "owner": "Orrin Vale",
+      "due_on": "2026-10-31",
+      "quote": "Yes, the holiday pages will be done by the end of the month.",
+      "critical": true
+    },
+    {
+      "title": "Deliver holiday photography edits",
+      "owner": "Bexley Marsh",
+      "due_on": "2026-10-20",
+      "quote": "I will deliver the holiday photography edits on the 20th.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "The Q3 audit finished two weeks late, so let us not repeat that.",
+    "End of the month always sneaks up on us."
+  ]
+}

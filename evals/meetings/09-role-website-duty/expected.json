@@ -1,0 +1,38 @@
+{
+  "type": "owner-by-role",
+  "meeting_date": "2026-10-21",
+  "tasks": [
+    {
+      "title": "Correct Harbour Street Sunday hours in the store locator",
+      "owner": "missing",
+      "due_on": "missing",
+      "quote": "Whoever is on website duty this week should correct it.",
+      "critical": false
+    },
+    {
+      "title": "Send staging link for the new checkout",
+      "owner": "missing",
+      "due_on": "missing",
+      "quote": "The agency should send the staging link for the new checkout.",
+      "critical": false
+    },
+    {
+      "title": "Write up the checkout test steps",
+      "owner": "Orrin Vale",
+      "due_on": "2026-10-23",
+      "quote": "I will write up the checkout test steps on 23 October",
+      "critical": false
+    },
+    {
+      "title": "Gather holiday period opening hours",
+      "owner": "missing",
+      "due_on": "missing",
+      "quote": "Retail will gather the new opening hours for the holiday period.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "We did a similar locator fix in March and it took forever.",
+    "If the locator breaks again I am moving us to a paper map."
+  ]
+}

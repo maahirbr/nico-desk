@@ -1,0 +1,24 @@
+{
+  "type": "cancelled",
+  "meeting_date": "2026-11-02",
+  "tasks": [
+    {
+      "title": "Remove the sale countdown timer from the homepage",
+      "owner": "Orrin Vale",
+      "due_on": "2026-11-03",
+      "quote": "I will remove the sale countdown timer from the homepage by 3 November.",
+      "critical": true
+    },
+    {
+      "title": "Tell all store teams about the sale postponement",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-11-02",
+      "quote": "I will tell all store teams about the postponement today.",
+      "critical": true
+    }
+  ],
+  "must_not_draft": [
+    "I will redo the sale banner in the new green by 4 November.",
+    "The sale was my favourite part of the month."
+  ]
+}

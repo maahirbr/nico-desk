@@ -1,0 +1,40 @@
+{
+  "type": "plain",
+  "meeting_date": "2026-10-07",
+  "tasks": [
+    {
+      "title": "Call supplier to ask for a partial cushion cover shipment",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-10-08",
+      "quote": "I will call the supplier on 8 October and ask for a partial shipment",
+      "critical": true
+    },
+    {
+      "title": "Send store-by-store stock count table to the group",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-09",
+      "quote": "I will pull the stock count for every store and send the table to the group on 9 October",
+      "critical": false
+    },
+    {
+      "title": "Add low stock label to cushion cover pages",
+      "owner": "Orrin Vale",
+      "due_on": "missing",
+      "quote": "I will add a low stock label to the cushion cover pages once Alder's table is in.",
+      "critical": false
+    },
+    {
+      "title": "Pause cushion cover emails until stock is sorted",
+      "owner": "Wren Calloway",
+      "due_on": "missing",
+      "quote": "I will pause the cushion cover emails until the stock is sorted.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "The next delivery from the supplier is not until the end of the month.",
+    "I think the supplier's old packaging looked better, honestly.",
+    "Stock turned over faster last year with the old packaging too.",
+    "The numbers in the system have been unreliable since the summer."
+  ]
+}

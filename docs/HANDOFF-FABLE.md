@@ -49,6 +49,11 @@ Pilot with one small team first. Roll-out or stop call on 31 Dec 2026.
 | `docs/AI-AND-TECH.md` | Jev, the structured-output stack, the draft-task design, the eval plan, other tech, avoid list, unverified items. |
 | `docs/RESEARCH-8-OCT.md` | Granola API facts, TypeSafe terms, project objects, sheet versus app as system of record. All claims tagged. |
 | `docs/RESEARCH-PLAN.md` | The ordered research plan, owners, done-when, and the first-slice recommendation. |
+| `docs/HOW-TEAMS-WORK.md` | The sponsor's doc: one shared core under four team types (Launch, Run, Partner, Pipeline). |
+| `docs/USE-CASES-8-OCT.md` | The use cases from the team channel on 8 Oct, and the why behind each. |
+| `docs/DATA-MODEL.md` | The data model: tasks, events and the status model. |
+| `fixtures/` | Synthetic people, projects, tasks and events, plus a denylist for real names and domains. |
+| `evals/meetings/` | Synthetic meetings for scoring draft quality. |
 
 Outside this repo: `~/Code/Nicobar work` holds the OKR page. Read `docs/SHEET-SPEC.md` and `web/app/globals.css` there for the UI. The UI tokens are in section 6.
 
@@ -107,12 +112,16 @@ Order the questions below, then give each an owner, a method and a done-when. A 
 
 1. **Pilot team and first user.** Needs a decision from the repo owner and the sponsor. Blocks everything.
 2. **Granola access.** Verified 8 Oct: the API needs Business or Enterprise, and an admin makes a workspace key tied to no person. Open: which plan the company is on, who the admin is, whether the pilot's meetings sit in the Team space or a space with API access on, and the revocation rule. See `docs/RESEARCH-8-OCT.md`.
-3. **Where the data lives.** Who owns a Postgres account? Shared with the OKR page or separate? Sheet-only for the pilot?
-4. **Model vendor approval** for real minutes, including Jev's data handling and retention terms. TypeSafe's terms are summarised in `docs/RESEARCH-8-OCT.md` with five questions to send in writing.
-5. **Draft quality.** Build 20 or more synthetic meetings and score owner, date, critical recall and injection cases. Include a Jev verifier arm.
-6. **Sheets read adapter.** Which Sheets, who grants read access, how stable are the columns.
-7. **Plane licence.** AGPL read by a lawyer before any internal run.
-8. **Week 0 baseline.** Count overdue items now so success has a start.
+3. **Notetaker adapters.** Ask the pilot team which notetakers it uses. Get one sample export per tool. Granola is first (item 2).
+4. **Google Chat access.** The founder gives a yes or no on read access, and on consent from the people in it. Read only, proposals only.
+5. **Where the data lives.** Who owns a Postgres account? Shared with the OKR page or separate? Sheet-only for the pilot?
+6. **Week 0 baseline.** Count overdue items now so success has a start.
+7. **Sheets read adapter.** Which Sheets, who grants read access, how stable are the columns.
+8. **Draft quality.** Build 20 or more synthetic meetings and score owner, date, critical recall and injection cases. Include a Jev verifier arm.
+9. **Model vendor approval** for real minutes, including Jev's data handling and retention terms. TypeSafe's terms are summarised in `docs/RESEARCH-8-OCT.md` with five questions to send in writing.
+10. **Plane licence.** AGPL read by a lawyer before any internal run.
+
+The numbering matches the table in `docs/RESEARCH-PLAN.md`.
 
 ## 9. Not verified
 
@@ -124,8 +133,8 @@ Order the questions below, then give each an owner, a method and a done-when. A 
 
 ## 10. State of the repo
 
-- Committed: everything up to `ac51271`.
-- Uncommitted: `docs/AI-AND-TECH.md`, `docs/TASKUARY-PACA-PLANE.md`, `docs/RESEARCH-8-OCT.md`, `docs/RESEARCH-PLAN.md`, `docs/INTENT-FABLE.md`, `docs/team-page/index.html`, this file. The repo owner has not yet said to commit them.
+- Committed: everything up to `2dd875c`.
+- Uncommitted: `docs/DATA-MODEL.md`, `fixtures/`, `evals/meetings/`, `docs/HOW-TEAMS-WORK.md`, `docs/USE-CASES-8-OCT.md`, and this file. The repo owner has not yet said to commit them.
 - Done in the 8 Oct session: `docs/INTENT-FABLE.md`, the research, the plan, and the HTML page (published as a private Artifact).
 
 ## 11. New input, 8 Oct
@@ -139,3 +148,12 @@ Team chat, 8 Oct, after `INTENT.md` was committed.
    - Does this work with the OKR skill and page, or is it an independent web app? Proposed: an independent web app for the pilot, on the same UI and the same data contract (`web/lib/types.ts` in the OKR repo), so it can merge later. Matches `docs/BRIEF.md` section 6. The pilot does not wait for the OKR backend.
    - Does it work with the existing Sheets, or are tasks created inside it? Proposed: both. People create tasks in the app, because today nobody can create or assign a task. The app reads the existing Sheets, read-only.
    - What is the system of record for tasks? Proposed: each task has exactly one system of record, stored on the task as its origin. For the pilot team the app is the system of record, because the on-time ledger and the change feed need an append-only history that a Sheet cannot give. Other teams' Sheets stay their own source of truth. Never write the same task in two places.
+5. **Afternoon input.** Five posts in the team channel, 8 Oct.
+   - The founder: task management matters more than full project management. Use cases: notes from two notetakers, one person sees all their pending items, scan Google Chat for to-dos, a weekly overdue email drafted for an admin, a six-colour status, a locked due date, a view by status, an update log.
+   - The teammate who drafted `INTENT.md`: do not restrict to Granola. Requests go to a spec. The why goes to the intent.
+   - A team lead: a Monday email per person, a request-for-support column that tags people, and priority set by the specific leader.
+   - The sponsor: four team types (Launch, Run, Partner, Pipeline) on one shared core. Open question: track the partner's tasks or only ours.
+   - The sponsor, 4:05 PM: her intent in one line is that every commitment gets done, or openly renegotiated, with no chasing. Four pains: leaks, chasing, hidden slips, no single source of truth.
+   - She frames it as task-first but project-aware. The line and pains are in `docs/USE-CASES-8-OCT.md` and `docs/INTENT-FABLE.md` section 1.
+   - The founder leans task-first. So the open question in item 2 now leans task, with the four types as switches. Decide with the sponsor and the teammate.
+   - Details are in `docs/USE-CASES-8-OCT.md` and `docs/HOW-TEAMS-WORK.md`.

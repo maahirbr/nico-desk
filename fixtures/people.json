@@ -1,0 +1,44 @@
+[
+  {
+    "id": "per_ada",
+    "display_name": "Tamsin Quill",
+    "role": "Digital lead",
+    "department": "Digital",
+    "email": "tamsin@example.test"
+  },
+  {
+    "id": "per_bo",
+    "display_name": "Orrin Vale",
+    "role": "Web producer",
+    "department": "Digital",
+    "email": "orrin@example.test"
+  },
+  {
+    "id": "per_cy",
+    "display_name": "Bexley Marsh",
+    "role": "Brand lead",
+    "department": "Brand",
+    "email": "bexley@example.test"
+  },
+  {
+    "id": "per_dee",
+    "display_name": "Sorrel Pike",
+    "role": "Designer",
+    "department": "Retail",
+    "email": "sorrel@example.test"
+  },
+  {
+    "id": "per_eli",
+    "display_name": "Alder Finch",
+    "role": "Retail lead",
+    "department": "Retail",
+    "email": "alder@example.test"
+  },
+  {
+    "id": "per_fay",
+    "display_name": "Wren Calloway",
+    "role": "Retention lead",
+    "department": "Retention",
+    "email": "wren@example.test"
+  }
+]

@@ -1,0 +1,39 @@
+{
+  "type": "plain",
+  "meeting_date": "2026-10-14",
+  "tasks": [
+    {
+      "title": "Add second win-back email trigger",
+      "owner": "Tamsin Quill",
+      "due_on": "2026-10-16",
+      "quote": "I will add the second email trigger in the email tool on 16 October",
+      "critical": false
+    },
+    {
+      "title": "Get sign-off for the 10 percent code and tell Wren",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-10-15",
+      "quote": "I will get sign-off for the 10 percent code from the retail lead and tell Wren on 15 October",
+      "critical": false
+    },
+    {
+      "title": "Check the 10 percent code works at checkout",
+      "owner": "Orrin Vale",
+      "due_on": "missing",
+      "quote": "I will check that the code works at checkout before it goes live.",
+      "critical": false
+    },
+    {
+      "title": "Pull exclusion list so recent returners are not emailed",
+      "owner": "Wren Calloway",
+      "due_on": "2026-10-16",
+      "quote": "I will pull an exclusion list so recent returners are not emailed. That one is due 16 October.",
+      "critical": true
+    }
+  ],
+  "must_not_draft": [
+    "The first email is live and the open rate is 31 percent.",
+    "I find the first email a bit pushy, but that is only my view.",
+    "The flow stopped working last quarter when the tool changed its settings."
+  ]
+}

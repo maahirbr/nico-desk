@@ -1,0 +1,39 @@
+{
+  "type": "plain",
+  "meeting_date": "2026-10-08",
+  "tasks": [
+    {
+      "title": "Update homepage banner text to October",
+      "owner": "Orrin Vale",
+      "due_on": "2026-10-09",
+      "quote": "I will update the banner text to say October on 9 October",
+      "critical": false
+    },
+    {
+      "title": "Send corrected banner font files to Orrin",
+      "owner": "Bexley Marsh",
+      "due_on": "2026-10-09",
+      "quote": "I will send Orrin the corrected font files on 9 October",
+      "critical": false
+    },
+    {
+      "title": "Fix returns and size guide footer links",
+      "owner": "Orrin Vale",
+      "due_on": "missing",
+      "quote": "I will fix the returns and size guide links, but I cannot say when yet.",
+      "critical": false
+    },
+    {
+      "title": "Email correct Eastgate opening hours to Orrin",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-12",
+      "quote": "Yes, I will email them to Orrin on 12 October.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "The free-shipping banner on the homepage still says September.",
+    "If the banner says October a day late, I might actually cry.",
+    "Please do not cry in the sprint review."
+  ]
+}

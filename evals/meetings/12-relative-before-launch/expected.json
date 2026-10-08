@@ -1,0 +1,46 @@
+{
+  "type": "relative-date",
+  "meeting_date": "2026-10-28",
+  "tasks": [
+    {
+      "title": "Freeze homepage changes before the Winter Drop launch",
+      "owner": "Tamsin Quill",
+      "due_on": "2026-11-02",
+      "quote": "I will freeze homepage changes before the launch.",
+      "critical": false
+    },
+    {
+      "title": "Load all Winter Drop products onto the site",
+      "owner": "Orrin Vale",
+      "due_on": "2026-11-02",
+      "quote": "I will load all the Winter Drop products onto the site before the launch.",
+      "critical": true
+    },
+    {
+      "title": "Send store teams the launch day script",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-10-29",
+      "quote": "I will send the store teams the launch day script tomorrow.",
+      "critical": false
+    },
+    {
+      "title": "Chase the courier about the window kits",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-29",
+      "quote": "I will chase the courier about them tomorrow.",
+      "critical": false
+    },
+    {
+      "title": "Schedule the launch email",
+      "owner": "Wren Calloway",
+      "due_on": "2026-11-02",
+      "quote": "I will schedule the launch email before the launch.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "The Winter Drop launches on 3 November.",
+    "Last launch we were up until midnight loading products.",
+    "I have a good feeling about this one."
+  ]
+}

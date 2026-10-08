@@ -1,0 +1,35 @@
+{
+  "note": "Invented, plainly fictional people for the meeting eval. Same people and ids as fixtures/people.json (canonical).",
+  "people": [
+    {
+      "id": "per_ada",
+      "name": "Tamsin Quill",
+      "department": "Digital"
+    },
+    {
+      "id": "per_bo",
+      "name": "Orrin Vale",
+      "department": "Digital"
+    },
+    {
+      "id": "per_cy",
+      "name": "Bexley Marsh",
+      "department": "Brand"
+    },
+    {
+      "id": "per_eli",
+      "name": "Alder Finch",
+      "department": "Retail"
+    },
+    {
+      "id": "per_dee",
+      "name": "Sorrel Pike",
+      "department": "Retail"
+    },
+    {
+      "id": "per_fay",
+      "name": "Wren Calloway",
+      "department": "Retention"
+    }
+  ]
+}

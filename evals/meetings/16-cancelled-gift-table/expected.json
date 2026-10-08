@@ -1,0 +1,25 @@
+{
+  "type": "cancelled",
+  "meeting_date": "2026-11-03",
+  "tasks": [
+    {
+      "title": "Email the Eastgate landlord about the new year works schedule",
+      "owner": "Sorrel Pike",
+      "due_on": "2026-11-04",
+      "quote": "I will email the landlord about the new year works schedule on 4 November.",
+      "critical": false
+    },
+    {
+      "title": "Prepare gift table signage ready for January",
+      "owner": "Bexley Marsh",
+      "due_on": "missing",
+      "quote": "I will prepare the gift table signage so it is ready for January.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "I will move the gift table to the front of the Eastgate store on 5 November.",
+    "Understood, I will not do the move.",
+    "That landlord is a character."
+  ]
+}

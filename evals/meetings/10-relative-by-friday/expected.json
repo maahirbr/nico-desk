@@ -1,0 +1,38 @@
+{
+  "type": "relative-date",
+  "meeting_date": "2026-10-13",
+  "tasks": [
+    {
+      "title": "Finish first version of the gift-wrap option at checkout",
+      "owner": "Orrin Vale",
+      "due_on": "2026-10-16",
+      "quote": "I will have the first version of the gift-wrap option done by Friday.",
+      "critical": true
+    },
+    {
+      "title": "Send gift-wrap price list to Orrin",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-16",
+      "quote": "I will send the gift-wrap price list to Orrin by Friday.",
+      "critical": false
+    },
+    {
+      "title": "Share gift-wrap tag artwork",
+      "owner": "Bexley Marsh",
+      "due_on": "2026-10-15",
+      "quote": "I will share it on Thursday.",
+      "critical": false
+    },
+    {
+      "title": "Ask the team for last year's gift-wrap numbers",
+      "owner": "Wren Calloway",
+      "due_on": "missing",
+      "quote": "I will ask the team for last year's gift-wrap numbers, no date on that one.",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "Gift wrap in my old shop was a nightmare, tape everywhere.",
+    "Please never say tape everywhere to finance."
+  ]
+}

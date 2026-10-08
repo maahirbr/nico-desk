@@ -1,0 +1,32 @@
+{
+  "type": "plain",
+  "meeting_date": "2026-10-12",
+  "tasks": [
+    {
+      "title": "Send signed-off winter campaign brief to Tamsin",
+      "owner": "Bexley Marsh",
+      "due_on": "2026-10-16",
+      "quote": "Yes, I will send the signed-off brief by 16 October.",
+      "critical": true
+    },
+    {
+      "title": "Confirm poster sizes for all stores",
+      "owner": "Alder Finch",
+      "due_on": "2026-10-14",
+      "quote": "I will confirm the poster sizes for all stores on 14 October",
+      "critical": false
+    },
+    {
+      "title": "Draft email outline for the three-email series",
+      "owner": "Wren Calloway",
+      "due_on": "2026-10-19",
+      "quote": "I will draft the email outline on 19 October",
+      "critical": false
+    }
+  ],
+  "must_not_draft": [
+    "Can we avoid red? Everyone uses red for winter.",
+    "I like the green. No one has to decide that today.",
+    "Slow Mornings sounds like a coffee brand, just saying."
+  ]
+}

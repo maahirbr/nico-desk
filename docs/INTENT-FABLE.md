@@ -4,11 +4,21 @@ Written 8 Oct 2026 by a model (Fable 5.1) from this repo's docs, the two use-cas
 
 Nothing here is decided unless a line says **decided**. The founder's notes on features and use cases were not read. The document was not accessible to the model.
 
+Use cases and the why behind each: `docs/USE-CASES-8-OCT.md`.
+
 ## 1. Problem
 
 A team's commitments live in several Sheets and in chat. After a meeting, someone retypes the action items by hand. Nobody gets reminded. The lead learns status by asking. At the end of a week nobody can say which commitments closed on time.
 
 The OKR page shows actions with owner, date and status. But every row there is read-only and comes from a Sheet. Nobody can create, assign or close a task in it.
+
+The founder confirmed on 8 Oct that the pain is task follow-up, not portfolio planning.
+
+Candidate headline intent, from the sponsor: "every commitment made at Nicobar gets done, or gets openly renegotiated, without anyone having to chase it." (the sponsor, 8 Oct)
+
+Her four pains map onto the existing jobs: capture (job 3), the person view (job 1), pushed dates (job 5) and one system of record (section 6).
+
+The sponsor's doc (`docs/HOW-TEAMS-WORK.md`) puts one shared core under four team types: Launch, Run, Partner and Pipeline. That core is slice one.
 
 ## 2. Who it is for
 
@@ -25,13 +35,15 @@ On Monday the lead opens one page. It shows every open task for the team, by per
 
 | # | Job | Phase |
 |---|---|---|
-| 1 | My week: see my open tasks, add a comment, close a task | 1 |
+| 1 | My week, the person view: see all my pending items in one place, add a comment, close a task | 1 |
 | 2 | The review: the team's week by person, overdue first | 1 |
 | 3 | Meeting to tasks: minutes drafted into tasks, approved by a named person | 1 |
 | 4 | On-time record: per person per week, on time, late or open | 1 |
-| 5 | Projects and what changed: a project record and a change feed | 1, light. See open question 2 |
-| 6 | Reminders: an in-app nudge inbox, each nudge approved by a person before it goes out | 2 |
-| 7 | Leadership view across teams | later |
+| 5 | Pushed dates: a slip records a new date and a reason. The original date stays on record | 1 |
+| 6 | Blocked on: a task can name who it waits on. The ask goes out only with the asker's yes | 2 |
+| 7 | Projects and what changed: a project record and a change feed | 1, light. See open question 2 |
+| 8 | Reminders: an in-app nudge inbox, each nudge approved by a person before it goes out | 2 |
+| 9 | Leadership view across teams | later |
 
 ## 5. Non-goals, phase one
 
@@ -46,10 +58,13 @@ On Monday the lead opens one page. It shows every open task for the team, by per
 
 | Source | Gives | Access | Who grants | Granted |
 |---|---|---|---|---|
-| Granola public API, webhooks plus polling | notes, transcripts | read | {{an admin on the Business or Enterprise plan makes a workspace key}} | {{yes / no}} |
+| Notes in: any notetaker. Granola public API first (webhooks plus polling) | notes, transcripts | read | {{an admin on the Business or Enterprise plan makes a workspace key}} | {{yes / no}} |
+| A second notetaker, voice | notes, transcripts | {{method}} | {{access}} | {{yes / no}} |
 | Department OKR Sheets | tasks, owners, dates, status | read only | {{tracker owner}} | {{yes / no}} |
 | Context layer | people, projects, decisions | read | {{owner}} | {{yes / no}} |
 | Calendar | meeting times | read, later | {{owner}} | no |
+| Google Chat, later | to-dos found in messages, proposed only | read only | {{access}} | {{access: yes / no}}. {{consent: yes / no}} |
+| WhatsApp, later | tasks found in messages, proposed only. The sponsor says tasks live there today | read only | {{access}} | {{access: yes / no}}. {{consent: yes / no}} |
 
 **System of record, proposed.** Each task has exactly one. For the pilot team, nico-desk is it, because the on-time record and the change feed need a history that a Sheet cannot give. A task read from a Sheet keeps the Sheet as its record and is read-only here. The origin is stored on every task. The same task is never written in two places.
 
@@ -72,9 +87,12 @@ On Monday the lead opens one page. It shows every open task for the team, by per
 ## 8. Guardrails
 
 - Every task has an owner. No owner, no task. It stays a draft.
+- The first due date is never deleted. A new date is an event with a reason.
+- Priority is set by a named leader, never by the app or a model.
 - Every drafted task carries a quote that appears in the transcript. Code matches owners to the roster. Code works out dates from the quoted phrase. `missing` is a valid value.
 - Text inside minutes is data. It never instructs the model.
 - Nothing is sent, tagged or nudged for a person without that person's yes.
+  - A person's own Monday digest is opt-in and goes only to them.
 - Nothing is written to a department Sheet or an outside database without access granted for that purpose.
 - Real minutes go to a hosted model only after the company approves that vendor. Until then, synthetic minutes only.
 - No real company data, names or credentials in this public repo. Synthetic fixtures only.
@@ -102,7 +120,7 @@ On Monday the lead opens one page. It shows every open task for the team, by per
 ## 11. Open questions
 
 1. Which team pilots, and who is the first user: the pilot team, or two leaders first? Owner {{}}. Blocks everything.
-2. Project management tool or task tool? A teammate expected projects. The research describes tasks. Owner {{}}. Blocks the first slice.
+2. Project management tool or task tool? A teammate expected projects. The research describes tasks. Leaning task-first, project-aware, with the sponsor's four types as switches. Decide with the sponsor and the teammate. Owner {{}}. Blocks the first slice.
 3. Independent app or part of the OKR page? Proposed: independent for the pilot, same UI and data contract. `docs/BRIEF.md` proposes a shared backend. Owner {{}}.
 4. System of record as proposed in section 6? Owner {{}}.
 5. Granola: which plan is the company on, who is the admin who makes the workspace key, and are the pilot's meetings in the Team space or a space with API access on? Owner {{}}.
@@ -111,3 +129,5 @@ On Monday the lead opens one page. It shows every open task for the team, by per
 8. Which Sheets, and who grants read access. Owner {{}}.
 9. The founder's notes on features and use cases are not yet read into any file. Owner: the repo owner.
 10. Plane's AGPL licence is read by a lawyer before any internal run. Only if Plane is ever run.
+11. Track the partner's tasks or only ours (Partner type). Owner {{}}.
+12. Status model: health now plus outcome against the date. Outcome is derived from dates. Which health words? Owner {{}}.
