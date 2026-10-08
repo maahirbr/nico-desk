@@ -35,28 +35,36 @@ Everything below serves this goal. If a feature does not move it, it waits.
 
 > We are building **one page where a Nicobar team runs its week** so that **each person sees
 > what is pending at their end and each lead runs the weekly review without chasing anyone**,
-> which today **means opening several Sheets and asking people in chat, and nobody can say which
+> which today **means piecing together Sheets, notes and WhatsApp and chasing people, and nobody can say which
 > commitments closed on time**.
 
 ---
 
 ## 2. The problem
 
-**What is broken today**
+**What is broken today: four pain points**
 
-- Tasks sit across several department Google Sheets. Nobody has one list of what they owe.
-- After a meeting, someone retypes the action items into a Sheet by hand.
-- Nothing reminds people. Nobody remembers which tasks matter most.
-- To run a weekly review, a lead opens each tracker and chases people in chat for status. The
-  chasing is the real process.
-- When work is stuck on someone else, there is no place to say so. It surfaces late, in a review.
-- A due date can be quietly moved, so "late" disappears. Nobody can say, at the end of a week,
-  which commitments closed on time and which slipped.
+Each one breaks a part of the goal in section 1.
+
+1. **Commitments leak.** Tasks come up in meetings, chats and different note-takers, and get lost
+   before anyone tracks them. After a meeting, someone retypes action items into a Sheet by hand,
+   if at all. *Breaks: "every commitment".*
+2. **Leads spend most of their time chasing.** To run a weekly review, a lead opens each tracker
+   and chases people in chat for status. Nothing reminds people, and when work is stuck on someone
+   else there is no place to say so. The system should do the reminding and hold people
+   accountable. *Breaks: "without anyone having to chase it".*
+3. **Slips are hidden.** Due dates move quietly, so "late" disappears. Nobody can say at the end
+   of a week which commitments closed on time and which slipped. A delay should be visible, with
+   a reason and a new date. *Breaks: "openly renegotiated".*
+4. **There is no single source of truth.** Tasks are spread across Sheets, meeting notes and
+   WhatsApp. Nobody has one list of what they owe, and nobody can see a team's list without
+   asking. *Breaks: "gets done", since no one can see all of it.*
 
 **Evidence**
 
 | What | Source |
 |---|---|
+| All four pain points above: leaking commitments, leads chasing, hidden slips, no single source of truth (tasks in Sheets, notes and WhatsApp) | The sponsor, from conversations across teams, Oct 2026 |
 | Tasks across several Sheets, no reminders, action items typed in by hand after meetings | Two use-case forms from the post-workshop sheet, 3 Oct and 5 Oct 2026 |
 | Leads chase status in chat before the weekly review | Use-case forms; `HANDOFF.md` section 1 |
 | The founder asks for one view of "everything pending at my end", a weekly overdue email, locked due dates and a logged reason when work goes red | The founder's use-case notes, Oct 2026 |
@@ -89,8 +97,8 @@ Everything below serves this goal. If a feature does not move it, it waits.
 
 | Role | What they need to get done | How often | Today they use |
 |---|---|---|---|
-| Team member | See everything pending at their end, update it, say when they are blocked | Daily, plus a Monday summary | Several Sheets, chat |
-| Lead (L1) | Run the weekly review, see what is late and where people need support, set priority | Weekly | Opens each Sheet, chases in chat |
+| Team member | See everything pending at their end, update it, say when they are blocked | Daily, plus a Monday summary | Several Sheets, notes, WhatsApp |
+| Lead (L1) | Run the weekly review, see what is late and where people need support, set priority | Weekly | Opens each Sheet, chases on chat and WhatsApp |
 | Admin (the team's coordinator) | Send the end-of-week overdue summary to everyone | Weekly | By hand, or not at all |
 | Leadership (CEO, founder) | See every team's open and overdue work in one view | Weekly | Asks each lead |
 
@@ -206,6 +214,7 @@ The full list is in `CLAUDE.md` CONSTRAINTS. The ones that shape the product:
 | 7 | The update log: a history of every change, or a weekly note per task? | the founder | `TBD` |
 | 8 | One backend shared with the OKR page, or separate? | the tracker owner, the OKR backend developer | `TBD` |
 | 9 | Who is the Granola admin who makes a workspace key, and is Nicobar on the Business or Enterprise plan? | `TBD` | `TBD` |
+| 10 | Single source of truth: once nico-desk exists, where does a task made in a Sheet, a note or a WhatsApp chat live? Do teams stop tracking in Sheets for pilot work, or does nico-desk read them? WhatsApp has no read access for personal chats, so commitments made there must be added by hand or forwarded in. | the sponsor, the pilot lead | `TBD` |
 
 ---
 
