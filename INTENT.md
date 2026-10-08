@@ -17,7 +17,21 @@ People are named by role because the repo is public. A number with no source is 
 
 ---
 
-## 1. The intent in one sentence
+## 1. The goal
+
+> **Every commitment made at Nicobar gets done, or gets openly renegotiated, without anyone
+> having to chase it.**
+
+- **Commitment:** a task with one owner and a date that person agreed to.
+- **Done:** closed, and the log shows whether it closed by the date first given.
+- **Openly renegotiated:** a new date and a reason, logged before the first date passes, visible
+  to the lead and anyone waiting on it. A date that slips with no new date is a silent slip, the
+  thing this tool exists to end.
+- **Without chasing:** the tool reminds, surfaces and asks. No lead messages people for status.
+
+Everything below serves this goal. If a feature does not move it, it waits.
+
+### The intent in one sentence
 
 > We are building **one page where a Nicobar team runs its week** so that **each person sees
 > what is pending at their end and each lead runs the weekly review without chasing anyone**,
@@ -96,8 +110,14 @@ teams, which one pilot will not give.
 The 31 Dec 2026 roll-out-or-stop call is made against these, not on feel. Baselines are taken in
 week 0, before the pilot starts.
 
+The first three rows measure the goal in section 1 directly. The rest show whether the tool is
+being used.
+
 | Goal | Measure | Baseline (week 0) | Target | By when | Source of data |
 |---|---|---|---|---|---|
+| Commitments get done or openly renegotiated | Silent slips: tasks past their first date with no new date and reason logged | `TBD` | 0 | 31 Dec 2026 | The status log |
+| Renegotiation happens in the open, early | Share of new dates logged before the first date passed | `TBD` | `TBD` | 31 Dec 2026 | The status log |
+| No one chases | Status-chasing messages the lead sends before the review | `TBD` | Near 0 | 31 Dec 2026 | Lead self-report, week 0 vs week 6 |
 | The review runs from nico-desk | Weeks in a row the lead runs the review from it without being asked | 0 | 6 | 31 Dec 2026 | Weekly check-in with the lead |
 | Fewer late tasks | Overdue items per week | `TBD` | Falling over 6 weeks | 31 Dec 2026 | Count in nico-desk |
 | Commitments kept | Share of tasks closed on or before the date first given | `TBD` | Rising from baseline | 31 Dec 2026 | The status log (section 5) |
@@ -138,7 +158,8 @@ not agreed. Field-level rules go in `spec.md`.
 ## 6. Principles: how to decide when this file is silent
 
 1. **The date first given is the truth.** It never changes. A new date sits next to it, with a
-   reason. On-time is judged against the first date.
+   reason. On-time is judged against the first date. Renegotiating is fine. Doing it silently is
+   not.
 2. **People set the facts, not the app.** Owner, date, priority and status come from a person. The
    app drafts. A person approves.
 3. **One place to look.** If someone still has to open a Sheet for the review, the design is wrong.
