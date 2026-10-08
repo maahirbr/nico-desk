@@ -1,0 +1,957 @@
+<title>nico-desk ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one paper sheet on a desk, ruled sections, mocks as slips of paper inside it. */
+:root{
+  --f-sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --desk:#d8cfba;--sheet-1:#eae2ce;--sheet-2:#e4dcc8;--sheet:#f2ecdc;
+  --ink:#1a1712;--ink-rgb:26 23 18;
+  --ink-74:rgb(var(--ink-rgb) / .74);--ink-65:rgb(var(--ink-rgb) / .65);
+  --ink-28:rgb(var(--ink-rgb) / .28);--ink-14:rgb(var(--ink-rgb) / .14);
+  --digital:#2d41e2;--brand:#a530c3;--retail:#ba430b;--retention:#c42e4c;
+  --red:#b03a00;--amber:#8f6200;--green:#00705a;
+  --shadow-sheet:0 2px 4px rgb(26 23 18 / .12),0 24px 42px rgb(26 23 18 / .16);
+  --ghost-1:0 1px 2px rgb(26 23 18 / .16);--ghost-2:0 1px 2px rgb(26 23 18 / .14);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --desk:#100f0d;--sheet-1:#1d1c17;--sheet-2:#191814;--sheet:#22201a;
+    --ink:#ece5d5;--ink-rgb:236 229 213;
+    --digital:#808dff;--brand:#d377ea;--retail:#f38e4c;--retention:#f4738c;
+    --red:#ff6f3b;--amber:#ffae16;--green:#1acd9e;
+    --shadow-sheet:0 0 0 1px rgb(236 229 213 / .09),0 28px 56px rgb(0 0 0 / .6);
+    --ghost-1:none;--ghost-2:none;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"],:root.dark{
+  --desk:#100f0d;--sheet-1:#1d1c17;--sheet-2:#191814;--sheet:#22201a;
+  --ink:#ece5d5;--ink-rgb:236 229 213;
+  --digital:#808dff;--brand:#d377ea;--retail:#f38e4c;--retention:#f4738c;
+  --red:#ff6f3b;--amber:#ffae16;--green:#1acd9e;
+  --shadow-sheet:0 0 0 1px rgb(236 229 213 / .09),0 28px 56px rgb(0 0 0 / .6);
+  --ghost-1:none;--ghost-2:none;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box;border-radius:0}
+html,body{background:var(--desk);color:var(--ink)}
+body{margin:0;padding-bottom:72px;font:400 16px/1.5 var(--f-sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,h4,h5,p,ol,ul,dl,dd,blockquote,figure{margin:0;padding:0}
+ol,ul{list-style:none}
+
+.caps{font:400 12px/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-65)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Actions: caps, underlined, no fill, no border */
+.act{font:400 12px/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;
+  text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:from-font;
+  background:transparent;border:0;padding:6px 0;color:var(--ink);cursor:pointer}
+.act:hover{text-underline-offset:6px;text-decoration-thickness:2px}
+.act:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* Desk, ghost sheets, live sheet */
+.pile{position:relative;width:calc(100% - 32px);max-width:1024px;margin:56px auto 0}
+.bar{position:absolute;left:0;right:0;top:-38px;display:flex;justify-content:space-between;align-items:baseline;padding:0 44px}
+.ghost{position:absolute;left:50%;transform:translateX(-50%)}
+.ghost.g1{top:14px;bottom:-12px;width:calc(100% - 34px);max-width:990px;background:var(--sheet-1);box-shadow:var(--ghost-1)}
+.ghost.g2{top:0;bottom:-24px;width:calc(100% - 68px);max-width:956px;background:var(--sheet-2);box-shadow:var(--ghost-2)}
+.sheet{position:relative;z-index:1;width:100%;background:var(--sheet);box-shadow:var(--shadow-sheet);padding:24px 40px 28px}
+@media (max-width:640px){
+  .pile{width:100%}
+  .sheet{padding:24px 24px 28px}
+  .bar{padding:0 24px}
+}
+@media (max-width:420px){
+  .sheet{padding:24px 16px 28px}
+  .bar{padding:0 16px}
+}
+
+/* Hero */
+.claim{font-weight:300;font-size:33px;line-height:1.16;letter-spacing:-.02em;max-width:22ch;text-wrap:balance;padding-top:8px}
+.evidence{font-size:17.5px;line-height:1.62;color:var(--ink-74);max-width:52ch;margin-top:20px}
+.invented{margin-top:20px;color:var(--ink-65)}
+@media (max-width:640px){.claim{font-size:27px}}
+
+/* Section mastheads */
+section{margin-top:52px}
+section.sub{margin-top:36px}
+.mast{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 .8em;padding-bottom:7px;border-bottom:2px solid var(--ink);
+  font:400 12px/1.5 var(--f-mono);letter-spacing:.16em;text-transform:uppercase}
+.mast i{font-style:normal;color:var(--ink-65)}
+.mast.s{border-bottom-width:1.5px}
+.intro{font-size:17.5px;line-height:1.62;color:var(--ink-74);max-width:52ch;margin-top:16px}
+.cap{font-size:14px;line-height:1.5;color:var(--ink-74);max-width:62ch;margin-top:10px}
+.capt{margin-top:8px}
+
+/* Five needs: sketches */
+.needs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:20px}
+.need{background:var(--sheet-1);box-shadow:var(--ghost-1);padding:14px 12px 12px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.need .sk{max-width:200px}
+.need .nl{display:grid;grid-template-columns:1.9rem 1fr;align-items:baseline;margin-top:auto}
+.need .nn{font:400 12px/1.4 var(--f-mono);color:var(--ink-65)}
+.need b{font-weight:500;font-size:15px;line-height:1.3}
+
+/* Inline sketch classes */
+.sk{display:block;width:100%;height:auto}
+.sk text{font:400 10px var(--f-mono);letter-spacing:.1em}
+.sk .t9{font-size:9px;letter-spacing:.06em}
+.sk .t16{font:500 16px var(--f-mono);letter-spacing:0}
+.ln{stroke:var(--ink-28);stroke-width:1;fill:none}
+.ln2{stroke:var(--ink);stroke-width:1.5;fill:none}
+.ln3{stroke:var(--ink-65);stroke-width:1;fill:none}
+.bx1{fill:none;stroke:var(--ink-28);stroke-width:1}
+.bx2{fill:none;stroke:var(--ink);stroke-width:1.5}
+.dsh{stroke-dasharray:3 3}
+.fl{fill:var(--ink-14)}
+.fr{fill:var(--red)}.fa{fill:var(--amber)}.fg{fill:var(--green)}.fk{fill:var(--ink)}.fm{fill:var(--ink-65)}
+
+/* Tool gallery */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:30px 24px;margin-top:22px}
+.shot{min-width:0;display:flex;flex-direction:column}
+.shot.wide{grid-column:1/-1}
+@media (max-width:700px){.shots{grid-template-columns:1fr}}
+.frame{position:relative;aspect-ratio:16/10;background:var(--sheet-2);box-shadow:var(--ghost-2);border:1px solid var(--ink-14);display:grid;place-items:center;overflow:hidden}
+.frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+.ph{color:var(--ink-65);text-align:center;padding:0 12px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+.pair>div{min-width:0}
+.pair .pl{margin-top:6px;color:var(--ink-65)}
+@media (max-width:700px){.pair{grid-template-columns:1fr}}
+.shot figcaption{padding-top:12px}
+.tool{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 12px}
+.tool b{font-weight:500;font-size:17px;line-height:1.3}
+.shot .cap{margin-top:4px;max-width:none}
+.tl{margin-top:10px;border-top:1px solid var(--ink-14)}
+.tl>div{display:grid;grid-template-columns:104px minmax(0,1fr);gap:0 12px;padding:7px 0;border-bottom:1px solid var(--ink-14);align-items:baseline}
+.tl dt{display:flex;align-items:center;gap:8px;color:var(--ink)}
+.tl dt::before{content:"";width:8px;height:8px;flex:none;background:var(--ink)}
+.tl .lv dt{color:var(--ink-65)}
+.tl .lv dt::before{background:none;border:1.5px solid var(--ink-65)}
+.tl dd{font-size:14px;line-height:1.4;color:var(--ink-74)}
+
+/* Gaps */
+.gaps{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;margin-top:8px;align-items:start}
+.gaps article{padding:20px 0 4px;min-width:0}
+.gaps h3{font-weight:400;font-size:20px;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}
+.gaps p.l{margin-top:8px;font-size:16px;color:var(--ink-74);max-width:46ch}
+@media (max-width:999px){.gaps{grid-template-columns:1fr}}
+
+/* Status marks */
+.st{display:inline-flex;align-items:baseline;gap:8px;font:400 12px/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--c,var(--ink-65));white-space:nowrap}
+.st::before{content:"";width:8px;height:8px;background:var(--c,var(--ink-65));flex:none;align-self:center}
+.st.c{letter-spacing:.08em;gap:6px}
+.red{--c:var(--red)}.amber{--c:var(--amber)}.green{--c:var(--green)}.grey{--c:var(--ink-65)}
+.dept{display:inline-flex;align-items:center;gap:8px}
+.dept::before{content:"";width:7px;height:7px;background:var(--c);flex:none}
+.d-digital{--c:var(--digital)}.d-brand{--c:var(--brand)}.d-retail{--c:var(--retail)}.d-retention{--c:var(--retention)}
+
+/* Slips (mocks) */
+.slip{background:var(--sheet-1);box-shadow:var(--ghost-1);padding:16px 20px 10px;margin-top:18px}
+@media (max-width:420px){.slip{padding:14px 14px 8px}}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.45;color:var(--ink-74);font-variant-numeric:tabular-nums}
+th{font:400 12px/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-65);padding:10px 12px 7px;text-align:left;border-bottom:1px solid var(--ink-28)}
+td{padding:8px 12px;border-bottom:1px solid var(--ink-14);vertical-align:baseline}
+th:first-child,td:first-child{padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+tbody tr:last-child td{border-bottom:0}
+td.t{color:var(--ink)}
+.w-st{width:176px}.w-due{width:84px}.w-dept{width:128px}.w-own{width:96px}.w-when{width:120px}.w-or{width:96px}.w-fld{width:150px}.w-ba{width:120px}
+@media (max-width:820px){
+  table.stack thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+  table.stack tr{padding:8px 0;border-bottom:1px solid var(--ink-28)}
+  table.stack tbody tr:last-child{border-bottom:0}
+  table.stack td{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;border:0;padding:4px 0}
+  table.stack td::before{content:attr(data-label);font:400 12px/1.5 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-65)}
+}
+
+/* Person mock */
+.person-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.person-h h4{font-weight:400;font-size:22px;line-height:1.2}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 24px;padding:14px 0 16px;border-bottom:1px solid var(--ink-28)}
+.nums dt{color:var(--ink-65)}
+.nums dd{font:500 30px/1.15 var(--f-mono);font-variant-numeric:tabular-nums;margin-top:4px}
+.sublabel{color:var(--ink-65);padding:16px 0 6px}
+.ledger{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--ink-28)}
+.ledger li{padding:8px 12px 12px;border-left:1px solid var(--ink-14);display:grid;gap:6px;min-width:0}
+.ledger li:first-child{border-left:0;padding-left:0}
+.ledger .wk{font:400 12px/1.4 var(--f-mono);color:var(--ink-65)}
+.ledger.t li{padding:6px 8px 10px}
+.ledger.t li:first-child{padding-left:0}
+.who{color:var(--ink);padding:14px 0 4px}
+@media (max-width:560px){
+  .ledger{grid-template-columns:1fr 1fr}
+  .ledger li:nth-child(odd){border-left:0;padding-left:0}
+  .ledger li:nth-child(n+3){border-top:1px solid var(--ink-14)}
+}
+.threads li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:9px 0;border-bottom:1px solid var(--ink-14);font-size:13px}
+.threads li:last-child{border-bottom:0}
+.threads .tt{color:var(--ink);min-width:0}
+.threads .due{font:400 12px/1.4 var(--f-mono);color:var(--ink-74);white-space:nowrap;display:flex;gap:12px;align-items:baseline}
+
+/* Project mock */
+.proj-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--ink-28)}
+.proj-h h4{font-weight:400;font-size:22px;line-height:1.2}
+.proj-meta{color:var(--ink-74);font-size:13px;padding:10px 0 4px}
+
+/* Triage */
+.draft{padding:18px 0 14px;border-bottom:1px solid var(--ink-28)}
+.draft:last-child{border-bottom:0}
+.draft-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.draft-h h4{font-weight:500;font-size:16px;line-height:1.35}
+.quote{font-size:17.5px;line-height:1.5;color:var(--ink-74);padding:10px 0 8px;margin-top:10px;border-bottom:1px solid var(--ink-28);max-width:60ch}
+.qflag{margin-top:8px}
+.facts{display:flex;flex-wrap:wrap;gap:8px 40px;margin-top:12px}
+.facts dt{color:var(--ink-65)}
+.facts dd{font-size:13px;color:var(--ink-74);margin-top:2px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.choices{margin-top:10px;max-width:420px}
+
+/* Form rows */
+.row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--ink-14);background:transparent;cursor:pointer;position:relative}
+.row input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.row .n{font:400 12px/1.4 var(--f-mono);color:var(--ink-65);font-variant-numeric:tabular-nums}
+.row .bx{width:12px;height:12px;border:1.5px solid var(--ink-28);flex:none}
+.row .lab{font-size:14.5px;line-height:1.3;color:var(--ink-74);border-bottom:1.5px solid transparent}
+.row input:checked~.bx{background:var(--ink);border-color:var(--ink)}
+.row input:checked~.lab{color:var(--ink);font-weight:500;border-bottom-color:var(--ink)}
+.row:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+@media (pointer:coarse){.row{min-height:44px}}
+
+/* Diagrams */
+.flow{margin-top:20px}
+.flow svg{display:block;width:100%;height:auto}
+.flow .v{display:none;max-width:380px}
+@media (max-width:1000px){.flow .h{display:none}.flow .v{display:block}}
+.flow .bxs{fill:var(--sheet-1);stroke:var(--ink-28);stroke-width:1}
+.flow .bxs.p{stroke:var(--ink);stroke-width:1.5}
+.flow .tg{font:400 11px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;fill:var(--ink-65)}
+.flow .tx{font:400 12.5px var(--f-sans);fill:var(--ink)}
+.flow .lb{font:400 12px var(--f-sans);fill:var(--ink-74)}
+.flow .stw{font:400 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase}
+.flow .ar{stroke:var(--ink-65);stroke-width:1;fill:none}
+.flow .ar.d{stroke-dasharray:4 3}
+.flow .c-green{fill:var(--green)}.flow .c-red{fill:var(--red)}.flow .c-amber{fill:var(--amber)}.flow .c-grey{fill:var(--ink-65)}.flow .c-ink{fill:var(--ink)}
+.rules{margin-top:20px}
+.rules li{padding:11px 0;border-bottom:1px solid var(--ink-28);font-size:17.5px;color:var(--ink-74)}
+.rules li:first-child{border-top:1px solid var(--ink-28)}
+
+/* On-time sketch inside the ledger mock */
+.axis{margin-top:4px}
+.axis svg{display:block;width:100%;height:auto;max-width:420px}
+.axis .lbl{font:400 12.5px var(--f-sans);fill:var(--ink)}
+.axis .tg{font:400 11px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;fill:var(--ink-65)}
+.axis .stw{font:400 10.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase}
+.axis .bar1{fill:var(--ink-28)}
+.axis .bar2{fill:none;stroke:var(--ink-65);stroke-width:1.5;stroke-dasharray:4 3}
+.axis .due{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:3 3}
+
+/* Ladder */
+.ladder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-top:20px}
+.rung{background:var(--sheet-1);box-shadow:var(--ghost-1);padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;border-top:2px solid var(--ink)}
+.rung.r1{min-height:250px;outline:1.5px solid var(--ink);outline-offset:-1.5px}
+.rung.r2{min-height:310px;outline:1.5px dashed var(--ink-65);outline-offset:-1.5px}
+.rung.r3{min-height:370px}
+.rung .sk{max-width:150px}
+.rung h3{font-weight:400;font-size:22px;line-height:1.2;display:flex;align-items:baseline;gap:12px}
+.rung h3 .rn{font:400 12px/1.4 var(--f-mono);color:var(--ink-65)}
+.rung .adds{font-size:15px;color:var(--ink-74)}
+.rung .adds .caps{display:block;color:var(--ink-65);margin-bottom:2px}
+.rung .mark{margin-top:auto;display:grid;grid-template-columns:14px 1fr;gap:0 8px;align-items:baseline;font-size:14px;color:var(--ink-74);border-top:1px solid var(--ink-28);padding-top:10px}
+.rung .mark .caps{color:var(--ink);display:block}
+.mk{width:10px;height:10px;display:block;background:var(--ink);align-self:start;margin-top:4px}
+.mk.dash{background:none;border:1.5px dashed var(--ink)}
+.mk.off{background:none;border:1.5px solid var(--ink-28)}
+@media (max-width:760px){
+  .ladder{grid-template-columns:1fr;align-items:stretch}
+  .rung.r1,.rung.r2,.rung.r3{min-height:0}
+  .rung.r2{margin-left:16px}.rung.r3{margin-left:32px}
+}
+
+/* Questions */
+.q{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:8px 40px;padding:18px 0 12px;border-bottom:1px solid var(--ink-28)}
+.q h3{font-weight:500;font-size:17px;line-height:1.35;display:grid;grid-template-columns:2.2rem 1fr}
+.q h3 .qn{font:400 12px/2.1 var(--f-mono);color:var(--ink-65)}
+.q .prop{margin-top:6px;margin-left:2.2rem;font-size:15px;color:var(--ink-74);max-width:48ch}
+.q .prop .caps{color:var(--ink-65);margin-right:6px}
+@media (max-width:760px){.q{grid-template-columns:1fr}}
+.field{margin-top:28px;max-width:640px}
+.field label{display:block;font-size:14.5px;color:var(--ink-74)}
+.field input,.field textarea{display:block;width:100%;background:transparent;border:0;border-bottom:1px solid var(--ink-28);color:var(--ink);
+  font:400 17.5px/1.5 var(--f-sans);padding:8px 0;outline:none;border-radius:0;margin-bottom:6px}
+.field input:focus{box-shadow:0 5px 0 -3px var(--ink)}
+.field textarea{resize:vertical;min-height:120px}
+.field input::placeholder{color:var(--ink-65)}
+.copyrow{display:flex;align-items:baseline;gap:20px;margin-top:20px;flex-wrap:wrap}
+
+.foot{margin-top:56px;padding-top:12px;border-top:1.5px solid var(--ink);color:var(--ink-65)}
+
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}}
+@media (prefers-reduced-motion:no-preference){
+  .arr{animation:arrive 380ms cubic-bezier(.22,1,.36,1) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+}
+</style>
+
+<div class="pile">
+  <div class="bar">
+    <span class="caps">nico-desk</span>
+    <button class="act" id="themeBtn" type="button">Night</button>
+  </div>
+  <div class="ghost g2" aria-hidden="true"></div>
+  <div class="ghost g1" aria-hidden="true"></div>
+
+  <main class="sheet">
+
+    <header data-stag>
+      <h1 class="claim">One page where the team runs its week.</h1>
+      <p class="evidence">Tasks, accountability, projects and meetings, for one pilot team first.</p>
+      <p class="invented caps">All data on this page is invented.</p>
+    </header>
+
+    <section id="needs">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>01</span><i>/</i><span>The five needs</span></h2>
+      <ol class="needs" data-stag>
+        <li class="need">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <line class="ln2" x1="0" y1="6.5" x2="140" y2="6.5"/>
+            <rect class="fl" x="0" y="17" width="14" height="4"/><rect class="fl" x="20" y="17" width="28" height="4"/><rect class="fr" x="56" y="15" width="8" height="8"/><text class="fr" x="68" y="23">OVERDUE</text>
+            <line class="ln" x1="0" y1="31.5" x2="140" y2="31.5"/>
+            <rect class="fl" x="0" y="41" width="14" height="4"/><rect class="fl" x="20" y="41" width="28" height="4"/><rect class="fa" x="56" y="39" width="8" height="8"/><text class="fa" x="68" y="47">THIS WEEK</text>
+            <line class="ln" x1="0" y1="55.5" x2="140" y2="55.5"/>
+            <rect class="fl" x="0" y="65" width="14" height="4"/><rect class="fl" x="20" y="65" width="28" height="4"/><rect class="fg" x="56" y="63" width="8" height="8"/><text class="fg" x="68" y="71">ON TRACK</text>
+          </svg>
+          <div class="nl"><span class="nn">01</span><b>The week by person</b></div>
+        </li>
+        <li class="need">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <text class="fm" x="0" y="11">DUE 5 OCT</text>
+            <rect class="fr" x="0" y="21" width="10" height="10"/><text class="fr" x="16" y="30" style="font-size:12px">OVERDUE</text>
+            <line class="ln" x1="0" y1="44.5" x2="140" y2="44.5"/>
+            <text class="fk t16" x="0" y="70">9 of 11</text>
+            <rect class="fg" x="76" y="62" width="8" height="8"/><text class="fg" x="88" y="70">ON TIME</text>
+          </svg>
+          <div class="nl"><span class="nn">02</span><b>Overdue and on time</b></div>
+        </li>
+        <li class="need">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <text class="fk" x="0" y="11">FESTIVE EDIT</text>
+            <line class="ln" x1="0" y1="44.5" x2="140" y2="44.5"/>
+            <rect class="bx2" x="36.75" y="40.75" width="8.5" height="8.5"/>
+            <rect class="fk" x="96" y="40" width="10" height="10"/>
+            <path class="ln3" d="M50 44.5H88M84 41L88 44.5L84 48"/>
+            <text class="fm" x="30" y="63">14 OCT</text><text class="fk" x="91" y="63">21 OCT</text>
+            <rect class="fk" x="0" y="71" width="7" height="7"/><text class="fk" x="12" y="78">CHANGED 6 OCT</text>
+          </svg>
+          <div class="nl"><span class="nn">03</span><b>A project and its changes</b></div>
+        </li>
+        <li class="need">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <rect class="bx1" x="0.5" y="2.5" width="64" height="40"/>
+            <rect class="fl" x="8" y="10" width="46" height="4"/><rect class="fk" x="8" y="19" width="40" height="4"/><rect class="fl" x="8" y="28" width="44" height="4"/>
+            <text class="fm t9" x="74" y="20">MEETING</text><text class="fm t9" x="74" y="32">NOTE</text>
+            <path class="ln3" d="M32 46V58M28.5 54L32 58L35.5 54"/>
+            <rect class="bx2" x="0.75" y="62.75" width="138.5" height="19.5"/>
+            <rect class="fm" x="9" y="68" width="8" height="8"/><text class="fm" x="23" y="76">DRAFT</text><rect class="fl" x="76" y="70" width="52" height="4"/>
+          </svg>
+          <div class="nl"><span class="nn">04</span><b>Meeting note to task</b></div>
+        </li>
+        <li class="need">
+          <svg class="sk" viewBox="0 0 140 84" aria-hidden="true">
+            <path class="ln3" d="M56 36L23 20M84 36L117 20M70 52V64"/>
+            <rect class="bx1" x="0.5" y="4.5" width="46" height="16"/><text class="fk t9" x="6" y="15.5">PERSON</text>
+            <rect class="bx1" x="93.5" y="4.5" width="46" height="16"/><text class="fk t9" x="99" y="15.5">PROJECT</text>
+            <rect class="bx2" x="42.75" y="35.75" width="54.5" height="16.5"/><text class="fk t9" x="49" y="47">CONTEXT</text>
+            <rect class="bx1" x="46.5" y="64.5" width="47" height="16"/><text class="fk t9" x="52" y="75.5">DECISION</text>
+          </svg>
+          <div class="nl"><span class="nn">05</span><b>A link to company context</b></div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="tools">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>02</span><i>/</i><span>What other tools do</span></h2>
+      <p class="intro">Seven screens from tools we looked at, and what we take from each.</p>
+      <p class="capt caps muted">Captured 8 Oct 2026, vendor public page</p>
+
+      <div class="shots">
+        <figure class="shot">
+          <div class="frame"><img loading="lazy" src="img/linear-triage.png" alt="Linear triage inbox, with incoming issues waiting for a person to accept or decline" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+          <figcaption>
+            <h3 class="tool"><b>Linear</b><span class="caps muted">Triage inbox</span></h3>
+            <p class="cap">Incoming issues wait here until a person accepts or declines.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>A proposed state and an approver.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>Engineering-shaped issues.</dd></div></dl>
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="frame"><img loading="lazy" src="img/linear-cycles.png" alt="Linear cycles view, with a team's work grouped into a dated window" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+          <figcaption>
+            <h3 class="tool"><b>Linear</b><span class="caps muted">Cycles</span></h3>
+            <p class="cap">Work grouped into a dated window, with its progress.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>A dated window.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>Velocity.</dd></div></dl>
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="frame"><img loading="lazy" src="img/asana-status.png" alt="Asana project status update, with a dated entry and a health word" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+          <figcaption>
+            <h3 class="tool"><b>Asana</b><span class="caps muted">Status update with health</span></h3>
+            <p class="cap">A dated update with one health word: on track, at risk or off track.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>A dated update with a word.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>The portfolio layer.</dd></div></dl>
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="frame"><img loading="lazy" src="img/asana-timeline.png" alt="Asana timeline view, with tasks and milestones laid out by date" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+          <figcaption>
+            <h3 class="tool"><b>Asana</b><span class="caps muted">Timeline</span></h3>
+            <p class="cap">Tasks and milestones laid out by date.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>Nothing in slice one.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>The Gantt view.</dd></div></dl>
+          </figcaption>
+        </figure>
+
+        <figure class="shot wide">
+          <div class="pair">
+            <div>
+              <div class="frame"><img loading="lazy" src="img/plane-cycles.png" alt="Plane cycles view, with work in dated time boxes" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+              <p class="pl caps">Cycles</p>
+            </div>
+            <div>
+              <div class="frame"><img loading="lazy" src="img/plane-modules.png" alt="Plane modules view, with work grouped inside a project" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+              <p class="pl caps">Modules</p>
+            </div>
+          </div>
+          <figcaption>
+            <h3 class="tool"><b>Plane</b><span class="caps muted">Cycles and modules</span></h3>
+            <p class="cap">Cycles time-box the work. Modules group it inside a project.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>The open data model, as a reference.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>The AGPL base and self-hosting.</dd></div></dl>
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="frame"><img loading="lazy" src="img/granola-notes.jpg" alt="Granola enhanced meeting note with bullet notes" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+          <figcaption>
+            <h3 class="tool"><b>Granola</b><span class="caps muted">Meeting notes</span></h3>
+            <p class="cap">The meeting note that minutes come from.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>The source of our minutes.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>Its own task list.</dd></div></dl>
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="frame"><img loading="lazy" src="img/todoist-upcoming.png" alt="Todoist Upcoming view, with a strip of the coming week" onerror="var p=document.createElement('span');p.className='ph caps';p.textContent='Screenshot pending';this.replaceWith(p)"></div>
+          <figcaption>
+            <h3 class="tool"><b>Todoist</b><span class="caps muted">Upcoming</span></h3>
+            <p class="cap">The week strip is the first screen.</p>
+            <dl class="tl"><div class="tk"><dt class="caps">We take</dt><dd>The week as the home screen.</dd></div><div class="lv"><dt class="caps">We leave</dt><dd>Personal-only scope.</dd></div></dl>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="gaps">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>03</span><i>/</i><span>The two gaps</span></h2>
+      <p class="intro">None of the tools we checked holds both.</p>
+      <div class="gaps" data-stag>
+        <article>
+          <h3>A triage inbox for drafted tasks.</h3>
+          <p class="l">Nothing becomes a task until a person says yes.</p>
+          <div class="slip" id="mock-triage">
+            <p class="sublabel caps" style="padding-top:0">Drafted from Weekly retail review, 6 Oct. Four drafts waiting.</p>
+
+            <article class="draft" data-draft="d1">
+              <div class="draft-h"><h4>Share the rail layout with the six stores</h4><span class="st grey" data-status>Waiting</span></div>
+              <blockquote class="quote">&ldquo;Owner C will share the rail layout with the six stores by the 10th.&rdquo;</blockquote>
+              <dl class="facts">
+                <div><dt class="caps">Owner candidate</dt><dd>Owner C <span class="st green">Matched</span></dd></div>
+                <div><dt class="caps">Due</dt><dd class="mono">stated 10 Oct</dd></div>
+              </dl>
+              <div class="choices" role="radiogroup" aria-label="Decision for the rail layout draft"></div>
+            </article>
+
+            <article class="draft" data-draft="d2">
+              <div class="draft-h"><h4>Update the stock count sheet</h4><span class="st grey" data-status>Waiting</span></div>
+              <blockquote class="quote">&ldquo;Someone needs to update the stock count sheet before the weekend.&rdquo;</blockquote>
+              <dl class="facts">
+                <div><dt class="caps">Owner candidate</dt><dd><span class="st amber">Needs owner</span></dd></div>
+                <div><dt class="caps">Due</dt><dd class="mono">inferred, check</dd></div>
+              </dl>
+              <div class="choices" role="radiogroup" aria-label="Decision for the stock count draft"></div>
+            </article>
+
+            <article class="draft" data-draft="d3">
+              <div class="draft-h"><h4>Book the studio for the festive edit shoot</h4><span class="st grey" data-status>Waiting</span></div>
+              <blockquote class="quote">&ldquo;We should book the studio for the shoot at some point.&rdquo;</blockquote>
+              <dl class="facts">
+                <div><dt class="caps">Owner candidate</dt><dd>Owner A <span class="st green">Matched</span></dd></div>
+                <div><dt class="caps">Due</dt><dd><span class="st amber">Needs date</span></dd></div>
+              </dl>
+              <div class="choices" role="radiogroup" aria-label="Decision for the studio booking draft"></div>
+            </article>
+
+            <article class="draft" data-draft="d4">
+              <div class="draft-h"><h4>Check the returns policy wording with legal</h4><span class="st grey" data-status>Waiting</span></div>
+              <blockquote class="quote">&ldquo;Owner D to check the returns policy wording with the legal team.&rdquo;</blockquote>
+              <p class="qflag"><span class="st red">Quote not found</span> <span class="muted" style="font-size:13px">Code could not find this quote in the transcript.</span></p>
+              <dl class="facts">
+                <div><dt class="caps">Owner candidate</dt><dd>Owner D <span class="st green">Matched</span></dd></div>
+                <div><dt class="caps">Due</dt><dd><span class="st amber">Needs date</span></dd></div>
+              </dl>
+              <div class="choices" role="radiogroup" aria-label="Decision for the returns policy draft"></div>
+            </article>
+          </div>
+          <p class="cap">A draft state, a named approver, and a log that only appends.</p>
+        </article>
+
+        <article>
+          <h3>An on-time ledger.</h3>
+          <p class="l">Per person and week: on time, late or open.</p>
+          <div class="slip" id="mock-ledger">
+            <p class="sublabel caps" style="padding-top:0">The ledger, last four weeks</p>
+            <p class="who caps">Owner A</p>
+            <ul class="ledger t">
+              <li><span class="wk">14 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">21 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">28 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">5 Oct</span><span class="st c grey">Open</span></li>
+            </ul>
+            <p class="who caps">Owner B</p>
+            <ul class="ledger t">
+              <li><span class="wk">14 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">21 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">28 Sep</span><span class="st c red">Late</span></li>
+              <li><span class="wk">5 Oct</span><span class="st c grey">Open</span></li>
+            </ul>
+            <p class="who caps">Owner C</p>
+            <ul class="ledger t">
+              <li><span class="wk">14 Sep</span><span class="st c red">Late</span></li>
+              <li><span class="wk">21 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">28 Sep</span><span class="st c green">On time</span></li>
+              <li><span class="wk">5 Oct</span><span class="st c grey">Open</span></li>
+            </ul>
+            <p class="sublabel caps">How one task is counted</p>
+            <div class="axis">
+              <svg viewBox="0 0 330 158" role="img" aria-label="Three tasks against a Friday due date. Closed Thursday is on time. Closed the next Monday is late. Not closed yet is open.">
+                <line class="due" x1="176" y1="4" x2="176" y2="132"/>
+                <text class="lbl" x="0" y="18">Closed Thursday</text>
+                <rect class="bar1" x="0" y="26" width="140" height="8"/>
+                <rect class="fg" x="256" y="26" width="8" height="8"/><text class="stw fg" x="270" y="34">On time</text>
+                <text class="lbl" x="0" y="58">Closed the next Monday</text>
+                <rect class="bar1" x="0" y="66" width="232" height="8"/>
+                <rect class="fr" x="256" y="66" width="8" height="8"/><text class="stw fr" x="270" y="74">Late</text>
+                <text class="lbl" x="0" y="98">Not closed yet</text>
+                <rect class="bar2" x="0.75" y="106.75" width="110" height="6.5"/>
+                <rect class="fm" x="256" y="106" width="8" height="8"/><text class="stw fm" x="270" y="114">Open</text>
+                <text class="tg" x="176" y="150" text-anchor="middle">Due Fri</text>
+              </svg>
+            </div>
+          </div>
+          <p class="cap">Worked out from the change history, not typed in.</p>
+        </article>
+      </div>
+
+      <section class="sub" id="draft-flow">
+        <h3 class="mast s"><span>The two gaps</span><i>/</i><span>03a</span><i>/</i><span>How a draft is made</span></h3>
+        <div class="flow" id="flowDraft"></div>
+        <ul class="rules">
+          <li>The model drafts. Code checks. A person decides.</li>
+          <li>No owner, no task.</li>
+          <li>A date is stated, inferred or missing. Never invented.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section id="week">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>04</span><i>/</i><span>One week</span></h2>
+      <div class="flow" id="flowWeek"></div>
+      <p class="cap">A Monday meeting becomes a Friday number. A person approves before any task exists.</p>
+    </section>
+
+    <section id="lives">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>05</span><i>/</i><span>Where a task lives</span></h2>
+      <div class="flow" id="flowLives"></div>
+      <p class="cap">Each task has one system of record. The app never writes to a Sheet.</p>
+    </section>
+
+    <section id="ladder">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>06</span><i>/</i><span>Task tool or project tool</span></h2>
+      <div class="ladder" data-stag>
+        <div class="rung r1">
+          <svg class="sk" viewBox="0 0 140 40" aria-hidden="true">
+            <rect class="fm" x="0" y="14" width="8" height="8"/><rect class="fl" x="16" y="16" width="22" height="4"/><rect class="fl" x="44" y="16" width="38" height="4"/><text class="fk" x="94" y="23">10 OCT</text>
+          </svg>
+          <h3><span class="rn">1</span>Task</h3>
+          <p class="adds"><span class="caps">Adds</span>An owner and a date.</p>
+          <p class="mark"><span class="mk"></span><span><span class="caps">Slice one is here</span>Plus a project record and a change feed.</span></p>
+        </div>
+        <div class="rung r2">
+          <svg class="sk" viewBox="0 0 140 40" aria-hidden="true">
+            <line class="ln" x1="0" y1="12.5" x2="140" y2="12.5"/>
+            <path class="fk" d="M40 7L45 12.5L40 18L35 12.5Z"/><path class="bx2" d="M100 7L105 12.5L100 18L95 12.5Z"/>
+            <rect class="fa" x="0" y="29" width="8" height="8"/><text class="fa" x="14" y="37">AT RISK</text>
+          </svg>
+          <h3><span class="rn">2</span>Project</h3>
+          <p class="adds"><span class="caps">Adds</span>Milestones and a dated health update.</p>
+          <p class="mark"><span class="mk dash"></span><span><span class="caps">A week-three call</span>Milestones, only if the pilot lead asks.</span></p>
+        </div>
+        <div class="rung r3">
+          <svg class="sk" viewBox="0 0 140 40" aria-hidden="true">
+            <rect class="fl" x="0" y="4" width="100" height="4"/><rect class="fm" x="112" y="2" width="8" height="8"/>
+            <rect class="fl" x="0" y="17" width="76" height="4"/><rect class="fm" x="112" y="15" width="8" height="8"/>
+            <rect class="fl" x="0" y="30" width="88" height="4"/><rect class="fm" x="112" y="28" width="8" height="8"/>
+          </svg>
+          <h3><span class="rn">3</span>Portfolio</h3>
+          <p class="adds"><span class="caps">Adds</span>A roll-up across projects.</p>
+          <p class="mark"><span class="mk off"></span><span><span class="caps">Not in the pilot</span>Left for later.</span></p>
+        </div>
+      </div>
+      <p class="cap">Solid outline: in slice one. Dashed outline: a week-three call.</p>
+    </section>
+
+    <section id="screens">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>07</span><i>/</i><span>Screens</span></h2>
+      <p class="intro">Invented data. These show shape, not a design to sign off.</p>
+
+      <section class="sub" id="mock-week">
+        <h3 class="mast s"><span>Screens</span><i>/</i><span>07a</span><i>/</i><span>The week</span></h3>
+        <div class="slip">
+          <table class="stack">
+            <thead><tr><th class="w-own">Owner</th><th>Task</th><th class="w-dept">Department</th><th class="w-due">Due</th><th class="w-st">Status</th></tr></thead>
+            <tbody>
+              <tr><td data-label="Owner">Owner B</td><td class="t" data-label="Task">Confirm window display dates with stores</td><td data-label="Department"><span class="dept d-retail">Retail</span></td><td class="mono" data-label="Due">5 Oct</td><td data-label="Status"><span class="st red">Overdue</span></td></tr>
+              <tr><td data-label="Owner">Owner D</td><td class="t" data-label="Task">Send the festive edit shot list to the studio</td><td data-label="Department"><span class="dept d-brand">Brand</span></td><td class="mono" data-label="Due">6 Oct</td><td data-label="Status"><span class="st red">Overdue</span></td></tr>
+              <tr><td data-label="Owner">Owner A</td><td class="t" data-label="Task">Approve the product page copy for the autumn drop</td><td data-label="Department"><span class="dept d-digital">Digital</span></td><td class="mono" data-label="Due">9 Oct</td><td data-label="Status"><span class="st amber">Due this week</span></td></tr>
+              <tr><td data-label="Owner">Owner C</td><td class="t" data-label="Task">Share store stock counts for the festive edit</td><td data-label="Department"><span class="dept d-retail">Retail</span></td><td class="mono" data-label="Due">10 Oct</td><td data-label="Status"><span class="st amber">Due this week</span></td></tr>
+              <tr><td data-label="Owner">The lead</td><td class="t" data-label="Task">Sign off the email calendar for November</td><td data-label="Department"><span class="dept d-retention">Retention</span></td><td class="mono" data-label="Due">11 Oct</td><td data-label="Status"><span class="st amber">Due this week</span></td></tr>
+              <tr><td data-label="Owner">Owner B</td><td class="t" data-label="Task">Brief the visual team on the in-store signage</td><td data-label="Department"><span class="dept d-brand">Brand</span></td><td class="mono" data-label="Due">14 Oct</td><td data-label="Status"><span class="st green">On track</span></td></tr>
+              <tr><td data-label="Owner">Owner A</td><td class="t" data-label="Task">Set up the size guide page test</td><td data-label="Department"><span class="dept d-digital">Digital</span></td><td class="mono" data-label="Due">16 Oct</td><td data-label="Status"><span class="st green">On track</span></td></tr>
+              <tr><td data-label="Owner">Owner D</td><td class="t" data-label="Task">Send the weekly return reasons summary</td><td data-label="Department"><span class="dept d-retention">Retention</span></td><td class="mono" data-label="Due">2 Oct</td><td data-label="Status"><span class="st grey">Done</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="cap">Open work by person, overdue first.</p>
+      </section>
+
+      <section class="sub" id="mock-person">
+        <h3 class="mast s"><span>Screens</span><i>/</i><span>07b</span><i>/</i><span>A person</span></h3>
+        <div class="slip">
+          <div class="person-h"><h4>Owner B</h4><span class="caps muted">Week of 5 Oct</span></div>
+          <dl class="nums">
+            <div><dt class="caps">Open</dt><dd>6</dd></div>
+            <div><dt class="caps">Overdue</dt><dd>1</dd></div>
+            <div><dt class="caps">On time last 4 weeks</dt><dd>9 of 11</dd></div>
+          </dl>
+          <p class="sublabel caps">The ledger, last four weeks</p>
+          <ul class="ledger">
+            <li><span class="wk">Week of 14 Sep</span><span class="st green">On time</span></li>
+            <li><span class="wk">Week of 21 Sep</span><span class="st green">On time</span></li>
+            <li><span class="wk">Week of 28 Sep</span><span class="st red">Late</span></li>
+            <li><span class="wk">Week of 5 Oct</span><span class="st grey">Open</span></li>
+          </ul>
+          <p class="sublabel caps">Open tasks</p>
+          <ul class="threads">
+            <li><span class="tt">Confirm window display dates with stores</span><span class="due"><span class="st red">Overdue</span><span>5 Oct</span></span></li>
+            <li><span class="tt">Review the festive edit mannequin plan</span><span class="due">12 Oct</span></li>
+            <li><span class="tt">Brief the visual team on the in-store signage</span><span class="due">14 Oct</span></li>
+            <li><span class="tt">Collect fitting room feedback from two stores</span><span class="due">15 Oct</span></li>
+            <li><span class="tt">Update the store visit checklist</span><span class="due">17 Oct</span></li>
+            <li><span class="tt">Check the rail layout with Owner C</span><span class="due">20 Oct</span></li>
+          </ul>
+        </div>
+        <p class="cap">One person: the counts, the ledger and the open tasks.</p>
+      </section>
+
+      <section class="sub" id="mock-project">
+        <h3 class="mast s"><span>Screens</span><i>/</i><span>07c</span><i>/</i><span>A project</span></h3>
+        <div class="slip">
+          <div class="proj-h"><h4>Festive edit, in-store</h4><span class="st amber">At risk</span></div>
+          <p class="proj-meta">Led by Owner A. Due 21 Oct. Eight stores.</p>
+          <p class="sublabel caps">What changed</p>
+          <table class="stack">
+            <thead><tr><th class="w-when">When</th><th class="w-own">Who</th><th class="w-fld">Field</th><th class="w-ba">Before</th><th class="w-ba">After</th><th class="w-or">Origin</th></tr></thead>
+            <tbody>
+              <tr><td class="mono" data-label="When">6 Oct 11:20</td><td data-label="Who">Owner A</td><td class="t" data-label="Field">due date</td><td class="mono" data-label="Before">14 Oct</td><td class="mono" data-label="After">21 Oct</td><td data-label="Origin"><span class="caps">Meeting</span></td></tr>
+              <tr><td class="mono" data-label="When">6 Oct 11:25</td><td data-label="Who">Owner C</td><td class="t" data-label="Field">stock owner</td><td data-label="Before">Owner D</td><td data-label="After">Owner C</td><td data-label="Origin"><span class="caps">Meeting</span></td></tr>
+              <tr><td class="mono" data-label="When">5 Oct 16:02</td><td data-label="Who">Owner B</td><td class="t" data-label="Field">status</td><td data-label="Before">On track</td><td data-label="After">At risk</td><td data-label="Origin"><span class="caps">Manual</span></td></tr>
+              <tr><td class="mono" data-label="When">3 Oct 10:15</td><td data-label="Who">Owner D</td><td class="t" data-label="Field">units confirmed</td><td class="mono" data-label="Before">120</td><td class="mono" data-label="After">96</td><td data-label="Origin"><span class="caps">Sheet</span></td></tr>
+              <tr><td class="mono" data-label="When">1 Oct 14:48</td><td data-label="Who">The lead</td><td class="t" data-label="Field">signage budget</td><td data-label="Before">Draft</td><td data-label="After">Approved</td><td data-label="Origin"><span class="caps">Manual</span></td></tr>
+              <tr><td class="mono" data-label="When">29 Sep 09:05</td><td data-label="Who">Owner A</td><td class="t" data-label="Field">store list</td><td class="mono" data-label="Before">6 stores</td><td class="mono" data-label="After">8 stores</td><td data-label="Origin"><span class="caps">Sheet</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="cap">A project record and its change feed.</p>
+      </section>
+    </section>
+
+    <section id="questions">
+      <h2 class="mast"><span>nico-desk</span><i>/</i><span>08</span><i>/</i><span>Questions we need answered</span></h2>
+      <p class="intro">Pick one row for each question. Your choices stay in this browser.</p>
+      <div id="qs"></div>
+
+      <div class="field">
+        <label for="more">Anything else</label>
+        <input id="more" type="text" autocomplete="off" enterkeyhint="done" maxlength="400">
+      </div>
+      <div class="copyrow">
+        <button class="act" id="copyBtn" type="button">Copy my answers</button>
+        <span class="caps muted" id="copyState" role="status" aria-live="polite"></span>
+      </div>
+      <div class="field" id="fallbackBox" hidden>
+        <label for="fallback">Select this text and copy it</label>
+        <textarea id="fallback" readonly></textarea>
+      </div>
+    </section>
+
+    <p class="foot caps">Draft for the pilot team. 8 Oct 2026. Nothing here is decided.</p>
+  </main>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var $=function(s,c){return (c||document).querySelector(s)};
+  var $$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
+
+  /* Theme: media query by default, data-theme and .dark when chosen */
+  var btn=$('#themeBtn');
+  function isDark(){
+    if(root.getAttribute('data-theme')==='dark')return true;
+    if(root.getAttribute('data-theme')==='light')return false;
+    return !!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+  function sync(){
+    var t=root.getAttribute('data-theme');
+    if(t)root.classList.toggle('dark',t==='dark');
+    btn.textContent=isDark()?'Day':'Night';
+  }
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme',isDark()?'light':'dark');
+    sync();
+  });
+  try{new MutationObserver(sync).observe(root,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+  sync();
+
+  /* Rows */
+  function row(name,val,label,checked){
+    var l=document.createElement('label');l.className='row';
+    var i=document.createElement('input');i.type='radio';i.name=name;i.value=val;i.checked=!!checked;
+    var n=document.createElement('span');n.className='n';n.textContent='0'+val;
+    var b=document.createElement('span');b.className='bx';b.setAttribute('aria-hidden','true');
+    var t=document.createElement('span');t.className='lab';t.textContent=label;
+    l.appendChild(i);l.appendChild(n);l.appendChild(b);l.appendChild(t);
+    return l;
+  }
+
+  /* Triage: local state only */
+  var TRI=[['Approve','Approved','green'],['Needs owner','Held, needs owner','amber'],['Needs date','Held, needs date','amber']];
+  $$('.draft').forEach(function(d){
+    var id=d.getAttribute('data-draft'),box=$('.choices',d),st=$('[data-status]',d);
+    TRI.forEach(function(t,k){box.appendChild(row(id,String(k+1),t[0]))});
+    box.addEventListener('change',function(e){
+      var t=TRI[Number(e.target.value)-1];if(!t)return;
+      st.textContent=t[1];st.className='st '+t[2];
+    });
+  });
+
+  /* Questions */
+  var KEY='nico-desk-ideas-answers-v1';
+  function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return {}}}
+  function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+  var saved=load();
+  var Q=[
+    ['Which team pilots first','A team that already has a weekly review and a Sheet of owners and dates.'],
+    ['A project tool or a task tool','Tasks first, plus a project record and a change feed.'],
+    ['Part of the OKR page or an independent app','Independent for the pilot, with the same look and data shape.'],
+    ['Where a task lives','One system of record per task, and for the pilot team that is nico-desk.'],
+    ['Who holds the Granola key, and which plan',null,'This needs a named person.'],
+    ['Where the data lives and who owns the account',null,'This needs a named account owner.'],
+    ['Which model may read real minutes, and when','Synthetic minutes only until the vendor is approved.'],
+    ['Which Sheets we read, and who grants access',null,'This needs a named person who can grant access.']
+  ];
+  var A=['Agree with the proposal','Not sure','Disagree'],B=['I can answer this','Not sure','Someone else should answer'];
+  var qs=$('#qs');
+  Q.forEach(function(q,i){
+    var name='q'+(i+1),has=!!q[1],labels=has?A:B;
+    var w=document.createElement('div');w.className='q';
+    var l=document.createElement('div');
+    var h=document.createElement('h3');
+    h.innerHTML='<span class="qn"></span><span></span>';
+    h.firstChild.textContent=String(i+1);h.lastChild.textContent=q[0];
+    var p=document.createElement('p');p.className='prop';
+    var c=document.createElement('span');c.className='caps';c.textContent=has?'Proposal':'No proposal yet';
+    p.appendChild(c);p.appendChild(document.createTextNode(has?q[1]:q[2]));
+    l.appendChild(h);l.appendChild(p);
+    var g=document.createElement('div');g.setAttribute('role','radiogroup');g.setAttribute('aria-label','Your answer to question '+(i+1));
+    labels.forEach(function(t,k){g.appendChild(row(name,String(k+1),t,saved[name]===String(k+1)))});
+    g.addEventListener('change',function(e){var s=load();s[name]=e.target.value;save(s)});
+    w.appendChild(l);w.appendChild(g);qs.appendChild(w);
+  });
+  var more=$('#more');
+  if(typeof saved.more==='string')more.value=saved.more;
+  more.addEventListener('input',function(){var s=load();s.more=more.value;save(s)});
+
+  /* Copy my answers */
+  var tm,state=$('#copyState');
+  function summary(){
+    var s=load(),out=['nico-desk ideas, my answers',''];
+    Q.forEach(function(q,i){
+      var v=s['q'+(i+1)],labels=q[1]?A:B;
+      out.push((i+1)+'. '+q[0]+': '+(v?labels[Number(v)-1]:'No answer'));
+    });
+    out.push('','Anything else: '+(more.value.trim()||'Nothing'));
+    return out.join('\n');
+  }
+  function done(msg){state.textContent=msg;clearTimeout(tm);tm=setTimeout(function(){state.textContent=''},2000)}
+  function fallback(t){
+    var box=$('#fallbackBox'),ta=$('#fallback');
+    box.hidden=false;ta.value=t;ta.focus();ta.select();done('Select and copy');
+  }
+  $('#copyBtn').addEventListener('click',function(){
+    var t=summary();
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(function(){done('Copied')},function(){fallback(t)});
+      }else fallback(t);
+    }catch(e){fallback(t)}
+  });
+
+  /* Mobile keyboard rule: close on outside tap, on Enter, and on scroll */
+  var focusAt=0;
+  function isField(el){
+    return !!el&&((el.tagName==='INPUT'&&/^(text|search|email|url|tel|number)$/.test(el.type))||el.tagName==='TEXTAREA');
+  }
+  document.addEventListener('focusin',function(e){if(isField(e.target))focusAt=Date.now()});
+  document.addEventListener('pointerdown',function(e){
+    var a=document.activeElement;
+    if(isField(a)&&e.target!==a)a.blur();
+  },true);
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&e.target.tagName==='INPUT'&&isField(e.target)){e.preventDefault();e.target.blur()}
+  });
+  window.addEventListener('scroll',function(){
+    var a=document.activeElement;
+    if(isField(a)&&Date.now()-focusAt>450)a.blur();
+  },{passive:true});
+
+  /* Diagrams: one data set per diagram, two layouts (wide and phone).
+     Step fields: t tag, h wide lines, v phone lines, p person step, w own width,
+     out status rows [word,colour], os x offset for rows (else below the lines),
+     lab label on the arrow after the step [caps word, plain line], link dashed line with no head. */
+  function el(n,a,txt){
+    var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+    for(var k in a)e.setAttribute(k,a[k]);
+    if(txt!=null)e.textContent=txt;return e;
+  }
+  function mk(vw,vh,cls,aria){
+    var s=el('svg',{viewBox:'0 0 '+vw+' '+vh,role:'img','aria-label':aria});
+    s.setAttribute('class',cls);return s;
+  }
+  function outRow(svg,x,y,o){
+    svg.appendChild(el('rect',{x:x,y:y-8,width:8,height:8,class:'c-'+o[1]}));
+    svg.appendChild(el('text',{x:x+14,y:y,class:'stw c-'+o[1]},o[0]));
+  }
+  function arrow(svg,x1,y1,x2,y2,horiz,s){
+    var d,hd=s.link?'':(horiz?'M'+(x2-4)+' '+(y2-3.5)+'L'+x2+' '+y2+'L'+(x2-4)+' '+(y2+3.5):'M'+(x2-3.5)+' '+(y2-4)+'L'+x2+' '+y2+'L'+(x2+3.5)+' '+(y2-4));
+    d='M'+x1+' '+y1+(horiz?'H'+x2:'V'+y2)+hd;
+    svg.appendChild(el('path',{d:d,class:'ar'+(s.link?' d':'')}));
+  }
+  function build(host,cfg){
+    var S=cfg.steps,W=cfg.W,G=cfg.G,H=cfg.H||116,n=S.length;
+    var xs=[],tw=0;
+    S.forEach(function(s,i){xs.push(tw);tw+=(s.w||W)+(i<n-1?G:0)});
+    /* wide */
+    var hs=mk(tw+1,H+2,'h',cfg.aria);
+    S.forEach(function(s,i){
+      var x=xs[i]+.5,w=s.w||W,my=1+H/2;
+      hs.appendChild(el('rect',{x:x,y:1,width:w,height:H,class:'bxs'+(s.p?' p':'')}));
+      hs.appendChild(el('text',{x:x+10,y:25,class:'tg'},s.t));
+      s.h.forEach(function(L,k){hs.appendChild(el('text',{x:x+10,y:50+k*16,class:'tx'},L))});
+      (s.out||[]).forEach(function(o,k){
+        if(s.os)outRow(hs,x+s.os,50+k*22,o);
+        else outRow(hs,x+10,50+s.h.length*16+6+k*18,o);
+      });
+      if(i<n-1){
+        arrow(hs,x+w+3,my,x+w+G-3,my,true,s);
+        if(s.lab){
+          var cx=x+w+G/2,L=[s.lab[0]].concat(s.lab.slice(1));
+          L.forEach(function(t,k){
+            hs.appendChild(el('text',{x:cx,y:my-8-(L.length-1-k)*14,'text-anchor':'middle',class:k===0?'tg':'lb'},t));
+          });
+        }
+      }
+    });
+    host.appendChild(hs);
+    /* phone */
+    var y=1,items=[],GAP=cfg.vg||22;
+    S.forEach(function(s){
+      var rows=s.v.length+(s.out?s.out.length:0),h=32+rows*19;items.push([y,h,s]);y+=h+GAP;
+    });
+    var vs=mk(340,y-GAP+2,'v',cfg.aria);
+    items.forEach(function(it,i){
+      var yy=it[0],h=it[1],s=it[2];
+      vs.appendChild(el('rect',{x:.5,y:yy,width:339,height:h,class:'bxs'+(s.p?' p':'')}));
+      vs.appendChild(el('text',{x:14,y:yy+21,class:'tg'},s.t));
+      s.v.forEach(function(L,k){vs.appendChild(el('text',{x:14,y:yy+43+k*19,class:'tx',style:'font-size:15px'},L))});
+      (s.out||[]).forEach(function(o,k){outRow(vs,14,yy+43+(s.v.length+k)*19,o)});
+      if(i<items.length-1){
+        var a=yy+h+3,b=yy+h+GAP-3,cx=170;
+        arrow(vs,cx,a,cx,b,false,s);
+        if(s.lab){
+          var mid=yy+h+GAP/2,top=mid-(s.lab.length-1)*7+4;
+          s.lab.forEach(function(t,k){
+            vs.appendChild(el('text',{x:cx+14,y:top+k*14,class:k===0?'tg':'lb',style:k?'font-size:13px':''},t));
+          });
+        }
+      }
+    });
+    host.appendChild(vs);
+    /* screen reader list */
+    var ol=document.createElement('ol');ol.className='sr';
+    S.forEach(function(s){
+      var li=document.createElement('li');
+      li.textContent=s.v.join(' ')+(s.out?': '+s.out.map(function(o){return o[0]}).join(', '):'');
+      ol.appendChild(li);
+    });
+    host.appendChild(ol);
+  }
+
+  build($('#flowDraft'),{W:106,G:16,aria:'Eight steps from meeting notes to a task, in order. See the list for the steps.',steps:[
+    {t:'Source',h:['Meeting notes','Granola,','read only'],v:['Meeting notes, Granola, read only']},
+    {t:'Model',h:['Extract','A schema-bound','model call'],v:['Extract, a schema-bound model call']},
+    {t:'Code',h:['Code checks','the quote'],v:['Code checks the quote']},
+    {t:'Code',h:['Code matches','the owner to','the roster'],v:['Code matches the owner to the roster']},
+    {t:'Code',h:['Code works out','the date from','the quoted','phrase'],v:['Code works out the date','from the quoted phrase']},
+    {t:'Queue',h:['The triage','inbox'],v:['The triage inbox']},
+    {t:'Person',h:['A person','approves'],v:['A person approves'],p:1},
+    {t:'Result',h:['A task','exists'],v:['A task exists']}
+  ]});
+
+  build($('#flowWeek'),{W:134,G:18,aria:'Six steps in one week, from the Monday meeting to the Friday ledger. See the list for the steps.',steps:[
+    {t:'Mon',h:['Weekly','meeting'],v:['Weekly meeting']},
+    {t:'Mon',h:['Granola note,','read only'],v:['Granola note, read only']},
+    {t:'Mon',h:['Drafts wait','in triage'],v:['Drafts wait in triage']},
+    {t:'Tue',h:['The owner','approves'],v:['The owner approves'],p:1},
+    {t:'Tue to Fri',h:['The week:','tasks, owners,','dates'],v:['The week: tasks, owners, dates']},
+    {t:'Fri',w:200,h:['The ledger','per person'],v:['The ledger per person'],os:104,out:[['On time','green'],['Late','red'],['Open','grey']]}
+  ]});
+
+  build($('#flowLives'),{W:224,G:130,vg:56,aria:'Three boxes. Department Sheets are read by the app and never written. The app is the system of record for the pilot team. The OKR page shares the look and the data contract but not the backend.',steps:[
+    {t:'Sheets',h:['Department Sheets','Stay as they are'],v:['Department Sheets','Stay as they are'],out:[['Writes: their owners','grey']],lab:['Read-only','by header name']},
+    {t:'System of record',p:1,h:['nico-desk app','Pilot team tasks'],v:['nico-desk app','Pilot team tasks'],out:[['Writes: here only','green']],link:1,lab:['Shares','the look and','the data contract']},
+    {t:'Shared look',h:['OKR page','Own backend'],v:['OKR page','Own backend'],out:[['No shared backend','grey']]}
+  ]});
+
+  /* Arrival fade, staggered */
+  $$('[data-stag]').forEach(function(p){
+    Array.prototype.forEach.call(p.children,function(c,i){c.classList.add('arr');c.style.setProperty('--i',i)});
+  });
+})();
+</script>

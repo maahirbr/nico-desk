@@ -1,0 +1,66 @@
+[
+  {
+    "file": "linear-triage.png",
+    "tool": "Linear",
+    "url": "https://linear.app/docs/triage",
+    "captured": "2026-10-08",
+    "shows": "The Linear Triage inbox for the Engineering team, listing unplanned work items from Intercom, Sentry and teammates.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "linear-cycles.png",
+    "tool": "Linear",
+    "url": "https://linear.app/docs/use-cycles",
+    "captured": "2026-10-08",
+    "shows": "A Linear cycle detail panel (Cycle 13) with scope, started and completed counts and a progress chart, beside a list of labelled issues.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "asana-status.png",
+    "tool": "Asana",
+    "url": "https://asana.com/features/project-management/status-updates",
+    "captured": "2026-10-08",
+    "shows": "An Asana project status update with On track, At risk and Off track health labels, an owner, a summary and completed milestones.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "asana-timeline.png",
+    "tool": "Asana",
+    "url": "https://asana.com/features/project-management/project-views",
+    "captured": "2026-10-08",
+    "shows": "Asana Timeline view of a User Research project with dated tasks, a milestone and a dependency arrow.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "plane-cycles.png",
+    "tool": "Plane",
+    "url": "https://plane.so/cycles",
+    "captured": "2026-10-08",
+    "shows": "Plane Cycles tab for a project with active cycles, a burn-down chart and a summary of pending and started work items.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "plane-modules.png",
+    "tool": "Plane",
+    "url": "https://docs.plane.so/core-concepts/modules",
+    "captured": "2026-10-08",
+    "shows": "Plane Modules in gallery layout, each card showing work item counts, a progress bar and start and end dates.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "granola-notes.jpg",
+    "tool": "Granola",
+    "url": "https://www.granola.ai",
+    "captured": "2026-10-08",
+    "shows": "A Granola enhanced meeting note (Design team weekly) with bullet notes and a Share notes menu listing participants.",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  },
+  {
+    "file": "todoist-upcoming.png",
+    "tool": "Todoist",
+    "url": "https://www.todoist.com/features",
+    "captured": "2026-10-08",
+    "shows": "Todoist Upcoming view showing a week strip for March 2026 with Today and Tomorrow sections of tasks (placeholder text bars).",
+    "licence_note": "product screenshot from the vendor's public page, used for comparison"
+  }
+]
