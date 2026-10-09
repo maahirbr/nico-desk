@@ -4,14 +4,14 @@
   "tasks": [
     {
       "title": "Recount the Eastgate candle wall",
-      "owner": "Alder Finch",
+      "owner": "Arjun Nair",
       "due_on": "2026-10-24",
       "quote": "I'll do the recount on Saturday.",
       "critical": false
     },
     {
       "title": "Fix the stock feed mapping for candle codes",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-10-26",
       "quote": "I will fix the stock feed mapping on 26 October.",
       "critical": false

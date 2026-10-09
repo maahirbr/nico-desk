@@ -4,30 +4,30 @@
   "tasks": [
     {
       "title": "Update homepage banner text to October",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-10-09",
       "quote": "I will update the banner text to say October on 9 October",
       "critical": false
     },
     {
-      "title": "Send corrected banner font files to Orrin",
-      "owner": "Bexley Marsh",
+      "title": "Send corrected banner font files to Kabir",
+      "owner": "Ananya Rao",
       "due_on": "2026-10-09",
-      "quote": "I will send Orrin the corrected font files on 9 October",
+      "quote": "I will send Kabir the corrected font files on 9 October",
       "critical": false
     },
     {
       "title": "Fix returns and size guide footer links",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "missing",
       "quote": "I will fix the returns and size guide links, but I cannot say when yet.",
       "critical": false
     },
     {
-      "title": "Email correct Eastgate opening hours to Orrin",
-      "owner": "Alder Finch",
+      "title": "Email correct Eastgate opening hours to Kabir",
+      "owner": "Arjun Nair",
       "due_on": "2026-10-12",
-      "quote": "Yes, I will email them to Orrin on 12 October.",
+      "quote": "Yes, I will email them to Kabir on 12 October.",
       "critical": false
     }
   ],
