@@ -49,7 +49,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
       </div>
       {t.blocked && (
         <div className="ask">
-          <span className="caps">{t.blocked.onId ? `Blocked on ${names[t.blocked.onId]}` : 'Blocked'}</span> <span className="small dim">since {fmtStamp(t.blocked.at)}</span>
+          <span className="ask-label">{t.blocked.onId ? `Blocked on ${names[t.blocked.onId]}` : 'Blocked'}</span> <span className="small dim">since {fmtStamp(t.blocked.at)}</span>
           <div>{t.blocked.ask}</div>
         </div>
       )}

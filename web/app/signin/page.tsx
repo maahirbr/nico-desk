@@ -12,9 +12,9 @@ export default async function SignIn() {
   if (!devSignInEnabled()) {
     return (
       <div className="signin">
-        <div className="signin-brand"><span className="mark-logo">n</span><span className="mark-name">nico-desk</span></div>
+        <div className="signin-brand"><span className="mark-name">nico-desk</span></div>
         <h1>Sign in</h1>
-        <p className="lede">Google sign-in is not configured yet. For a local run, start with NICO_DEV_SIGNIN=1 (npm run dev does this).</p>
+        <p className="lede">Sign-in is not set up yet.</p>
       </div>
     );
   }
@@ -23,15 +23,14 @@ export default async function SignIn() {
   const owner = people.find((p) => p.id === ownerId);
   return (
     <div className="signin">
-      <div className="signin-brand"><span className="mark-logo">n</span><span className="mark-name">nico-desk</span></div>
-      <h1>{owner ? `Welcome back, ${owner.displayName.split(' ')[0]}` : 'Sign in'}</h1>
-      <p className="lede">{openDemo() ? 'Sample data. Pick who to view the desk as.' : 'Local run. Google sign-in with the company domain replaces this when a client is issued.'}</p>
+      <div className="signin-brand"><span className="mark-name">nico-desk</span></div>
+      <h1>Choose who you are</h1>
       {owner && (
         <div className="card signin-me">
           <SignInList people={[{ id: owner.id, name: owner.displayName, role: owner.role, roles: 'Continue as you' }]} />
         </div>
       )}
-      {owner && <p className="small dim" style={{ margin: '22px 0 8px' }}>Or see the desk as someone else</p>}
+      {owner && <p className="small dim" style={{ margin: 'var(--space-lg) 0 var(--space-xs)' }}>Or see the desk as someone else</p>}
       <div className="card"><SignInList
         people={people.filter((p) => p.id !== owner?.id).map((p) => ({
           id: p.id, name: p.displayName, role: p.role, roles: p.appRoles.filter((r) => r !== 'member').join(', '),

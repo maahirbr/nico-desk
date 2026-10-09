@@ -15,6 +15,7 @@ colors:
   sunk: "#F4F5F7"
   pill: "#EEF0F3"
   hairline: "#E6E8EC"
+  line-strong: "#C9CED6"
   late: "#C3352B"
   late-soft: "#FCEBEA"
   off: "#93560A"
@@ -29,6 +30,7 @@ colors:
   night-sunk: "#171A1F"
   night-pill: "#22262D"
   night-hairline: "#262A31"
+  night-line-strong: "#3A3F48"
   night-late: "#FF8A80"
   night-late-soft: "#3A1A18"
   night-off: "#F2B866"
@@ -92,6 +94,21 @@ typography:
     fontSize: 14px
     fontWeight: 500
     lineHeight: 1.2
+  heading:
+    fontFamily: Geist
+    fontSize: 16px
+    fontWeight: 600
+    lineHeight: 1.3
+  small:
+    fontFamily: Geist
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.4
+  input:
+    fontFamily: Geist
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.4
 
 rounded:
   control: 10px
@@ -224,6 +241,17 @@ components:
     typography: "{typography.state}"
     rounded: "{rounded.full}"
     size: 26px
+  initials-mark-lg:
+    backgroundColor: "{colors.pill}"
+    textColor: "{colors.ink-2}"
+    typography: "{typography.state}"
+    rounded: "{rounded.full}"
+    size: 36px
+  side-nav:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink-2}"
+    typography: "{typography.body}"
+    width: 232px
   initials-mark-you:
     backgroundColor: "{colors.primary-soft}"
     textColor: "{colors.primary}"

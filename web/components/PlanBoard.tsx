@@ -21,7 +21,7 @@ type P = { id: string; name: string; role: string; department: string };
 // Same words as tasks everywhere else; the stored values stay as they are.
 const WORD: Record<string, string> = { 'Not started': 'Not started', 'In progress': 'In progress', Blocked: 'Blocked', Done: 'Done' };
 
-const ST_C: Record<string, string> = { 'Not started': 'var(--black)', 'In progress': 'var(--amber)', Blocked: 'var(--red)', Done: 'var(--green)' };
+const ST_TONE: Record<string, string> = { 'Not started': 'idle', 'In progress': 'active', Blocked: 'blocked', Done: 'done' };
 
 function Stamp({ on, due, block }: { on: string; due: string | null; block?: boolean }) {
   const r = stampRel(on, due);
@@ -158,8 +158,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             {l.status !== 'Done' && totalPushes(l) > 0 && <div><Pushed n={totalPushes(l)} was={nm ? nm.origDueOn : l.origDueOn} /></div>}
           </td>
           <td>
-            <select className="status-sel" value={l.status} disabled={busy} aria-label={`Status of line ${l.num}`}
-              style={{ '--c': ST_C[l.status] } as React.CSSProperties}
+            <select className={`status-sel tone-${ST_TONE[l.status]}`} value={l.status} disabled={busy} aria-label={`Status of line ${l.num}`}
               onChange={(e) => {
                 const s = e.target.value;
                 // Blocked, back to not started and reopening ask why; the rest is one click.

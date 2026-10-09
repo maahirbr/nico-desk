@@ -1,45 +1,41 @@
 import type { Health, Outcome, Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 
-// Colour plus a word, always (SPEC.md FR-11, INTENT.md principle 5).
+// A word in a quiet pill, always. The tone only picks a token pair in globals.css (.tone-*).
+
+export type Tone = 'idle' | 'active' | 'blocked' | 'done' | 'quiet' | 'late' | 'risk' | 'ok';
 
 // A person picks not started or in progress. Older ahead and off-track values read as in progress;
 // ahead, at risk and late are now worked out from the dates.
-export const HEALTH: Record<Health, { word: string; c: string }> = {
-  not_started: { word: 'Not started', c: 'var(--black)' },
-  on_track: { word: 'In progress', c: 'var(--amber)' },
-  ahead: { word: 'In progress', c: 'var(--amber)' },
-  off_track: { word: 'In progress', c: 'var(--amber)' },
+export const HEALTH: Record<Health, { word: string; tone: Tone }> = {
+  not_started: { word: 'Not started', tone: 'idle' },
+  on_track: { word: 'In progress', tone: 'active' },
+  ahead: { word: 'In progress', tone: 'active' },
+  off_track: { word: 'In progress', tone: 'active' },
 };
 
-export const OUTCOME: Record<Outcome, { word: string; c: string }> = {
-  ahead: { word: 'Closed ahead', c: 'var(--purple)' },
-  on_time: { word: 'Closed on time', c: 'var(--purple)' },
-  late: { word: 'Closed late', c: 'var(--navy)' },
+export const OUTCOME: Record<Outcome, { word: string; tone: Tone }> = {
+  ahead: { word: 'Closed ahead', tone: 'done' },
+  on_time: { word: 'Closed on time', tone: 'done' },
+  late: { word: 'Closed late', tone: 'done' },
 };
 
-type Style = React.CSSProperties & { '--c'?: string; '--h'?: number };
-
-export function Chip({ word, c, kind = '' }: { word: string; c?: string; kind?: '' | 'outline' | 'plain' }) {
-  return (
-    <span className={`st ${kind}`} style={c ? ({ '--c': c } as Style) : undefined}>
-      {word}
-    </span>
-  );
+export function Chip({ word, tone = 'idle' }: { word: string; tone?: Tone }) {
+  return <span className={`st tone-${tone}`}>{word}</span>;
 }
 
 export function StatusChips({ t, names }: { t: Task; names?: Record<string, string> }) {
   return (
     <span className="chips">
       {t.statusCategory === 'open' && t.health && <Chip {...HEALTH[t.health]} />}
-      {t.statusCategory === 'open' && !t.health && <Chip word={t.sourceStatus} kind="plain" />}
+      {t.statusCategory === 'open' && !t.health && <Chip word={t.sourceStatus} tone="quiet" />}
       {t.outcome && <Chip {...OUTCOME[t.outcome]} />}
-      {t.statusCategory === 'dropped' && <Chip word="Dropped" c="var(--ink-65)" kind="outline" />}
-      {t.overdue && <Chip word="Late" c="var(--red)" kind="outline" />}
-      {t.slippedSilently && <Chip word="Slipped silently" c="var(--red)" kind="plain" />}
-      {t.blocked && <Chip word={t.blocked.onId ? `Blocked on ${names?.[t.blocked.onId] ?? 'someone'}` : 'Blocked'} c="var(--red)" kind="outline" />}
-      {t.priority && <Chip word={`Priority ${t.priority.value}`} kind="plain" />}
-      {t.readOnly && <Chip word="From Sheet" kind="plain" />}
+      {t.statusCategory === 'dropped' && <Chip word="Dropped" tone="quiet" />}
+      {t.overdue && <Chip word="Late" tone="late" />}
+      {t.slippedSilently && <Chip word="Slipped silently" tone="late" />}
+      {t.blocked && <Chip word={t.blocked.onId ? `Blocked on ${names?.[t.blocked.onId] ?? 'someone'}` : 'Blocked'} tone="blocked" />}
+      {t.priority && <Chip word={`Priority ${t.priority.value}`} tone="quiet" />}
+      {t.readOnly && <Chip word="From Sheet" tone="quiet" />}
     </span>
   );
 }
@@ -51,12 +47,10 @@ export function dueLine(t: Task): string {
   return `Due ${fmtDate(t.dueOn)} (first given ${fmtDate(t.firstDueOn)}, ${moved})`;
 }
 
-// Initials on a tint picked from the name, so each person reads the same everywhere.
-export function Avatar({ name, lg = false }: { name: string; lg?: boolean }) {
+// Initials on a neutral mark. The viewer's own mark is the one blue one.
+export function Avatar({ name, lg = false, you = false }: { name: string; lg?: boolean; you?: boolean }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
-  return <span className={`av${lg ? ' lg' : ''}`} style={{ '--h': h } as Style} aria-hidden>{initials}</span>;
+  return <span className={`av${lg ? ' lg' : ''}${you ? ' you' : ''}`} aria-hidden>{initials}</span>;
 }
 
 export function Person({ name }: { name: string }) {

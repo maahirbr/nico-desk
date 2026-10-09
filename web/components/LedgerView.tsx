@@ -124,8 +124,8 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
               </div>
               {closed > 0 && (
                 <div className="split" role="group" aria-label="Ahead, on time, late">
-                  {[['Ahead', a, 'var(--green)'], ['On time', o, 'var(--purple)'], ['Late', l, 'var(--red)']].map(([label, list, c]) => (list as Task[]).length ? (
-                    <button key={label as string} style={{ flexGrow: (list as Task[]).length, background: c as string }} title={`${label}: ${(list as Task[]).length}`}
+                  {[['Ahead', a, 'ok'], ['On time', o, 'done'], ['Late', l, 'late']].map(([label, list, tone]) => (list as Task[]).length ? (
+                    <button key={label as string} className={`tone-${tone as string}`} style={{ flexGrow: (list as Task[]).length }} title={`${label}: ${(list as Task[]).length}`}
                       onClick={() => show(`${p.name}: ${(label as string).toLowerCase()}`, list as Task[])}><span>{label as string} {(list as Task[]).length}</span></button>
                   ) : null)}
                 </div>
