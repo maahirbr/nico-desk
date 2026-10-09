@@ -6,7 +6,9 @@ import { Avatar } from '@/components/chips';
 import { Nav, SignOut, SwitchToOwner } from '@/components/client';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { TopSearch } from '@/components/TopSearch';
-import { rosterFile } from '@/lib/db';
+import { db, rosterFile } from '@/lib/db';
+import { listPeople } from '@/lib/service';
+import { today } from '@/lib/time';
 import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
 import './globals.css';
@@ -19,6 +21,8 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const me = await currentMe();
   const ownerId = localOwnerId(rosterFile());
+  // The commit field in the top search matches "ask <name> to ..." against the active roster.
+  const roster = me ? (await listPeople(await db(), me.team.id)).filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })) : [];
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
       <body>
@@ -41,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <SignOut />
               </div>
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /></div><div className="page">{children}</div></main>
+            <main className="main"><div className="topbar"><TopSearch people={roster} meId={me.person.id} todayIso={today()} /></div><div className="page">{children}</div></main>
           </div>
         ) : (
           <main className="page-solo">{children}</main>
