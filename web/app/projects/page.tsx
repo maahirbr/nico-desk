@@ -35,11 +35,10 @@ export default async function Projects() {
           return (
             <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
               <div className="pcard-top">
-                <span className="kind-tag">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>
+                <h2 className="pcard-name">{p.name}</h2>
                 <span className={`st tone-${st.tone}`}>{st.word}</span>
               </div>
-              <h2 className="pcard-name">{p.name}</h2>
-              {p.eyebrow && <div className="pcard-eyebrow">{p.eyebrow}</div>}
+              <div className="kind-tag">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}{p.eyebrow ? ` · ${p.eyebrow}` : ''}</div>
               {p.intro && <p className="pcard-goal">{p.intro}</p>}
               <div className="pcard-progress">
                 <span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span>

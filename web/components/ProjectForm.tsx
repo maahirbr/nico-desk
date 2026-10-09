@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { focusOnDesktop } from './motion';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
+import { notify } from './toast';
 
 // Starting a project, or changing one later. What a project needs before it starts: a name,
 // what done looks like, a lead, and a date. Everything else (team roles, sub-projects, a partner)
@@ -60,13 +62,14 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       };
       try {
         const p = await api(editing ? `/projects/${projectId}` : '/projects', editing ? 'PATCH' : 'POST', body);
+        notify(editing ? 'Project saved' : 'Project started');
         onDone();
         if (editing) router.refresh(); else router.push(`/projects/${p.id}`);
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <fieldset>
         <legend>The project</legend>
-        <label className="f"><span>Name</span><input autoFocus required maxLength={80} value={f.name} placeholder="e.g. Festive gifting" onChange={(e) => set('name', e.target.value)} /></label>
+        <label className="f"><span>Name</span><input ref={focusOnDesktop} required maxLength={80} value={f.name} placeholder="e.g. Festive gifting" onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
             <button type="button" role="radio" aria-checked={f.kind === 'tasks'} onClick={() => set('kind', 'tasks')}>

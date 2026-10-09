@@ -454,6 +454,15 @@ Three gestures, no more. Each shows a cause. Transform and opacity only. All of 
 
 Nothing loops, nothing counts up, nothing moves on its own.
 
+Other motion is not a gesture. It is the screen keeping up with the user.
+
+- **A page enters.** The content fades in over `--dur-enter` (140ms). No slide.
+- **A panel opens.** A drawer or dialog slides `--panel-shift` (32px) and fades over `--dur-panel` (200ms). It closes the same way, reversed.
+- **A confirmation appears.** A small bar at the foot of the screen fades in over `--dur-toast` (160ms), stays for `--dwell-confirm`, then fades out. It has `aria-live="polite"`. At most three show at once.
+- **A page loads.** `loading.tsx` shows a skeleton shaped like the real content, in `--skeleton-fill`. The fill is static. There is no shimmer.
+
+Every duration and easing is a token in `web/app/tokens.css`. Under `prefers-reduced-motion: reduce` the three durations above become 0.
+
 ## Components
 
 Each component lists its tokens, then the line it must pass before it ships.
@@ -587,7 +596,28 @@ The three ranked references from the handout, section 7. Take the mechanism, nev
 | 2. Linear and Things | A state is one word. Rows are dense but still breathe. The keyboard drives everything. An issue is an object with one owner. | One-word states. The row rhythm. One field that takes commands from the keyboard. The ask as its own object with an asker, an owner and a date. | Cycles, priorities, estimates, the project tree, brand purple, the round checkboxes. |
 | 3. Notion and Craft | Text turns into structure. A block keeps its source. A page prints clean. | The note turns into draft lines beside it. Picking a line lights the sentence it came from. The record prints as one page per week. | Blank-canvas freedom, slash menus, nested pages, emoji icons, cover images. |
 
-Mood page: `docs/design/moods.html`. B and C stay in it as the rejected options.
+Mood page: `docs/design/moods.html`. A is the default. B and C are offered as skins (see Skins).
+
+## Skins
+
+A skin is a block of token overrides in `web/app/tokens.css`, selected by `data-skin` on `<html>`. Each has a day set and a night set. Components read `var(--...)` only, so a skin never needs a component change.
+
+| Id | Name | Type | Accent (day / night) | Shape |
+|---|---|---|---|---|
+| a | Plain and familiar (default) | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 6px controls, soft pills, light shadow |
+| b | Calm and precise | IBM Plex Sans, IBM Plex Mono | `#0a736e` / `#4fc2bb` | 3px corners, outlined pills, no shadow |
+| c | Soft and warm | Source Sans 3 | `#2d6a55` / `#7cc3a6` | 6px corners, warm ground, soft card shadow |
+
+- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload.
+- The switcher is the half-filled circle next to the avatar. Its items use the names above.
+- Fonts load only through `next/font/google`. No font file is committed.
+- Skin hooks, beyond colour and type: `--bar`, `--avatar-bg`, `--avatar-you-ring`, `--pill-ring`, `--callout-bg`, `--callout-line`, `--card-shadow`, `--row-pad`, `--font-date`, `--skeleton-fill`, `--toast-bg`, `--toast-ink`.
+- Text contrast is at least 4.5:1 in all six skin and scheme sets, for ink, ink-2, ink-3, primary, late and off on canvas, surface, sunk and the bar, and for each state pill on its fill. Lowest ratios: A day 4.63, A night 4.73, B day 4.76, B night 5.17, C day 4.57, C night 5.66.
+- Night follows the system setting. `data-theme="light"` or `"dark"` on `<html>` overrides it.
+
+## Keyboard
+
+`/` or Ctrl/Cmd+K focuses the search. `n` opens New task. `?` lists the shortcuts. `Esc` closes a panel, a menu or the search. Keys are ignored while a field has focus. Every control shows a focus ring from `--ring-width`, `--ring-color` and `--ring-offset`.
 
 ## Known Gaps
 

@@ -8,7 +8,8 @@ import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
 import { Avatar, type Tone } from './chips';
 import { logLine } from './logText';
-import { arrivals, usePreviousWhileChanging } from './motion';
+import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
+import { notify } from './toast';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -142,7 +143,7 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
           <input type="checkbox" aria-label={`Mark “${t.title}” done`} checked={ticked} disabled={ticked}
             onChange={async () => {
               setTicked(true); setErr(null);
-              try { await api(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'done' }); router.refresh(); }
+              try { await api(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'done' }); notify('Marked done'); router.refresh(); }
               catch (e) { setTicked(false); setErr((e as Error).message); }
             }} />
         )}
@@ -166,7 +167,7 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
               if (formFor(t, s)) return onStatus(s);
               if (s === 'done') setTicked(true);
               setErr(null);
-              try { await quickMove(t, s); router.refresh(); }
+              try { await quickMove(t, s); notify(`Status set to ${STATUS[s].word}`); router.refresh(); }
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }}>
             {PICK.map((s) => <option key={s} value={s}>{STATUS[s].word}</option>)}
@@ -181,15 +182,16 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
 // ---------- pop-up and side panel ----------
 
 export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
+  const [closing, close] = useClosing(onClose);
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
-  }, [onClose]);
+  }, [close]);
   return (
-    <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className={`overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
       <div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
-        <div className="modal-head"><h2>{title}</h2><button className="x" aria-label="Close" onClick={onClose}>×</button></div>
+        <div className="modal-head"><h2>{title}</h2><button className="x" aria-label="Close" onClick={close}>×</button></div>
         {children}
       </div>
     </div>
@@ -212,6 +214,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [edit, setEdit] = useState({ title: '', description: '', note: '', ownerId: '', workstream: '' });
   const [showLog, setShowLog] = useState(false);
   const [target, setTarget] = useState<StatusKey>('todo');
+  const [closing, close] = useClosing(onClose);
 
   async function load() {
     const [task, lines] = await Promise.all([api(`/tasks/${id}`, 'GET'), api(`/tasks/${id}/log?limit=100`, 'GET')]);
@@ -220,15 +223,15 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   }
   useEffect(() => { load().catch((e) => setErr(e.message)); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
-  }, [onClose]);
+  }, [close]);
 
-  async function run(fn: (v: number) => Promise<unknown>) {
+  async function run(fn: (v: number) => Promise<unknown>, done?: string) {
     if (!t) return;
     setBusy(true); setErr(null);
-    try { await fn(t.version); setMode(null); setForm({ date: '', text: '', person: '' }); await load(); router.refresh(); }
+    try { await fn(t.version); if (done) notify(done); setMode(null); setForm({ date: '', text: '', person: '' }); await load(); router.refresh(); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -243,7 +246,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (!t || s === key) return;
     const f = formFor(t, s);
     if (f) { setTarget(s); setMode(f); return; }
-    run(() => quickMove(t, s));
+    run(() => quickMove(t, s), `Status set to ${STATUS[s].word}`);
   }
 
   // Opened from a row's status picker: go straight to the question for that status.
@@ -268,11 +271,11 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const okText = form.text.trim().length >= 10;
 
   return (
-    <div className="overlay drawer-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className={`overlay drawer-overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
       <aside className="drawer" role="dialog" aria-modal="true" aria-label="Task">
         <div className="drawer-top">
           <span className="small dim">{t ? [t.projectId ? projectNames[t.projectId] : 'No project', t.workstream].filter(Boolean).join(' · ') : ''}</span>
-          <button className="x" aria-label="Close" onClick={onClose}>×</button>
+          <button className="x" aria-label="Close" onClick={close}>×</button>
         </div>
         {!t ? <p className="empty">{err ?? 'Loading…'}</p> : (
           <>
@@ -323,7 +326,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                       if (mode === 'date') return api(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, newDueOn: form.date, reason: form.text });
                       if (mode === 'drop') return api(`/tasks/${t.id}/close`, 'POST', { version: v, as: 'dropped', reason: form.text });
                       return api(`/tasks/${t.id}/reopen`, 'POST', { version: v, reason: form.text });
-                    })}>Save</button>
+                    }, { status: 'Status set to Not started', blocked: 'Marked blocked', date: `Date moved to ${fmtDate(form.date)}`, drop: 'Task dropped', reopen: 'Task reopened' }[mode])}>Save</button>
                   <button className="btn ghost" onClick={() => setMode(null)}>Cancel</button>
                 </div>
               </div>
@@ -369,7 +372,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {dirty && (
               <div className="row">
-                <button className="btn" disabled={busy || edit.title.trim().length < 3} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }))}>Save changes</button>
+                <button className="btn" disabled={busy || edit.title.trim().length < 3} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved')}>Save changes</button>
                 <button className="btn ghost" onClick={() => setEdit({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, workstream: t.workstream ?? '' })}>Discard</button>
               </div>
             )}
@@ -417,10 +420,11 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       try {
         const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
         if (made?.id) arrivals.add(made.id);
+        notify('Task added');
         router.refresh(); onDone();
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
-      <label className="f"><span>Task</span><input autoFocus required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <label className="f"><span>Task</span><input ref={focusOnDesktop} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { PlanState, Project } from '@/lib/plan';
 import {
   daysBetween, dueWords, lineLate, needsWhy, nextCheckpoint, ownerPending, sortedCheckpoints, stampRel, STATUSES, targetDate, totalPushes,
@@ -10,7 +10,10 @@ import {
 import { fmtDate } from '@/lib/time';
 import { Avatar } from './chips';
 import { ImportPanel, Inbox } from './Minutes';
+import { arrivals, focusOnDesktop } from './motion';
+import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { Modal } from './task-ui';
+import { notify } from './toast';
 
 // A partner plan: lines of work, each with an owner on our side, a partner person, a mode,
 // checkpoints and a status. Rows open for detail. Every change is one call to
@@ -34,6 +37,22 @@ function Stamp({ on, due, block }: { on: string; due: string | null; block?: boo
 
 const Pushed = ({ n, was }: { n: number; was: string | null }) =>
   n ? <span className="pushed" title={`Date moved later ${n} ${n === 1 ? 'time' : 'times'}`}>pushed {n}×{was ? ` · was ${fmtDate(was)}` : ''}</span> : null;
+
+// The short confirmation for each kind of change. Anything not listed stays quiet.
+function doneText(b: Record<string, unknown>): string | null {
+  switch (b.op) {
+    case 'status': return `Status set to ${WORD[String(b.status)] ?? String(b.status)}`;
+    case 'addLine': return 'Line added';
+    case 'editLine': return b.dateReason ? 'Date moved, line saved' : 'Line saved';
+    case 'removeLine': return 'Line removed';
+    case 'restoreLine': return 'Line restored';
+    case 'tickCheckpoint': return b.done ? 'Checkpoint ticked' : 'Checkpoint reopened';
+    case 'tickAction': return b.done ? 'Action ticked' : 'Action reopened';
+    case 'tickAsk': return b.done ? 'Ask ticked' : 'Ask reopened';
+    case 'removeAction': return 'Action removed';
+    default: return null;
+  }
+}
 
 export function PlanBoard({ project, state, people, names, meId, today }: {
   project: Project; state: PlanState; people: P[]; names: Record<string, string>; meId: string; today: string;
@@ -59,16 +78,39 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const [reviewing, setReviewing] = useState(false);
   const [removedOpen, setRemovedOpen] = useState(false);
 
+  // A line added in this tab rises in once: note that one is expected, then mark the new id on arrival.
+  const expectLine = useRef(false);
+  const knownLines = useRef<Set<string> | null>(null);
+  if (knownLines.current === null) knownLines.current = new Set(state.lines.map((l) => l.id));
+  for (const l of state.lines) {
+    if (!knownLines.current.has(l.id)) {
+      knownLines.current.add(l.id);
+      if (expectLine.current) { arrivals.add(l.id); expectLine.current = false; }
+    }
+  }
+
+  useEffect(() => {
+    if (!menu) return;
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false); };
+    const away = (e: PointerEvent) => { if (!(e.target as HTMLElement).closest('.menu-wrap')) setMenu(false); };
+    window.addEventListener('keydown', k);
+    window.addEventListener('pointerdown', away);
+    return () => { window.removeEventListener('keydown', k); window.removeEventListener('pointerdown', away); };
+  }, [menu]);
+
   async function op(body: Record<string, unknown>): Promise<boolean> {
     setBusy(true); setError(null);
+    if (body.op === 'addLine') expectLine.current = true;
     try {
       const res = await fetch(`/api/v1/projects/${project.id}/plan`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error?.message ?? `Request failed (${res.status}).`);
       if (data?.note) setNote(data.note);
+      const said = doneText(body);
+      if (said) notify(said);
       router.refresh();
       return true;
-    } catch (e) { setError((e as Error).message); return false; }
+    } catch (e) { expectLine.current = false; setError((e as Error).message); return false; }
     finally { setBusy(false); }
   }
 
@@ -105,7 +147,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   ];
   const visible = lines.filter((l) =>
     (pillar === 'All' || l.pillar === pillar) && (!tile || TILES.find((t) => t.key === tile)!.match(l)) && (!who || involves(l, who)) && (!q || matches(l, q)));
-  const emptyText = q ? `No lines match “${q}”.` : who ? `No lines for ${isPartner(who) ? who : names[who]} with these filters.` : tile ? 'No lines match that tile right now.' : 'No lines yet.';
+  const emptyReason = q ? `No lines match “${q}”.` : who ? `No lines for ${isPartner(who) ? who : names[who]} with these filters.` : tile ? 'No lines match that tile right now.' : '';
+  const emptyNode = emptyReason
+    ? <div className="empty-block"><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
+    : pillar !== 'All'
+      ? <div className="empty-block"><p>No lines in this pillar yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all pillars</button></div>
+      : <div className="empty-block"><p>No lines in this plan yet.</p><button className="btn" onClick={() => setAddOpen(true)}>Add a line</button></div>;
 
   const byNext = (a: PlanLine, b: PlanLine) => {
     const x = a.status === 'Done' ? '~' : nextCheckpoint(a)?.date ?? '9999';
@@ -128,7 +175,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     const nAct = openActions(l.id);
     return (
       <Fragment key={l.id}>
-        <tr className={`line-row${l.status === 'Done' ? ' done-row' : ''}${open ? ' is-open' : ''}`}
+        <MotionRow id={l.id} className={`line-row${l.status === 'Done' ? ' done-row' : ''}${open ? ' is-open' : ''}`}
           onClick={(e) => { if (!(e.target as HTMLElement).closest('input,select,textarea,a,button,label')) toggle(); }}>
           <td className="check-cell">
             <input type="checkbox" aria-label={`Mark line ${l.num} done`} checked={l.status === 'Done'} disabled={busy}
@@ -152,13 +199,13 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           <td className="by" data-label="Due">
             {l.status === 'Done'
               ? (l.completedOn ? <Stamp on={l.completedOn} due={targetDate(l)} block /> : <span className="dim">Done</span>)
-              : next ? <span className={`by-main${next.date < today ? ' overdue' : ''}`}>{fmtDate(next.date)}</span>
+              : next ? <span className={`by-main${next.date < today ? ' overdue' : ''}`}><MovedDate value={next.date} text={fmtDate(next.date)} fmt={fmtDate} /></span>
                 : <span className="dim small">{l.byLabel || 'No date'}</span>}
             {cps.length > 1 && <span className="ms-count" title="Checkpoints done"> · {cps.filter((c) => c.done).length}/{cps.length}</span>}
             {l.status !== 'Done' && totalPushes(l) > 0 && <div><Pushed n={totalPushes(l)} was={nm ? nm.origDueOn : l.origDueOn} /></div>}
           </td>
           <td>
-            <select className={`status-sel tone-${ST_TONE[l.status]}`} value={l.status} disabled={busy} aria-label={`Status of line ${l.num}`}
+            <StateSelect className={`status-sel tone-${ST_TONE[l.status]}`} value={l.status} disabled={busy} aria-label={`Status of line ${l.num}`}
               onChange={(e) => {
                 const s = e.target.value;
                 // Blocked, back to not started and reopening ask why; the rest is one click.
@@ -166,7 +213,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                 setAsking({ lineId: l.id, to: s });
               }}>
               {STATUSES.map((s) => <option key={s} value={s}>{WORD[s]}</option>)}
-            </select>
+            </StateSelect>
           </td>
           <td className="act-cell">
             <span className="row-actions">
@@ -174,7 +221,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
               <button className="row-btn del" title="Remove line" aria-label={`Remove line ${l.num}`} onClick={() => { setRemoving(l.id); setEditing(null); }}>✕</button>
             </span>
           </td>
-        </tr>
+        </MotionRow>
         {asking?.lineId === l.id && (
           <ReasonRow
             title={asking.to === 'Blocked' ? `Why is line ${l.num} blocked?` : `Line ${l.num}: changing to “${WORD[asking.to]}”`}
@@ -227,9 +274,9 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     );
   }
 
-  const table = (ls: PlanLine[], empty: string) => (
+  const table = (ls: PlanLine[], empty: React.ReactNode) => (
     <div className="card table-card plan-wrap">
-      <table className="plan">
+      <table className="plan sticky-head">
         <colgroup><col className="c-check" /><col className="c-num" /><col /><col className="c-owner" /><col className="c-partner" /><col className="c-due" /><col className="c-status" /><col className="c-act" /></colgroup>
         <thead>
           <tr>
@@ -244,10 +291,10 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   );
 
   let board: React.ReactNode;
-  if (view === 'date') board = table([...visible].sort(byNext), emptyText);
+  if (view === 'date') board = table([...visible].sort(byNext), emptyNode);
   else {
     const groups = project.pillars.map((p) => ({ p, ls: visible.filter((l) => l.pillar === p.key).sort((a, b) => a.num - b.num) })).filter((g) => g.ls.length);
-    board = groups.length ? groups.map((g) => <Fragment key={g.p.key}><h3 className="pillar">{g.p.label}</h3>{table(g.ls, '')}</Fragment>) : table([], emptyText);
+    board = groups.length ? groups.map((g) => <Fragment key={g.p.key}><h3 className="pillar">{g.p.label}</h3>{table(g.ls, '')}</Fragment>) : table([], emptyNode);
   }
 
   const other = actionsFor(null).filter((a) =>
@@ -467,7 +514,7 @@ function ReasonRow({ title, label, min, go, busy, onCancel, onGo }: {
           <div className="small"><b>{title}</b></div>
           <div className="row">
             <label className="f"><span>{label}</span>
-              <input autoFocus maxLength={280} value={r} onChange={(e) => setR(e.target.value)}
+              <input ref={focusOnDesktop} maxLength={280} value={r} onChange={(e) => setR(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && ok) onGo(r.trim()); if (e.key === 'Escape') onCancel(); }} />
             </label>
             <span className="row" style={{ flex: 'none' }}>
