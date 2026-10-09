@@ -122,7 +122,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             {ws === 'All' && t.workstream && <span className="ws-tag">{t.workstream}</span>}
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
-            {t.blocked && <div className="sub" style={{ color: 'var(--red)' }}>{t.blocked.onId ? `Waiting on ${names[t.blocked.onId]}: ` : 'Blocked: '}{t.blocked.ask}</div>}
+            {t.blocked && <div className="sub blocked-line">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId]}: ` : 'Blocked: '}{t.blocked.ask}</div>}
           </td>
           <td data-label="Owner"><Person name={names[t.ownerId] ?? t.ownerId} /></td>
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
@@ -135,8 +135,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             )}
           </td>
           <td>
-            <select className="status-sel" aria-label={`Status of “${t.title}”`} value={s} disabled={!can || busy || t.statusCategory === 'dropped'}
-              style={{ '--c': st.c } as React.CSSProperties} onChange={(e) => changeStatus(t, e.target.value as StatusKey)}>
+            <select className={`status-sel tone-${st.tone}`} aria-label={`Status of “${t.title}”`} value={s} disabled={!can || busy || t.statusCategory === 'dropped'}
+              onChange={(e) => changeStatus(t, e.target.value as StatusKey)}>
               {PICK.map((k) => <option key={k} value={k}>{STATUS[k].word}</option>)}
             </select>
             <div><FlagChip t={t} today={today} /></div>

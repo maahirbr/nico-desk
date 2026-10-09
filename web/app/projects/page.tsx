@@ -16,8 +16,8 @@ export default async function Projects() {
   const t = today();
   const sorted = [...projects].sort((a, b) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999'));
   const members = Object.fromEntries(await Promise.all(projects.map(async (p) => [p.id, await projectMembers(d, p.id)] as const)));
-  const STATUS: Record<string, { word: string; c: string }> = {
-    on_track: { word: 'On track', c: 'var(--green)' }, at_risk: { word: 'At risk', c: 'var(--amber)' }, off_track: { word: 'Off track', c: 'var(--red)' },
+  const STATUS: Record<string, { word: string; tone: string }> = {
+    on_track: { word: 'On track', tone: 'ok' }, at_risk: { word: 'At risk', tone: 'risk' }, off_track: { word: 'Off track', tone: 'late' },
   };
   return (
     <div className="calm">
@@ -36,7 +36,7 @@ export default async function Projects() {
             <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
               <div className="pcard-top">
                 <span className="kind-tag">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>
-                <span className="st" style={{ '--c': st.c } as React.CSSProperties}>{st.word}</span>
+                <span className={`st tone-${st.tone}`}>{st.word}</span>
               </div>
               <h2 className="pcard-name">{p.name}</h2>
               {p.eyebrow && <div className="pcard-eyebrow">{p.eyebrow}</div>}

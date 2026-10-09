@@ -20,8 +20,8 @@ export function ProjectHeader({ project: p, members, names, people, meId, canEdi
   return (
     <header className="phead">
       <div className="phead-main">
-        {p.eyebrow && <div className="eyebrow">{p.eyebrow}</div>}
         <h1>{p.name}</h1>
+        {p.eyebrow && <div className="eyebrow">{p.eyebrow}</div>}
         <p className="phead-meta">
           {p.launchOn && <span><b>{label}</b> {fmtDate(p.launchOn)} <span className={cd?.past ? 'late-text' : 'dim'}>· {left}</span></span>}
           {p.phase && <span><b>Phase</b> {p.phase}</span>}

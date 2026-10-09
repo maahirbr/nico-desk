@@ -15,7 +15,8 @@ export function SearchView({ initial }: { initial: string }) {
   const [sel, setSel] = useState(0);
   const input = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { input.current?.focus(); }, []);
+  // Focus only when the page opens empty. After a search from the top bar, the keyboard stays closed.
+  useEffect(() => { if (!initial.trim()) input.current?.focus(); }, [initial]);
   useEffect(() => {
     const term = q.trim();
     if (!term) { setHits(null); return; }

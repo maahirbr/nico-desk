@@ -17,6 +17,7 @@
   --sunk: #f4f5f7;
   --pill: #eef0f3;
   --hairline: #e6e8ec;
+  --line-strong: #c9ced6;
   --late: #c3352b;
   --late-soft: #fcebea;
   --off: #93560a;
@@ -37,6 +38,9 @@
   --type-meta: 400 14px/1.4 var(--font-sans);
   --type-state: 500 13px/1.3 var(--font-sans);
   --type-button: 500 14px/1.2 var(--font-sans);
+  --type-heading: 600 16px/1.3 var(--font-sans);
+  --type-small: 400 13px/1.4 var(--font-sans);
+  --type-input: 400 16px/1.4 var(--font-sans);
   --track-date: -0.02em;
   --track-title: -0.01em;
   --features-date: "tnum" 1;
@@ -83,6 +87,23 @@
   --touch-min: 44px;
   --commit-bar-height: 72px;
   --rule: 1px;
+  --side-width: 232px;
+  --mark-size-lg: 36px;
+  --check-size: 18px;
+  --bar-thin: 4px;
+  --chevron: 5px;
+  --icon-size: 17px;
+  --calm-max: 980px;
+  --calm-narrow: 640px;
+  --solo-max: 480px;
+  --col-owner: 120px;
+  --col-status: 136px;
+  --label-col: 120px;
+  --menu-min: 220px;
+  --modal-width: 560px;
+  --modal-wide: 760px;
+  --drawer-width: 480px;
+  --search-max: 560px;
 
   /* Focus ring */
   --ring-width: 2px;
@@ -102,6 +123,7 @@
   --rise: 8px;
   --slide: 6px;
   --state-scale-from: 0.96;
+  --press-scale: 0.98;
   /* How long the confirmation stays. A wait, not a movement, so reduced motion keeps it. */
   --dwell-confirm: 4s;
 }
@@ -128,6 +150,7 @@
     --sunk: #171a1f;
     --pill: #22262d;
     --hairline: #262a31;
+    --line-strong: #3a3f48;
     --late: #ff8a80;
     --late-soft: #3a1a18;
     --off: #f2b866;
@@ -150,6 +173,7 @@
   --sunk: #171a1f;
   --pill: #22262d;
   --hairline: #262a31;
+  --line-strong: #3a3f48;
   --late: #ff8a80;
   --late-soft: #3a1a18;
   --off: #f2b866;

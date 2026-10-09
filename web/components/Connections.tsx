@@ -27,7 +27,7 @@ export function Connections({ status: initial, canManage }: { status: Status; ca
       <header className="page-head"><div><h1>Connections</h1><p className="summary">Bring meeting notes in from the tools you already use.</p></div></header>
       {(['granola', 'fireflies'] as const).map((p) => <Card key={p} p={p} s={status[p]} canManage={canManage} onChange={setStatus} />)}
       <section className="card conn">
-        <div className="conn-head"><h2>Wispr Flow</h2><span className="st plain">Paste only</span></div>
+        <div className="conn-head"><h2>Wispr Flow</h2><span className="st tone-quiet">Paste only</span></div>
         <p className="small dim" style={{ margin: 0 }}>
           Wispr Flow doesn’t offer an API for apps like this one; it only connects to AI assistants such as Claude. Copy a meeting’s
           summary from Wispr Flow and use <b>Import minutes → Paste</b> on any project.
@@ -61,7 +61,7 @@ function Card({ p, s, canManage, onChange }: { p: 'granola' | 'fireflies'; s: St
     <section className="card conn">
       <div className="conn-head">
         <h2>{info.name}</h2>
-        {s.connected ? <span className="st" style={{ '--c': 'var(--green)' } as React.CSSProperties}>Connected · key {s.hint}</span> : <span className="st plain">Not connected</span>}
+        {s.connected ? <span className="st tone-ok">Connected · key {s.hint}</span> : <span className="st tone-quiet">Not connected</span>}
       </div>
       <p className="small dim" style={{ margin: 0 }}>{info.what}</p>
       {canManage ? (

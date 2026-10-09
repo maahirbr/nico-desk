@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
-import { Avatar } from './chips';
+import { Avatar, type Tone } from './chips';
 import { logLine } from './logText';
+import { arrivals, usePreviousWhileChanging } from './motion';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -20,12 +21,12 @@ export type Opt = { id: string; name: string };
 
 export type StatusKey = 'todo' | 'doing' | 'blocked' | 'done' | 'dropped';
 export const PICK: StatusKey[] = ['todo', 'doing', 'blocked', 'done', 'dropped'];
-export const STATUS: Record<StatusKey, { word: string; c: string }> = {
-  todo: { word: 'Not started', c: 'var(--black)' },
-  doing: { word: 'In progress', c: 'var(--amber)' },
-  blocked: { word: 'Blocked', c: 'var(--red)' },
-  done: { word: 'Done', c: 'var(--purple)' },
-  dropped: { word: 'Dropped', c: 'var(--muted)' },
+export const STATUS: Record<StatusKey, { word: string; tone: Tone }> = {
+  todo: { word: 'Not started', tone: 'idle' },
+  doing: { word: 'In progress', tone: 'active' },
+  blocked: { word: 'Blocked', tone: 'blocked' },
+  done: { word: 'Done', tone: 'done' },
+  dropped: { word: 'Dropped', tone: 'quiet' },
 };
 
 export function statusKey(t: Task): StatusKey {
@@ -40,35 +41,36 @@ export function statusKey(t: Task): StatusKey {
 export const RISK_DAYS = 2;
 const daysTo = (d: string, today: string) => Math.round((Date.parse(`${d}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400000);
 
-export type Flag = { key: 'late' | 'at_risk' | 'ahead' | 'on_time'; word: string; c: string; why: string };
+export type Flag = { key: 'late' | 'at_risk' | 'ahead' | 'on_time'; word: string; tone: Tone; why: string };
 export function flagOf(t: Task, today: string): Flag | null {
   if (t.statusCategory === 'done') {
-    if (t.outcome === 'ahead') return { key: 'ahead', word: 'Ahead', c: 'var(--green)', why: `Done before the first date, ${fmtDate(t.firstDueOn)}.` };
-    if (t.outcome === 'late') return { key: 'late', word: 'Late', c: 'var(--red)', why: `Done after the first date, ${fmtDate(t.firstDueOn)}.` };
-    if (t.outcome === 'on_time') return { key: 'on_time', word: 'On time', c: 'var(--green)', why: `Done by the first date, ${fmtDate(t.firstDueOn)}.` };
+    if (t.outcome === 'ahead') return { key: 'ahead', word: 'Ahead', tone: 'ok', why: `Done before the first date, ${fmtDate(t.firstDueOn)}.` };
+    if (t.outcome === 'late') return { key: 'late', word: 'Late', tone: 'late', why: `Done after the first date, ${fmtDate(t.firstDueOn)}.` };
+    if (t.outcome === 'on_time') return { key: 'on_time', word: 'On time', tone: 'ok', why: `Done by the first date, ${fmtDate(t.firstDueOn)}.` };
     return null;
   }
   if (t.statusCategory !== 'open') return null;
   const n = daysTo(t.dueOn, today);
-  if (n < 0) return { key: 'late', word: 'Late', c: 'var(--red)', why: 'The date has passed and it is not done.' };
+  if (n < 0) return { key: 'late', word: 'Late', tone: 'late', why: 'The date has passed and it is not done.' };
   const k = statusKey(t);
   if (n <= RISK_DAYS && (k === 'todo' || k === 'blocked')) {
-    return { key: 'at_risk', word: 'At risk', c: 'var(--amber)', why: `Due ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`} and ${k === 'blocked' ? 'still blocked' : 'not started'}.` };
+    return { key: 'at_risk', word: 'At risk', tone: 'risk', why: `Due ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`} and ${k === 'blocked' ? 'still blocked' : 'not started'}.` };
   }
   return null;
 }
 
-export function FlagChip({ t, today }: { t: Task; today: string }) {
+// hideLate: the row already says "3 days late" in red, so it does not say Late a second time.
+export function FlagChip({ t, today, hideLate = false }: { t: Task; today: string; hideLate?: boolean }) {
   const f = flagOf(t, today);
-  if (!f) return null;
-  return <span className={`flag flag-${f.key}`} style={{ '--c': f.c } as React.CSSProperties} title={f.why}>{f.word}</span>;
+  if (!f || (hideLate && f.key === 'late')) return null;
+  return <span className={`flag tone-${f.tone}`} title={f.why}>{f.word}</span>;
 }
 
 export function StatusLabel({ t, today }: { t: Task; today?: string }) {
   const s = STATUS[statusKey(t)];
   return (
     <span className="st-wrap">
-      <span className="st" style={{ '--c': s.c } as React.CSSProperties}>{s.word}</span>
+      <span className={`st tone-${s.tone}`}>{s.word}</span>
       {today && <FlagChip t={t} today={today} />}
     </span>
   );
@@ -127,8 +129,14 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
   const [err, setErr] = useState<string | null>(null);
   const due = dueText(t, today);
   const closed = t.statusCategory !== 'open';
+  const key = statusKey(t);
+  // Motion: a line made in this tab rises in once; a moved date strikes the old one and slides the new
+  // one in; a set state crossfades its pill.
+  const [arrive] = useState(() => arrivals.delete(t.id));
+  const oldDate = usePreviousWhileChanging(t.dueOn, 360);
+  const stateFrom = usePreviousWhileChanging(key, 140);
   return (
-    <div className={`trow${closed || ticked ? ' is-closed' : ''}`}>
+    <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}`}>
       <span className="trow-check">
         {!closed && canTick && (
           <input type="checkbox" aria-label={`Mark “${t.title}” done`} checked={ticked} disabled={ticked}
@@ -146,12 +154,13 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
       </button>
       {owner !== undefined && <span className="trow-owner"><Avatar name={owner} />{owner.split(' ')[0]}</span>}
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
-        {due.text}{t.dateMoves > 0 && !closed && <span className="moved" aria-label={`moved ${t.dateMoves} times`}> ↻{t.dateMoves}</span>}
+        {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
+        <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
+        {t.dateMoves > 0 && !closed && <span className="moved" aria-label={`moved ${t.dateMoves} times`}>moved {t.dateMoves}×</span>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
-          <select className="st-pick" value={statusKey(t)} aria-label={`Status of “${t.title}”`} disabled={ticked}
-            style={{ '--c': STATUS[statusKey(t)].c } as React.CSSProperties}
+          <select className={`st-pick tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`} value={key} aria-label={`Status of “${t.title}”`} disabled={ticked}
             onChange={async (e) => {
               const s = e.target.value as StatusKey;
               if (formFor(t, s)) return onStatus(s);
@@ -162,8 +171,8 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
             }}>
             {PICK.map((s) => <option key={s} value={s}>{STATUS[s].word}</option>)}
           </select>
-        ) : <span className="st" style={{ '--c': STATUS[statusKey(t)].c } as React.CSSProperties}>{STATUS[statusKey(t)].word}</span>}
-        <FlagChip t={t} today={today} />
+        ) : <span className={`st tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}>{STATUS[key].word}</span>}
+        <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
     </div>
   );
@@ -278,7 +287,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             {open ? (
               <div className="status-picker" role="group" aria-label="Status">
                 {PICK.map((s) => (
-                  <button key={s} aria-pressed={key === s} disabled={!can || busy} style={{ '--c': STATUS[s].c } as React.CSSProperties} onClick={() => setStatus(s)}>
+                  <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={!can || busy} onClick={() => setStatus(s)}>
                     {STATUS[s].word}
                   </button>
                 ))}
@@ -323,7 +332,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {t.blocked && (
               <div className="ask">
-                <span className="caps">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId] ?? 'someone'}` : 'Blocked'}</span>
+                <span className="ask-label">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId] ?? 'someone'}` : 'Blocked'}</span>
                 <div>{t.blocked.ask}</div>
               </div>
             )}
@@ -406,7 +415,8 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     <form className="stack" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr(null);
       try {
-        await api('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
+        const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
+        if (made?.id) arrivals.add(made.id);
         router.refresh(); onDone();
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>

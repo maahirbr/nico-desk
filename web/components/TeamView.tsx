@@ -108,7 +108,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         if (!items.length) return null;
         return (
           <section key={k} className="group">
-            <h2><span className="st" style={{ '--c': STATUS[k].c } as React.CSSProperties}>{STATUS[k].word}</span> <span className="n">{items.length}</span></h2>
+            <h2><span className={`st tone-${STATUS[k].tone}`}>{STATUS[k].word}</span> <span className="n">{items.length}</span></h2>
             <div className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</div>
           </section>
         );
