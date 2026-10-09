@@ -21,6 +21,8 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   `/team/ledger` (printable), `/team/week`, `/team/by-status`, `/team/load`, `/notes/:id` (the
   drafting table), `/find` (find, ask or commit from one field), `/tasks/:id`, `/drafts`,
   `/sends`. `docs/DESIGN-HANDOUT.md` is the design brief these screens were built from.
+- `DESIGN.md` (repo root) is the visual system for the v2 redesign and outranks everything
+  visual, the handout included. `docs/design/moods.html` holds the three mood sketches.
 - Local-only, never committed: `SPEC.local.md` (merged spec), `web/UI-REFERENCE.local.md` (sheet
   tokens and rules, cited to the OKR page repo), `web/public/fonts/` (licensed Euclid Flex),
   `web/.data/`, `.claude/launch.json`. All are in `.git/info/exclude`.
@@ -103,6 +105,11 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   context (two teams, four projects, 39 tasks); the on-time record is unchanged at 28/2/16/6/4.
   Smoke grows from 20 to 29 items. The meeting evals keep their own fictional brand. Rollback:
   `git revert` this commit, then delete `web/.data/pglite` and reseed.
+- 2026-10-09 · Opus 5.5 · Mood A (plain and familiar: Geist, white, one blue, pills) picked for
+  the redesign, since the repo owner had not replied to the mood page and asked me to pick. It
+  reads as an ordinary work tool on first use, which is the bar. Mood B stays a candidate for
+  the lead and founder pages if A reads too soft there. `DESIGN.md` now outranks the handout on
+  anything visual. Rollback: `git revert` this commit and pick again from `docs/design/moods.html`.
 
 ## VERIFY
 
