@@ -42,7 +42,6 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds,
             <span className="dim"> · {fmtDate(today)}</span>
           </p>
         </div>
-        <button className="btn" onClick={() => setAdding(true)}>+ New task</button>
       </header>
 
       {waiting.length > 0 && (
@@ -60,7 +59,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds,
       {groups.length === 0 && (
         <div className="empty-state">
           <p>You’re clear. Nothing open on your side.</p>
-          <button className="btn ghost" onClick={() => setAdding(true)}>Add a task</button>
+          <button className="btn" onClick={() => setAdding(true)}>Add a task</button>
         </div>
       )}
 

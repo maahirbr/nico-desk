@@ -105,6 +105,26 @@
   --drawer-width: 480px;
   --search-max: 560px;
 
+  /* Skin hooks. Skin A keeps these as they are; skins B and C change some (see the skin blocks below). */
+  --bar: var(--canvas);
+  --avatar-bg: var(--pill);
+  --avatar-you-ring: 0 0 0 0 transparent;
+  --pill-ring: 0 0 0 0 transparent;
+  --callout-bg: var(--primary-soft);
+  --callout-line: transparent;
+  --card-shadow: none;
+  --row-pad: var(--space-sm);
+  --font-date: var(--font-sans);
+
+  /* Placeholder shapes while a page loads: a still fill, never a shimmer */
+  --skeleton-fill: var(--sunk);
+
+  /* The small confirmation after an action: ink on canvas, so it reads in every skin and in night */
+  --toast-bg: var(--ink);
+  --toast-ink: var(--canvas);
+  --toast-width: 360px;
+  --toast-offset: var(--space-lg);
+
   /* Focus ring */
   --ring-width: 2px;
   --ring-offset: 2px;
@@ -120,7 +140,11 @@
   --dur-strike: 160ms;
   --dur-slide: 200ms;
   --dur-state: 120ms;
+  --dur-enter: 140ms;
+  --dur-panel: 200ms;
+  --dur-toast: 160ms;
   --rise: 8px;
+  --panel-shift: 32px;
   --slide: 6px;
   --state-scale-from: 0.96;
   --press-scale: 0.98;
@@ -182,6 +206,184 @@
   --scrim: rgb(0 0 0 / 0.6);
 }
 
+/* ---------- Skins. Three moods from docs/design/moods.html, picked in the shell, kept in the nd_skin cookie
+   and set on <html data-skin> by the server. A is the default and is the values above, so it has no block.
+   Each skin changes colour, face, corners and spacing and nothing else. Day is the skin block itself;
+   night repeats the colours under the same two selectors the base night uses. */
+
+/* B. Calm and precise: IBM Plex, a teal, square corners, outlined states */
+:root[data-skin="b"] {
+  --font-sans: var(--font-plex-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-date: var(--font-mono);
+  --type-date-xl: 500 22px/1.05 var(--font-date);
+  --type-date-lg: 500 17px/1.05 var(--font-date);
+  --type-date-phone: 500 30px/1.05 var(--font-date);
+  --type-line: 500 16px/1.3 var(--font-sans);
+  --type-body: 400 15px/1.3 var(--font-sans);
+  --type-meta: 400 14px/1.3 var(--font-sans);
+  --type-small: 400 13px/1.3 var(--font-sans);
+  --radius-control: 3px;
+  --radius-card: 3px;
+  --radius-pill: 3px;
+  --row-pad: 8px;
+  --shadow-1: none;
+  --card-shadow: none;
+  --pill-ring: inset 0 0 0 1px currentColor;
+  --avatar-bg: var(--sunk);
+  --avatar-you-ring: inset 0 0 0 1px var(--primary);
+  --callout-bg: var(--surface);
+  --callout-line: var(--primary);
+  --primary: #0a736e;
+  --on-primary: #ffffff;
+  --primary-soft: transparent;
+  --ink: #1a1d22;
+  --ink-2: #565d68;
+  --ink-3: #626975;
+  --canvas: #f4f5f7;
+  --surface: #ffffff;
+  --sunk: #eceef1;
+  --pill: transparent;
+  --hairline: #d9dde3;
+  --line-strong: #b6bcc6;
+  --late: #b42318;
+  --late-soft: transparent;
+  --off: #8a5300;
+  --off-soft: transparent;
+  --bar: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="b"]:not([data-theme="light"]) {
+    --primary: #4fc2bb;
+    --on-primary: #0b1213;
+    --primary-soft: transparent;
+    --ink: #e7eaee;
+    --ink-2: #a2a9b3;
+    --ink-3: #8c939e;
+    --canvas: #121417;
+    --surface: #181b1f;
+    --sunk: #1e2226;
+    --pill: transparent;
+    --hairline: #2a2f36;
+    --line-strong: #3d434c;
+    --late: #ff7b70;
+    --late-soft: transparent;
+    --off: #e0b060;
+    --off-soft: transparent;
+    --bar: #181b1f;
+    --shadow-1: none;
+    --scrim: rgb(0 0 0 / 0.6);
+  }
+}
+:root[data-skin="b"][data-theme="dark"] {
+  --primary: #4fc2bb;
+  --on-primary: #0b1213;
+  --primary-soft: transparent;
+  --ink: #e7eaee;
+  --ink-2: #a2a9b3;
+  --ink-3: #8c939e;
+  --canvas: #121417;
+  --surface: #181b1f;
+  --sunk: #1e2226;
+  --pill: transparent;
+  --hairline: #2a2f36;
+  --line-strong: #3d434c;
+  --late: #ff7b70;
+  --late-soft: transparent;
+  --off: #e0b060;
+  --off-soft: transparent;
+  --bar: #181b1f;
+  --shadow-1: none;
+  --scrim: rgb(0 0 0 / 0.6);
+}
+
+/* C. Soft and warm: Source Sans 3, a pine green, warm paper, more air */
+:root[data-skin="c"] {
+  --font-sans: var(--font-source-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-date: var(--font-sans);
+  --type-date-xl: 600 28px/1.05 var(--font-date);
+  --type-date-lg: 600 21px/1.05 var(--font-date);
+  --type-date-phone: 600 34px/1.05 var(--font-date);
+  --type-line: 500 16px/1.5 var(--font-sans);
+  --type-body: 400 15px/1.55 var(--font-sans);
+  --type-meta: 400 14px/1.5 var(--font-sans);
+  --type-small: 400 13px/1.5 var(--font-sans);
+  --radius-control: 6px;
+  --radius-card: 6px;
+  --radius-pill: 6px;
+  --row-pad: 15px;
+  --card-shadow: 0 1px 3px rgb(31 36 48 / 0.07);
+  --shadow-1: 0 1px 3px rgb(31 36 48 / 0.07), 0 8px 24px rgb(31 36 48 / 0.08);
+  --primary: #2d6a55;
+  --on-primary: #ffffff;
+  --primary-soft: #e4f0ea;
+  --ink: #1f2430;
+  --ink-2: #545a68;
+  --ink-3: #6e6a63;
+  --canvas: #faf8f5;
+  --surface: #ffffff;
+  --sunk: #f2eee8;
+  --pill: #f0ece6;
+  --hairline: #e8e2da;
+  --line-strong: #cfc8bd;
+  --late: #b3261e;
+  --late-soft: #fbe9e6;
+  --off: #8c5200;
+  --off-soft: #fcf0dc;
+  --bar: var(--canvas);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="c"]:not([data-theme="light"]) {
+    --primary: #7cc3a6;
+    --on-primary: #0f1714;
+    --primary-soft: #1f3029;
+    --ink: #f1ede6;
+    --ink-2: #bdb7ac;
+    --ink-3: #a7a196;
+    --canvas: #1a1917;
+    --surface: #22211e;
+    --sunk: #22211e;
+    --pill: #2b2925;
+    --hairline: #33302b;
+    --line-strong: #46423b;
+    --late: #f28b7d;
+    --late-soft: #3a201c;
+    --off: #e6b86a;
+    --off-soft: #33281a;
+    --bar: var(--canvas);
+    --shadow-1: none;
+    --card-shadow: none;
+    --scrim: rgb(0 0 0 / 0.6);
+  }
+}
+:root[data-skin="c"][data-theme="dark"] {
+  --primary: #7cc3a6;
+  --on-primary: #0f1714;
+  --primary-soft: #1f3029;
+  --ink: #f1ede6;
+  --ink-2: #bdb7ac;
+  --ink-3: #a7a196;
+  --canvas: #1a1917;
+  --surface: #22211e;
+  --sunk: #22211e;
+  --pill: #2b2925;
+  --hairline: #33302b;
+  --line-strong: #46423b;
+  --late: #f28b7d;
+  --late-soft: #3a201c;
+  --off: #e6b86a;
+  --off-soft: #33281a;
+  --bar: var(--canvas);
+  --shadow-1: none;
+  --card-shadow: none;
+  --scrim: rgb(0 0 0 / 0.6);
+}
+
+/* Phones: controls grow to 40px so a thumb can hit them */
+@media (max-width: 860px) {
+  :root { --button-height: 40px; }
+}
+
 /* Reduced motion: every movement becomes an instant change */
 @media (prefers-reduced-motion: reduce) {
   :root {
@@ -189,5 +391,8 @@
     --dur-strike: 0ms;
     --dur-slide: 0ms;
     --dur-state: 0ms;
+    --dur-enter: 0ms;
+    --dur-panel: 0ms;
+    --dur-toast: 0ms;
   }
 }

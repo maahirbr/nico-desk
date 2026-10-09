@@ -4,9 +4,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { SearchHit } from '@/lib/search';
 import { fmtDate } from '@/lib/time';
+import { isTyping } from './keys';
 
 // The search bar at the top middle of every page. Results drop down as you type; Enter opens the
-// highlighted one, or the full results page. Ctrl/⌘+K jumps here from anywhere.
+// highlighted one, or the full results page. / or Ctrl/⌘+K jumps here from anywhere.
 
 const KIND: Record<SearchHit['kind'], string> = { project: 'Project', person: 'Person', task: 'Task', line: 'Plan line' };
 
@@ -23,7 +24,10 @@ export function TopSearch() {
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); box.current?.focus(); box.current?.select(); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); box.current?.focus(); box.current?.select(); return; }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target) && !document.querySelector('[aria-modal="true"]')) {
+        e.preventDefault(); box.current?.focus(); box.current?.select();
+      }
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);

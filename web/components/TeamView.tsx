@@ -70,8 +70,8 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
       </div>
 
-      {needle && shownPeople.length === 0 && <div className="empty-state"><p>No one matches “{q.trim()}”.</p></div>}
-      {!needle && view === 'status' && list.length === 0 && <div className="empty-state"><p>Nothing due this week.</p></div>}
+      {needle && shownPeople.length === 0 && <div className="empty-state"><p>No one matches “{q.trim()}”.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>}
+      {!needle && view === 'status' && list.length === 0 && <div className="empty-state"><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
 
       {view === 'person' ? shownPeople.map((p) => {
         const o = list.filter((t) => t.ownerId === p.id && t.statusCategory === 'open');

@@ -8,7 +8,10 @@ import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Person } from './chips';
 import { ImportPanel, Inbox } from './Minutes';
+import { arrivals, focusOnDesktop } from './motion';
+import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, statusKey, TaskDrawer, type StatusKey } from './task-ui';
+import { notify } from './toast';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
 // table where each task shows what it is about, its owner, date and status. Status changes in the
@@ -81,9 +84,9 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const involved = people.filter((p) => tasks.some((t) => t.ownerId === p.id));
   const filtered = !!(tile || who || ws !== 'All');
 
-  async function run(fn: () => Promise<unknown>) {
+  async function run(fn: () => Promise<unknown>, done?: string) {
     setBusy(true); setError(null);
-    try { await fn(); setPrompt(null); setEditing(null); router.refresh(); }
+    try { await fn(); if (done) notify(done); setPrompt(null); setEditing(null); router.refresh(); }
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -96,7 +99,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     if (f === 'blocked') return setPrompt({ kind: 'blocked', t });
     if (f === 'drop') return setPrompt({ kind: 'remove', t });
     if (f === 'status') return setPrompt({ kind: 'status', t });
-    await run(() => quickMove(t, s));
+    await run(() => quickMove(t, s), `Status set to ${STATUS[s].word}`);
   }
 
   const row = (t: Task) => {
@@ -105,14 +108,14 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         let v = t.version;
         if (due) v = (await call(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, ...due })).version;
         if (Object.keys(body).length) await call(`/tasks/${t.id}`, 'PATCH', { version: v, ...body });
-      })} />;
+      }, due ? `Date moved to ${fmtDate(due.newDueOn)}` : 'Changes saved')} />;
     const s = statusKey(t);
     const st = STATUS[s];
     const can = may(t);
     const p = prompt && prompt.t.id === t.id ? prompt : null;
     return (
       <Fragment key={t.id}>
-        <tr className={t.statusCategory === 'open' ? '' : 'done-row'}>
+        <MotionRow id={t.id} className={t.statusCategory === 'open' ? '' : 'done-row'}>
           <td className="check-cell">
             <input type="checkbox" aria-label={`Mark “${t.title}” done`} checked={t.statusCategory === 'done'} disabled={!can || busy || t.statusCategory === 'dropped'}
               onChange={(e) => (e.target.checked ? changeStatus(t, 'done') : setPrompt({ kind: 'reopen', t }))} />
@@ -126,7 +129,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </td>
           <td data-label="Owner"><Person name={names[t.ownerId] ?? t.ownerId} /></td>
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
-            {fmtDate(t.dueOn)}
+            <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
             {t.dateMoves > 0 && t.statusCategory === 'open' && (
               <div>
                 <span className="pushed">pushed {t.dateMoves}×</span>
@@ -135,10 +138,10 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             )}
           </td>
           <td>
-            <select className={`status-sel tone-${st.tone}`} aria-label={`Status of “${t.title}”`} value={s} disabled={!can || busy || t.statusCategory === 'dropped'}
+            <StateSelect className={`status-sel tone-${st.tone}`} aria-label={`Status of “${t.title}”`} value={s} disabled={!can || busy || t.statusCategory === 'dropped'}
               onChange={(e) => changeStatus(t, e.target.value as StatusKey)}>
               {PICK.map((k) => <option key={k} value={k}>{STATUS[k].word}</option>)}
-            </select>
+            </StateSelect>
             <div><FlagChip t={t} today={today} /></div>
           </td>
           <td className="act-cell">
@@ -149,21 +152,21 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
               </span>
             )}
           </td>
-        </tr>
+        </MotionRow>
         {p && <PromptRow p={p} people={people.filter((x) => x.id !== t.ownerId)} today={today} busy={busy} onCancel={() => setPrompt(null)}
           onGo={(v) => run(async () => {
             if (p.kind === 'status') return quickMove(t, 'todo', v.text);
             if (p.kind === 'blocked') return call(`/tasks/${t.id}/block`, 'POST', { version: t.version, onId: v.person || null, ask: v.text });
             if (p.kind === 'remove') return call(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'dropped', reason: v.text });
             return call(`/tasks/${t.id}/reopen`, 'POST', { version: t.version, reason: v.text });
-          })} />}
+          }, { status: 'Status set to Not started', blocked: 'Marked blocked', remove: 'Task dropped', reopen: 'Task reopened' }[p.kind])} />}
       </Fragment>
     );
   };
 
-  const table = (rows: Task[], empty: string) => (
+  const table = (rows: Task[], empty: React.ReactNode) => (
     <div className="card table-card">
-      <table className="stacked board">
+      <table className="stacked board sticky-head">
         <thead><tr><th aria-label="Done" /><th>Task</th><th>Owner</th><th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
         <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={6} className="empty-cell">{empty}</td></tr>}</tbody>
       </table>
@@ -219,7 +222,9 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </aside>
         )}
         <div style={{ minWidth: 0 }}>
-          {table(openRows, filtered ? 'No open tasks match these filters.' : 'No open tasks yet. Use + Add task.')}
+          {table(openRows, filtered
+            ? <div className="empty-block"><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
+            : <div className="empty-block"><p>No tasks in this project yet.</p><button className="btn" onClick={() => setAddOpen(true)}>Add a task</button></div>)}
           {closedRows.length > 0 && tile !== 'done' && (
             <>
               <button className="log-toggle small-toggle" style={{ marginTop: 22 }} aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
@@ -277,7 +282,7 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
           <div className="small">{label}</div>
           <div className="row">
             <label className="f"><span>{p.kind === 'blocked' ? 'Block reason' : 'Reason'} (10 to 280 characters)</span>
-              <input autoFocus maxLength={280} value={text} onChange={(e) => setText(e.target.value)}
+              <input ref={focusOnDesktop} maxLength={280} value={text} onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && ok) onGo({ text, date, person }); if (e.key === 'Escape') onCancel(); }} />
             </label>
             {p.kind === 'blocked' && (
@@ -361,11 +366,13 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     <form className="card add-form" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError(null);
       try {
-        await call('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null });
+        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null });
+        if (made?.id) arrivals.add(made.id);
+        notify('Task added');
         setF(blank); router.refresh(); onDone();
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     }}>
-      <label className="f"><span>Task</span><input autoFocus required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <label className="f"><span>Task</span><input ref={focusOnDesktop} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
