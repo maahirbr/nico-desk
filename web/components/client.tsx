@@ -101,7 +101,7 @@ export function SwitchToOwner({ id, viewing }: { id: string; viewing: string }) 
   return (
     <div className="viewing-as">
       <span>Viewing as {viewing.split(' ')[0]}</span>
-      <button className="act" onClick={async () => { const r = await api('/session', 'POST', { personId: id }); if (r.ok) { router.push('/me'); router.refresh(); } }}>
+      <button className="act" onClick={async () => { const r = await api('/session', 'POST', { personId: id }); if (r.ok) { router.push('/'); router.refresh(); } }}>
         Switch back to you
       </button>
     </div>
@@ -120,7 +120,7 @@ export function SignInList({ people }: { people: { id: string; name: string; rol
               onClick={async () => {
                 const r = await api('/session', 'POST', { personId: p.id });
                 if (!r.ok) return setError(r.error.message);
-                router.push('/me');
+                router.push('/');
                 router.refresh();
               }}
             >

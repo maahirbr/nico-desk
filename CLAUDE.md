@@ -78,4 +78,4 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 python3 -I evals/meetings/check.py
 ```
 
-expects `OK: 20 cases`. In `web/`: `npm test` expects 41 passed, `npm run typecheck` and `npm run build` succeed. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
+expects `OK: 20 cases`. In `web/`: `npm test` expects 56 passed, `npm run typecheck` and `npm run build` succeed. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

@@ -14,7 +14,7 @@
     },
     "actor_id": "per_ada",
     "origin": "app",
-    "at": "2026-09-11T04:30:00Z"
+    "at": "2026-08-31T04:30:00Z"
   },
   {
     "id": "evt_0002",
@@ -31,7 +31,7 @@
     },
     "actor_id": "per_cy",
     "origin": "app",
-    "at": "2026-09-11T04:40:00Z"
+    "at": "2026-08-31T04:40:00Z"
   },
   {
     "id": "evt_0003",
@@ -48,10 +48,712 @@
     },
     "actor_id": "per_fay",
     "origin": "app",
-    "at": "2026-09-11T04:50:00Z"
+    "at": "2026-08-31T04:50:00Z"
   },
   {
     "id": "evt_0004",
+    "entity_type": "task",
+    "entity_id": "tsk_046",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Agree the festive page brief",
+      "owner_id": "per_ada",
+      "project_id": "prj_landing",
+      "due_on": "2026-09-02",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-08-31T05:00:00Z"
+  },
+  {
+    "id": "evt_0005",
+    "entity_type": "task",
+    "entity_id": "tsk_047",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Shortlist photographers",
+      "owner_id": "per_cy",
+      "project_id": "prj_shoot",
+      "due_on": "2026-09-03",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-08-31T05:05:00Z"
+  },
+  {
+    "id": "evt_0006",
+    "entity_type": "task",
+    "entity_id": "tsk_048",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Mood board for the festive shoot",
+      "owner_id": "per_dee",
+      "project_id": "prj_shoot",
+      "due_on": "2026-09-02",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-08-31T05:10:00Z"
+  },
+  {
+    "id": "evt_0007",
+    "entity_type": "task",
+    "entity_id": "tsk_049",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Audit store signage",
+      "owner_id": "per_eli",
+      "project_id": null,
+      "due_on": "2026-09-04",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-08-31T05:15:00Z"
+  },
+  {
+    "id": "evt_0008",
+    "entity_type": "task",
+    "entity_id": "tsk_050",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Draft tier criteria",
+      "owner_id": "per_fay",
+      "project_id": "prj_tiers",
+      "due_on": "2026-09-02",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-08-31T05:20:00Z"
+  },
+  {
+    "id": "evt_0009",
+    "entity_type": "task",
+    "entity_id": "tsk_046",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-08-31T08:00:00Z"
+  },
+  {
+    "id": "evt_0010",
+    "entity_type": "task",
+    "entity_id": "tsk_047",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-01T05:00:00Z"
+  },
+  {
+    "id": "evt_0011",
+    "entity_type": "task",
+    "entity_id": "tsk_048",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-01T06:00:00Z"
+  },
+  {
+    "id": "evt_0012",
+    "entity_type": "task",
+    "entity_id": "tsk_050",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-01T07:00:00Z"
+  },
+  {
+    "id": "evt_0013",
+    "entity_type": "task",
+    "entity_id": "tsk_050",
+    "field": "due_on",
+    "before": "2026-09-02",
+    "after": "2026-09-04",
+    "reason": "Needed the sales numbers first.",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-01T09:00:00Z"
+  },
+  {
+    "id": "evt_0014",
+    "entity_type": "task",
+    "entity_id": "tsk_046",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-02T09:00:00Z"
+  },
+  {
+    "id": "evt_0015",
+    "entity_type": "task",
+    "entity_id": "tsk_046",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-02T09:00:00Z"
+  },
+  {
+    "id": "evt_0016",
+    "entity_type": "task",
+    "entity_id": "tsk_046",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-02T09:00:00Z",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-02T09:00:00Z"
+  },
+  {
+    "id": "evt_0017",
+    "entity_type": "task",
+    "entity_id": "tsk_047",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-03T07:30:00Z"
+  },
+  {
+    "id": "evt_0018",
+    "entity_type": "task",
+    "entity_id": "tsk_047",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-03T07:30:00Z"
+  },
+  {
+    "id": "evt_0019",
+    "entity_type": "task",
+    "entity_id": "tsk_047",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-03T07:30:00Z",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-03T07:30:00Z"
+  },
+  {
+    "id": "evt_0020",
+    "entity_type": "task",
+    "entity_id": "tsk_049",
+    "field": "status",
+    "before": "todo",
+    "after": "done",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-03T08:30:00Z"
+  },
+  {
+    "id": "evt_0021",
+    "entity_type": "task",
+    "entity_id": "tsk_049",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-03T08:30:00Z"
+  },
+  {
+    "id": "evt_0022",
+    "entity_type": "task",
+    "entity_id": "tsk_049",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-03T08:30:00Z",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-03T08:30:00Z"
+  },
+  {
+    "id": "evt_0023",
+    "entity_type": "task",
+    "entity_id": "tsk_048",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-04T10:00:00Z"
+  },
+  {
+    "id": "evt_0024",
+    "entity_type": "task",
+    "entity_id": "tsk_048",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-04T10:00:00Z"
+  },
+  {
+    "id": "evt_0025",
+    "entity_type": "task",
+    "entity_id": "tsk_048",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-04T10:00:00Z",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-04T10:00:00Z"
+  },
+  {
+    "id": "evt_0026",
+    "entity_type": "task",
+    "entity_id": "tsk_050",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-04T11:00:00Z"
+  },
+  {
+    "id": "evt_0027",
+    "entity_type": "task",
+    "entity_id": "tsk_050",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-04T11:00:00Z"
+  },
+  {
+    "id": "evt_0028",
+    "entity_type": "task",
+    "entity_id": "tsk_050",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-04T11:00:00Z",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-04T11:00:00Z"
+  },
+  {
+    "id": "evt_0029",
+    "entity_type": "task",
+    "entity_id": "tsk_051",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Pick the landing page template",
+      "owner_id": "per_ada",
+      "project_id": "prj_landing",
+      "due_on": "2026-09-09",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-07T05:00:00Z"
+  },
+  {
+    "id": "evt_0030",
+    "entity_type": "task",
+    "entity_id": "tsk_052",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Set up the staging site",
+      "owner_id": "per_bo",
+      "project_id": "prj_landing",
+      "due_on": "2026-09-10",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-07T05:05:00Z"
+  },
+  {
+    "id": "evt_0031",
+    "entity_type": "task",
+    "entity_id": "tsk_053",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Book the photographer",
+      "owner_id": "per_cy",
+      "project_id": "prj_shoot",
+      "due_on": "2026-09-10",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-07T05:10:00Z"
+  },
+  {
+    "id": "evt_0032",
+    "entity_type": "task",
+    "entity_id": "tsk_054",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "First look at the colour palette",
+      "owner_id": "per_dee",
+      "project_id": "prj_shoot",
+      "due_on": "2026-09-09",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-07T05:15:00Z"
+  },
+  {
+    "id": "evt_0033",
+    "entity_type": "task",
+    "entity_id": "tsk_055",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Review festive stock plan",
+      "owner_id": "per_eli",
+      "project_id": null,
+      "due_on": "2026-09-11",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-07T05:20:00Z"
+  },
+  {
+    "id": "evt_0034",
+    "entity_type": "task",
+    "entity_id": "tsk_056",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "List pilot store staff",
+      "owner_id": "per_fay",
+      "project_id": "prj_tiers",
+      "due_on": "2026-09-09",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-07T05:25:00Z"
+  },
+  {
+    "id": "evt_0035",
+    "entity_type": "task",
+    "entity_id": "tsk_057",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Try a video hero banner",
+      "owner_id": "per_bo",
+      "project_id": "prj_landing",
+      "due_on": "2026-09-11",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-07T05:30:00Z"
+  },
+  {
+    "id": "evt_0036",
+    "entity_type": "task",
+    "entity_id": "tsk_051",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-08T05:00:00Z"
+  },
+  {
+    "id": "evt_0037",
+    "entity_type": "task",
+    "entity_id": "tsk_052",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-08T05:30:00Z"
+  },
+  {
+    "id": "evt_0038",
+    "entity_type": "task",
+    "entity_id": "tsk_053",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-08T06:00:00Z"
+  },
+  {
+    "id": "evt_0039",
+    "entity_type": "task",
+    "entity_id": "tsk_056",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-08T07:00:00Z"
+  },
+  {
+    "id": "evt_0040",
+    "entity_type": "task",
+    "entity_id": "tsk_054",
+    "field": "status",
+    "before": "todo",
+    "after": "done",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-08T10:00:00Z"
+  },
+  {
+    "id": "evt_0041",
+    "entity_type": "task",
+    "entity_id": "tsk_054",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-08T10:00:00Z"
+  },
+  {
+    "id": "evt_0042",
+    "entity_type": "task",
+    "entity_id": "tsk_054",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-08T10:00:00Z",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-09-08T10:00:00Z"
+  },
+  {
+    "id": "evt_0043",
+    "entity_type": "task",
+    "entity_id": "tsk_057",
+    "field": "status",
+    "before": "todo",
+    "after": "dropped",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-09T06:00:00Z"
+  },
+  {
+    "id": "evt_0044",
+    "entity_type": "task",
+    "entity_id": "tsk_057",
+    "field": "status_category",
+    "before": "open",
+    "after": "dropped",
+    "reason": "Page weight is too high for mobile.",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-09T06:00:00Z"
+  },
+  {
+    "id": "evt_0045",
+    "entity_type": "task",
+    "entity_id": "tsk_051",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-09T09:30:00Z"
+  },
+  {
+    "id": "evt_0046",
+    "entity_type": "task",
+    "entity_id": "tsk_051",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-09T09:30:00Z"
+  },
+  {
+    "id": "evt_0047",
+    "entity_type": "task",
+    "entity_id": "tsk_051",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-09T09:30:00Z",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-09-09T09:30:00Z"
+  },
+  {
+    "id": "evt_0048",
+    "entity_type": "task",
+    "entity_id": "tsk_056",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-10T07:00:00Z"
+  },
+  {
+    "id": "evt_0049",
+    "entity_type": "task",
+    "entity_id": "tsk_056",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-10T07:00:00Z"
+  },
+  {
+    "id": "evt_0050",
+    "entity_type": "task",
+    "entity_id": "tsk_056",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-10T07:00:00Z",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-09-10T07:00:00Z"
+  },
+  {
+    "id": "evt_0051",
+    "entity_type": "task",
+    "entity_id": "tsk_053",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-10T08:00:00Z"
+  },
+  {
+    "id": "evt_0052",
+    "entity_type": "task",
+    "entity_id": "tsk_053",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-10T08:00:00Z"
+  },
+  {
+    "id": "evt_0053",
+    "entity_type": "task",
+    "entity_id": "tsk_053",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-10T08:00:00Z",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-09-10T08:00:00Z"
+  },
+  {
+    "id": "evt_0054",
+    "entity_type": "task",
+    "entity_id": "tsk_055",
+    "field": "status",
+    "before": "todo",
+    "after": "done",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-11T09:00:00Z"
+  },
+  {
+    "id": "evt_0055",
+    "entity_type": "task",
+    "entity_id": "tsk_055",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-11T09:00:00Z"
+  },
+  {
+    "id": "evt_0056",
+    "entity_type": "task",
+    "entity_id": "tsk_055",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-11T09:00:00Z",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-09-11T09:00:00Z"
+  },
+  {
+    "id": "evt_0057",
+    "entity_type": "task",
+    "entity_id": "tsk_052",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-11T10:00:00Z"
+  },
+  {
+    "id": "evt_0058",
+    "entity_type": "task",
+    "entity_id": "tsk_052",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-11T10:00:00Z"
+  },
+  {
+    "id": "evt_0059",
+    "entity_type": "task",
+    "entity_id": "tsk_052",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-09-11T10:00:00Z",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-09-11T10:00:00Z"
+  },
+  {
+    "id": "evt_0060",
     "entity_type": "task",
     "entity_id": "tsk_001",
     "field": "_created",
@@ -69,7 +771,7 @@
     "at": "2026-09-14T05:00:00Z"
   },
   {
-    "id": "evt_0005",
+    "id": "evt_0061",
     "entity_type": "project",
     "entity_id": "prj_landing",
     "field": "status_note",
@@ -80,7 +782,7 @@
     "at": "2026-09-14T05:00:00Z"
   },
   {
-    "id": "evt_0006",
+    "id": "evt_0062",
     "entity_type": "task",
     "entity_id": "tsk_002",
     "field": "_created",
@@ -98,7 +800,7 @@
     "at": "2026-09-14T05:05:00Z"
   },
   {
-    "id": "evt_0007",
+    "id": "evt_0063",
     "entity_type": "task",
     "entity_id": "tsk_003",
     "field": "_created",
@@ -116,7 +818,7 @@
     "at": "2026-09-14T05:10:00Z"
   },
   {
-    "id": "evt_0008",
+    "id": "evt_0064",
     "entity_type": "project",
     "entity_id": "prj_tiers",
     "field": "status_note",
@@ -127,7 +829,7 @@
     "at": "2026-09-14T05:10:00Z"
   },
   {
-    "id": "evt_0009",
+    "id": "evt_0065",
     "entity_type": "task",
     "entity_id": "tsk_005",
     "field": "_created",
@@ -145,7 +847,7 @@
     "at": "2026-09-14T05:15:00Z"
   },
   {
-    "id": "evt_0010",
+    "id": "evt_0066",
     "entity_type": "task",
     "entity_id": "tsk_006",
     "field": "_created",
@@ -163,7 +865,7 @@
     "at": "2026-09-14T05:20:00Z"
   },
   {
-    "id": "evt_0011",
+    "id": "evt_0067",
     "entity_type": "task",
     "entity_id": "tsk_007",
     "field": "_created",
@@ -181,7 +883,7 @@
     "at": "2026-09-14T05:25:00Z"
   },
   {
-    "id": "evt_0012",
+    "id": "evt_0068",
     "entity_type": "task",
     "entity_id": "tsk_001",
     "field": "status",
@@ -192,7 +894,7 @@
     "at": "2026-09-14T09:00:00Z"
   },
   {
-    "id": "evt_0013",
+    "id": "evt_0069",
     "entity_type": "task",
     "entity_id": "tsk_004",
     "field": "_created",
@@ -203,14 +905,15 @@
       "project_id": null,
       "due_on": "2026-09-18",
       "status": "todo",
-      "status_category": "open"
+      "status_category": "open",
+      "origin_ref": "SYNTH-SHEET-RETAIL#row-014"
     },
     "actor_id": null,
     "origin": "sheet",
     "at": "2026-09-15T04:30:00Z"
   },
   {
-    "id": "evt_0014",
+    "id": "evt_0070",
     "entity_type": "task",
     "entity_id": "tsk_003",
     "field": "status",
@@ -221,7 +924,7 @@
     "at": "2026-09-15T05:00:00Z"
   },
   {
-    "id": "evt_0015",
+    "id": "evt_0071",
     "entity_type": "task",
     "entity_id": "tsk_002",
     "field": "status",
@@ -232,7 +935,7 @@
     "at": "2026-09-15T06:00:00Z"
   },
   {
-    "id": "evt_0016",
+    "id": "evt_0072",
     "entity_type": "task",
     "entity_id": "tsk_005",
     "field": "status",
@@ -243,7 +946,7 @@
     "at": "2026-09-15T07:00:00Z"
   },
   {
-    "id": "evt_0017",
+    "id": "evt_0073",
     "entity_type": "task",
     "entity_id": "tsk_006",
     "field": "status",
@@ -254,7 +957,7 @@
     "at": "2026-09-15T08:00:00Z"
   },
   {
-    "id": "evt_0018",
+    "id": "evt_0074",
     "entity_type": "task",
     "entity_id": "tsk_006",
     "field": "status_category",
@@ -265,7 +968,7 @@
     "at": "2026-09-15T08:00:00Z"
   },
   {
-    "id": "evt_0019",
+    "id": "evt_0075",
     "entity_type": "task",
     "entity_id": "tsk_006",
     "field": "closed_at",
@@ -276,7 +979,7 @@
     "at": "2026-09-15T08:00:00Z"
   },
   {
-    "id": "evt_0020",
+    "id": "evt_0076",
     "entity_type": "task",
     "entity_id": "tsk_007",
     "field": "status",
@@ -287,7 +990,7 @@
     "at": "2026-09-16T06:00:00Z"
   },
   {
-    "id": "evt_0021",
+    "id": "evt_0077",
     "entity_type": "task",
     "entity_id": "tsk_007",
     "field": "status_category",
@@ -298,7 +1001,7 @@
     "at": "2026-09-16T06:00:00Z"
   },
   {
-    "id": "evt_0022",
+    "id": "evt_0078",
     "entity_type": "task",
     "entity_id": "tsk_001",
     "field": "status",
@@ -309,7 +1012,7 @@
     "at": "2026-09-16T10:00:00Z"
   },
   {
-    "id": "evt_0023",
+    "id": "evt_0079",
     "entity_type": "task",
     "entity_id": "tsk_001",
     "field": "status_category",
@@ -320,7 +1023,7 @@
     "at": "2026-09-16T10:00:00Z"
   },
   {
-    "id": "evt_0024",
+    "id": "evt_0080",
     "entity_type": "task",
     "entity_id": "tsk_001",
     "field": "closed_at",
@@ -331,7 +1034,7 @@
     "at": "2026-09-16T10:00:00Z"
   },
   {
-    "id": "evt_0025",
+    "id": "evt_0081",
     "entity_type": "task",
     "entity_id": "tsk_002",
     "field": "status",
@@ -342,7 +1045,7 @@
     "at": "2026-09-17T11:00:00Z"
   },
   {
-    "id": "evt_0026",
+    "id": "evt_0082",
     "entity_type": "task",
     "entity_id": "tsk_002",
     "field": "status_category",
@@ -353,7 +1056,7 @@
     "at": "2026-09-17T11:00:00Z"
   },
   {
-    "id": "evt_0027",
+    "id": "evt_0083",
     "entity_type": "task",
     "entity_id": "tsk_002",
     "field": "closed_at",
@@ -364,7 +1067,7 @@
     "at": "2026-09-17T11:00:00Z"
   },
   {
-    "id": "evt_0028",
+    "id": "evt_0084",
     "entity_type": "task",
     "entity_id": "tsk_003",
     "field": "status",
@@ -375,7 +1078,7 @@
     "at": "2026-09-18T07:00:00Z"
   },
   {
-    "id": "evt_0029",
+    "id": "evt_0085",
     "entity_type": "task",
     "entity_id": "tsk_003",
     "field": "status_category",
@@ -386,7 +1089,7 @@
     "at": "2026-09-18T07:00:00Z"
   },
   {
-    "id": "evt_0030",
+    "id": "evt_0086",
     "entity_type": "task",
     "entity_id": "tsk_003",
     "field": "closed_at",
@@ -397,7 +1100,7 @@
     "at": "2026-09-18T07:00:00Z"
   },
   {
-    "id": "evt_0031",
+    "id": "evt_0087",
     "entity_type": "task",
     "entity_id": "tsk_004",
     "field": "status",
@@ -408,7 +1111,7 @@
     "at": "2026-09-18T09:00:00Z"
   },
   {
-    "id": "evt_0032",
+    "id": "evt_0088",
     "entity_type": "task",
     "entity_id": "tsk_004",
     "field": "status_category",
@@ -419,7 +1122,7 @@
     "at": "2026-09-18T09:00:00Z"
   },
   {
-    "id": "evt_0033",
+    "id": "evt_0089",
     "entity_type": "task",
     "entity_id": "tsk_004",
     "field": "closed_at",
@@ -430,7 +1133,7 @@
     "at": "2026-09-18T09:00:00Z"
   },
   {
-    "id": "evt_0034",
+    "id": "evt_0090",
     "entity_type": "task",
     "entity_id": "tsk_005",
     "field": "status",
@@ -441,7 +1144,7 @@
     "at": "2026-09-18T10:30:00Z"
   },
   {
-    "id": "evt_0035",
+    "id": "evt_0091",
     "entity_type": "task",
     "entity_id": "tsk_005",
     "field": "status_category",
@@ -452,7 +1155,7 @@
     "at": "2026-09-18T10:30:00Z"
   },
   {
-    "id": "evt_0036",
+    "id": "evt_0092",
     "entity_type": "task",
     "entity_id": "tsk_005",
     "field": "closed_at",
@@ -463,7 +1166,7 @@
     "at": "2026-09-18T10:30:00Z"
   },
   {
-    "id": "evt_0037",
+    "id": "evt_0093",
     "entity_type": "task",
     "entity_id": "tsk_008",
     "field": "_created",
@@ -481,7 +1184,7 @@
     "at": "2026-09-21T04:30:00Z"
   },
   {
-    "id": "evt_0038",
+    "id": "evt_0094",
     "entity_type": "task",
     "entity_id": "tsk_009",
     "field": "_created",
@@ -499,7 +1202,7 @@
     "at": "2026-09-21T04:35:00Z"
   },
   {
-    "id": "evt_0039",
+    "id": "evt_0095",
     "entity_type": "task",
     "entity_id": "tsk_010",
     "field": "_created",
@@ -517,7 +1220,7 @@
     "at": "2026-09-21T04:40:00Z"
   },
   {
-    "id": "evt_0040",
+    "id": "evt_0096",
     "entity_type": "task",
     "entity_id": "tsk_011",
     "field": "_created",
@@ -535,7 +1238,7 @@
     "at": "2026-09-21T04:45:00Z"
   },
   {
-    "id": "evt_0041",
+    "id": "evt_0097",
     "entity_type": "task",
     "entity_id": "tsk_014",
     "field": "_created",
@@ -553,7 +1256,7 @@
     "at": "2026-09-21T04:50:00Z"
   },
   {
-    "id": "evt_0042",
+    "id": "evt_0098",
     "entity_type": "task",
     "entity_id": "tsk_015",
     "field": "_created",
@@ -571,7 +1274,7 @@
     "at": "2026-09-21T04:55:00Z"
   },
   {
-    "id": "evt_0043",
+    "id": "evt_0099",
     "entity_type": "task",
     "entity_id": "tsk_013",
     "field": "_created",
@@ -582,14 +1285,15 @@
       "project_id": null,
       "due_on": "2026-09-25",
       "status": "todo",
-      "status_category": "open"
+      "status_category": "open",
+      "origin_ref": "SYNTH-SHEET-RETAIL#row-021"
     },
     "actor_id": null,
     "origin": "sheet",
     "at": "2026-09-21T05:00:00Z"
   },
   {
-    "id": "evt_0044",
+    "id": "evt_0100",
     "entity_type": "task",
     "entity_id": "tsk_008",
     "field": "status",
@@ -600,7 +1304,7 @@
     "at": "2026-09-21T08:00:00Z"
   },
   {
-    "id": "evt_0045",
+    "id": "evt_0101",
     "entity_type": "task",
     "entity_id": "tsk_008",
     "field": "due_on",
@@ -611,7 +1315,7 @@
     "at": "2026-09-22T05:00:00Z"
   },
   {
-    "id": "evt_0046",
+    "id": "evt_0102",
     "entity_type": "task",
     "entity_id": "tsk_010",
     "field": "status",
@@ -622,7 +1326,7 @@
     "at": "2026-09-22T05:30:00Z"
   },
   {
-    "id": "evt_0047",
+    "id": "evt_0103",
     "entity_type": "task",
     "entity_id": "tsk_009",
     "field": "status",
@@ -633,7 +1337,7 @@
     "at": "2026-09-22T06:00:00Z"
   },
   {
-    "id": "evt_0048",
+    "id": "evt_0104",
     "entity_type": "task",
     "entity_id": "tsk_012",
     "field": "_created",
@@ -644,14 +1348,15 @@
       "project_id": "prj_tiers",
       "due_on": "2026-09-23",
       "status": "todo",
-      "status_category": "open"
+      "status_category": "open",
+      "origin_ref": "SYNTH-MEETING-0922#item-2"
     },
     "actor_id": "per_fay",
     "origin": "granola",
     "at": "2026-09-22T06:30:00Z"
   },
   {
-    "id": "evt_0049",
+    "id": "evt_0105",
     "entity_type": "task",
     "entity_id": "tsk_014",
     "field": "status",
@@ -662,7 +1367,7 @@
     "at": "2026-09-22T07:00:00Z"
   },
   {
-    "id": "evt_0050",
+    "id": "evt_0106",
     "entity_type": "task",
     "entity_id": "tsk_011",
     "field": "status",
@@ -673,7 +1378,7 @@
     "at": "2026-09-23T05:00:00Z"
   },
   {
-    "id": "evt_0051",
+    "id": "evt_0107",
     "entity_type": "task",
     "entity_id": "tsk_012",
     "field": "status",
@@ -684,7 +1389,7 @@
     "at": "2026-09-23T11:00:00Z"
   },
   {
-    "id": "evt_0052",
+    "id": "evt_0108",
     "entity_type": "task",
     "entity_id": "tsk_012",
     "field": "status_category",
@@ -695,7 +1400,7 @@
     "at": "2026-09-23T11:00:00Z"
   },
   {
-    "id": "evt_0053",
+    "id": "evt_0109",
     "entity_type": "task",
     "entity_id": "tsk_012",
     "field": "closed_at",
@@ -706,7 +1411,7 @@
     "at": "2026-09-23T11:00:00Z"
   },
   {
-    "id": "evt_0054",
+    "id": "evt_0110",
     "entity_type": "task",
     "entity_id": "tsk_010",
     "field": "status",
@@ -717,7 +1422,7 @@
     "at": "2026-09-24T07:00:00Z"
   },
   {
-    "id": "evt_0055",
+    "id": "evt_0111",
     "entity_type": "task",
     "entity_id": "tsk_010",
     "field": "status_category",
@@ -728,7 +1433,7 @@
     "at": "2026-09-24T07:00:00Z"
   },
   {
-    "id": "evt_0056",
+    "id": "evt_0112",
     "entity_type": "task",
     "entity_id": "tsk_010",
     "field": "closed_at",
@@ -739,7 +1444,7 @@
     "at": "2026-09-24T07:00:00Z"
   },
   {
-    "id": "evt_0057",
+    "id": "evt_0113",
     "entity_type": "task",
     "entity_id": "tsk_009",
     "field": "status",
@@ -750,7 +1455,7 @@
     "at": "2026-09-24T10:00:00Z"
   },
   {
-    "id": "evt_0058",
+    "id": "evt_0114",
     "entity_type": "task",
     "entity_id": "tsk_009",
     "field": "status_category",
@@ -761,7 +1466,7 @@
     "at": "2026-09-24T10:00:00Z"
   },
   {
-    "id": "evt_0059",
+    "id": "evt_0115",
     "entity_type": "task",
     "entity_id": "tsk_009",
     "field": "closed_at",
@@ -772,7 +1477,7 @@
     "at": "2026-09-24T10:00:00Z"
   },
   {
-    "id": "evt_0060",
+    "id": "evt_0116",
     "entity_type": "task",
     "entity_id": "tsk_014",
     "field": "status",
@@ -783,7 +1488,7 @@
     "at": "2026-09-25T06:00:00Z"
   },
   {
-    "id": "evt_0061",
+    "id": "evt_0117",
     "entity_type": "task",
     "entity_id": "tsk_014",
     "field": "status_category",
@@ -794,7 +1499,7 @@
     "at": "2026-09-25T06:00:00Z"
   },
   {
-    "id": "evt_0062",
+    "id": "evt_0118",
     "entity_type": "task",
     "entity_id": "tsk_014",
     "field": "closed_at",
@@ -805,7 +1510,7 @@
     "at": "2026-09-25T06:00:00Z"
   },
   {
-    "id": "evt_0063",
+    "id": "evt_0119",
     "entity_type": "task",
     "entity_id": "tsk_015",
     "field": "status",
@@ -816,7 +1521,7 @@
     "at": "2026-09-25T08:00:00Z"
   },
   {
-    "id": "evt_0064",
+    "id": "evt_0120",
     "entity_type": "task",
     "entity_id": "tsk_015",
     "field": "status_category",
@@ -827,7 +1532,7 @@
     "at": "2026-09-25T08:00:00Z"
   },
   {
-    "id": "evt_0065",
+    "id": "evt_0121",
     "entity_type": "task",
     "entity_id": "tsk_015",
     "field": "closed_at",
@@ -838,7 +1543,7 @@
     "at": "2026-09-25T08:00:00Z"
   },
   {
-    "id": "evt_0066",
+    "id": "evt_0122",
     "entity_type": "task",
     "entity_id": "tsk_008",
     "field": "status",
@@ -849,7 +1554,7 @@
     "at": "2026-09-25T09:30:00Z"
   },
   {
-    "id": "evt_0067",
+    "id": "evt_0123",
     "entity_type": "task",
     "entity_id": "tsk_008",
     "field": "status_category",
@@ -860,7 +1565,7 @@
     "at": "2026-09-25T09:30:00Z"
   },
   {
-    "id": "evt_0068",
+    "id": "evt_0124",
     "entity_type": "task",
     "entity_id": "tsk_008",
     "field": "closed_at",
@@ -871,7 +1576,7 @@
     "at": "2026-09-25T09:30:00Z"
   },
   {
-    "id": "evt_0069",
+    "id": "evt_0125",
     "entity_type": "task",
     "entity_id": "tsk_011",
     "field": "status",
@@ -882,7 +1587,7 @@
     "at": "2026-09-25T11:00:00Z"
   },
   {
-    "id": "evt_0070",
+    "id": "evt_0126",
     "entity_type": "task",
     "entity_id": "tsk_011",
     "field": "status_category",
@@ -893,7 +1598,7 @@
     "at": "2026-09-25T11:00:00Z"
   },
   {
-    "id": "evt_0071",
+    "id": "evt_0127",
     "entity_type": "task",
     "entity_id": "tsk_011",
     "field": "closed_at",
@@ -904,7 +1609,7 @@
     "at": "2026-09-25T11:00:00Z"
   },
   {
-    "id": "evt_0072",
+    "id": "evt_0128",
     "entity_type": "task",
     "entity_id": "tsk_016",
     "field": "_created",
@@ -922,7 +1627,7 @@
     "at": "2026-09-28T04:30:00Z"
   },
   {
-    "id": "evt_0073",
+    "id": "evt_0129",
     "entity_type": "task",
     "entity_id": "tsk_017",
     "field": "_created",
@@ -940,7 +1645,7 @@
     "at": "2026-09-28T04:35:00Z"
   },
   {
-    "id": "evt_0074",
+    "id": "evt_0130",
     "entity_type": "task",
     "entity_id": "tsk_018",
     "field": "_created",
@@ -958,7 +1663,7 @@
     "at": "2026-09-28T04:40:00Z"
   },
   {
-    "id": "evt_0075",
+    "id": "evt_0131",
     "entity_type": "task",
     "entity_id": "tsk_019",
     "field": "_created",
@@ -976,7 +1681,7 @@
     "at": "2026-09-28T04:45:00Z"
   },
   {
-    "id": "evt_0076",
+    "id": "evt_0132",
     "entity_type": "task",
     "entity_id": "tsk_020",
     "field": "_created",
@@ -994,7 +1699,7 @@
     "at": "2026-09-28T04:50:00Z"
   },
   {
-    "id": "evt_0077",
+    "id": "evt_0133",
     "entity_type": "task",
     "entity_id": "tsk_021",
     "field": "_created",
@@ -1005,14 +1710,15 @@
       "project_id": null,
       "due_on": "2026-09-30",
       "status": "todo",
-      "status_category": "open"
+      "status_category": "open",
+      "origin_ref": "SYNTH-SHEET-RETAIL#row-033"
     },
     "actor_id": null,
     "origin": "sheet",
     "at": "2026-09-28T05:00:00Z"
   },
   {
-    "id": "evt_0078",
+    "id": "evt_0134",
     "entity_type": "task",
     "entity_id": "tsk_013",
     "field": "status",
@@ -1023,7 +1729,7 @@
     "at": "2026-09-28T06:00:00Z"
   },
   {
-    "id": "evt_0079",
+    "id": "evt_0135",
     "entity_type": "task",
     "entity_id": "tsk_013",
     "field": "status_category",
@@ -1034,7 +1740,7 @@
     "at": "2026-09-28T06:00:00Z"
   },
   {
-    "id": "evt_0080",
+    "id": "evt_0136",
     "entity_type": "task",
     "entity_id": "tsk_013",
     "field": "closed_at",
@@ -1045,7 +1751,7 @@
     "at": "2026-09-28T06:00:00Z"
   },
   {
-    "id": "evt_0081",
+    "id": "evt_0137",
     "entity_type": "task",
     "entity_id": "tsk_016",
     "field": "status",
@@ -1056,7 +1762,7 @@
     "at": "2026-09-28T08:00:00Z"
   },
   {
-    "id": "evt_0082",
+    "id": "evt_0138",
     "entity_type": "task",
     "entity_id": "tsk_022",
     "field": "_created",
@@ -1074,7 +1780,7 @@
     "at": "2026-09-29T04:30:00Z"
   },
   {
-    "id": "evt_0083",
+    "id": "evt_0139",
     "entity_type": "task",
     "entity_id": "tsk_017",
     "field": "status",
@@ -1085,7 +1791,7 @@
     "at": "2026-09-29T05:00:00Z"
   },
   {
-    "id": "evt_0084",
+    "id": "evt_0140",
     "entity_type": "task",
     "entity_id": "tsk_019",
     "field": "status",
@@ -1096,7 +1802,7 @@
     "at": "2026-09-29T06:00:00Z"
   },
   {
-    "id": "evt_0085",
+    "id": "evt_0141",
     "entity_type": "task",
     "entity_id": "tsk_017",
     "field": "due_on",
@@ -1107,7 +1813,7 @@
     "at": "2026-09-30T05:00:00Z"
   },
   {
-    "id": "evt_0086",
+    "id": "evt_0142",
     "entity_type": "task",
     "entity_id": "tsk_023",
     "field": "_created",
@@ -1118,14 +1824,15 @@
       "project_id": "prj_tiers",
       "due_on": "2026-10-01",
       "status": "todo",
-      "status_category": "open"
+      "status_category": "open",
+      "origin_ref": "SYNTH-MEETING-0930#item-1"
     },
     "actor_id": "per_fay",
     "origin": "granola",
     "at": "2026-09-30T06:00:00Z"
   },
   {
-    "id": "evt_0087",
+    "id": "evt_0143",
     "entity_type": "task",
     "entity_id": "tsk_020",
     "field": "status",
@@ -1136,7 +1843,7 @@
     "at": "2026-09-30T06:00:00Z"
   },
   {
-    "id": "evt_0088",
+    "id": "evt_0144",
     "entity_type": "task",
     "entity_id": "tsk_018",
     "field": "status",
@@ -1147,7 +1854,7 @@
     "at": "2026-09-30T08:30:00Z"
   },
   {
-    "id": "evt_0089",
+    "id": "evt_0145",
     "entity_type": "task",
     "entity_id": "tsk_018",
     "field": "status_category",
@@ -1158,7 +1865,7 @@
     "at": "2026-09-30T08:30:00Z"
   },
   {
-    "id": "evt_0090",
+    "id": "evt_0146",
     "entity_type": "task",
     "entity_id": "tsk_018",
     "field": "closed_at",
@@ -1169,7 +1876,7 @@
     "at": "2026-09-30T08:30:00Z"
   },
   {
-    "id": "evt_0091",
+    "id": "evt_0147",
     "entity_type": "task",
     "entity_id": "tsk_033",
     "field": "_created",
@@ -1187,7 +1894,7 @@
     "at": "2026-10-01T05:00:00Z"
   },
   {
-    "id": "evt_0092",
+    "id": "evt_0148",
     "entity_type": "task",
     "entity_id": "tsk_019",
     "field": "status",
@@ -1198,7 +1905,7 @@
     "at": "2026-10-01T07:30:00Z"
   },
   {
-    "id": "evt_0093",
+    "id": "evt_0149",
     "entity_type": "task",
     "entity_id": "tsk_019",
     "field": "status_category",
@@ -1209,7 +1916,7 @@
     "at": "2026-10-01T07:30:00Z"
   },
   {
-    "id": "evt_0094",
+    "id": "evt_0150",
     "entity_type": "task",
     "entity_id": "tsk_019",
     "field": "closed_at",
@@ -1220,7 +1927,7 @@
     "at": "2026-10-01T07:30:00Z"
   },
   {
-    "id": "evt_0095",
+    "id": "evt_0151",
     "entity_type": "task",
     "entity_id": "tsk_016",
     "field": "status",
@@ -1231,7 +1938,7 @@
     "at": "2026-10-01T09:00:00Z"
   },
   {
-    "id": "evt_0096",
+    "id": "evt_0152",
     "entity_type": "task",
     "entity_id": "tsk_016",
     "field": "status_category",
@@ -1242,7 +1949,7 @@
     "at": "2026-10-01T09:00:00Z"
   },
   {
-    "id": "evt_0097",
+    "id": "evt_0153",
     "entity_type": "task",
     "entity_id": "tsk_016",
     "field": "closed_at",
@@ -1253,7 +1960,7 @@
     "at": "2026-10-01T09:00:00Z"
   },
   {
-    "id": "evt_0098",
+    "id": "evt_0154",
     "entity_type": "task",
     "entity_id": "tsk_023",
     "field": "status",
@@ -1264,7 +1971,7 @@
     "at": "2026-10-01T10:00:00Z"
   },
   {
-    "id": "evt_0099",
+    "id": "evt_0155",
     "entity_type": "task",
     "entity_id": "tsk_023",
     "field": "status_category",
@@ -1275,7 +1982,7 @@
     "at": "2026-10-01T10:00:00Z"
   },
   {
-    "id": "evt_0100",
+    "id": "evt_0156",
     "entity_type": "task",
     "entity_id": "tsk_023",
     "field": "closed_at",
@@ -1286,7 +1993,7 @@
     "at": "2026-10-01T10:00:00Z"
   },
   {
-    "id": "evt_0101",
+    "id": "evt_0157",
     "entity_type": "task",
     "entity_id": "tsk_033",
     "field": "status",
@@ -1297,7 +2004,18 @@
     "at": "2026-10-02T05:00:00Z"
   },
   {
-    "id": "evt_0102",
+    "id": "evt_0158",
+    "entity_type": "task",
+    "entity_id": "tsk_033",
+    "field": "priority",
+    "before": null,
+    "after": "high",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-02T06:00:00Z"
+  },
+  {
+    "id": "evt_0159",
     "entity_type": "task",
     "entity_id": "tsk_017",
     "field": "status",
@@ -1308,7 +2026,7 @@
     "at": "2026-10-02T10:00:00Z"
   },
   {
-    "id": "evt_0103",
+    "id": "evt_0160",
     "entity_type": "task",
     "entity_id": "tsk_017",
     "field": "status_category",
@@ -1319,7 +2037,7 @@
     "at": "2026-10-02T10:00:00Z"
   },
   {
-    "id": "evt_0104",
+    "id": "evt_0161",
     "entity_type": "task",
     "entity_id": "tsk_017",
     "field": "closed_at",
@@ -1330,7 +2048,7 @@
     "at": "2026-10-02T10:00:00Z"
   },
   {
-    "id": "evt_0105",
+    "id": "evt_0162",
     "entity_type": "task",
     "entity_id": "tsk_022",
     "field": "status",
@@ -1341,7 +2059,7 @@
     "at": "2026-10-02T10:30:00Z"
   },
   {
-    "id": "evt_0106",
+    "id": "evt_0163",
     "entity_type": "task",
     "entity_id": "tsk_022",
     "field": "status_category",
@@ -1352,7 +2070,7 @@
     "at": "2026-10-02T10:30:00Z"
   },
   {
-    "id": "evt_0107",
+    "id": "evt_0164",
     "entity_type": "task",
     "entity_id": "tsk_022",
     "field": "closed_at",
@@ -1363,7 +2081,7 @@
     "at": "2026-10-02T10:30:00Z"
   },
   {
-    "id": "evt_0108",
+    "id": "evt_0165",
     "entity_type": "task",
     "entity_id": "tsk_024",
     "field": "_created",
@@ -1381,7 +2099,7 @@
     "at": "2026-10-05T04:30:00Z"
   },
   {
-    "id": "evt_0109",
+    "id": "evt_0166",
     "entity_type": "task",
     "entity_id": "tsk_025",
     "field": "_created",
@@ -1399,7 +2117,7 @@
     "at": "2026-10-05T04:35:00Z"
   },
   {
-    "id": "evt_0110",
+    "id": "evt_0167",
     "entity_type": "task",
     "entity_id": "tsk_026",
     "field": "_created",
@@ -1417,7 +2135,7 @@
     "at": "2026-10-05T04:40:00Z"
   },
   {
-    "id": "evt_0111",
+    "id": "evt_0168",
     "entity_type": "task",
     "entity_id": "tsk_027",
     "field": "_created",
@@ -1435,7 +2153,7 @@
     "at": "2026-10-05T04:45:00Z"
   },
   {
-    "id": "evt_0112",
+    "id": "evt_0169",
     "entity_type": "task",
     "entity_id": "tsk_028",
     "field": "_created",
@@ -1453,7 +2171,7 @@
     "at": "2026-10-05T04:50:00Z"
   },
   {
-    "id": "evt_0113",
+    "id": "evt_0170",
     "entity_type": "task",
     "entity_id": "tsk_029",
     "field": "_created",
@@ -1464,14 +2182,15 @@
       "project_id": "prj_tiers",
       "due_on": "2026-10-09",
       "status": "todo",
-      "status_category": "open"
+      "status_category": "open",
+      "origin_ref": "SYNTH-SHEET-RETAIL#row-040"
     },
     "actor_id": null,
     "origin": "sheet",
     "at": "2026-10-05T05:00:00Z"
   },
   {
-    "id": "evt_0114",
+    "id": "evt_0171",
     "entity_type": "task",
     "entity_id": "tsk_020",
     "field": "status",
@@ -1482,7 +2201,7 @@
     "at": "2026-10-05T05:00:00Z"
   },
   {
-    "id": "evt_0115",
+    "id": "evt_0172",
     "entity_type": "task",
     "entity_id": "tsk_020",
     "field": "status_category",
@@ -1493,7 +2212,7 @@
     "at": "2026-10-05T05:00:00Z"
   },
   {
-    "id": "evt_0116",
+    "id": "evt_0173",
     "entity_type": "task",
     "entity_id": "tsk_020",
     "field": "closed_at",
@@ -1504,7 +2223,7 @@
     "at": "2026-10-05T05:00:00Z"
   },
   {
-    "id": "evt_0117",
+    "id": "evt_0174",
     "entity_type": "task",
     "entity_id": "tsk_030",
     "field": "_created",
@@ -1513,7 +2232,7 @@
       "title": "Run landing page link check",
       "owner_id": "per_bo",
       "project_id": "prj_landing",
-      "due_on": "2026-10-09",
+      "due_on": "2026-10-07",
       "status": "todo",
       "status_category": "open"
     },
@@ -1522,7 +2241,7 @@
     "at": "2026-10-05T05:05:00Z"
   },
   {
-    "id": "evt_0118",
+    "id": "evt_0175",
     "entity_type": "task",
     "entity_id": "tsk_031",
     "field": "_created",
@@ -1540,7 +2259,7 @@
     "at": "2026-10-05T05:10:00Z"
   },
   {
-    "id": "evt_0119",
+    "id": "evt_0176",
     "entity_type": "task",
     "entity_id": "tsk_032",
     "field": "_created",
@@ -1558,7 +2277,44 @@
     "at": "2026-10-05T05:15:00Z"
   },
   {
-    "id": "evt_0120",
+    "id": "evt_0177",
+    "entity_type": "task",
+    "entity_id": "tsk_034",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Sign off sign-up form error wording",
+      "owner_id": "per_ada",
+      "project_id": "prj_landing",
+      "due_on": "2026-10-07",
+      "status": "todo",
+      "status_category": "open",
+      "note": "Five messages. The web producer is waiting on these."
+    },
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-05T05:20:00Z"
+  },
+  {
+    "id": "evt_0178",
+    "entity_type": "task",
+    "entity_id": "tsk_038",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Compress landing page images",
+      "owner_id": "per_bo",
+      "project_id": "prj_landing",
+      "due_on": "2026-10-09",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-05T05:25:00Z"
+  },
+  {
+    "id": "evt_0179",
     "entity_type": "project",
     "entity_id": "prj_shoot",
     "field": "status",
@@ -1569,7 +2325,7 @@
     "at": "2026-10-05T05:30:00Z"
   },
   {
-    "id": "evt_0121",
+    "id": "evt_0180",
     "entity_type": "project",
     "entity_id": "prj_shoot",
     "field": "status_note",
@@ -1580,7 +2336,25 @@
     "at": "2026-10-05T05:30:00Z"
   },
   {
-    "id": "evt_0122",
+    "id": "evt_0181",
+    "entity_type": "task",
+    "entity_id": "tsk_044",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Reprint festive postcards",
+      "owner_id": "per_eli",
+      "project_id": null,
+      "due_on": "2026-10-08",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-10-05T05:30:00Z"
+  },
+  {
+    "id": "evt_0182",
     "entity_type": "task",
     "entity_id": "tsk_024",
     "field": "status",
@@ -1591,7 +2365,7 @@
     "at": "2026-10-05T08:00:00Z"
   },
   {
-    "id": "evt_0123",
+    "id": "evt_0183",
     "entity_type": "task",
     "entity_id": "tsk_025",
     "field": "status",
@@ -1602,7 +2376,99 @@
     "at": "2026-10-06T05:00:00Z"
   },
   {
-    "id": "evt_0124",
+    "id": "evt_0184",
+    "entity_type": "task",
+    "entity_id": "tsk_036",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Review landing page speed report",
+      "owner_id": "per_ada",
+      "project_id": "prj_landing",
+      "due_on": "2026-10-09",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-06T05:00:00Z"
+  },
+  {
+    "id": "evt_0185",
+    "entity_type": "task",
+    "entity_id": "tsk_038",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-06T05:00:00Z"
+  },
+  {
+    "id": "evt_0186",
+    "entity_type": "task",
+    "entity_id": "tsk_045",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Update site footer links",
+      "owner_id": "per_bo",
+      "project_id": "prj_landing",
+      "due_on": "2026-10-14",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-06T05:20:00Z"
+  },
+  {
+    "id": "evt_0187",
+    "entity_type": "task",
+    "entity_id": "tsk_030",
+    "field": "due_on",
+    "before": "2026-10-07",
+    "after": "2026-10-09",
+    "reason": "Staging was down for a day, so the check could not start.",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-06T05:30:00Z"
+  },
+  {
+    "id": "evt_0188",
+    "entity_type": "task",
+    "entity_id": "tsk_033",
+    "field": "blocked_on_id",
+    "before": null,
+    "after": "per_ada",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-10-06T05:30:00Z"
+  },
+  {
+    "id": "evt_0189",
+    "entity_type": "task",
+    "entity_id": "tsk_033",
+    "field": "blocked_ask",
+    "before": null,
+    "after": "Need the final landing page address to link from the launch note.",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-10-06T05:30:00Z"
+  },
+  {
+    "id": "evt_0190",
+    "entity_type": "task",
+    "entity_id": "tsk_034",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-06T06:00:00Z"
+  },
+  {
+    "id": "evt_0191",
     "entity_type": "task",
     "entity_id": "tsk_032",
     "field": "status",
@@ -1613,7 +2479,7 @@
     "at": "2026-10-06T09:00:00Z"
   },
   {
-    "id": "evt_0125",
+    "id": "evt_0192",
     "entity_type": "task",
     "entity_id": "tsk_032",
     "field": "status_category",
@@ -1624,7 +2490,7 @@
     "at": "2026-10-06T09:00:00Z"
   },
   {
-    "id": "evt_0126",
+    "id": "evt_0193",
     "entity_type": "task",
     "entity_id": "tsk_032",
     "field": "closed_at",
@@ -1635,7 +2501,18 @@
     "at": "2026-10-06T09:00:00Z"
   },
   {
-    "id": "evt_0127",
+    "id": "evt_0194",
+    "entity_type": "task",
+    "entity_id": "tsk_025",
+    "field": "priority",
+    "before": null,
+    "after": "high",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-07T04:00:00Z"
+  },
+  {
+    "id": "evt_0195",
     "entity_type": "task",
     "entity_id": "tsk_026",
     "field": "status",
@@ -1646,7 +2523,154 @@
     "at": "2026-10-07T05:00:00Z"
   },
   {
-    "id": "evt_0128",
+    "id": "evt_0196",
+    "entity_type": "task",
+    "entity_id": "tsk_025",
+    "field": "blocked_on_id",
+    "before": null,
+    "after": "per_ada",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-07T05:00:00Z"
+  },
+  {
+    "id": "evt_0197",
+    "entity_type": "task",
+    "entity_id": "tsk_025",
+    "field": "blocked_ask",
+    "before": null,
+    "after": "Need the final error wording signed off before I can change the text.",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-07T05:00:00Z"
+  },
+  {
+    "id": "evt_0198",
+    "entity_type": "task",
+    "entity_id": "tsk_035",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Write tier launch email subject lines",
+      "owner_id": "per_ada",
+      "project_id": "prj_tiers",
+      "due_on": "2026-10-09",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-07T05:10:00Z"
+  },
+  {
+    "id": "evt_0199",
+    "entity_type": "task",
+    "entity_id": "tsk_039",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Confirm model bookings",
+      "owner_id": "per_cy",
+      "project_id": "prj_shoot",
+      "due_on": "2026-10-12",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-07T05:30:00Z"
+  },
+  {
+    "id": "evt_0200",
+    "entity_type": "task",
+    "entity_id": "tsk_040",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Approve crop sizes for hero images",
+      "owner_id": "per_cy",
+      "project_id": "prj_shoot",
+      "due_on": "2026-10-09",
+      "status": "todo",
+      "status_category": "open",
+      "note": "The designer is waiting on this."
+    },
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-07T05:35:00Z"
+  },
+  {
+    "id": "evt_0201",
+    "entity_type": "task",
+    "entity_id": "tsk_041",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Retouch campaign stills",
+      "owner_id": "per_dee",
+      "project_id": "prj_shoot",
+      "due_on": "2026-10-14",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-10-07T05:40:00Z"
+  },
+  {
+    "id": "evt_0202",
+    "entity_type": "task",
+    "entity_id": "tsk_042",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Collect window display photos from stores",
+      "owner_id": "per_eli",
+      "project_id": null,
+      "due_on": "2026-10-13",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-10-07T05:45:00Z"
+  },
+  {
+    "id": "evt_0203",
+    "entity_type": "task",
+    "entity_id": "tsk_044",
+    "field": "status",
+    "before": "todo",
+    "after": "dropped",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-10-07T06:00:00Z"
+  },
+  {
+    "id": "evt_0204",
+    "entity_type": "task",
+    "entity_id": "tsk_044",
+    "field": "status_category",
+    "before": "open",
+    "after": "dropped",
+    "reason": "Digital cards replace the printed set.",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-10-07T06:00:00Z"
+  },
+  {
+    "id": "evt_0205",
+    "entity_type": "task",
+    "entity_id": "tsk_045",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-07T06:00:00Z"
+  },
+  {
+    "id": "evt_0206",
     "entity_type": "task",
     "entity_id": "tsk_024",
     "field": "status",
@@ -1657,7 +2681,7 @@
     "at": "2026-10-07T09:30:00Z"
   },
   {
-    "id": "evt_0129",
+    "id": "evt_0207",
     "entity_type": "task",
     "entity_id": "tsk_024",
     "field": "status_category",
@@ -1668,7 +2692,7 @@
     "at": "2026-10-07T09:30:00Z"
   },
   {
-    "id": "evt_0130",
+    "id": "evt_0208",
     "entity_type": "task",
     "entity_id": "tsk_024",
     "field": "closed_at",
@@ -1679,7 +2703,18 @@
     "at": "2026-10-07T09:30:00Z"
   },
   {
-    "id": "evt_0131",
+    "id": "evt_0209",
+    "entity_type": "project",
+    "entity_id": "prj_landing",
+    "field": "status_note",
+    "before": "Copy done, build under way.",
+    "after": "Staging is up. The form wording is the last open item.",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-07T09:35:00Z"
+  },
+  {
+    "id": "evt_0210",
     "entity_type": "task",
     "entity_id": "tsk_031",
     "field": "status",
@@ -1690,7 +2725,7 @@
     "at": "2026-10-07T10:00:00Z"
   },
   {
-    "id": "evt_0132",
+    "id": "evt_0211",
     "entity_type": "task",
     "entity_id": "tsk_031",
     "field": "status_category",
@@ -1701,7 +2736,7 @@
     "at": "2026-10-07T10:00:00Z"
   },
   {
-    "id": "evt_0133",
+    "id": "evt_0212",
     "entity_type": "task",
     "entity_id": "tsk_031",
     "field": "closed_at",
@@ -1712,7 +2747,7 @@
     "at": "2026-10-07T10:00:00Z"
   },
   {
-    "id": "evt_0134",
+    "id": "evt_0213",
     "entity_type": "task",
     "entity_id": "tsk_027",
     "field": "status",
@@ -1723,7 +2758,51 @@
     "at": "2026-10-08T05:00:00Z"
   },
   {
-    "id": "evt_0135",
+    "id": "evt_0214",
+    "entity_type": "project",
+    "entity_id": "prj_tiers",
+    "field": "status",
+    "before": "on_track",
+    "after": "at_risk",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-10-08T05:00:00Z"
+  },
+  {
+    "id": "evt_0215",
+    "entity_type": "project",
+    "entity_id": "prj_tiers",
+    "field": "status_note",
+    "before": "Pilot list agreed.",
+    "after": "The launch note waits on the landing page address.",
+    "actor_id": "per_fay",
+    "origin": "app",
+    "at": "2026-10-08T05:00:00Z"
+  },
+  {
+    "id": "evt_0216",
+    "entity_type": "task",
+    "entity_id": "tsk_036",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-08T05:00:00Z"
+  },
+  {
+    "id": "evt_0217",
+    "entity_type": "task",
+    "entity_id": "tsk_042",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_eli",
+    "origin": "app",
+    "at": "2026-10-08T05:30:00Z"
+  },
+  {
+    "id": "evt_0218",
     "entity_type": "task",
     "entity_id": "tsk_030",
     "field": "status",
@@ -1732,5 +2811,196 @@
     "actor_id": "per_bo",
     "origin": "app",
     "at": "2026-10-08T06:00:00Z"
+  },
+  {
+    "id": "evt_0219",
+    "entity_type": "task",
+    "entity_id": "tsk_045",
+    "field": "blocked_ask",
+    "before": null,
+    "after": "Waiting on the final legal wording for the footer.",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-08T06:15:00Z"
+  },
+  {
+    "id": "evt_0220",
+    "entity_type": "task",
+    "entity_id": "tsk_037",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Build the festive landing page",
+      "owner_id": "per_ada",
+      "project_id": "prj_landing",
+      "due_on": "2026-10-16",
+      "status": "todo",
+      "status_category": "open"
+    },
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-08T06:20:00Z"
+  },
+  {
+    "id": "evt_0221",
+    "entity_type": "task",
+    "entity_id": "tsk_039",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-08T06:30:00Z"
+  },
+  {
+    "id": "evt_0222",
+    "entity_type": "task",
+    "entity_id": "tsk_043",
+    "field": "_created",
+    "before": null,
+    "after": {
+      "title": "Final tier names for the landing page",
+      "owner_id": "per_fay",
+      "project_id": "prj_landing",
+      "due_on": "2026-10-14",
+      "status": "todo",
+      "status_category": "open",
+      "origin_ref": "SYNTH-MEETING-1008#item-1"
+    },
+    "actor_id": "per_ada",
+    "origin": "granola",
+    "at": "2026-10-08T06:40:00Z"
+  },
+  {
+    "id": "evt_0223",
+    "entity_type": "task",
+    "entity_id": "tsk_026",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-08T07:00:00Z"
+  },
+  {
+    "id": "evt_0224",
+    "entity_type": "task",
+    "entity_id": "tsk_026",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-08T07:00:00Z"
+  },
+  {
+    "id": "evt_0225",
+    "entity_type": "task",
+    "entity_id": "tsk_026",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-10-08T07:00:00Z",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-08T07:00:00Z"
+  },
+  {
+    "id": "evt_0226",
+    "entity_type": "task",
+    "entity_id": "tsk_040",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_cy",
+    "origin": "app",
+    "at": "2026-10-08T07:00:00Z"
+  },
+  {
+    "id": "evt_0227",
+    "entity_type": "task",
+    "entity_id": "tsk_037",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-08T08:00:00Z"
+  },
+  {
+    "id": "evt_0228",
+    "entity_type": "task",
+    "entity_id": "tsk_027",
+    "field": "blocked_on_id",
+    "before": null,
+    "after": "per_cy",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-10-08T09:00:00Z"
+  },
+  {
+    "id": "evt_0229",
+    "entity_type": "task",
+    "entity_id": "tsk_027",
+    "field": "blocked_ask",
+    "before": null,
+    "after": "Waiting on the approved crop sizes before I can finish the crops.",
+    "actor_id": "per_dee",
+    "origin": "app",
+    "at": "2026-10-08T09:00:00Z"
+  },
+  {
+    "id": "evt_0230",
+    "entity_type": "task",
+    "entity_id": "tsk_043",
+    "field": "status",
+    "before": "todo",
+    "after": "doing",
+    "actor_id": "per_fay",
+    "origin": "granola",
+    "at": "2026-10-08T09:10:00Z"
+  },
+  {
+    "id": "evt_0231",
+    "entity_type": "task",
+    "entity_id": "tsk_030",
+    "field": "priority",
+    "before": null,
+    "after": "high",
+    "actor_id": "per_ada",
+    "origin": "app",
+    "at": "2026-10-08T09:30:00Z"
+  },
+  {
+    "id": "evt_0232",
+    "entity_type": "task",
+    "entity_id": "tsk_038",
+    "field": "status",
+    "before": "doing",
+    "after": "done",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-08T10:00:00Z"
+  },
+  {
+    "id": "evt_0233",
+    "entity_type": "task",
+    "entity_id": "tsk_038",
+    "field": "status_category",
+    "before": "open",
+    "after": "done",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-08T10:00:00Z"
+  },
+  {
+    "id": "evt_0234",
+    "entity_type": "task",
+    "entity_id": "tsk_038",
+    "field": "closed_at",
+    "before": null,
+    "after": "2026-10-08T10:00:00Z",
+    "actor_id": "per_bo",
+    "origin": "app",
+    "at": "2026-10-08T10:00:00Z"
   }
 ]
