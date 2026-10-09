@@ -6,16 +6,18 @@ The files match `docs/DATA-MODEL.md`: `people.json`, `projects.json`, `tasks.jso
 `plan.json` holds the project-page details and one partner plan for the web app (`web/lib/seed.ts`); its free-text owner fields may name a person id (`per_bo`), which the seed swaps for that person's name.
 `events.json` is the full history. Replaying it gives exactly the rows in `tasks.json` and `projects.json`.
 
-## The four weeks
+## Six weeks and a seed-time shift
 
-The weeks run Monday to Friday and end on 2026-10-09. The data is "as of" 2026-10-09.
+The weeks run Monday to Friday, from 2026-08-31 to 2026-10-09. The data is "as of" 2026-10-09 (`FIXTURE_ANCHOR` in `web/lib/shift.ts`).
+At seed time the app moves every date and timestamp forward by whole weeks, so the anchor week becomes the current week and each date keeps its weekday.
+The files on disk never change. A test run pins today to the anchor, so nothing shifts there.
 
-- Week of 09-14: 6 tasks counted, 5 on time, 1 late. One task dropped.
-- Week of 09-21: 8 tasks counted, 5 on time, 3 late. One due date moved later before close.
-- Week of 09-28: 8 tasks counted, 5 on time, 2 late, 1 open and overdue. One due date moved earlier.
-- Week of 10-05: 6 tasks counted, 3 on time, 3 open and overdue. Some tasks are due 10-09 and not counted yet.
+- Weeks of 08-31 and 09-07: closed work only, on time, ahead and late. One due date moved and one task dropped.
+- Weeks of 09-14 and 09-21: the original weeks. One task dropped, one due date moved later before close.
+- Week of 09-28: some tasks late or open and overdue. One due date moved earlier.
+- Week of 10-05: the demo week. The lead has one late task, one at risk and one due this week. Two tasks wait on the lead, one waits on a teammate, one is blocked with no person. One task is done early, one is dropped, one date was moved with a reason.
 
-Mix: 27 origin app, 4 sheet, 2 granola. Ledger totals: 18 on time, 6 late, 4 open.
+Mix: 50 origin app, 4 sheet, 3 granola. Ledger totals: 27 on time or ahead, 10 late, 4 open and overdue.
 
 ## Guard rule
 

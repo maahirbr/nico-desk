@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Tx } from './db';
+import { shiftDays, shiftJson } from './shift';
 
 // Loads the synthetic fixtures into the SPEC.md schema. Fills the fields the fixtures predate
 // (SPEC.md 3.6): one pilot team, first_due_on from each task's _created event, health from the
@@ -35,8 +36,9 @@ export function loadRosterOverlay(file: string): RosterOverlay | undefined {
   return (raw.people ?? raw) as RosterOverlay;
 }
 
+// Fixture dates move to the current week at seed time (lib/shift.ts).
 function load(dir: string, name: string): Row[] {
-  return JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
+  return shiftJson(JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')), shiftDays());
 }
 
 const j = (v: unknown) => (v === null || v === undefined ? null : JSON.stringify(v));
@@ -72,12 +74,13 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
     const health =
       t.status_category !== 'open' || t.origin === 'sheet' ? null : t.status === 'todo' ? 'not_started' : 'on_track';
     await tx.query(
-      `INSERT INTO tasks (id, team_id, title, owner_id, project_id, first_due_on, due_on, health, status, status_category,
-         origin, origin_ref, created_by, created_at, closed_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+      `INSERT INTO tasks (id, team_id, title, description, owner_id, project_id, first_due_on, due_on, note, health, status, status_category,
+         priority, priority_set_by, priority_set_at, blocked_on_id, blocked_ask, blocked_at, origin, origin_ref, created_by, created_at, closed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
       [
-        t.id, TEAM_ID, t.title, t.owner_id, t.project_id, c.after.due_on, t.due_on, health, t.status,
-        t.status_category, t.origin, t.origin_ref, c.actor_id, t.created_at, t.closed_at,
+        t.id, TEAM_ID, t.title, t.description ?? null, t.owner_id, t.project_id, c.after.due_on, t.due_on, t.note ?? null, health, t.status,
+        t.status_category, t.priority ?? null, t.priority_set_by ?? null, t.priority_set_at ?? null, t.blocked_on_id ?? null,
+        t.blocked_ask ?? null, t.blocked_at ?? null, t.origin, t.origin_ref, c.actor_id, t.created_at, t.closed_at,
       ],
     );
   }
@@ -174,7 +177,7 @@ async function seedLocalProjects(tx: Tx, local: LocalProjects, people: Row[]): P
 async function seedPlan(tx: Tx, dir: string, people: Row[], skipPlan = false): Promise<void> {
   const file = path.join(dir, 'plan.json');
   if (!fs.existsSync(file)) return;
-  const plan = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const plan = shiftJson(JSON.parse(fs.readFileSync(file, 'utf8')), shiftDays());
   await seedPlanData(tx, skipPlan ? { project_meta: plan.project_meta } : plan, people);
 }
 

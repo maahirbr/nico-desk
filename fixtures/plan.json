@@ -29,11 +29,11 @@
     "status_note": "Plan agreed in principle. Two owners still to name.",
     "status_at": "2026-10-01T05:00:00Z",
     "kind": "plan",
-    "eyebrow": "Loomworks studio for the pilot team · OND 2026",
+    "eyebrow": "Loomworks studio for the pilot team",
     "phase": "Draft for agreement",
     "intro": "What the studio helps us build this quarter, who owns each line on our side, and the checkpoints we hold each other to.\nThe studio coaches; we own the work.",
     "launch_on": "2026-12-31",
-    "pills": [{ "label": "Quarter", "value": "Oct to Dec 2026" }, { "label": "Review", "value": "Fortnightly" }],
+    "pills": [{ "label": "Quarter", "value": "This quarter" }, { "label": "Review", "value": "Fortnightly" }],
     "pillars": [
       { "key": "foundations", "label": "Foundations" },
       { "key": "people", "label": "People and capability" },

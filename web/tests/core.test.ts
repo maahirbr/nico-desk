@@ -39,8 +39,8 @@ describe('ledger (FR-33, SPEC.md C1)', () => {
   it('matches the fixture totals, judged against the first date', async () => {
     const rows = await s.ledger(db, TEAM_ID, '2026-01-05', '2026-12-28', undefined, AS_OF);
     const sum = (k: keyof s.LedgerRow) => rows.reduce((n, r) => n + (r[k] as number), 0);
-    expect(sum('closedAhead') + sum('closedOnTime')).toBe(18);
-    expect(sum('closedLate')).toBe(6);
+    expect(sum('closedAhead') + sum('closedOnTime')).toBe(27);
+    expect(sum('closedLate')).toBe(10);
     expect(sum('openPastDue')).toBe(4);
   });
 

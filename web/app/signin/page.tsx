@@ -8,7 +8,7 @@ import { SignInList } from '@/components/client';
 export const dynamic = 'force-dynamic';
 
 export default async function SignIn() {
-  if (!openDemo() && (await currentMe())) redirect('/me');
+  if (!openDemo() && (await currentMe())) redirect('/');
   if (!devSignInEnabled()) {
     return (
       <div className="signin">
