@@ -48,7 +48,7 @@ Type `@Wren` and what you need and by when, on any line or in the field. It beco
 
 - **Yes, by then** (or a date Wren picks, which becomes the first date on record).
 - **Later, because …** (moves the date, with the reason, in the open).
-- **Not me** (declines with a reason, and the ask goes back to the asker to re-tag).
+- **Not me, because …** (one line of reason, required). In the same line Wren can type `@Dev` to name who is responsible, and the ask moves to Dev's week with Wren's reason on it, still asked by Tamsin. With no `@`, the ask goes back to Tamsin to re-tag. (The repo owner, 9 Oct.)
 
 An ask is judged in the record like any other commitment. This is the thing that turns "the system holds people accountable" from a wish into a mechanic, and it is the component to design first and best.
 
@@ -60,7 +60,7 @@ On the line itself, one tap: **done**, **on track**, **off track**. Off track op
 
 ### 4.5 Team (lead and founder home)
 
-For the lead: this week's lines across the team, grouped by person, with the late ones and the stuck ones first. What moved this week and why. Who is waiting on whom (the owed view). Monday: last week's note in drafts, this week's lines being written while the team talks. Friday: the team's note, drafted by the app from the week, read and sent by the lead. Nobody sends a Friday note today (the repo owner, 9 Oct), so this is new behaviour, not a replacement: it is off until the lead switches it on, and the lead always presses send. For the founder: every team's week, the same page the lead sees, plus the four-week record on top: counted, ahead, on time, late, silent slips, per team.
+For the lead: this week's lines across the team, grouped by person, with the late ones and the stuck ones first. What moved this week and why. Who is waiting on whom (the owed view). Monday: last week's note in drafts, this week's lines being written while the team talks. Friday: the team's note, drafted by the app from the week, read and sent by the lead. Nobody sends a Friday note today (the repo owner, 9 Oct), so this is new behaviour, not a replacement. It is on by default for the pilot, with a visible switch the lead can turn off, and the lead always presses send. For the founder: every team's week, the same page the lead sees, plus the four-week record on top: counted, ahead, on time, late, silent slips, per team.
 
 The record is one printable page per week. It is the honest answer to "did we do what we said".
 
@@ -153,8 +153,8 @@ Expected: `OK: 20 cases`, `OK: fixtures`, no grep output, tsc and lint silent, b
 
 1. Does a member see other people's lines on their team? Default: yes, read-only, on the team page, not on their week.
 2. Can a member tag someone on another team? Default: yes, the ask lands on that person's week; team pages show asks crossing in and out.
-3. Does "not me" need a reason? Default: yes, one line, so the asker learns who to tag instead.
-4. Is the Friday note sent to the whole team or to the lead only? Default: drafted for the lead, the lead sends it to the team. Off until the lead switches it on (section 4.5).
+3. Does "not me" need a reason? Answered 9 Oct: yes, one line, and the decliner can `@` whoever is responsible, which moves the ask to them (section 4.3).
+4. Is the Friday note sent to the whole team or to the lead only? Answered 9 Oct: drafted for the lead, the lead sends it to the team. On by default for the pilot, with a visible off switch (section 4.5).
 
 Answered on 9 Oct by the repo owner, no longer open: desktop first; asks today happen on Slack, in person, email and WhatsApp; the founder sees the record plus every team's week; nobody sends a Friday note today; the temperature ranking in section 7; the three v1 ideas to keep in section 7.
 
