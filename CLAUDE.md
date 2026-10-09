@@ -9,6 +9,7 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 - `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Local sign-in is a roster picker behind `NICO_DEV_SIGNIN=1`. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
 - Hosting: `web/lib/db.ts` picks the database. `DATABASE_URL` set: postgres-js through `web/lib/pgRemote.ts` (Supabase transaction pooler), loaded by `npm run db:remote` (`web/scripts/db-remote.ts`: drops, reseeds, RLS on with no policies). Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last. Unset locally: PGlite in `web/.data/`. `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come from env or are derived (`web/lib/secret.ts`). `web/.env.example` lists every variable. Vercel project `nico-desk`, root `web`, serves https://nico-desk.vercel.app.
 - Look: `DESIGN.md` (repo root) is the visual system and outranks everything visual. Every token lives in `web/app/tokens.css`; Geist comes from `next/font/google`. `web/components/motion.ts` holds the three motion gestures and `web/components/KeyboardDismiss.tsx` the mobile keyboard rule. `docs/design/moods.html` holds the three mood sketches, and each is a skin: `[data-skin]` token blocks in `tokens.css`, picked from the menu by the avatar and kept in the `nd_skin` cookie, which `layout.tsx` reads so the server HTML carries it. `web/components/keys.ts` holds the shortcuts (`/`, Cmd+K, `n`, `?`, Esc); `toast.tsx` and `skeletons.tsx` the confirmations and loading states.
+- `web/` v2: the ask is a task row with `ask_state` (asked, accepted, countered, cant, declined) and stays off the desk until agreed (`ON_DESK` in `lib/service.ts`). `lib/commit.ts` turns "ask <person> to <thing> by <date>" and "I'll <thing> by <date>" in the top search into a draft, with no model. `/team?asof=<Monday>` rebuilds the desk at the end of any of the last 8 weeks from the events log (`asOfTasks`, read only). `weeklyLoad` gives open work per person for this week and next. Demo asks come from `lib/seedAsks.ts`, apart from `fixtures/`. UI in `components/Asks.tsx` and `components/TeamV2.tsx`.
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
 - `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
@@ -115,6 +116,13 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
   touches only transform and opacity and stops under reduced motion. On `/projects` the plan or
   board tag moved below the project name, since above it read as an eyebrow. Rollback:
   `git revert -m 1 47531a3`.
+- 2026-10-09 · Sonnet 5.5 · v2 built in four steps: the ask as the central object, the commit field in the top
+  search, an as-of scrubber on `/team`, and per-person load. An ask is a task row with four additive columns
+  (`ask_state`, `ask_due_on`, `ask_counter_on`, `ask_reason`). Agreement sets `first_due_on` once, so the on-time
+  ledger judges against the agreed date. The as-of view rewinds the current row by undoing events after the week's
+  end (IST midnight), so no snapshots are stored. The commit field is a plain parser, not a model, so it never
+  guesses. A hosted database needs `npm run db:remote` run again, because it does not run `upgrade()`.
+  Rollback: revert the v2 commits on the branch. The added columns are harmless if left in place.
 
 ## VERIFY
 

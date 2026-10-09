@@ -1,6 +1,24 @@
 // Slice 1 schema from SPEC.md section 3.3, plus the project boards (project meta and the plan_*
 // tables). Slice 2 tables are not created yet.
 
+// v2: an ask is a task row whose ask_state says where the agreement stands. While it is pending
+// (asked, countered) or closed without a task (declined, cant) it is off the desk. The first date
+// is set once, at agreement; until then first_due_on only holds the date the asker wanted.
+export const ASK_COLUMNS = `
+  ask_state       text CHECK (ask_state IN ('asked','accepted','countered','declined','cant')),
+  ask_due_on      date,   -- the date the asker wanted
+  ask_counter_on  date,   -- the date the asked person offered instead
+  ask_reason      text CHECK (char_length(ask_reason) <= 280)`;
+
+export const FIRST_DUE_FN = `
+CREATE OR REPLACE FUNCTION tasks_first_due_locked() RETURNS trigger LANGUAGE plpgsql AS
+$$ BEGIN
+  IF NEW.first_due_on <> OLD.first_due_on AND COALESCE(OLD.ask_state, '') NOT IN ('asked', 'countered') THEN
+    RAISE EXCEPTION 'first_due_on is locked';
+  END IF;
+  RETURN NEW;
+END $$;`;
+
 export const SCHEMA = `
 SET TIME ZONE 'UTC';
 
@@ -79,7 +97,7 @@ CREATE TABLE tasks (
   created_by       text REFERENCES people(id),
   created_at       timestamptz NOT NULL,
   closed_at        timestamptz,
-  version          integer NOT NULL DEFAULT 1,
+  version          integer NOT NULL DEFAULT 1,${ASK_COLUMNS},
   CHECK ((origin = 'app') = (origin_ref IS NULL)),
   CHECK ((status_category = 'done') = (closed_at IS NOT NULL)),
   CHECK ((priority IS NULL) = (priority_set_by IS NULL)),
@@ -90,13 +108,7 @@ CREATE TABLE tasks (
 CREATE UNIQUE INDEX tasks_origin_ref ON tasks (origin, origin_ref) WHERE origin_ref IS NOT NULL;
 CREATE INDEX tasks_team_open ON tasks (team_id, owner_id, due_on) WHERE status_category = 'open';
 
-CREATE FUNCTION tasks_first_due_locked() RETURNS trigger LANGUAGE plpgsql AS
-$$ BEGIN
-  IF NEW.first_due_on <> OLD.first_due_on THEN
-    RAISE EXCEPTION 'first_due_on is locked';
-  END IF;
-  RETURN NEW;
-END $$;
+${FIRST_DUE_FN}
 CREATE TRIGGER tasks_first_due_locked BEFORE UPDATE ON tasks
   FOR EACH ROW EXECUTE FUNCTION tasks_first_due_locked();
 

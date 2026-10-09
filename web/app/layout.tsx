@@ -11,7 +11,9 @@ import { SkinMenu } from '@/components/SkinMenu';
 import { SKIN_COOKIE, skinOf } from '@/components/skins';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
-import { rosterFile } from '@/lib/db';
+import { db, rosterFile } from '@/lib/db';
+import { listPeople } from '@/lib/service';
+import { today } from '@/lib/time';
 import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
 import './globals.css';
@@ -29,6 +31,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const me = await currentMe();
   const skin = skinOf((await cookies()).get(SKIN_COOKIE)?.value);
   const ownerId = localOwnerId(rosterFile());
+  // The commit field in the top search matches "ask <name> to ..." against the active roster.
+  const roster = me ? (await listPeople(await db(), me.team.id)).filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })) : [];
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable}`}>
       <body>
@@ -39,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="shell">
             <aside className="side">
               <Link className="mark" href="/me">
-                <span className="mark-name">nico-desk</span>
+                <span className="mark-name">nico-desk<span className="mark-v">v2</span></span>
                 <span className="mark-sub">{me.team.name}</span>
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={me.person.appRoles.includes('lead')} />
@@ -54,7 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <SignOut />
               </div>
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /></div><div className="page">{children}</div></main>
+            <main className="main"><div className="topbar"><TopSearch people={roster} meId={me.person.id} todayIso={today()} /></div><div className="page">{children}</div></main>
           </div>
         ) : (
           <main className="page-solo">{children}</main>

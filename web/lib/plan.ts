@@ -119,7 +119,7 @@ export async function projectCounts(db: Tx, teamId: string, today = todayIst()) 
     `SELECT project_id, count(*) FILTER (WHERE status_category = 'open')::int AS open,
             count(*) FILTER (WHERE status_category = 'open' AND due_on < $2)::int AS overdue,
             count(*) FILTER (WHERE status_category = 'done')::int AS done
-     FROM tasks WHERE team_id = $1 AND project_id IS NOT NULL GROUP BY project_id`, [teamId, today]);
+     FROM tasks WHERE team_id = $1 AND project_id IS NOT NULL AND (ask_state IS NULL OR ask_state = 'accepted') GROUP BY project_id`, [teamId, today]);
   const out: Record<string, { open: number; overdue: number; done: number }> = {};
   for (const r of t) out[r.project_id] = { open: r.open, overdue: r.overdue, done: r.done };
   const plans = (await teamProjects(db, teamId)).filter((p) => p.kind === 'plan');

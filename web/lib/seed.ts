@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Tx } from './db';
 import { shiftDays, shiftJson } from './shift';
+import { seedAsks } from './seedAsks';
+import { today } from './time';
 
 // Loads the synthetic fixtures into the SPEC.md schema. Fills the fields the fixtures predate
 // (SPEC.md 3.6): one pilot team, first_due_on from each task's _created event, health from the
@@ -98,6 +100,8 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
 
   await seedPlan(tx, dir, people, !!local?.drop_sample_plan);
   if (local) await seedLocalProjects(tx, local, people);
+  // v2 demo asks: synthetic, so never on a run with a real roster or real projects.
+  if (!overlay && !local) await seedAsks(tx, TEAM_ID, today());
   // A smaller local team: a person marked merged_into hands their work to that person and leaves
   // the team. Their history stays, under their name.
   for (const [id, o] of Object.entries(overlay ?? {})) {
