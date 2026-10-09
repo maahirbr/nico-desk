@@ -4,6 +4,7 @@ import path from 'node:path';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { dataDir, db } from './db';
+import { derivedSecret } from './secret';
 import { findPersonByEmail, getPerson, teamsOf, type Person } from './service';
 
 // Sessions are a signed cookie naming a roster person. SPEC.md FR-54 asks for Google sign-in;
@@ -18,6 +19,7 @@ export type Me = { person: Person; team: { id: string; name: string; teamType: s
 let cached: string | null = null;
 function secret(): string {
   if (process.env.NICO_SESSION_SECRET) return process.env.NICO_SESSION_SECRET;
+  if (process.env.VERCEL) return derivedSecret('session');
   if (cached) return cached;
   const file = path.join(dataDir(), 'session-secret');
   fs.mkdirSync(dataDir(), { recursive: true });

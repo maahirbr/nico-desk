@@ -1,5 +1,6 @@
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { SCHEMA } from './schema';
 import { jobSecret } from './jobs';
@@ -7,21 +8,30 @@ import { loadLocalProjects, loadRosterOverlay, seed } from './seed';
 
 // PGlite is Postgres compiled to WASM, running in this process. Locally it stands in for the
 // pilot database until an account owner is named (SPEC.md OQ8). Data lives in web/.data/pg.
+// With DATABASE_URL set, the same interface runs over postgres-js (lib/pgRemote.ts) instead.
+// On Vercel with no DATABASE_URL, PGlite lives in the temp dir and reseeds per instance.
 
-export type Db = PGlite;
-export type Tx = Pick<PGlite, 'query' | 'exec'>;
+export type Tx = {
+  query<T = any>(sql: string, params?: any[]): Promise<{ rows: T[]; affectedRows?: number }>;
+  exec(sql: string): Promise<unknown>;
+};
+export type Db = Tx & { transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> };
 
-const parsers = {
+export const parsers = {
   1082: (v: string) => v, // date stays 'YYYY-MM-DD'
   1184: (v: string) => new Date(v.replace(' ', 'T').replace(/([+-]\d\d)$/, '$1:00')).toISOString(), // timestamptz
 };
 
+// Vercel's disk is read-only except the temp dir.
 export function dataDir(): string {
-  return process.env.NICO_DATA_DIR || path.join(process.cwd(), '.data');
+  return process.env.NICO_DATA_DIR || (process.env.VERCEL ? path.join(os.tmpdir(), 'nico-desk') : path.join(process.cwd(), '.data'));
 }
 
+// ../fixtures is traced into the Vercel functions by next.config.ts; ./fixtures covers a flatter layout.
 export function fixturesDir(): string {
-  return process.env.NICO_FIXTURES_DIR || path.join(process.cwd(), '..', 'fixtures');
+  if (process.env.NICO_FIXTURES_DIR) return process.env.NICO_FIXTURES_DIR;
+  const up = path.join(process.cwd(), '..', 'fixtures');
+  return fs.existsSync(up) ? up : path.join(process.cwd(), 'fixtures');
 }
 
 // roster.local.json (git-ignored) puts real names on a local run; fixtures stay synthetic.
@@ -60,12 +70,23 @@ async function upgrade(db: Db) {
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };
 
+function openLocal(): Promise<Db> {
+  const dir = path.join(dataDir(), 'pg');
+  fs.mkdirSync(dir, { recursive: true });
+  return openDb(dir, rosterFile());
+}
+
 export function db(): Promise<Db> {
   if (!g.__ndDb) {
-    const dir = path.join(dataDir(), 'pg');
-    fs.mkdirSync(dir, { recursive: true });
     jobSecret(); // make sure the local job secret exists for npm run job:*
-    g.__ndDb = openDb(dir, rosterFile());
+    // Hosted: the schema and seed come from scripts/db-remote.ts, never from a page load.
+    const url = process.env.DATABASE_URL;
+    const opening = url ? import('./pgRemote').then((m) => m.openRemote(url)) : openLocal();
+    // A failed open must not stick for the life of a warm serverless instance.
+    g.__ndDb = opening.catch((e) => {
+      g.__ndDb = undefined;
+      throw e;
+    });
   }
   return g.__ndDb;
 }
