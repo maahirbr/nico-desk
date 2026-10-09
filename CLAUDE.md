@@ -7,6 +7,8 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 ## ARCHITECTURE
 
 - `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Local sign-in is a roster picker behind `NICO_DEV_SIGNIN=1`. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
+- Hosting: `web/lib/db.ts` picks the database. `DATABASE_URL` set: postgres-js through `web/lib/pgRemote.ts` (Supabase transaction pooler), loaded by `npm run db:remote` (`web/scripts/db-remote.ts`: drops, reseeds, RLS on with no policies). Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last. Unset locally: PGlite in `web/.data/`. `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come from env or are derived (`web/lib/secret.ts`). `web/.env.example` lists every variable. Vercel project `nico-desk`, root `web`, serves https://nico-desk.vercel.app.
+- Look: `DESIGN.md` (repo root) is the visual system and outranks everything visual. Every token lives in `web/app/tokens.css`; Geist comes from `next/font/google`. `web/components/motion.ts` holds the three motion gestures and `web/components/KeyboardDismiss.tsx` the mobile keyboard rule. `docs/design/moods.html` holds the three mood sketches.
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
 - `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
@@ -17,13 +19,17 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 
 ## CONSTRAINTS
 
-- Any Nicobar surface uses the UI already designed in `~/Code/Nicobar work` (`docs/SHEET-SPEC.md`,
-  the `web/` tokens and components). No new visual language.
+- nico-desk has its own visual language, designed from the product's needs (decision 2026-10-09).
+  The OKR page's sheet language in `~/Code/Nicobar work` is not a reference for it. The rule that
+  any Nicobar surface uses that sheet language still holds for the OKR page itself.
 - Do not rebuild the tracker owner's tracker (`nicobar-okr-processor`). Read what it produces.
 - Never write to the founder's Supabase or any department Google Sheet without access granted for
   that purpose.
-- No real Nicobar data in git, fixtures or artifacts; synthetic fixtures only. Any exception is
-  the repo owner's call, recorded in DECISIONS.
+- No real Nicobar data in git, fixtures or artifacts; synthetic fixtures only. The company name and
+  its public context (team names, kinds of project, product and place words from the public site)
+  are allowed in fixtures (decision 2026-10-09). Real people, real dates, real numbers and anything
+  from a department sheet or Supabase are not. Any other exception is the repo owner's call,
+  recorded in DECISIONS.
 - No people's names in repo files. Use roles: the repo owner, the sponsor, the pilot lead, the
   founder, the tracker owner, the context layer lead, the OKR backend developer.
 - No customer PII. Nothing from `~/Code/personalised-NL/`, the Full Moon files or order exports.
@@ -71,11 +77,46 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
   FR-12's picked health and the Red rule: an early warning is now a date move. Blocked needs a block
   reason (a teammate it waits on is optional, since not every block is a person), dropped needs a
   reason; starting and done are one click. Rollback: revert the commit that makes this change.
+- 2026-10-09 · Fable 5.1 · The sheet-language constraint is lifted for nico-desk at the repo owner's
+  call, after they reviewed the v1 and rejected its direction (dull, hard to understand, the
+  colleague dependency invisible). The redesign is briefed in `docs/DESIGN-HANDOUT.md` v2: three
+  roles, five functions, the ask as the central object, three mood sketches before any build.
+  The company name and public context are allowed in fixtures so the demo reads as Nicobar; the
+  name is removed from `fixtures/denylist.txt`. The repo owner also said to bypass anything blocked
+  on them: commits and `CLAUDE.md` edits proceed without a wait; push, deploy and sends still ask.
+  Rollback: restore the two CONSTRAINTS lines and the denylist line from this commit's parent.
+- 2026-10-09 · Opus 5.5 · Mood A (plain and familiar: Geist, white, one blue, pills) picked for
+  the redesign, since the repo owner had not replied to the mood page and asked me to pick. It
+  reads as an ordinary work tool on first use, which is the bar. Mood B stays a candidate for
+  the lead and founder pages if A reads too soft there. `DESIGN.md` now outranks the handout on
+  anything visual. Rollback: `git revert` this commit and pick again from `docs/design/moods.html`.
+- 2026-10-09 · Opus 5.5 · The PM's app (branch `local-desk`) is the baseline for the MVP, at the repo
+  owner's call, on branch `maahir/mvp`. The owner's own app on `maahir/v2-hosting` stays as a source
+  of features. Its spec moved to `docs/LOCAL-DESK-SPEC.md` so no filename carries a name. The company
+  name left `fixtures/denylist.txt` again, per the entry above. Rollback: point Vercel back at
+  `maahir/v2-hosting`.
+- 2026-10-09 · Opus 5.5 · Hosted without a database for now, at the repo owner's call: on Vercel
+  with no `DATABASE_URL`, each instance seeds PGlite in tmpdir, so edits do not last and can differ
+  between page loads. Setting `DATABASE_URL` and running `npm run db:remote` moves it to Supabase.
+  Sign-in is removed for the demo (`NICO_OPEN_DEMO=1`) at the repo owner's call: a visitor is the
+  team lead. Secrets are derived when unset, which is acceptable only for synthetic data with no
+  real sign-in. Earlier the same day `maahir/v2-hosting` reached production by mistake (the API
+  ignored the preview target); it was replaced by `maahir/mvp`. Rollback: unset `NICO_OPEN_DEMO`
+  on Vercel and redeploy, which brings back the roster picker.
+- 2026-10-09 · Opus 5.5 · The PM's app restyled to `DESIGN.md` mood A: white, Geist, one blue,
+  quiet flag text, three motion gestures, the keyboard rule. Features and screens unchanged.
+  Rollback: `git revert -m 1 7328ee2`.
 
 ## VERIFY
 
 ```
 python3 -I evals/meetings/check.py
+grep -rilf fixtures/denylist.txt fixtures/*.json evals/
+cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
-expects `OK: 20 cases`. In `web/`: `npm test` expects 41 passed, `npm run typecheck` and `npm run build` succeed. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
+Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
+internal hosts are not); typecheck silent; `48 passed`; build green. Then run the app
+(`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
+375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
+`docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
