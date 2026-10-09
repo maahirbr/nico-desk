@@ -3,13 +3,15 @@
 import { useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
+import type { AskItem } from '@/lib/service';
+import { Asks } from './Asks';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds, assignedNotice, waiting, done, names, projectNames, people, projects, workstreamsByProject }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds, assignedNotice, waiting, asks, done, names, projectNames, people, projects, workstreamsByProject }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; waiting: Task[]; asks: { ofMe: AskItem[]; byMe: AskItem[] }; done: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -38,12 +40,15 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds,
           <h1>{greeting}</h1>
           <p className="summary">
             {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text">{overdue} late</span></>}</> : 'Nothing open'}
+            {asks.ofMe.length > 0 && <> · {asks.ofMe.length} asked of you</>}
             {waiting.length > 0 && <> · {waiting.length} waiting on you</>}
             <span className="dim"> · {fmtDate(today)}</span>
           </p>
         </div>
         <button className="btn" onClick={() => setAdding(true)}>+ New task</button>
       </header>
+
+      <Asks ofMe={asks.ofMe} byMe={asks.byMe} today={today} names={names} />
 
       {waiting.length > 0 && (
         <section className="callout">

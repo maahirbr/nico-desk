@@ -1,5 +1,5 @@
 import type { Db, Tx } from './db';
-import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
+import { derive, type AskState, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 
@@ -100,8 +100,12 @@ export async function listProjects(db: Tx, teamId: string): Promise<{ id: string
 
 // ---------- reading tasks ----------
 
-async function loadTasks(db: Tx, where: string, params: unknown[], today: string): Promise<Task[]> {
-  const { rows } = await db.query<TaskRow>(`SELECT * FROM tasks WHERE ${where}`, params);
+// The desk holds tasks and agreed asks. An ask still waiting, or closed without a task, stays off it
+// (listAsks and getTask still see it).
+const ON_DESK = `(ask_state IS NULL OR ask_state = 'accepted')`;
+
+async function loadTasks(db: Tx, where: string, params: unknown[], today: string, deskOnly = true): Promise<Task[]> {
+  const { rows } = await db.query<TaskRow>(`SELECT * FROM tasks WHERE ${where}${deskOnly ? ` AND ${ON_DESK}` : ''}`, params);
   if (rows.length === 0) return [];
   const { rows: events } = await db.query<EventRow>(
     `SELECT * FROM events WHERE entity_type = 'task' AND entity_id = ANY($1) AND field = 'due_on' ORDER BY at, id`,
@@ -113,7 +117,7 @@ async function loadTasks(db: Tx, where: string, params: unknown[], today: string
 }
 
 export async function getTask(db: Tx, id: string, today = todayIst()): Promise<Task> {
-  const [t] = await loadTasks(db, 'id = $1', [id], today);
+  const [t] = await loadTasks(db, 'id = $1', [id], today, false);
   if (!t) throw notFound('No such task.');
   return t;
 }
@@ -185,6 +189,7 @@ async function mutate(
     if (roles.size === 0) throw forbidden('You are not on this task’s team.');
     if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
     if (row.version !== version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
+    if (row.ask_state && row.ask_state !== 'accepted') throw bad('ask_open', 'This ask is not agreed yet. Answer it first.');
     const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId, isLead: roles.has('lead') };
     if (!allow(ctx)) throw forbidden();
     const change = build(ctx);
@@ -416,6 +421,157 @@ export async function addUpdate(db: Db, meId: string, id: string, text: string):
   });
 }
 
+// ---------- asks (v2) ----------
+// An ask is a task row that waits for an agreement. Asked: the owner has not answered. Yes sets the
+// first date, once. A counter date waits for the asker. Can't closes it with a reason. Every step
+// appends to the events log. Until agreed, an ask is off the desk (see ON_DESK).
+
+export type AskInput = { teamId: string; title: string; toId: string; dueOn: string; description?: string | null; projectId?: string | null };
+
+export async function createAsk(db: Db, meId: string, input: AskInput): Promise<Task> {
+  const today = todayIst();
+  if (input.dueOn < today) throw bad('date_in_past', 'The date must be today or later.', 'dueOn');
+  if (input.toId === meId) throw bad('invalid_body', 'To give yourself a task, add a task. An ask goes to someone else.', 'toId');
+  const id = newId('tsk');
+  await db.transaction(async (tx) => {
+    if ((await rolesIn(tx, input.teamId, meId)).size === 0) throw forbidden('You are not on this team.');
+    await activeMember(tx, input.teamId, input.toId, 'toId');
+    if (input.projectId) {
+      const { rows } = await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND team_id = $2`, [input.projectId, input.teamId]);
+      if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
+    }
+    const at = new Date().toISOString();
+    const title = input.title.trim();
+    const description = input.description?.trim() || null;
+    await tx.query(
+      `INSERT INTO tasks (id, team_id, title, description, owner_id, project_id, first_due_on, due_on, health, status, status_category,
+         origin, created_by, created_at, ask_state, ask_due_on)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$7,'not_started','open','open','app',$8,$9,'asked',$7)`,
+      [id, input.teamId, title, description, input.toId, input.projectId ?? null, input.dueOn, meId, at],
+    );
+    await insertEvent(tx, {
+      entityId: id, field: '_created', before: null, actorId: meId, at,
+      after: { title, owner_id: input.toId, project_id: input.projectId ?? null, due_on: input.dueOn, ask_state: 'asked', ask_due_on: input.dueOn },
+    });
+    await insertEvent(tx, { entityId: id, field: 'ask_state', before: null, after: 'asked', actorId: meId, at });
+  });
+  return getTask(db, id);
+}
+
+type Ev = { field: string; before: unknown; after: unknown; reason?: string | null };
+
+// One locked step on an ask: the right person, the right version, the right state. `step` returns
+// the columns to set and the events to write; the version rises by one.
+async function askStep(
+  db: Db, meId: string, id: string, version: number, who: 'owner' | 'asker', from: AskState,
+  step: (row: TaskRow) => { set: Record<string, unknown>; events: Ev[] },
+): Promise<Task> {
+  await db.transaction(async (tx) => {
+    const { rows } = await tx.query<TaskRow>(`SELECT * FROM tasks WHERE id = $1 FOR UPDATE`, [id]);
+    const row = rows[0];
+    if (!row || !row.ask_state) throw notFound('No such ask.');
+    if ((await rolesIn(tx, row.team_id, meId)).size === 0) throw forbidden('You are not on this task’s team.');
+    if ((who === 'owner' ? row.owner_id : row.created_by) !== meId)
+      throw forbidden(who === 'owner' ? 'Only the person asked can answer.' : 'Only the person who asked can decide on a counter date.');
+    if (row.version !== version) throw new ApiError(409, 'version_conflict', 'Someone changed this ask. Reload and try again.');
+    if (row.ask_state !== from) throw bad('ask_state', from === 'asked' ? 'This ask is already answered.' : 'There is no counter date to decide on.');
+    const { set, events } = step(row);
+    const cols = Object.keys(set);
+    await tx.query(
+      `UPDATE tasks SET ${cols.map((c, i) => `${c} = $${i + 2}`).join(', ')}, version = version + 1 WHERE id = $1`,
+      [id, ...cols.map((c) => set[c])],
+    );
+    const at = new Date().toISOString();
+    for (const e of events) await insertEvent(tx, { entityId: id, ...e, actorId: meId, at });
+  });
+  return getTask(db, id);
+}
+
+export type AskAnswer =
+  | { version: number; answer: 'yes' }
+  | { version: number; answer: 'counter'; counterOn: string; reason?: string }
+  | { version: number; answer: 'cant'; reason: string };
+
+// The asked person answers. "Yes, by then" sets the first date, once. "Not by then" offers another
+// date. "Can't" gives a reason.
+export async function answerAsk(db: Db, meId: string, id: string, input: AskAnswer): Promise<Task> {
+  return askStep(db, meId, id, input.version, 'owner', 'asked', (row) => {
+    const asked = row.ask_due_on ?? row.first_due_on;
+    if (input.answer === 'yes') {
+      if (asked < todayIst()) throw bad('date_in_past', 'That date has passed. Offer a new date instead.');
+      return {
+        set: { ask_state: 'accepted', first_due_on: asked, due_on: asked },
+        events: [
+          { field: 'ask_state', before: 'asked', after: 'accepted' },
+          { field: 'first_due_on', before: row.first_due_on, after: asked },
+        ],
+      };
+    }
+    if (input.answer === 'counter') {
+      if (input.counterOn < todayIst()) throw bad('date_in_past', 'The new date must be today or later.', 'counterOn');
+      if (input.counterOn === asked) throw bad('invalid_body', 'That is the date you were asked for. Answer yes instead.', 'counterOn');
+      const note = input.reason?.trim().slice(0, 280) || null;
+      return {
+        set: { ask_state: 'countered', ask_counter_on: input.counterOn, ask_reason: note },
+        events: [
+          { field: 'ask_state', before: 'asked', after: 'countered', reason: note },
+          { field: 'ask_counter_on', before: null, after: input.counterOn },
+        ],
+      };
+    }
+    const reason = needReason(input.reason);
+    return {
+      set: { ask_state: 'cant', ask_reason: reason },
+      events: [{ field: 'ask_state', before: 'asked', after: 'cant', reason }],
+    };
+  });
+}
+
+// The asker takes or leaves the counter date. Taking it sets the first date, once, to that date.
+export async function respondToCounter(db: Db, meId: string, id: string, input: { version: number; accept: boolean; reason?: string }): Promise<Task> {
+  return askStep(db, meId, id, input.version, 'asker', 'countered', (row) => {
+    if (!input.accept) {
+      const note = input.reason?.trim().slice(0, 280) || null;
+      return { set: { ask_state: 'declined' }, events: [{ field: 'ask_state', before: 'countered', after: 'declined', reason: note }] };
+    }
+    const on = row.ask_counter_on!;
+    if (on < todayIst()) throw bad('date_in_past', 'That date has passed. Decline it and ask again.');
+    return {
+      set: { ask_state: 'accepted', first_due_on: on, due_on: on },
+      events: [
+        { field: 'ask_state', before: 'countered', after: 'accepted' },
+        { field: 'first_due_on', before: row.first_due_on, after: on },
+      ],
+    };
+  });
+}
+
+export type AskItem = Task & { answeredAt: string | null };
+
+// /me: asks waiting for your answer, and asks you made with where each stands. Finished asks stay
+// in "You asked" for a week, so the answer is seen.
+export async function listAsks(db: Db, teamId: string, meId: string, today = todayIst()): Promise<{ ofMe: AskItem[]; byMe: AskItem[] }> {
+  const tasks = await loadTasks(db, `team_id = $1 AND ask_state IS NOT NULL AND (owner_id = $2 OR created_by = $2)`, [teamId, meId], today, false);
+  const answered = new Map<string, string>();
+  if (tasks.length) {
+    const { rows } = await db.query<{ entity_id: string; at: string }>(
+      `SELECT entity_id, max(at) AS at FROM events WHERE entity_type = 'task' AND field = 'ask_state' AND after <> '"asked"'::jsonb
+         AND entity_id = ANY($1) GROUP BY entity_id`,
+      [tasks.map((t) => t.id)],
+    );
+    for (const r of rows) answered.set(r.entity_id, r.at);
+  }
+  const items: AskItem[] = tasks.map((t) => ({ ...t, answeredAt: answered.get(t.id) ?? null }));
+  const recent = (t: AskItem) => !!t.answeredAt && istDate(t.answeredAt) >= addDays(today, -7);
+  const rank = (t: AskItem) => ({ countered: 0, asked: 1, accepted: 2, cant: 2, declined: 2 })[t.ask!.state];
+  return {
+    ofMe: items.filter((t) => t.ownerId === meId && t.ask!.state === 'asked').sort((a, b) => a.dueOn.localeCompare(b.dueOn) || a.createdAt.localeCompare(b.createdAt)),
+    byMe: items
+      .filter((t) => t.createdBy === meId && (t.ask!.state === 'asked' || t.ask!.state === 'countered' || recent(t)))
+      .sort((a, b) => rank(a) - rank(b) || (b.answeredAt ?? b.createdAt).localeCompare(a.answeredAt ?? a.createdAt)),
+  };
+}
+
 // ---------- views ----------
 
 const byUrgency = (a: Task, b: Task) =>
@@ -563,7 +719,7 @@ export async function runReminders(db: Db, today = todayIst()): Promise<number> 
   const tomorrow = addDays(today, 1);
   const { rows } = await db.query<{ id: string; owner_id: string; due_on: string }>(
     `SELECT t.id, t.owner_id, t.due_on FROM tasks t JOIN people p ON p.id = t.owner_id
-     WHERE t.status_category = 'open' AND p.active AND t.due_on <= $1`,
+     WHERE t.status_category = 'open' AND p.active AND t.due_on <= $1 AND (t.ask_state IS NULL OR t.ask_state = 'accepted')`,
     [tomorrow],
   );
   let made = 0;

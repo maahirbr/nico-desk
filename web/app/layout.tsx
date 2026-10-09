@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="shell">
             <aside className="side">
               <Link className="mark" href="/me">
-                <span className="mark-name">nico-desk</span>
+                <span className="mark-name">nico-desk<span className="mark-v">v2</span></span>
                 <span className="mark-sub">{me.team.name}</span>
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={me.person.appRoles.includes('lead')} />

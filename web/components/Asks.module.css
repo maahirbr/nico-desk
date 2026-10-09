@@ -1,0 +1,20 @@
+/* v2 asks on /me. Tokens only. */
+.wrap { display: flex; flex-direction: column; gap: var(--space-lg); margin-bottom: var(--space-lg); }
+.sect { min-width: 0; }
+.h { font: var(--type-heading); margin: 0 0 var(--space-xs); display: flex; gap: var(--space-xs); align-items: baseline; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+.item { border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-md); background: var(--surface); min-width: 0; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); }
+.what { display: flex; flex-direction: column; gap: var(--space-xxs); min-width: 0; }
+.title { font: var(--type-line); overflow-wrap: anywhere; }
+.who { font: var(--type-small); color: var(--ink-3); }
+.date { font: var(--type-date-lg); letter-spacing: var(--track-date); font-feature-settings: var(--features-date); color: var(--primary); white-space: nowrap; }
+.line { font: var(--type-meta); color: var(--ink-2); margin: var(--space-xs) 0 0; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-sm); }
+.form { display: flex; flex-direction: column; gap: var(--space-sm); margin-top: var(--space-sm); max-width: var(--field-max); }
+
+@media (max-width: 767px) {
+  .top { flex-direction: column; gap: var(--space-xs); }
+  .date { font: var(--type-date-lg); }
+  .actions button { flex: 1 1 auto; min-height: var(--touch-min); }
+}

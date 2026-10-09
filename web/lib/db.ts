@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SCHEMA } from './schema';
+import { FIRST_DUE_FN, SCHEMA } from './schema';
 import { jobSecret } from './jobs';
 import { loadLocalProjects, loadRosterOverlay, seed } from './seed';
 
@@ -66,6 +66,14 @@ async function upgrade(db: Db) {
       ALTER TABLE tasks ADD CONSTRAINT tasks_block_person_needs_reason CHECK (blocked_on_id IS NULL OR blocked_ask IS NOT NULL);
     END IF;
   END $$;`);
+  // v2: asks. Additive columns, and the first-date trigger lets a pending ask set its date once.
+  await db.exec(`ALTER TABLE tasks
+    ADD COLUMN IF NOT EXISTS ask_state text CHECK (ask_state IN ('asked','accepted','countered','declined','cant')),
+    ADD COLUMN IF NOT EXISTS ask_due_on date,
+    ADD COLUMN IF NOT EXISTS ask_counter_on date,
+    ADD COLUMN IF NOT EXISTS ask_reason text CHECK (char_length(ask_reason) <= 280)`);
+  await db.exec(FIRST_DUE_FN);
+  await db.exec(`CREATE INDEX IF NOT EXISTS tasks_asks ON tasks (team_id, ask_state) WHERE ask_state IS NOT NULL`);
 }
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };

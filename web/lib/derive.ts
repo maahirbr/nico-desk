@@ -31,7 +31,16 @@ export type TaskRow = {
   created_at: string;
   closed_at: string | null;
   version: number;
+  ask_state: AskState | null;
+  ask_due_on: string | null;
+  ask_counter_on: string | null;
+  ask_reason: string | null;
 };
+
+export type AskState = 'asked' | 'accepted' | 'countered' | 'declined' | 'cant';
+
+// v2: where an ask stands. askedBy is the person who asked (the task's creator); the owner is who was asked.
+export type Ask = { state: AskState; askedBy: string | null; requestedOn: string; counterOn: string | null; reason: string | null };
 
 export type EventRow = {
   id: string;
@@ -76,6 +85,7 @@ export type Task = {
   createdAt: string;
   closedAt: string | null;
   version: number;
+  ask: Ask | null;
 };
 
 export function renegotiations(events: EventRow[]): Renegotiation[] {
@@ -138,6 +148,9 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     createdAt: row.created_at,
     closedAt: row.closed_at,
     version: row.version,
+    ask: row.ask_state
+      ? { state: row.ask_state, askedBy: row.created_by, requestedOn: row.ask_due_on ?? row.first_due_on, counterOn: row.ask_counter_on, reason: row.ask_reason }
+      : null,
   };
 }
 

@@ -614,6 +614,9 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
   .trow-owner { display: none; }
 }
 
+/* v2 mark: a small tag after the product name in the shell. Tokens only. */
+.mark-v { margin-left: var(--space-xs); padding: 1px var(--space-xs); border-radius: var(--radius-pill); background: var(--primary-soft); color: var(--primary); font: var(--type-small); letter-spacing: 0; vertical-align: 1px; }
+
 /* callout */
 .callout { background: var(--sunk); border-radius: var(--radius-card); padding: var(--space-md); }
 .callout h2 { margin: 0 0 var(--space-xs); font: var(--type-heading); }
