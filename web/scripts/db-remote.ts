@@ -1,9 +1,7 @@
 // Loads the schema and the synthetic fixtures into the hosted database named by DATABASE_URL.
-// Run: npm run db:remote (reads .env.remote.local). The hosted app never creates or seeds on its own.
-import { fixturesDir } from '../lib/db';
+// Run: npm run db:remote (reads .env.remote.local). Page loads never create or seed; the weekly cron (app/api/cron/reseed) runs the same body.
 import { openRemote } from '../lib/pgRemote';
-import { SCHEMA } from '../lib/schema';
-import { seed } from '../lib/seed';
+import { reseed, schemaTables } from '../lib/reseed';
 
 const url = process.env.DATABASE_URL;
 if (!process.argv.includes('--remote') || !url) {
@@ -12,24 +10,14 @@ if (!process.argv.includes('--remote') || !url) {
   process.exit(1);
 }
 
-// Only what SCHEMA itself creates is dropped, so other tables in the database stay.
-const tables = [...SCHEMA.matchAll(/^CREATE TABLE (\w+)/gm)].map((m) => m[1]);
-const functions = [...SCHEMA.matchAll(/^CREATE FUNCTION (\w+)/gm)].map((m) => m[1]);
+const tables = schemaTables();
 
 console.log(`WARNING: dropping and recreating ${tables.length} tables (${tables.join(', ')}) on ${new URL(url).hostname}. Their data is lost.`);
 
 const remote = openRemote(url);
 try {
-  await remote.transaction(async (tx) => {
-    await tx.exec(`DROP TABLE IF EXISTS ${tables.join(', ')} CASCADE`);
-    for (const f of functions) await tx.exec(`DROP FUNCTION IF EXISTS ${f}() CASCADE`);
-    await tx.exec(SCHEMA);
-    await seed(tx, fixturesDir());
-    // The app connects as the table owner, which RLS does not bind. With no policies, the public anon key reads nothing.
-    const { rows } = await tx.query<{ tablename: string }>(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
-    for (const { tablename } of rows) await tx.exec(`ALTER TABLE public."${tablename}" ENABLE ROW LEVEL SECURITY`);
-    console.log(`Row level security on for ${rows.length} tables, no policies.`);
-  });
+  const n = await remote.transaction((tx) => reseed(tx));
+  console.log(`Row level security on for ${n} tables, no policies.`);
   const { rows } = await remote.query<{ n: number }>(`SELECT count(*)::int AS n FROM tasks`);
   console.log(`Done. ${rows[0].n} tasks seeded.`);
 } finally {

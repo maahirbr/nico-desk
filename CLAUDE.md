@@ -7,7 +7,7 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 ## ARCHITECTURE
 
 - `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Local sign-in is a roster picker behind `NICO_DEV_SIGNIN=1`. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
-- Hosting: `web/lib/db.ts` picks the database. `DATABASE_URL` set: postgres-js through `web/lib/pgRemote.ts` (Supabase transaction pooler), loaded by `npm run db:remote` (`web/scripts/db-remote.ts`: drops, reseeds, RLS on with no policies). Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last. Unset locally: PGlite in `web/.data/`. `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come from env or are derived (`web/lib/secret.ts`). `web/.env.example` lists every variable. Vercel project `nico-desk`, root `web`, serves https://nico-desk.vercel.app from Supabase project `nico-desk` (Mumbai): `DATABASE_URL` is set for production only, so previews still use PGlite. Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its ask columns are not in the Supabase schema.
+- Hosting: `web/lib/db.ts` picks the database. `DATABASE_URL` set: postgres-js through `web/lib/pgRemote.ts` (Supabase transaction pooler), loaded by `npm run db:remote` (`web/scripts/db-remote.ts`: drops, reseeds, RLS on with no policies). Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last. Unset locally: PGlite in `web/.data/`. `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come from env or are derived (`web/lib/secret.ts`). `web/.env.example` lists every variable. Vercel project `nico-desk`, root `web`, serves https://nico-desk.vercel.app from Supabase project `nico-desk` (Mumbai): `DATABASE_URL` is set for production only, so previews still use PGlite. A daily Vercel cron (`web/vercel.json`) calls `/api/cron/reseed` (`web/lib/reseed.ts`), which wipes and reseeds only on the first run of a new IST week. Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its ask columns are not in the Supabase schema.
 - Look: `DESIGN.md` (repo root) is the visual system and outranks everything visual. Every token lives in `web/app/tokens.css`; Geist comes from `next/font/google`. `web/components/motion.ts` holds the three motion gestures and `web/components/KeyboardDismiss.tsx` the mobile keyboard rule. `docs/design/moods.html` holds the three mood sketches, and each is a skin: `[data-skin]` token blocks in `tokens.css`, picked from the menu by the avatar and kept in the `nd_skin` cookie, which `layout.tsx` reads so the server HTML carries it. `web/components/keys.ts` holds the shortcuts (`/`, Cmd+K, `n`, `?`, Esc); `toast.tsx` and `skeletons.tsx` the confirmations and loading states.
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
@@ -124,6 +124,11 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
   is IPv6 only and Vercel cannot reach it. Supabase holds only the synthetic demo, RLS on with no policies.
   With the open demo, every visitor shares the same edits. The seeded dates go stale, so a weekly reseed
   is still to be set up. Rollback: `vercel env rm DATABASE_URL production`, then redeploy.
+- 2026-10-09 · Opus 5.5 · Weekly reseed of the hosted demo, at the repo owner's call, so seeded dates
+  stay current. A daily cron runs at 00:35 IST (daily is the Hobby limit); the route reseeds only when the
+  first fixture task's `first_due_on`, which a trigger locks, differs from this week's shifted value. So it
+  needs no secret: any extra call in the same week only reads one row. Visitor edits are lost each Monday.
+  Rollback: delete `web/vercel.json` and redeploy.
 
 ## VERIFY
 
@@ -134,7 +139,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `56 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `58 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
