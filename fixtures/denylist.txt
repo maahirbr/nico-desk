@@ -1,4 +1,3 @@
-nicobar
 @gmail.com
 @nicobar
 supabase.co
