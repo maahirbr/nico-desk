@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
 import { OwedMatrix } from "./OwedMatrix";
 import { ThreadLayer } from "@/components/week/ThreadLayer";
-import { KeyboardRule } from "@/components/week/KeyboardRule";
 import { fmtLong, fmtShort, inkOf, markOf } from "@/components/week/lines";
 import type { DeskTask, OwedEdge, TaskQuote } from "@/lib/db/queries-ui";
 import { addDays, mondayOf } from "@/lib/db/dates";
@@ -129,7 +128,6 @@ export function Desk({ teamName, people, tasks, today, quotes = [], initialWeek,
 
   return (
     <div className="dk">
-      <KeyboardRule />
       <div className="dk-top arrive" style={{ "--arrive-y": "24px", "--arrive-dur": "var(--dur-hero)" } as CSSProperties}>
         <nav className="flip caps" aria-label="Weeks">
           {prev ? (

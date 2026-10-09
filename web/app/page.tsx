@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getCurrentPerson } from "@/lib/auth";
+import { getCurrentPerson, isLeadOrAdmin } from "@/lib/auth";
 
+// A member lands on their week, a lead or admin on the team.
 async function Route(): Promise<null> {
-  redirect((await getCurrentPerson()) ? "/me" : "/dev/act-as");
+  const person = await getCurrentPerson();
+  redirect(!person ? "/dev/act-as" : isLeadOrAdmin(person) ? "/team" : "/week");
 }
 
 export default function Home() {

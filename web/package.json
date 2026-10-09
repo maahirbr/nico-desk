@@ -11,12 +11,14 @@
     "seed": "tsx scripts/seed.ts",
     "replay": "tsx scripts/replay.ts",
     "smoke": "tsx scripts/smoke.ts",
+    "shots": "tsx scripts/shots.ts",
     "db:check": "tsx scripts/db-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.132.1",
     "@electric-sql/pglite": "^0.5.8",
     "drizzle-orm": "^0.45.4",
+    "geist": "^1.7.2",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -30,6 +32,7 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "playwright-core": "^1.63.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"

@@ -23,6 +23,12 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   `/sends`. `docs/DESIGN-HANDOUT.md` is the design brief these screens were built from.
 - `DESIGN.md` (repo root) is the visual system for the v2 redesign and outranks everything
   visual, the handout included. `docs/design/moods.html` holds the three mood sketches.
+  `docs/design/WORK-PACKAGES.md` is the build plan. Every token lives in `web/app/tokens.css`;
+  components use CSS Modules that read `var(--...)`. `web/components/shell/` is the top bar, nav,
+  commit field frame and keyboard rule, mounted once in `web/app/layout.tsx`. `/` sends a member
+  to `/week` and a lead or admin to `/team`. `web/scripts/shots.ts` (`npm run shots`) shoots
+  every route by role, width, theme and motion into `web/.shots/` and fails on contrast or console
+  errors.
 - Local-only, never committed: `SPEC.local.md` (merged spec), `web/UI-REFERENCE.local.md` (sheet
   tokens and rules, cited to the OKR page repo), `web/public/fonts/` (licensed Euclid Flex),
   `web/.data/`, `.claude/launch.json`. All are in `.git/info/exclude`.
@@ -110,6 +116,11 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   reads as an ordinary work tool on first use, which is the bar. Mood B stays a candidate for
   the lead and founder pages if A reads too soft there. `DESIGN.md` now outranks the handout on
   anything visual. Rollback: `git revert` this commit and pick again from `docs/design/moods.html`.
+- 2026-10-09 · Opus 5.5 · WP2 (shell and tokens) and WP8 (shots) land together. Geist comes from
+  the `geist` npm package, so no font file is committed; Euclid is no longer referenced. The
+  Tailwind CSS loader is removed from `next.config.ts`, since it treated CSS Modules as global.
+  In the demo the admin stands in for the founder and sponsor view. Night `--on-primary` is dark,
+  because white on the night blue fails contrast. Rollback: `git revert` this commit.
 
 ## VERIFY
 

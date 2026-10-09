@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local database
 .data/
+
+# screen shots from npm run shots
+.shots/

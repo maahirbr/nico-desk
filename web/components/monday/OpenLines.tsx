@@ -6,7 +6,6 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { ActionResult } from "@/components/ui/ActionForm";
-import { KeyboardRule } from "@/components/week/KeyboardRule";
 import { Mark } from "@/components/week/Mark";
 import type { MarkSpec } from "@/components/week/lines";
 import { closeAction, renegotiateAction } from "@/lib/actions/tasks";
@@ -122,7 +121,6 @@ export function OpenLines({ lines, today, planMonday }: { lines: OpenLineData[];
   if (lines.length === 0) return <p className="empty">No open line is past its date.</p>;
   return (
     <>
-      <KeyboardRule />
       <ul>
         {lines.map((l) => (
           <OpenLine key={l.id} l={l} today={today} planMonday={planMonday} />

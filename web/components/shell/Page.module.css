@@ -1,0 +1,17 @@
+/* The frame under the bar: padded at the sides, 1360px wide at most, left aligned. */
+.page {
+  max-width: calc(var(--page-max) + 2 * var(--page-pad));
+  padding: var(--space-xl) var(--page-pad) var(--space-section);
+}
+
+.title {
+  font: var(--type-page-title);
+  letter-spacing: var(--track-title);
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding-top: var(--space-lg);
+    padding-bottom: calc(var(--commit-bar-height) + var(--space-lg) + env(safe-area-inset-bottom));
+  }
+}

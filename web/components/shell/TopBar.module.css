@@ -1,0 +1,52 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  min-height: var(--bar-height);
+  padding: 0 var(--page-pad);
+  background: var(--canvas);
+  border-bottom: var(--rule) solid var(--hairline);
+}
+
+.mark {
+  font: var(--type-line);
+}
+
+.who {
+  margin-left: auto;
+  color: var(--ink-2);
+}
+
+.you {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* Phone: wordmark and name on the first row, the nav under them. The commit field is a bottom bar. */
+@media (max-width: 767px) {
+  .bar {
+    flex-wrap: wrap;
+    gap: 0 var(--space-md);
+    padding-top: var(--space-xs);
+  }
+
+  .mark {
+    order: 1;
+  }
+
+  .you,
+  .who {
+    order: 2;
+  }
+
+  .nav {
+    order: 3;
+    flex: 0 0 100%;
+    margin: 0 calc(var(--nav-pad-x) * -1);
+    padding-bottom: var(--space-xs);
+  }
+}

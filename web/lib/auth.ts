@@ -76,6 +76,11 @@ export function isAdmin(person: Person): boolean {
   return person.memberships.some((m) => m.appRole === "admin");
 }
 
+// Lead of any team, or admin: the people who see Record and land on Team.
+export function isLeadOrAdmin(person: Person): boolean {
+  return person.memberships.some((m) => m.appRole === "lead" || m.appRole === "admin");
+}
+
 export function isOnTeam(person: Person, teamId: string): boolean {
   return person.memberships.some((m) => m.teamId === teamId);
 }

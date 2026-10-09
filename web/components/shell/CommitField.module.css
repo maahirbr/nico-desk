@@ -1,0 +1,38 @@
+.bar {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--field-max);
+}
+
+.field {
+  display: block;
+  width: 100%;
+  height: var(--field-height);
+  padding: 0 var(--field-pad-x);
+  border: var(--rule) solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--type-body);
+}
+
+.field::placeholder {
+  color: var(--ink-3);
+}
+
+/* Phone: a bar along the bottom edge, within thumb reach */
+@media (max-width: 767px) {
+  .bar {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-width: none;
+    padding: var(--space-sm) var(--page-pad) calc(var(--space-sm) + env(safe-area-inset-bottom));
+    background: var(--canvas);
+    border-top: var(--rule) solid var(--hairline);
+    z-index: 1;
+  }
+
+  .field {
+    height: var(--touch-min);
+  }
+}

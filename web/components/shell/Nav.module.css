@@ -1,0 +1,29 @@
+.nav {
+  display: flex;
+  gap: var(--space-xxs);
+}
+
+.item {
+  padding: var(--nav-pad-y) var(--nav-pad-x);
+  border-radius: var(--radius-control);
+  color: var(--ink-2);
+  font: var(--type-body);
+  white-space: nowrap;
+}
+
+.item:hover {
+  color: var(--ink);
+}
+
+.item[aria-current="page"] {
+  background: var(--sunk);
+  color: var(--ink);
+}
+
+@media (pointer: coarse) {
+  .item {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-min);
+  }
+}

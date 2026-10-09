@@ -1,7 +1,6 @@
 "use client";
 // Paste a meeting note. One large field, and the day and team it belongs to. Then the table opens.
 import { useActionState } from "react";
-import { KeyboardRule } from "@/components/week/KeyboardRule";
 import { pasteNoteAction } from "@/lib/actions/notes";
 import type { ActionResult } from "@/components/ui/ActionForm";
 
@@ -22,7 +21,6 @@ export function NewNoteForm({ teams, today, dev }: Props) {
   const [state, run, pending] = useActionState(paste, null);
   return (
     <form action={run} className="tb-new">
-      <KeyboardRule />
       <label className="caps" htmlFor="tb-body">
         Meeting note
       </label>

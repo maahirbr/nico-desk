@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { DraftLine } from "@/components/table/DraftLine";
 import type { TableDraft, TablePerson } from "@/components/table/types";
-import { KeyboardRule } from "@/components/week/KeyboardRule";
 
 export type NoteGroup = { id: string; title: string; drafts: TableDraft[] };
 
@@ -15,7 +14,6 @@ export function DraftColumn({ groups, people, isLead }: { groups: NoteGroup[]; p
   if (groups.length === 0) return <p className="empty">No drafts are waiting.</p>;
   return (
     <>
-      <KeyboardRule />
       {groups.map((g) => (
         <section key={g.id} className="mon-note" aria-label={g.title}>
           <h3 className="mon-nh">{g.title}</h3>

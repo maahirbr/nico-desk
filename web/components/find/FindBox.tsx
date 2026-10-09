@@ -6,7 +6,6 @@ import { Suspense, use, useEffect, useMemo, useRef, useState, useSyncExternalSto
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { commitFindAction } from "@/app/find/actions";
-import { KeyboardRule } from "@/components/week/KeyboardRule";
 import { completeFind, parseFind, verbSlot, type RosterName } from "./parse";
 
 // Pages whose lines the field filters in place. Anywhere else, Find goes to /search.
@@ -179,7 +178,6 @@ export function FindBox({ data }: { data: Promise<FindData> }) {
 
   return (
     <>
-      <KeyboardRule />
       <form
         role="search"
         className="alt-field"

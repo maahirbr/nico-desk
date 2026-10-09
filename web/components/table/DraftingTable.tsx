@@ -3,7 +3,6 @@
 // Each draft sits on the right as one line, tied to its sentence by a thread. Accepting a line slides it
 // to a small stack of the owner's week sheet. Decisions run the existing server actions.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { KeyboardRule } from "@/components/week/KeyboardRule";
 import { DraftLine } from "./DraftLine";
 import { layoutNote } from "./segments";
 import type { TableDraft, TablePerson } from "./types";
@@ -124,7 +123,6 @@ export function DraftingTable({ title, day, body, drafts, people, isLead }: Prop
 
   return (
     <div className="tb">
-      <KeyboardRule />
       <div className="stack">
         <div className="sheet" ref={sheetRef}>
           <h1 className="tb-title">{title}</h1>
