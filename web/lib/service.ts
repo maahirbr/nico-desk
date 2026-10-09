@@ -572,6 +572,80 @@ export async function listAsks(db: Db, teamId: string, meId: string, today = tod
   };
 }
 
+// ---------- as of a past week (v2) ----------
+// The desk as it stood at the end of a week, read from the append-only events. Nothing is written.
+// The current row is rewound: every field goes back to the "before" of its earliest event after the
+// cutoff. A task made after the cutoff is not there yet. Pending asks stay off the desk, as now.
+
+export const ASOF_WEEKS = 8;
+
+// The Mondays of the last eight finished weeks, newest first. The current week is "now", not a past state.
+export function asOfWeeks(todayDate = todayIst()): string[] {
+  const now = mondayOf(todayDate);
+  return Array.from({ length: ASOF_WEEKS }, (_, i) => addDays(now, -7 * (i + 1)));
+}
+
+// "End of the week of Monday 2026-09-28" is 2026-10-05 00:00 in India. The last second counts as in.
+export const weekEndCutoff = (weekStart: string) => new Date(`${addDays(weekStart, 7)}T00:00:00+05:30`).toISOString();
+
+export async function asOfTasks(db: Tx, teamId: string, weekStart: string): Promise<Task[]> {
+  const cutoff = weekEndCutoff(weekStart);
+  const sunday = addDays(weekStart, 6);
+  const { rows: cur } = await db.query<TaskRow & { existed: boolean }>(
+    `SELECT *, (created_at <= $2::timestamptz) AS existed FROM tasks WHERE team_id = $1`, [teamId, cutoff],
+  );
+  if (cur.length === 0) return [];
+  const { rows: evs } = await db.query<EventRow & { late: boolean }>(
+    `SELECT *, (at > $2::timestamptz) AS late FROM events WHERE entity_type = 'task' AND entity_id = ANY($1) ORDER BY at, id`,
+    [cur.map((r) => r.id), cutoff],
+  );
+  const byTask = new Map<string, (EventRow & { late: boolean })[]>();
+  for (const e of evs) byTask.set(e.entity_id, [...(byTask.get(e.entity_id) ?? []), e]);
+
+  const out: Task[] = [];
+  for (const r of cur) {
+    const log = byTask.get(r.id) ?? [];
+    const made = log.find((e) => e.field === '_created');
+    if (made ? made.late : !r.existed) continue;
+    const row: TaskRow = { ...r };
+    const rec = row as unknown as Record<string, unknown>;
+    // Undo what happened after the cutoff, newest first, so the earliest one wins.
+    for (const e of [...log].reverse()) {
+      if (!e.late || e.field.startsWith('_')) continue;
+      if (e.field in rec) rec[e.field] = e.before ?? null;
+    }
+    // Bookkeeping columns that have no events of their own follow the field they belong to.
+    if (!row.blocked_ask) { row.blocked_on_id = null; row.blocked_at = null; }
+    else if (!row.blocked_at) row.blocked_at = cutoff;
+    if (!row.priority) { row.priority_set_by = null; row.priority_set_at = null; }
+    else { row.priority_set_by ??= row.created_by ?? row.owner_id; row.priority_set_at ??= cutoff; }
+    if (row.status_category !== 'done') row.closed_at = null;
+    if (row.ask_state && row.ask_state !== 'accepted') continue; // not agreed yet at that point
+    out.push(derive(row, log.filter((e) => !e.late && e.field === 'due_on'), sunday));
+  }
+  return out;
+}
+
+// ---------- load (v2) ----------
+// Open work per person for a week and the one after. This week includes what is late, because late
+// work is still on the plate. A week is Monday to Sunday.
+
+export type Load = { personId: string; thisWeek: Task[]; nextWeek: Task[]; late: number };
+
+export function weeklyLoad(tasks: Task[], personIds: string[], weekStart: string): Load[] {
+  const weekEnd = addDays(weekStart, 6);
+  const nextEnd = addDays(weekStart, 13);
+  return personIds.map((personId) => {
+    const open = tasks.filter((t) => t.ownerId === personId && t.statusCategory === 'open').sort((a, b) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title));
+    return {
+      personId,
+      thisWeek: open.filter((t) => t.dueOn <= weekEnd),
+      nextWeek: open.filter((t) => t.dueOn > weekEnd && t.dueOn <= nextEnd),
+      late: open.filter((t) => t.dueOn < weekStart).length,
+    };
+  });
+}
+
 // ---------- views ----------
 
 const byUrgency = (a: Task, b: Task) =>

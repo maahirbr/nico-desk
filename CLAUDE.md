@@ -7,6 +7,7 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 ## ARCHITECTURE
 
 - `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Local sign-in is a roster picker behind `NICO_DEV_SIGNIN=1`. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
+- `web/` v2: the ask is a task row with `ask_state` (asked, accepted, countered, cant, declined) and stays off the desk until agreed (`ON_DESK` in `lib/service.ts`). `lib/commit.ts` turns "ask <person> to <thing> by <date>" and "I'll <thing> by <date>" in the top search into a draft, with no model. `/team?asof=<Monday>` rebuilds the desk at the end of any of the last 8 weeks from the events log (`asOfTasks`, read only). `weeklyLoad` gives open work per person for this week and next. Demo asks come from `lib/seedAsks.ts`, apart from `fixtures/`. UI in `components/Asks.tsx` and `components/TeamV2.tsx`.
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
 - `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
@@ -72,10 +73,18 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
   reason (a teammate it waits on is optional, since not every block is a person), dropped needs a
   reason; starting and done are one click. Rollback: revert the commit that makes this change.
 
+- 2026-10-09 · Sonnet 5.5 · v2 built in four steps: the ask as the central object, the commit field in the top
+  search, an as-of scrubber on `/team`, and per-person load. An ask is a task row with four additive columns
+  (`ask_state`, `ask_due_on`, `ask_counter_on`, `ask_reason`). Agreement sets `first_due_on` once, so the on-time
+  ledger judges against the agreed date. The as-of view rewinds the current row by undoing events after the week's
+  end (IST midnight), so no snapshots are stored. The commit field is a plain parser, not a model, so it never
+  guesses. A hosted database needs `npm run db:remote` run again, because it does not run `upgrade()`.
+  Rollback: revert the v2 commits on the branch. The added columns are harmless if left in place.
+
 ## VERIFY
 
 ```
 python3 -I evals/meetings/check.py
 ```
 
-expects `OK: 20 cases`. In `web/`: `npm test` expects 41 passed, `npm run typecheck` and `npm run build` succeed. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
+expects `OK: 20 cases`. In `web/`: `npm test` expects 83 passed, `npm run typecheck` and `npm run build` succeed. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

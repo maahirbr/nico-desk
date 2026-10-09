@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Task } from '@/lib/derive';
 import { addDays, fmtDate } from '@/lib/time';
 import { Avatar } from './chips';
@@ -9,8 +9,8 @@ import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type StatusKey } from
 
 type Person = { id: string; name: string; role: string };
 
-export function TeamView({ tasks, later, weekStart, thisWeek, today, view, people, names, projectNames, projects, workstreamsByProject, meId, isLead, opts }: {
-  tasks: Task[]; later: Task[]; weekStart: string; thisWeek: string; today: string; view: 'person' | 'status'; people: Person[];
+export function TeamView({ tasks, later, weekStart, thisWeek, today, view, asOf = null, extra, people, names, projectNames, projects, workstreamsByProject, meId, isLead, opts }: {
+  tasks: Task[]; later: Task[]; weekStart: string; thisWeek: string; today: string; view: 'person' | 'status'; asOf?: string | null; extra?: ReactNode; people: Person[];
   names: Record<string, string>; projectNames: Record<string, string>; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   meId: string; isLead: boolean; opts: Opt[];
 }) {
@@ -29,13 +29,13 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   const overdue = open.filter((t) => t.dueOn < today).length;
   const done = list.filter((t) => t.statusCategory === 'done').length;
   const href = (o: Record<string, string>) => {
-    const p = new URLSearchParams({ week: weekStart, view, ...o });
+    const p = new URLSearchParams({ week: weekStart, view, ...(asOf ? { asof: asOf } : {}), ...o });
     return `/team?${p}`;
   };
   const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ');
   const row = (t: Task, owner?: string) => (
-    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)}
-      onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} />
+    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!asOf && !t.readOnly && (t.ownerId === meId || isLead)}
+      onOpen={() => { if (asOf) return; setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} />
   );
   const opened = [...tasks, ...later].find((t) => t.id === openId);
   const shownPeople = people.filter(found);
@@ -53,12 +53,14 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         </div>
       </header>
 
+      {extra}
+
       <div className="toolbar2">
-        <span className="weeknav">
+        {!asOf && <span className="weeknav">
           <Link className="iconbtn" href={href({ week: addDays(weekStart, -7) })} aria-label="Previous week">‹</Link>
           <span className="wk">{weekStart === thisWeek ? 'This week' : `Week of ${fmtDate(weekStart)}`}</span>
           <Link className="iconbtn" href={href({ week: addDays(weekStart, 7) })} aria-label="Next week">›</Link>
-        </span>
+        </span>}
         <span className="seg" role="group" aria-label="View">
           <Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link>
           <Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link>
