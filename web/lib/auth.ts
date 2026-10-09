@@ -59,6 +59,13 @@ export function devSignInEnabled(): boolean {
   return process.env.NICO_DEV_SIGNIN === '1';
 }
 
+// Open demo (NICO_OPEN_DEMO=1): no sign-in. A visitor with no session is the team lead; the
+// roster picker at /signin switches who they view as. Synthetic data only.
+export const DEMO_PERSON = 'per_ada';
+export function openDemo(): boolean {
+  return process.env.NICO_OPEN_DEMO === '1';
+}
+
 // Returns the person id if they may sign in, else a reason.
 export async function checkSignIn(email: string): Promise<{ ok: true; personId: string } | { ok: false; why: string }> {
   if (email.split('@')[1]?.toLowerCase() !== allowedDomain()) return { ok: false, why: 'That email is not on the company domain.' };
@@ -69,7 +76,7 @@ export async function checkSignIn(email: string): Promise<{ ok: true; personId: 
 }
 
 export async function currentMe(): Promise<Me | null> {
-  const id = verify((await cookies()).get(COOKIE)?.value);
+  const id = verify((await cookies()).get(COOKIE)?.value) ?? (openDemo() ? DEMO_PERSON : null);
   if (!id) return null;
   const d = await db();
   const [team] = await teamsOf(d, id);
