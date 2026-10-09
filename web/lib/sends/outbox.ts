@@ -1,10 +1,14 @@
 // The v1 outbox. There is no email provider. "Sending" prints the message to the server console
 // and appends it to .data/outbox.jsonl (gitignored). It is idempotent: one send id is written once.
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { renderText, type Snapshot } from "./render";
 
-const FILE = process.env.NICO_OUTBOX_FILE ?? path.join(process.cwd(), ".data", "outbox.jsonl");
+// Hosted (Vercel) has a read-only disk outside the temp dir, so the outbox goes there and does not last.
+const FILE =
+  process.env.NICO_OUTBOX_FILE ??
+  path.join(process.env.DATABASE_URL ? tmpdir() : path.join(process.cwd(), ".data"), "outbox.jsonl");
 
 export type Delivery = { providerId: string; alreadyDelivered: boolean };
 

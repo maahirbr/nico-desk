@@ -9,6 +9,8 @@ import path from "node:path";
 const tmp = mkdtempSync(path.join(os.tmpdir(), "nico-smoke-"));
 process.env.NICO_DATA_DIR = path.join(tmp, "pglite");
 process.env.NICO_OUTBOX_FILE = path.join(tmp, "outbox.jsonl");
+// The smoke test wipes and reseeds, so it only ever runs on its own PGlite copy.
+delete process.env.DATABASE_URL;
 for (const k of ["GATE_VENDOR_APPROVED", "GATE_TYPESAFE_ANSWERS", "NICO_HOSTED_MODELS_APPROVED", "ANTHROPIC_API_KEY"]) delete process.env[k];
 
 let failed = 0;
@@ -58,7 +60,7 @@ async function item(name: string, fn: () => Promise<void>) {
 
 async function main() {
   const { sql, eq } = await import("drizzle-orm");
-  const { getDb, getClient } = await import("../lib/db/client");
+  const { getDb, getClient, rowsOf } = await import("../lib/db/client");
   const S = await import("../lib/db/schema");
   const M = await import("../lib/db/queries"); // re-exports the mutations
   const P = await import("../lib/db/queries-pipeline");
@@ -80,7 +82,7 @@ async function main() {
   const LEAD = "per_ada";
   const MEMBER = "per_bo";
 
-  const rows = async (q: ReturnType<typeof sql>) => (await db.execute(q)).rows as Record<string, unknown>[];
+  const rows = async (q: ReturnType<typeof sql>) => rowsOf(await db.execute(q));
   const count = async (table: string, where = "true") =>
     Number((await rows(sql.raw(`SELECT count(*)::int AS n FROM ${table} WHERE ${where}`)))[0].n);
   const getTask = async (id: string) => {

@@ -1,7 +1,7 @@
 // Read-only queries for the week sheet. Nothing here writes; the mutations stay in mutations.ts.
 import { and, asc, eq, inArray, lt, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { getDb } from "./client";
+import { getDb, rowsOf } from "./client";
 import { addDays, istDay, mondayOf } from "./dates";
 import { drafts, events, notes, people, tasks, teamMembers } from "./schema";
 import type { Task } from "./mutations";
@@ -172,7 +172,7 @@ export async function ledgerLines(teamId: string, weeksBack: number, today: stri
     WHERE t.team_id = ${teamId} AND t.status_category <> 'dropped'
       AND t.first_due_on >= ${from}::date AND t.first_due_on <= ${to}::date
     ORDER BY t.first_due_on, t.id`);
-  const rows = res.rows as Record<string, unknown>[];
+  const rows = rowsOf(res);
   const moves = await dueMovesOf(rows.map((r) => r.id as string));
   const out: LedgerLine[] = [];
   for (const r of rows) {

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { CommitField } from "./CommitField";
 import { InitialsMark } from "./InitialsMark";
+import { actAsPath, isHosted } from "@/lib/hosted";
 import { Nav } from "./Nav";
 import styles from "./TopBar.module.css";
 
 export type Viewer = { name: string; canRecord: boolean };
 
-// The viewer's mark and first name. In dev it opens the "act as" picker; production has no such page.
+// The viewer's mark and first name. It opens the "act as" picker: /dev/act-as locally, /act-as when hosted.
 function You({ name }: { name: string }) {
   const body = (
     <>
@@ -14,10 +15,10 @@ function You({ name }: { name: string }) {
       <span>{name.split(" ")[0]}</span>
     </>
   );
-  return process.env.NODE_ENV === "production" ? (
+  return process.env.NODE_ENV === "production" && !isHosted() ? (
     <span className={styles.you}>{body}</span>
   ) : (
-    <Link href="/dev/act-as" className={styles.you} title="Change who you are acting as">
+    <Link href={actAsPath()} className={styles.you} title="Change who you are acting as">
       {body}
     </Link>
   );
@@ -39,7 +40,7 @@ export function TopBar({ viewer }: { viewer?: Viewer | null }) {
           <You name={viewer.name} />
         </>
       ) : (
-        <Link href="/dev/act-as" className={styles.who}>
+        <Link href={actAsPath()} className={styles.who}>
           Choose who you are
         </Link>
       )}

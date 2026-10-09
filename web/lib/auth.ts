@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { people, teamMembers, teams } from "@/lib/db/schema";
+import { actAsPath, isHosted } from "@/lib/hosted";
+import { allowedSessionEmail } from "@/lib/supabase/server";
 
 export const PERSON_COOKIE = "nd_person";
 
@@ -46,10 +48,12 @@ export async function loadPerson(id: string): Promise<Person | null> {
   };
 }
 
-// Dev only. Better Auth + Google replaces the cookie read later; callers keep this signature.
+// Local: the dev "act as" cookie. Hosted: the same cookie, but only with a verified, allowed Supabase user,
+// so the cookie alone is never enough. Callers keep this signature.
 export async function getCurrentPerson(): Promise<Person | null> {
   const id = (await cookies()).get(PERSON_COOKIE)?.value;
   if (!id) return null;
+  if (isHosted() && !(await allowedSessionEmail())) return null;
   await connection(); // the database clock is a request-time value, so never part of a prerender
   return loadPerson(id);
 }
@@ -57,7 +61,7 @@ export async function getCurrentPerson(): Promise<Person | null> {
 // For pages: send a visitor with no person to the picker.
 export async function getPersonOrRedirect(): Promise<Person> {
   const person = await getCurrentPerson();
-  if (!person) redirect("/dev/act-as");
+  if (!person) redirect(actAsPath());
   return person;
 }
 

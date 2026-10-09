@@ -2,7 +2,7 @@
 // events is append-only (trigger in 0001_rules.sql), so the wipe uses TRUNCATE, which the
 // trigger does not see. The trigger stays on during the load: events are only inserted.
 import { sql } from "drizzle-orm";
-import { getClient, getDb } from "../lib/db/client";
+import { getClient, getDb, isHostedDb } from "../lib/db/client";
 import { runMigrations } from "../lib/db/migrate";
 import { FIXTURES_DIR, missingFixtures, readAllFixtures } from "../lib/db/fixtures";
 import { checkReplay, type EventLike } from "../lib/db/replay";
@@ -23,6 +23,16 @@ function toProps(rows: Rows, drop: string[] = []): Rows {
 const WIPE = "people, teams, team_members, projects, tasks, events, notices, sheet_sources, notes, drafts, email_optins, sends, model_calls";
 
 export async function seed(): Promise<void> {
+  // The seed truncates every table, so it never reaches a hosted database by accident.
+  if (isHostedDb() !== process.argv.includes("--remote")) {
+    console.error(
+      isHostedDb()
+        ? "seed refused: DATABASE_URL is set. Run `npm run seed:remote` to wipe and seed that database, or unset it for the local one."
+        : "seed refused: --remote was given but DATABASE_URL is not set.",
+    );
+    process.exitCode = 1;
+    return;
+  }
   const missing = missingFixtures();
   if (missing.length > 0) {
     console.error(`fixtures not ready: missing ${missing.join(", ")} in ${FIXTURES_DIR}`);

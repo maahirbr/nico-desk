@@ -1,7 +1,7 @@
 // Reads for the views, plus a re-export of the writes in mutations.ts.
 // Dates are plain ISO strings in Asia/Kolkata. "Today" is always passed in from JS, never now().
 import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
-import { getDb } from "./client";
+import { getDb, rowsOf } from "./client";
 import { addDays, mondayOf, todayIST } from "./dates";
 import { events, people, tasks, teamMembers } from "./schema";
 import type { Task } from "./mutations";
@@ -119,7 +119,7 @@ export async function ledger(teamId: string, weeksBack: number, personId?: strin
            count(*) FILTER (WHERE open_overdue)::int AS open_overdue
     FROM s GROUP BY week ORDER BY week`);
   const found = new Map(
-    (res.rows as Record<string, unknown>[]).map((r) => [
+    rowsOf(res).map((r) => [
       r.week_monday as string,
       {
         weekMonday: r.week_monday as string,
@@ -162,7 +162,7 @@ export async function loadView(teamId: string, fromMondayISO?: string): Promise<
     WHERE team_id = ${teamId} AND status_category = 'open'
       AND due_on >= ${from}::date AND due_on < ${to}::date
     GROUP BY owner_id, week_monday ORDER BY week_monday, owner_id`);
-  return (res.rows as Record<string, unknown>[]).map((r) => ({
+  return rowsOf(res).map((r) => ({
     ownerId: r.owner_id as string,
     weekMonday: r.week_monday as string,
     open: Number(r.open),

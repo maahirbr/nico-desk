@@ -1,0 +1,44 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+  max-width: 360px;
+  margin-top: var(--space-xl);
+  padding: var(--card-pad);
+  background: var(--surface);
+  border: var(--rule) solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-1);
+}
+
+.title {
+  font: var(--type-page-title);
+  letter-spacing: var(--track-title);
+}
+
+.denied {
+  font: var(--type-body);
+  color: var(--late);
+}
+
+.button {
+  min-height: var(--button-height);
+  padding: 0 var(--button-pad-x);
+  font: var(--type-button);
+  color: var(--on-primary);
+  background: var(--primary);
+  border: 0;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.button:focus-visible {
+  outline: var(--ring-width) solid var(--ring-color);
+  outline-offset: var(--ring-offset);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

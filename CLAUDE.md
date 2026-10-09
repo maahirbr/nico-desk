@@ -29,6 +29,12 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   to `/week` and a lead or admin to `/team`. `web/scripts/shots.ts` (`npm run shots`) shoots
   every route by role, width, theme and motion into `web/.shots/` and fails on contrast or console
   errors.
+- Hosted mode is on when `NEXT_PUBLIC_SUPABASE_URL` is set (`web/lib/hosted.ts`). `DATABASE_URL`
+  switches `web/lib/db/client.ts` from PGlite to postgres-js (Supabase transaction pooler).
+  `web/proxy.ts` requires a Supabase Google session and an allowed email (`ALLOWED_EMAILS`,
+  `ALLOWED_EMAIL_DOMAINS`); `/sign-in`, `/auth/callback`, then `/act-as` picks a fixture person.
+  `npm run seed:remote` loads the fixtures into the database in `web/.env.remote.local`.
+  `web/.env.example` lists every variable.
 - Local-only, never committed: `SPEC.local.md` (merged spec), `web/UI-REFERENCE.local.md` (sheet
   tokens and rules, cited to the OKR page repo), `web/public/fonts/` (licensed Euclid Flex),
   `web/.data/`, `.claude/launch.json`. All are in `.git/info/exclude`.
@@ -126,6 +132,13 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   Tailwind CSS loader is removed from `next.config.ts`, since it treated CSS Modules as global.
   In the demo the admin stands in for the founder and sponsor view. Night `--on-primary` is dark,
   because white on the night blue fails contrast. Rollback: `git revert` this commit.
+- 2026-10-09 · Opus 5.5 · Hosted mode for the MVP link: the repo owner's own Supabase project
+  `nico-desk` (Mumbai, free plan, not the founder's), Google sign-in through Supabase with an email
+  allow-list, Vercel Hobby, branch and PR. Row level security is on for every table with no
+  policies, so the public key reads nothing; the app connects as the owner. Previews share the one
+  database, since Supabase branching needs Pro. The data stays synthetic, so a signed-in user
+  picks a fixture person. Rollback: `git revert` this commit, remove the Vercel project, pause or
+  delete the Supabase project.
 
 ## VERIFY
 
