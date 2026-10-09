@@ -97,6 +97,12 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   name is removed from `fixtures/denylist.txt`. The repo owner also said to bypass anything blocked
   on them: commits and `CLAUDE.md` edits proceed without a wait; push, deploy and sends still ask.
   Rollback: restore the two CONSTRAINTS lines and the denylist line from this commit's parent.
+- 2026-10-09 · Opus 5.5 · The ask becomes a task with an asker: migration `0002_ask.sql` adds
+  `asked_by_id`, `for_task_id` and `ask_state`, and the first-date lock now lets the owner set the
+  first date once, when they answer "Yes, by then". Fixtures were rewritten with Nicobar public
+  context (two teams, four projects, 39 tasks); the on-time record is unchanged at 28/2/16/6/4.
+  Smoke grows from 20 to 29 items. The meeting evals keep their own fictional brand. Rollback:
+  `git revert` this commit, then delete `web/.data/pglite` and reseed.
 
 ## VERIFY
 
@@ -108,7 +114,7 @@ cd web && npx tsc --noEmit && npm run lint && npm run build && npm run smoke
 ```
 
 Expected: `OK: 20 cases`, `OK: fixtures`, no grep output (the company name is allowed; real people,
-emails and internal hosts are not), tsc and lint silent, build green, `smoke: all 20 items ok`. Then open
+emails and internal hosts are not), tsc and lint silent, build green, `smoke: all 29 items ok`. Then open
 http://localhost:3000 (`npm run dev --prefix web`), act as a lead, and check `/me`, `/team` and
 `/notes/:id` at desktop and 375px, day and night, static mode on. Done still means `docs/BRIEF.md`
 answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

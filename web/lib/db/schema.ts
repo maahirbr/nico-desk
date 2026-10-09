@@ -4,6 +4,7 @@
 // events append-only trigger and the task_outcome view.
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   check,
   customType,
@@ -126,6 +127,11 @@ export const tasks = pgTable(
     blockedOnId: text("blocked_on_id").references(() => people.id),
     blockedAsk: text("blocked_ask"),
     blockedAt: ts("blocked_at"),
+    // The ask (docs/DESIGN-HANDOUT.md 4.3). asked_by_id is who needs it, owner_id is who must answer.
+    // ask_state is null exactly when the task is not an ask: asked, accepted or returned.
+    askedById: text("asked_by_id").references(() => people.id),
+    forTaskId: text("for_task_id").references((): AnyPgColumn => tasks.id),
+    askState: text("ask_state"),
     origin: origin("origin").notNull(),
     originRef: text("origin_ref"),
     createdBy: text("created_by").references(() => people.id),
@@ -146,6 +152,8 @@ export const tasks = pgTable(
     check("tasks_closed_pair", sql`(${t.closedAt} IS NULL) = (${t.closedOn} IS NULL)`),
     check("tasks_priority_pair", sql`(${t.priority} IS NULL) = (${t.prioritySetBy} IS NULL)`),
     check("tasks_blocked_pair", sql`(${t.blockedOnId} IS NULL) = (${t.blockedAsk} IS NULL)`),
+    check("tasks_ask_state", sql`${t.askState} IN ('asked','accepted','returned')`),
+    check("tasks_ask_pair", sql`(${t.askState} IS NULL) = (${t.askedById} IS NULL)`),
     check(
       "tasks_open_has_health",
       sql`${t.origin} = 'sheet' OR ${t.statusCategory} <> 'open' OR ${t.health} IS NOT NULL`,

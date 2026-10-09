@@ -34,7 +34,7 @@ COLS = {
     "tasks": ["id", "team_id", "title", "owner_id", "project_id", "first_due_on", "due_on", "note", "health",
               "status", "status_category", "priority", "priority_set_by", "priority_set_at", "blocked_on_id",
               "blocked_ask", "blocked_at", "origin", "origin_ref", "created_by", "created_at", "closed_at",
-              "closed_on"],
+              "closed_on", "asked_by_id", "for_task_id", "ask_state"],
     "events": ["id", "entity_type", "entity_id", "field", "before", "after", "reason", "actor_id", "origin", "at"],
     "notes": ["id", "team_id", "source_app", "external_id", "title", "body", "held_at", "received_at",
               "drafted_at", "status", "synthetic"],
@@ -64,6 +64,7 @@ ENUMS = {
     ("tasks", "status_category"): {"open", "done", "dropped"},
     ("tasks", "priority"): {"high", "normal", "low"},
     ("tasks", "origin"): {"app", "sheet", "notes"},
+    ("tasks", "ask_state"): {"asked", "accepted", "returned"},
     ("events", "entity_type"): {"task", "project"},
     ("events", "origin"): {"app", "sheet", "notes"},
     ("notes", "status"): {"received", "drafted", "failed", "cleared"},
@@ -72,7 +73,8 @@ FKS = {
     "team_members": [("team_id", "teams"), ("person_id", "people")],
     "projects": [("team_id", "teams"), ("owner_id", "people")],
     "tasks": [("team_id", "teams"), ("owner_id", "people"), ("project_id", "projects"),
-              ("priority_set_by", "people"), ("blocked_on_id", "people"), ("created_by", "people")],
+              ("priority_set_by", "people"), ("blocked_on_id", "people"), ("created_by", "people"),
+              ("asked_by_id", "people"), ("for_task_id", "tasks")],
     "events": [("actor_id", "people")],
     "notes": [("team_id", "teams")],
 }
@@ -164,6 +166,10 @@ for t in data["tasks"]:
         err(f"{w}: open non-sheet task needs health")
     if t["status"] != t["status_category"] and t["origin"] != "sheet":
         err(f"{w}: status must equal status_category for app and notes tasks")
+    if (t["ask_state"] is None) != (t["asked_by_id"] is None):
+        err(f"{w}: ask_state vs asked_by_id")
+    if t["asked_by_id"] is not None and t["asked_by_id"] == t["owner_id"]:
+        err(f"{w}: an ask made of its own asker")
     if t["blocked_on_id"] == t["owner_id"]:
         err(f"{w}: blocked on the owner")
     if t["origin"] == "sheet" and t["created_by"] is not None:
@@ -205,11 +211,13 @@ for n in data["notes"]:
 nk = [(n["source_app"], n["external_id"]) for n in data["notes"] if n["external_id"]]
 if len(nk) != len(set(nk)):
     err("notes: duplicate (source_app, external_id)")
+# A note still waiting to be drafted (status received) has no tasks yet and is skipped here.
+drafted = [n for n in data["notes"] if n["status"] != "received"]
 note_tasks = {t["origin_ref"].split("#")[0] for t in data["tasks"] if t["origin"] == "notes"}
-note_keys = {n["external_id"] or n["id"] for n in data["notes"]}
+note_keys = {n["external_id"] or n["id"] for n in drafted}
 if note_tasks != note_keys:
     err(f"notes: origin_ref prefixes {sorted(note_tasks)} do not match notes {sorted(note_keys)}")
-for n in data["notes"]:
+for n in drafted:
     k = n["external_id"] or n["id"]
     cnt = sum(1 for t in data["tasks"] if t["origin"] == "notes" and t["origin_ref"].split("#")[0] == k)
     if cnt not in (2, 3):
@@ -309,8 +317,23 @@ if sum(1 for t in data["tasks"] if t["status_category"] == "dropped") != 1:
     err("story: want 1 dropped task")
 if sum(1 for e in data["events"] if e["field"] == "_reopened") != 1:
     err("story: want 1 reopen")
-if sum(1 for t in data["tasks"] if t["health"] == "off_track" and t["due_on"] != t["first_due_on"]) != 1:
-    err("story: want 1 off_track task carrying a new date")
+if sum(1 for t in data["tasks"] if t["health"] == "off_track" and t["due_on"] != t["first_due_on"] and not t["asked_by_id"]) != 1:
+    err("story: want 1 off_track task carrying a new date outside the asks")
+asks = [t for t in data["tasks"] if t["asked_by_id"]]
+if sorted(t["id"] for t in asks) != ["tsk_037", "tsk_038", "tsk_039"]:
+    err("story: want exactly three asks, tsk_037 to tsk_039")
+if any(t["status_category"] != "open" or t["due_on"] < ASOF for t in asks):
+    err("story: an ask is closed or overdue, so it would enter the ledger")
+by_id = {t["id"]: t for t in data["tasks"]}
+a38 = by_id["tsk_038"]
+if not (a38["ask_state"] == "accepted" and a38["health"] == "off_track" and a38["due_on"] > a38["first_due_on"]
+        and any(e["entity_id"] == "tsk_038" and e["field"] == "due_on" and e["reason"] for e in data["events"])):
+    err("story: tsk_038 must be an accepted ask with a 'later, because' answer")
+if by_id["tsk_037"]["ask_state"] != "asked":
+    err("story: tsk_037 must still be waiting for an answer")
+waiting = [n for n in data["notes"] if n["status"] == "received"]
+if len(waiting) != 1 or len(re.findall(r"\bI will\b", waiting[0]["body"] or "")) != 4:
+    err("story: want one undrafted note holding exactly four 'I will' commitments")
 tm = [r for r in data["team_members"] if r["team_id"] == "team_run"]
 if sorted(r["app_role"] for r in tm) != ["admin", "lead", "member", "member", "member", "member"]:
     err("story: pilot team needs 1 lead, 1 admin, 4 members")

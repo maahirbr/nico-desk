@@ -1,8 +1,9 @@
 // Read-only queries for the week sheet. Nothing here writes; the mutations stay in mutations.ts.
 import { and, asc, eq, inArray, lt, ne, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "./client";
 import { addDays, istDay, mondayOf } from "./dates";
-import { drafts, events, notes, tasks, teamMembers } from "./schema";
+import { drafts, events, notes, people, tasks, teamMembers } from "./schema";
 import type { Task } from "./mutations";
 
 export type DueMove = { taskId: string; from: string; to: string; reason: string | null; at: string };
@@ -81,7 +82,7 @@ export async function openBlockedOn(personId: string): Promise<Task[]> {
 }
 
 // The fields the desk replays. Anything else in the log does not change what a desk line shows.
-const DESK_FIELDS = ["_created", "title", "owner_id", "due_on", "health", "status_category", "closed_on"];
+const DESK_FIELDS = ["_created", "title", "owner_id", "due_on", "health", "status_category", "closed_on", "ask_state"];
 
 export type DeskEvent = { field: string; before: string | null; after: string | null; reason: string | null; at: string; day: string };
 export type DeskTask = {
@@ -94,6 +95,9 @@ export type DeskTask = {
   statusCategory: string;
   closedOn: string | null;
   createdAt: string;
+  askedById: string | null; // set when the line is an ask
+  forTaskId: string | null;
+  askState: string | null; // as created; later ask_state events are in `events`
   events: DeskEvent[]; // after the _created event, oldest first; day is the Asia/Kolkata day it happened
 };
 
@@ -124,6 +128,9 @@ export async function deskHistory(teamId: string): Promise<DeskTask[]> {
         statusCategory: str(a.status_category) ?? "open",
         closedOn: str(a.closed_on),
         createdAt: str(a.created_at) ?? e.at,
+        askedById: str(a.asked_by_id),
+        forTaskId: str(a.for_task_id),
+        askState: str(a.ask_state),
         events: [],
       });
       continue;
@@ -224,4 +231,42 @@ export async function openPastDue(teamId: string, today: string): Promise<Task[]
     .from(tasks)
     .where(and(eq(tasks.teamId, teamId), eq(tasks.statusCategory, "open"), lt(tasks.dueOn, today)))
     .orderBy(asc(tasks.dueOn), asc(tasks.id));
+}
+
+type PersonRow = typeof people.$inferSelect;
+export type AskRow = { task: Task; askedBy: PersonRow; forTaskTitle: string | null };
+export type WaitingRow = { task: Task; owner: PersonRow; forTaskTitle: string | null };
+
+// Asks that wait on this person to answer (ask_state = 'asked'), soonest date first.
+export async function asksOf(personId: string): Promise<AskRow[]> {
+  const forTask = alias(tasks, "for_task");
+  const rows = await getDb()
+    .select({ task: tasks, askedBy: people, forTaskTitle: forTask.title })
+    .from(tasks)
+    .innerJoin(people, eq(people.id, tasks.askedById))
+    .leftJoin(forTask, eq(forTask.id, tasks.forTaskId))
+    .where(and(eq(tasks.ownerId, personId), eq(tasks.askState, "asked"), eq(tasks.statusCategory, "open")))
+    .orderBy(asc(tasks.dueOn), asc(tasks.id));
+  return rows;
+}
+
+// Open asks this person made of other people (asked or accepted), with the owner. Returned asks are not here:
+// they are back with the asker.
+export async function waitingOn(personId: string): Promise<WaitingRow[]> {
+  const forTask = alias(tasks, "for_task");
+  const rows = await getDb()
+    .select({ task: tasks, owner: people, forTaskTitle: forTask.title })
+    .from(tasks)
+    .innerJoin(people, eq(people.id, tasks.ownerId))
+    .leftJoin(forTask, eq(forTask.id, tasks.forTaskId))
+    .where(
+      and(
+        eq(tasks.askedById, personId),
+        ne(tasks.ownerId, personId),
+        inArray(tasks.askState, ["asked", "accepted"]),
+        eq(tasks.statusCategory, "open"),
+      ),
+    )
+    .orderBy(asc(tasks.dueOn), asc(tasks.id));
+  return rows;
 }

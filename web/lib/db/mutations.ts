@@ -21,6 +21,8 @@ export type DeskErrorCode =
   | "not_open"
   | "not_closed"
   | "not_lead"
+  | "not_owner"
+  | "not_pending"
   | "stale_version";
 
 export class DeskError extends Error {
@@ -391,6 +393,168 @@ export async function addUpdate(taskId: string, a: { text: string; byPersonId: s
       actorId: a.byPersonId,
       origin: "app",
       at: new Date().toISOString(),
+    });
+  });
+}
+
+// ---- asks (docs/DESIGN-HANDOUT.md 4.3) ----
+// An ask is a task owned by the person who must answer and asked by the person who needs it.
+// ask_state: asked (waiting for the owner), accepted (the owner said yes or later), returned (sent back).
+
+async function mustBeRosterPerson(tx: Tx, teamId: string, personId: string, label: string) {
+  const [row] = await tx
+    .select({ id: people.id })
+    .from(people)
+    .innerJoin(teamMembers, eq(teamMembers.personId, people.id))
+    .where(and(eq(people.id, personId), eq(people.active, true), eq(teamMembers.teamId, teamId)));
+  if (!row) throw new DeskError("invalid", `${label} must be an active person on the team roster`);
+}
+
+export type CreateAskInput = {
+  askedById: string;
+  ownerId: string;
+  title: string;
+  dueOn: string;
+  forTaskId?: string | null;
+  teamId: string;
+};
+
+export async function createAsk(input: CreateAskInput): Promise<Task> {
+  const title = cleanText("title", input.title, 3, 200);
+  const dueOn = requireDate("due date", input.dueOn);
+  if (input.askedById === input.ownerId) throw new DeskError("invalid", "an ask must be made of someone else");
+  return getDb().transaction(async (tx) => {
+    await mustBeRosterPerson(tx, input.teamId, input.ownerId, "owner");
+    await mustBeRosterPerson(tx, input.teamId, input.askedById, "asker");
+    let projectId: string | null = null;
+    if (input.forTaskId) {
+      const forTask = await loadTask(tx, input.forTaskId);
+      if (forTask.teamId !== input.teamId) throw new DeskError("invalid", "the line this ask unblocks is on another team");
+      projectId = forTask.projectId; // the ask sits in the same project as the line it unblocks
+    }
+    const at = new Date().toISOString();
+    const [created] = await tx
+      .insert(tasks)
+      .values({
+        id: newTaskId(),
+        teamId: input.teamId,
+        title,
+        ownerId: input.ownerId,
+        projectId,
+        firstDueOn: dueOn,
+        dueOn,
+        health: "on_track",
+        status: "open",
+        statusCategory: "open",
+        origin: "app",
+        originRef: null,
+        createdBy: input.askedById,
+        createdAt: at,
+        askedById: input.askedById,
+        forTaskId: input.forTaskId ?? null,
+        askState: "asked",
+        version: 1,
+      })
+      .returning();
+    const after = Object.fromEntries(Object.entries(created).filter(([k]) => k !== "searchTsv").map(([k, v]) => [snake(k), v]));
+    await tx.insert(events).values({
+      id: newEventId(),
+      entityType: "task",
+      entityId: created.id,
+      field: "_created",
+      before: null,
+      after,
+      actorId: input.askedById,
+      origin: "app",
+      at,
+    });
+    return created;
+  });
+}
+
+// Only the owner answers, and only while the ask is waiting (ask_state = 'asked').
+function mustBeAskedOwner(task: Task, personId: string) {
+  mustBeOpen(task);
+  if (task.askState !== "asked") throw new DeskError("not_pending", "this ask is not waiting for an answer");
+  if (task.ownerId !== personId) throw new DeskError("not_owner", "only the person asked may answer");
+}
+
+// "Yes, by then", or "yes, by this date": a date the owner picks becomes the first date on record.
+// The first_due_on lock is open for this one move (0002_ask.sql), and only together with due_on.
+export async function acceptAsk(
+  taskId: string,
+  a: { byPersonId: string; dueOn?: string; version?: number },
+): Promise<Task> {
+  const picked = a.dueOn === undefined ? undefined : requireDate("due date", a.dueOn);
+  return inTask(taskId, async (tx, task) => {
+    mustBeAskedOwner(task, a.byPersonId);
+    const pick = picked !== undefined && picked !== task.dueOn;
+    const changes: TaskPatch = { askState: "accepted" };
+    if (pick) {
+      changes.firstDueOn = picked;
+      changes.dueOn = picked;
+    }
+    return writeChanges(tx, task, {
+      changes,
+      reasonFields: ["first_due_on", "due_on"],
+      reason: pick ? "Date picked by the owner when saying yes" : undefined,
+      actorId: a.byPersonId,
+      at: new Date().toISOString(),
+      version: a.version,
+    });
+  });
+}
+
+// "Later, because": the ask is accepted for a later date. first_due_on stays the asked date, so the
+// record still judges the answer against it. The move needs a reason and turns the line off_track.
+export async function acceptAskLater(
+  taskId: string,
+  a: { byPersonId: string; dueOn: string; reason: string; version?: number },
+): Promise<Task> {
+  const reason = cleanText("reason", a.reason, 10, 280);
+  const dueOn = requireDate("new due date", a.dueOn);
+  return inTask(taskId, async (tx, task) => {
+    mustBeAskedOwner(task, a.byPersonId);
+    if (dueOn <= task.dueOn) throw new DeskError("invalid", "a later date must be after the asked date");
+    return writeChanges(tx, task, {
+      changes: { askState: "accepted", health: "off_track", dueOn },
+      reasonFields: ["due_on"],
+      reason,
+      actorId: a.byPersonId,
+      at: new Date().toISOString(),
+      version: a.version,
+    });
+  });
+}
+
+// "Not me, because": a reason is required. With toPersonId the ask moves to that person and stays asked,
+// still asked by the same person. Without it the ask goes back to the asker as returned.
+export async function declineAsk(
+  taskId: string,
+  a: { byPersonId: string; reason: string; toPersonId?: string | null; version?: number },
+): Promise<Task> {
+  const reason = cleanText("reason", a.reason, 10, 280);
+  return inTask(taskId, async (tx, task) => {
+    mustBeAskedOwner(task, a.byPersonId);
+    const changes: TaskPatch = {};
+    if (a.toPersonId) {
+      if (a.toPersonId === task.ownerId || a.toPersonId === task.askedById) {
+        throw new DeskError("invalid", "hand the ask to someone other than yourself or the asker");
+      }
+      await mustBeRosterPerson(tx, task.teamId, a.toPersonId, "new owner");
+      changes.ownerId = a.toPersonId;
+    } else {
+      if (!task.askedById) throw new DeskError("invalid", "this task is not an ask");
+      changes.ownerId = task.askedById;
+      changes.askState = "returned";
+    }
+    return writeChanges(tx, task, {
+      changes,
+      reasonFields: ["owner_id"],
+      reason,
+      actorId: a.byPersonId,
+      at: new Date().toISOString(),
+      version: a.version,
     });
   });
 }

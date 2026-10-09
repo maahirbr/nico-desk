@@ -2,7 +2,7 @@
   {
     "id": "prj_landing",
     "team_id": "team_run",
-    "name": "Autumn landing page",
+    "name": "Festive website relaunch",
     "department": "Digital",
     "owner_id": "per_ada",
     "status": "on_track",
@@ -12,7 +12,7 @@
   {
     "id": "prj_shoot",
     "team_id": "team_run",
-    "name": "Campaign shoot plan",
+    "name": "Festive edit shoot",
     "department": "Brand",
     "owner_id": "per_cy",
     "status": "at_risk",
@@ -22,7 +22,7 @@
   {
     "id": "prj_tiers",
     "team_id": "team_run",
-    "name": "Loyalty tier pilot",
+    "name": "Loyalty tiers pilot",
     "department": "Retention",
     "owner_id": "per_fay",
     "status": "on_track",
@@ -32,11 +32,11 @@
   {
     "id": "prj_capsule",
     "team_id": "team_pipe",
-    "name": "Winter capsule samples",
+    "name": "Home linen drop samples",
     "department": "Design",
     "owner_id": "per_gus",
     "status": "on_track",
-    "status_note": "Swatches requested.",
+    "status_note": "Fabric swatches requested.",
     "status_at": "2026-10-07T05:10:00Z"
   }
 ]

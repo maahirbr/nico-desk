@@ -18,7 +18,7 @@
     "source_app": "granola",
     "external_id": "SYNTH-MEETING-0930",
     "title": "Weekly sync, 30 Sep",
-    "body": "Weekly sync, Wednesday 30 Sep. Present: Wren Calloway, Sorrel Pike, Tamsin Quill.\nWren will set the tier points rule by Thursday 1 Oct. Wren will also draft the tier launch note by Monday 5 Oct. Sorrel said the sample photos still need edits and will edit them by Friday 2 Oct. Tamsin asked everyone to keep the landing page link list up to date. A short chat about the festive window followed, with nothing agreed.",
+    "body": "Weekly sync, Wednesday 30 Sep. Present: Wren Calloway, Sorrel Pike, Tamsin Quill.\nWren will set the tier points rule by Thursday 1 Oct. Wren will also draft the tier launch note by Monday 5 Oct. Sorrel said the sample photos still need edits and will edit them by Friday 2 Oct. Tamsin asked everyone to keep the festive landing page link list up to date. A short chat about the festive window followed, with nothing agreed.",
     "held_at": "2026-09-30T04:30:00Z",
     "received_at": "2026-09-30T05:00:00Z",
     "drafted_at": "2026-09-30T05:10:00Z",
@@ -31,11 +31,24 @@
     "source_app": "paste",
     "external_id": null,
     "title": "Shoot week huddle",
-    "body": "Shoot week huddle, Monday 5 Oct. Present: Bexley Marsh, Sorrel Pike, Alder Finch.\nBexley will send the shoot call sheet by Thursday 8 Oct. Sorrel will finish the final crop of the campaign images by Friday 9 Oct. Alder will confirm the store roster for shoot day by Tuesday 6 Oct. Everyone agreed the studio is booked and snacks are sorted. No other actions.",
+    "body": "Shoot week huddle, Monday 5 Oct. Present: Bexley Marsh, Sorrel Pike, Alder Finch.\nBexley will send the shoot call sheet by Thursday 8 Oct. Sorrel will finish the final crop of the festive edit images by Friday 9 Oct. Alder will confirm the store roster for shoot day by Tuesday 6 Oct. Everyone agreed the studio is booked and snacks are sorted. No other actions.",
     "held_at": "2026-10-05T03:30:00Z",
     "received_at": "2026-10-05T03:45:00Z",
     "drafted_at": "2026-10-05T03:50:00Z",
     "status": "drafted",
+    "synthetic": true
+  },
+  {
+    "id": "ntn_004",
+    "team_id": "team_run",
+    "source_app": "granola",
+    "external_id": "SYNTH-MEETING-1005",
+    "title": "Monday sync, 5 Oct",
+    "body": "Monday sync, 5 Oct. Present: Tamsin Quill, Orrin Vale, Alder Finch, Wren Calloway.\nTamsin Quill: The festive edit goes live in two weeks. I will share the festive launch plan with the team by Friday.\nOrrin Vale: I will resize the festive banners for mobile on 12 October.\nAlder Finch: I will list the props for the Mumbai store window by 15 October.\nWren Calloway: I will write the tier welcome email by 14 October.",
+    "held_at": "2026-10-05T04:30:00Z",
+    "received_at": "2026-10-05T05:00:00Z",
+    "drafted_at": null,
+    "status": "received",
     "synthetic": true
   }
 ]

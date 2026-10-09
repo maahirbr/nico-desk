@@ -2,12 +2,12 @@
   {
     "id": "tsk_001",
     "team_id": "team_run",
-    "title": "Draft landing page copy",
+    "title": "Draft festive landing page copy",
     "owner_id": "per_ada",
     "project_id": "prj_landing",
     "first_due_on": "2026-09-16",
     "due_on": "2026-09-16",
-    "note": "Hero and form copy in one doc.",
+    "note": "Hero and sign-up copy in one doc.",
     "health": "on_track",
     "status": "done",
     "status_category": "done",
@@ -22,12 +22,15 @@
     "created_by": "per_ada",
     "created_at": "2026-09-14T05:00:00Z",
     "closed_at": "2026-09-16T10:00:00Z",
-    "closed_on": "2026-09-16"
+    "closed_on": "2026-09-16",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_002",
     "team_id": "team_run",
-    "title": "Shortlist hero images",
+    "title": "Shortlist festive hero images",
     "owner_id": "per_dee",
     "project_id": "prj_shoot",
     "first_due_on": "2026-09-17",
@@ -47,12 +50,15 @@
     "created_by": "per_dee",
     "created_at": "2026-09-14T05:05:00Z",
     "closed_at": "2026-09-17T11:00:00Z",
-    "closed_on": "2026-09-17"
+    "closed_on": "2026-09-17",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_003",
     "team_id": "team_run",
-    "title": "Set up form tracking",
+    "title": "Set up sign-up form tracking",
     "owner_id": "per_bo",
     "project_id": "prj_landing",
     "first_due_on": "2026-09-16",
@@ -72,12 +78,15 @@
     "created_by": "per_bo",
     "created_at": "2026-09-14T05:10:00Z",
     "closed_at": "2026-09-22T07:00:00Z",
-    "closed_on": "2026-09-22"
+    "closed_on": "2026-09-22",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_004",
     "team_id": "team_run",
-    "title": "Update store opening hours",
+    "title": "Update Mumbai store opening hours",
     "owner_id": "per_eli",
     "project_id": null,
     "first_due_on": "2026-09-18",
@@ -97,7 +106,10 @@
     "created_by": null,
     "created_at": "2026-09-15T04:30:00Z",
     "closed_at": "2026-09-18T09:00:00Z",
-    "closed_on": "2026-09-18"
+    "closed_on": "2026-09-18",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_005",
@@ -122,12 +134,15 @@
     "created_by": "per_fay",
     "created_at": "2026-09-14T05:15:00Z",
     "closed_at": "2026-09-18T10:30:00Z",
-    "closed_on": "2026-09-18"
+    "closed_on": "2026-09-18",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_006",
     "team_id": "team_run",
-    "title": "Book studio for shoot",
+    "title": "Book studio for the festive shoot",
     "owner_id": "per_cy",
     "project_id": "prj_shoot",
     "first_due_on": "2026-09-15",
@@ -147,7 +162,10 @@
     "created_by": "per_cy",
     "created_at": "2026-09-14T05:20:00Z",
     "closed_at": "2026-09-15T08:00:00Z",
-    "closed_on": "2026-09-15"
+    "closed_on": "2026-09-15",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_007",
@@ -172,12 +190,15 @@
     "created_by": "per_bo",
     "created_at": "2026-09-14T05:25:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_008",
     "team_id": "team_run",
-    "title": "Review landing wireframes",
+    "title": "Review festive landing page wireframes",
     "owner_id": "per_ada",
     "project_id": "prj_landing",
     "first_due_on": "2026-09-23",
@@ -197,7 +218,10 @@
     "created_by": "per_ada",
     "created_at": "2026-09-21T04:30:00Z",
     "closed_at": "2026-09-25T09:30:00Z",
-    "closed_on": "2026-09-25"
+    "closed_on": "2026-09-25",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_009",
@@ -222,12 +246,15 @@
     "created_by": "per_dee",
     "created_at": "2026-09-21T04:35:00Z",
     "closed_at": "2026-09-24T10:00:00Z",
-    "closed_on": "2026-09-24"
+    "closed_on": "2026-09-24",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_010",
     "team_id": "team_run",
-    "title": "Approve shot list",
+    "title": "Approve festive shot list",
     "owner_id": "per_cy",
     "project_id": "prj_shoot",
     "first_due_on": "2026-09-22",
@@ -247,7 +274,10 @@
     "created_by": "per_cy",
     "created_at": "2026-09-21T04:40:00Z",
     "closed_at": "2026-09-24T07:00:00Z",
-    "closed_on": "2026-09-24"
+    "closed_on": "2026-09-24",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_011",
@@ -272,7 +302,10 @@
     "created_by": "per_bo",
     "created_at": "2026-09-21T04:45:00Z",
     "closed_at": "2026-09-25T11:00:00Z",
-    "closed_on": "2026-09-25"
+    "closed_on": "2026-09-25",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_012",
@@ -297,12 +330,15 @@
     "created_by": "per_ada",
     "created_at": "2026-09-22T06:30:00Z",
     "closed_at": "2026-09-23T11:00:00Z",
-    "closed_on": "2026-09-23"
+    "closed_on": "2026-09-23",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_013",
     "team_id": "team_run",
-    "title": "Refresh window display plan",
+    "title": "Refresh Delhi store window display plan",
     "owner_id": "per_eli",
     "project_id": null,
     "first_due_on": "2026-09-25",
@@ -322,7 +358,10 @@
     "created_by": null,
     "created_at": "2026-09-21T05:00:00Z",
     "closed_at": "2026-09-28T06:00:00Z",
-    "closed_on": "2026-09-28"
+    "closed_on": "2026-09-28",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_014",
@@ -347,7 +386,10 @@
     "created_by": "per_ada",
     "created_at": "2026-09-22T06:35:00Z",
     "closed_at": "2026-09-25T06:00:00Z",
-    "closed_on": "2026-09-25"
+    "closed_on": "2026-09-25",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_015",
@@ -372,12 +414,15 @@
     "created_by": "per_eli",
     "created_at": "2026-09-21T04:55:00Z",
     "closed_at": "2026-09-24T08:00:00Z",
-    "closed_on": "2026-09-24"
+    "closed_on": "2026-09-24",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_016",
     "team_id": "team_run",
-    "title": "Build landing page hero",
+    "title": "Build festive landing page hero",
     "owner_id": "per_ada",
     "project_id": "prj_landing",
     "first_due_on": "2026-10-01",
@@ -397,7 +442,10 @@
     "created_by": "per_ada",
     "created_at": "2026-09-28T04:30:00Z",
     "closed_at": "2026-10-01T09:00:00Z",
-    "closed_on": "2026-10-01"
+    "closed_on": "2026-10-01",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_017",
@@ -422,7 +470,10 @@
     "created_by": "per_bo",
     "created_at": "2026-09-28T04:35:00Z",
     "closed_at": "2026-10-02T10:00:00Z",
-    "closed_on": "2026-10-02"
+    "closed_on": "2026-10-02",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_018",
@@ -447,12 +498,15 @@
     "created_by": "per_dee",
     "created_at": "2026-09-28T04:40:00Z",
     "closed_at": "2026-09-30T08:30:00Z",
-    "closed_on": "2026-09-30"
+    "closed_on": "2026-09-30",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_019",
     "team_id": "team_run",
-    "title": "Sign off on props list",
+    "title": "Sign off on linen props list",
     "owner_id": "per_cy",
     "project_id": "prj_shoot",
     "first_due_on": "2026-10-01",
@@ -472,7 +526,10 @@
     "created_by": "per_cy",
     "created_at": "2026-09-28T04:45:00Z",
     "closed_at": "2026-10-01T07:30:00Z",
-    "closed_on": "2026-10-01"
+    "closed_on": "2026-10-01",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_020",
@@ -497,7 +554,10 @@
     "created_by": "per_fay",
     "created_at": "2026-09-28T04:50:00Z",
     "closed_at": "2026-10-05T05:00:00Z",
-    "closed_on": "2026-10-05"
+    "closed_on": "2026-10-05",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_021",
@@ -522,7 +582,10 @@
     "created_by": null,
     "created_at": "2026-09-28T05:00:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_022",
@@ -547,7 +610,10 @@
     "created_by": "per_ada",
     "created_at": "2026-09-30T06:10:00Z",
     "closed_at": "2026-10-02T10:30:00Z",
-    "closed_on": "2026-10-02"
+    "closed_on": "2026-10-02",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_023",
@@ -572,12 +638,15 @@
     "created_by": "per_ada",
     "created_at": "2026-09-30T06:00:00Z",
     "closed_at": "2026-10-01T10:00:00Z",
-    "closed_on": "2026-10-01"
+    "closed_on": "2026-10-01",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_024",
     "team_id": "team_run",
-    "title": "Publish landing page to staging",
+    "title": "Publish festive landing page to staging",
     "owner_id": "per_ada",
     "project_id": "prj_landing",
     "first_due_on": "2026-10-07",
@@ -597,7 +666,10 @@
     "created_by": "per_ada",
     "created_at": "2026-10-05T04:30:00Z",
     "closed_at": "2026-10-07T09:30:00Z",
-    "closed_on": "2026-10-07"
+    "closed_on": "2026-10-07",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_025",
@@ -622,7 +694,10 @@
     "created_by": "per_bo",
     "created_at": "2026-10-05T04:35:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_026",
@@ -647,12 +722,15 @@
     "created_by": "per_ada",
     "created_at": "2026-10-05T04:40:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_027",
     "team_id": "team_run",
-    "title": "Final crop of campaign images",
+    "title": "Final crop of festive edit images",
     "owner_id": "per_dee",
     "project_id": "prj_shoot",
     "first_due_on": "2026-10-09",
@@ -672,12 +750,15 @@
     "created_by": "per_ada",
     "created_at": "2026-10-05T04:45:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_028",
     "team_id": "team_run",
-    "title": "Plan weekend store roster",
+    "title": "Plan weekend roster for Bengaluru store",
     "owner_id": "per_eli",
     "project_id": null,
     "first_due_on": "2026-10-09",
@@ -697,7 +778,10 @@
     "created_by": "per_eli",
     "created_at": "2026-10-05T04:50:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_029",
@@ -722,7 +806,10 @@
     "created_by": null,
     "created_at": "2026-10-05T05:00:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_030",
@@ -747,12 +834,15 @@
     "created_by": "per_bo",
     "created_at": "2026-10-05T05:05:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_031",
     "team_id": "team_run",
-    "title": "Share shoot recap",
+    "title": "Share festive shoot recap",
     "owner_id": "per_dee",
     "project_id": "prj_shoot",
     "first_due_on": "2026-10-07",
@@ -772,7 +862,10 @@
     "created_by": "per_dee",
     "created_at": "2026-10-05T05:10:00Z",
     "closed_at": "2026-10-06T10:00:00Z",
-    "closed_on": "2026-10-06"
+    "closed_on": "2026-10-06",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_032",
@@ -797,7 +890,10 @@
     "created_by": "per_ada",
     "created_at": "2026-10-05T05:15:00Z",
     "closed_at": "2026-10-06T09:00:00Z",
-    "closed_on": "2026-10-06"
+    "closed_on": "2026-10-06",
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_033",
@@ -822,12 +918,15 @@
     "created_by": "per_ada",
     "created_at": "2026-09-30T06:05:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_034",
     "team_id": "team_pipe",
-    "title": "Request winter capsule fabric swatches",
+    "title": "Request home linen fabric swatches",
     "owner_id": "per_gus",
     "project_id": "prj_capsule",
     "first_due_on": "2026-10-12",
@@ -847,12 +946,15 @@
     "created_by": "per_gus",
     "created_at": "2026-10-07T05:00:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
   },
   {
     "id": "tsk_035",
     "team_id": "team_pipe",
-    "title": "Book fit session for capsule samples",
+    "title": "Book review session for linen samples",
     "owner_id": "per_gus",
     "project_id": "prj_capsule",
     "first_due_on": "2026-10-15",
@@ -872,6 +974,121 @@
     "created_by": "per_gus",
     "created_at": "2026-10-08T05:00:00Z",
     "closed_at": null,
-    "closed_on": null
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
+  },
+  {
+    "id": "tsk_036",
+    "team_id": "team_run",
+    "title": "Build the festive landing page",
+    "owner_id": "per_ada",
+    "project_id": "prj_landing",
+    "first_due_on": "2026-10-16",
+    "due_on": "2026-10-16",
+    "note": null,
+    "health": "on_track",
+    "status": "open",
+    "status_category": "open",
+    "priority": null,
+    "priority_set_by": null,
+    "priority_set_at": null,
+    "blocked_on_id": null,
+    "blocked_ask": null,
+    "blocked_at": null,
+    "origin": "app",
+    "origin_ref": null,
+    "created_by": "per_ada",
+    "created_at": "2026-10-08T06:20:00Z",
+    "closed_at": null,
+    "closed_on": null,
+    "asked_by_id": null,
+    "for_task_id": null,
+    "ask_state": null
+  },
+  {
+    "id": "tsk_037",
+    "team_id": "team_run",
+    "title": "Final tier names for the landing page",
+    "owner_id": "per_fay",
+    "project_id": "prj_landing",
+    "first_due_on": "2026-10-14",
+    "due_on": "2026-10-14",
+    "note": null,
+    "health": "on_track",
+    "status": "open",
+    "status_category": "open",
+    "priority": null,
+    "priority_set_by": null,
+    "priority_set_at": null,
+    "blocked_on_id": null,
+    "blocked_ask": null,
+    "blocked_at": null,
+    "origin": "app",
+    "origin_ref": null,
+    "created_by": "per_ada",
+    "created_at": "2026-10-08T06:40:00Z",
+    "closed_at": null,
+    "closed_on": null,
+    "asked_by_id": "per_ada",
+    "for_task_id": "tsk_036",
+    "ask_state": "asked"
+  },
+  {
+    "id": "tsk_038",
+    "team_id": "team_run",
+    "title": "Cropped hero images for the festive page",
+    "owner_id": "per_dee",
+    "project_id": "prj_landing",
+    "first_due_on": "2026-10-08",
+    "due_on": "2026-10-12",
+    "note": null,
+    "health": "off_track",
+    "status": "open",
+    "status_category": "open",
+    "priority": null,
+    "priority_set_by": null,
+    "priority_set_at": null,
+    "blocked_on_id": null,
+    "blocked_ask": null,
+    "blocked_at": null,
+    "origin": "app",
+    "origin_ref": null,
+    "created_by": "per_bo",
+    "created_at": "2026-10-06T05:20:00Z",
+    "closed_at": null,
+    "closed_on": null,
+    "asked_by_id": "per_bo",
+    "for_task_id": "tsk_030",
+    "ask_state": "accepted"
+  },
+  {
+    "id": "tsk_039",
+    "team_id": "team_run",
+    "title": "Staff list for the Bengaluru window install",
+    "owner_id": "per_eli",
+    "project_id": null,
+    "first_due_on": "2026-10-13",
+    "due_on": "2026-10-13",
+    "note": null,
+    "health": "on_track",
+    "status": "open",
+    "status_category": "open",
+    "priority": null,
+    "priority_set_by": null,
+    "priority_set_at": null,
+    "blocked_on_id": null,
+    "blocked_ask": null,
+    "blocked_at": null,
+    "origin": "app",
+    "origin_ref": null,
+    "created_by": "per_cy",
+    "created_at": "2026-10-07T06:30:00Z",
+    "closed_at": null,
+    "closed_on": null,
+    "asked_by_id": "per_cy",
+    "for_task_id": null,
+    "ask_state": "accepted"
   }
 ]

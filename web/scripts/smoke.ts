@@ -379,6 +379,121 @@ async function main() {
     assert(dups.length === 0, "duplicate open sends exist");
   });
 
+  // ---- the ask (handout 4.3) ----
+  const Q = await import("../lib/db/queries-ui"); // asksOf and waitingOn
+  const ASKER = "per_ada";
+  const OWNER = "per_fay";
+  const newAsk = (dueOn: string, title: string, owner = OWNER) =>
+    M.createAsk({ askedById: ASKER, ownerId: owner, title, dueOn, forTaskId: "tsk_036", teamId: TEAM });
+
+  await item("ask: the seeded asks are in place and are not in the ledger", async () => {
+    const a = await getTask("tsk_037");
+    assert(a.askedById === "per_ada" && a.ownerId === "per_fay" && a.forTaskId === "tsk_036" && a.askState === "asked", "tsk_037 is not an open ask to per_fay");
+    const later = await getTask("tsk_038");
+    assert(later.askState === "accepted" && later.health === "off_track", "tsk_038 must be an accepted, off-track ask");
+    assert(String(later.firstDueOn) === "2026-10-08" && String(later.dueOn) === "2026-10-12", "tsk_038 dates: first date stays, due date moved");
+    const reason = (await M.taskLog("tsk_038")).find((e) => e.field === "due_on")?.reason;
+    assert(reason === "Waiting on the final edit from the shoot", `tsk_038 reason: ${reason}`);
+    assert((await getTask("tsk_039")).askState === "accepted", "tsk_039 must be accepted");
+    assert((await Q.asksOf("per_fay")).some((r) => r.task.id === "tsk_037" && r.forTaskTitle === "Build the festive landing page"), "asksOf(per_fay) misses tsk_037");
+    assert(!(await Q.asksOf("per_dee")).some((r) => r.task.id === "tsk_038"), "an answered ask still waits on per_dee");
+    const waiting = (await Q.waitingOn("per_ada")).map((r) => r.task.id);
+    assert(waiting.includes("tsk_037"), "waitingOn(per_ada) misses tsk_037");
+    assert((await Q.waitingOn("per_bo")).some((r) => r.task.id === "tsk_038"), "waitingOn(per_bo) misses tsk_038");
+    // The README ledger item above already matches the 28 counted tasks; here the asks are checked one by one.
+    for (const id of ["tsk_036", "tsk_037", "tsk_038", "tsk_039"]) {
+      assert((await outcomeOf(id)) === "null", `${id} has an outcome, so the ledger would count it`);
+    }
+  });
+
+  await item("ask: createAsk makes an ask the owner sees and the asker waits on; own-ask and wrong team are refused", async () => {
+    const n0 = await count("tasks");
+    const t = await newAsk(addDays(today, 5), "Smoke ask create");
+    assert(t.askState === "asked" && t.askedById === ASKER && t.ownerId === OWNER && t.forTaskId === "tsk_036", "ask columns wrong");
+    assert(t.firstDueOn === t.dueOn && t.projectId === "prj_landing", "dates or project wrong");
+    assert((await count("tasks")) === n0 + 1, "no task row made");
+    const log = await M.taskLog(t.id);
+    assert(log.length === 1 && log[0].field === "_created" && log[0].actorId === ASKER, "want one _created event by the asker");
+    assert((await Q.asksOf(OWNER)).some((r) => r.task.id === t.id && r.askedBy.id === ASKER), "asksOf misses the new ask");
+    assert((await Q.waitingOn(ASKER)).some((r) => r.task.id === t.id && r.owner.id === OWNER), "waitingOn misses the new ask");
+    await rejects(() => M.createAsk({ askedById: ASKER, ownerId: ASKER, title: "Smoke self ask", dueOn: addDays(today, 5), teamId: TEAM }), /invalid|someone else/, "ask of yourself");
+    await rejects(() => M.createAsk({ askedById: ASKER, ownerId: "per_gus", title: "Smoke other team", dueOn: addDays(today, 5), teamId: TEAM }), /not_on_roster|roster|invalid/, "owner on another team");
+  });
+
+  await item("ask: accept with a picked date moves first_due_on and due_on; only the owner answers; once", async () => {
+    const t = await newAsk(addDays(today, 5), "Smoke ask pick date");
+    const picked = addDays(today, 8);
+    await rejects(() => M.acceptAsk(t.id, { byPersonId: "per_dee", dueOn: picked }), /not_owner/, "answer by someone else");
+    const a = await M.acceptAsk(t.id, { byPersonId: OWNER, dueOn: picked });
+    assert(a.askState === "accepted", "not accepted");
+    assert(String(a.firstDueOn) === picked && String(a.dueOn) === picked, `dates ${a.firstDueOn} / ${a.dueOn}, want ${picked}`);
+    const fields = (await M.taskLog(t.id)).slice(1).map((e) => e.field).sort().join();
+    assert(fields === "ask_state,due_on,first_due_on", `events: ${fields}`);
+    await rejects(() => M.acceptAsk(t.id, { byPersonId: OWNER }), /not_pending/, "second answer");
+    const yes = await newAsk(addDays(today, 6), "Smoke ask plain yes");
+    const y = await M.acceptAsk(yes.id, { byPersonId: OWNER });
+    assert(y.askState === "accepted" && String(y.firstDueOn) === String(yes.firstDueOn) && String(y.dueOn) === String(yes.dueOn), "a plain yes moved a date");
+  });
+
+  await item("ask: accept later needs a reason; first_due_on stays, due_on moves, off_track", async () => {
+    const t = await newAsk(addDays(today, 5), "Smoke ask later");
+    const n0 = (await M.taskLog(t.id)).length;
+    await rejects(() => M.acceptAskLater(t.id, { byPersonId: OWNER, dueOn: addDays(today, 9), reason: "" }), /reason_required/, "no reason");
+    await rejects(() => M.acceptAskLater(t.id, { byPersonId: OWNER, dueOn: addDays(today, 3), reason: "Waiting on the final edit" }), /invalid|after/, "a date that is not later");
+    assert((await M.taskLog(t.id)).length === n0, "a rejected call wrote an event");
+    const a = await M.acceptAskLater(t.id, { byPersonId: OWNER, dueOn: addDays(today, 9), reason: "Waiting on the final edit" });
+    assert(a.askState === "accepted" && a.health === "off_track", "state or health wrong");
+    assert(String(a.firstDueOn) === String(t.firstDueOn) && String(a.dueOn) === addDays(today, 9), "first date must stay and due date must move");
+    const due = (await M.taskLog(t.id)).find((e) => e.field === "due_on");
+    assert(due?.reason === "Waiting on the final edit", "the due_on event lacks the reason");
+  });
+
+  await item("ask: decline with a reason and an @ handoff changes the owner, the asker stays", async () => {
+    const t = await newAsk(addDays(today, 5), "Smoke ask handoff");
+    await rejects(() => M.declineAsk(t.id, { byPersonId: OWNER, reason: "", toPersonId: "per_dee" }), /reason_required/, "no reason");
+    const d = await M.declineAsk(t.id, { byPersonId: OWNER, reason: "Not mine, Sorrel owns the crops", toPersonId: "per_dee" });
+    assert(d.ownerId === "per_dee" && d.askedById === ASKER && d.askState === "asked", "owner, asker or state wrong");
+    const ev = (await M.taskLog(t.id)).find((e) => e.field === "owner_id");
+    assert(ev?.reason === "Not mine, Sorrel owns the crops", "the owner_id event lacks the reason");
+    assert((await Q.asksOf("per_dee")).some((r) => r.task.id === t.id) && !(await Q.asksOf(OWNER)).some((r) => r.task.id === t.id), "the ask did not move queues");
+  });
+
+  await item("ask: decline without a handoff returns it to the asker", async () => {
+    const t = await newAsk(addDays(today, 5), "Smoke ask returned");
+    const d = await M.declineAsk(t.id, { byPersonId: OWNER, reason: "No room before the festive launch" });
+    assert(d.ownerId === ASKER && d.askedById === ASKER && d.askState === "returned", `owner ${d.ownerId}, state ${d.askState}`);
+    assert(!(await Q.waitingOn(ASKER)).some((r) => r.task.id === t.id) && !(await Q.asksOf(OWNER)).some((r) => r.task.id === t.id), "a returned ask is still waiting");
+  });
+
+  await item("ask: first_due_on stays locked on an accepted ask, and on an asked one unless due_on moves with it", async () => {
+    const t = await newAsk(addDays(today, 5), "Smoke ask lock");
+    await rejects(() => db.execute(sql`UPDATE tasks SET first_due_on = '2026-01-01' WHERE id = ${t.id}`), /first_due_on is locked/, "asked, due_on left behind");
+    await M.acceptAsk(t.id, { byPersonId: OWNER });
+    await rejects(
+      () => db.execute(sql`UPDATE tasks SET first_due_on = '2026-01-01', due_on = '2026-01-01' WHERE id = ${t.id}`),
+      /first_due_on is locked/, "accepted ask");
+    await rejects(() => db.execute(sql`UPDATE tasks SET first_due_on = '2026-01-01' WHERE id = 'tsk_038'`), /first_due_on is locked/, "seeded accepted ask");
+    assert(String((await getTask(t.id)).firstDueOn) === String(t.firstDueOn), "first_due_on changed");
+  });
+
+  await item("ask: the two CHECKs refuse a bad ask_state and an ask_state without an asker", async () => {
+    await rejects(() => db.execute(sql`UPDATE tasks SET ask_state = 'maybe', asked_by_id = 'per_ada' WHERE id = 'tsk_001'`), /tasks_ask_state|check constraint/, "bad state");
+    await rejects(() => db.execute(sql`UPDATE tasks SET ask_state = 'asked' WHERE id = 'tsk_001'`), /tasks_ask_pair|check constraint/, "state without asker");
+  });
+
+  await item("note ntn_004 (Monday sync) is undrafted and drafts to exactly four lines", async () => {
+    const [before] = await db.select().from(S.notes).where(eq(S.notes.id, "ntn_004"));
+    assert(before && before.status === "received" && before.draftedAt === null, "ntn_004 must start received and undrafted");
+    assert((await count("drafts", "note_id = 'ntn_004'")) === 0, "ntn_004 already has drafts");
+    const run = await draftFromNote("ntn_004", { drafter: new FixtureDrafter() });
+    assert(run.ok && run.count === 4, `drafts: ${JSON.stringify(run)}`);
+    const ds = await P.draftsOfNote("ntn_004");
+    assert(ds.length === 4, `${ds.length} draft rows`);
+    assert(ds.every((d) => d.quoteValid && d.ownerId && d.dueOn), "a draft lacks a valid quote, owner or date");
+    assert(new Set(ds.map((d) => d.ownerId)).size === 4, "want four different owners");
+    assert(ds.every((d) => !d.duplicateOf), "a draft is marked as a duplicate");
+  });
+
   await getClient().close();
   const total = report.length;
   console.log(failed === 0 ? `smoke: all ${total} items ok` : `smoke: ${failed} of ${total} items FAILED`);

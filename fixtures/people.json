@@ -18,7 +18,7 @@
   {
     "id": "per_cy",
     "display_name": "Bexley Marsh",
-    "role": "Brand lead",
+    "role": "Brand and content lead",
     "department": "Brand",
     "email": "bexley@example.test",
     "active": true
@@ -26,7 +26,7 @@
   {
     "id": "per_dee",
     "display_name": "Sorrel Pike",
-    "role": "Designer",
+    "role": "Visual merchandiser",
     "department": "Retail",
     "email": "sorrel@example.test",
     "active": true
@@ -34,7 +34,7 @@
   {
     "id": "per_eli",
     "display_name": "Alder Finch",
-    "role": "Retail lead",
+    "role": "Store operations lead",
     "department": "Retail",
     "email": "alder@example.test",
     "active": true
@@ -42,7 +42,7 @@
   {
     "id": "per_fay",
     "display_name": "Wren Calloway",
-    "role": "Retention lead",
+    "role": "Loyalty lead",
     "department": "Retention",
     "email": "wren@example.test",
     "active": true
@@ -50,7 +50,7 @@
   {
     "id": "per_gus",
     "display_name": "Marlow Vance",
-    "role": "Design lead",
+    "role": "Home design lead",
     "department": "Design",
     "email": "marlow@example.test",
     "active": true
