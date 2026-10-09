@@ -1,0 +1,41 @@
+[
+  {
+    "id": "ntn_001",
+    "team_id": "team_run",
+    "source_app": "granola",
+    "external_id": "SYNTH-MEETING-0922",
+    "title": "Tier pilot sync",
+    "body": "Tier pilot sync, Tuesday 22 Sep. Present: Wren Calloway, Tamsin Quill, Bexley Marsh.\nWren said the pilot customer list is agreed and the tier names are still open. Wren will agree the tier names by Wednesday 23 Sep. Tamsin wants the email wording early so the landing page can link to it. Wren will draft the tier email wording by Thursday 24 Sep. Bexley said the shoot plan has not changed. We spent a while on weekend store hours and left it there. No other actions.",
+    "held_at": "2026-09-22T04:30:00Z",
+    "received_at": "2026-09-22T05:00:00Z",
+    "drafted_at": "2026-09-22T05:10:00Z",
+    "status": "drafted",
+    "synthetic": true
+  },
+  {
+    "id": "ntn_002",
+    "team_id": "team_run",
+    "source_app": "granola",
+    "external_id": "SYNTH-MEETING-0930",
+    "title": "Weekly sync, 30 Sep",
+    "body": "Weekly sync, Wednesday 30 Sep. Present: Wren Calloway, Sorrel Pike, Tamsin Quill.\nWren will set the tier points rule by Thursday 1 Oct. Wren will also draft the tier launch note by Monday 5 Oct. Sorrel said the sample photos still need edits and will edit them by Friday 2 Oct. Tamsin asked everyone to keep the landing page link list up to date. A short chat about the festive window followed, with nothing agreed.",
+    "held_at": "2026-09-30T04:30:00Z",
+    "received_at": "2026-09-30T05:00:00Z",
+    "drafted_at": "2026-09-30T05:10:00Z",
+    "status": "drafted",
+    "synthetic": true
+  },
+  {
+    "id": "ntn_003",
+    "team_id": "team_run",
+    "source_app": "paste",
+    "external_id": null,
+    "title": "Shoot week huddle",
+    "body": "Shoot week huddle, Monday 5 Oct. Present: Bexley Marsh, Sorrel Pike, Alder Finch.\nBexley will send the shoot call sheet by Thursday 8 Oct. Sorrel will finish the final crop of the campaign images by Friday 9 Oct. Alder will confirm the store roster for shoot day by Tuesday 6 Oct. Everyone agreed the studio is booked and snacks are sorted. No other actions.",
+    "held_at": "2026-10-05T03:30:00Z",
+    "received_at": "2026-10-05T03:45:00Z",
+    "drafted_at": "2026-10-05T03:50:00Z",
+    "status": "drafted",
+    "synthetic": true
+  }
+]

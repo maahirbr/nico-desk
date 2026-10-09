@@ -6,25 +6,46 @@ team first. Nothing is built yet; `HANDOFF.md` is the brief and the reading list
 
 ## ARCHITECTURE
 
-No code yet. Filled in at the first code commit.
+`web/` is the v1 localhost app: Next.js 16 App Router, Drizzle over PGlite (file-backed at
+`web/.data/pglite`, local only). Execution travels: a page in `web/app/*` calls a query in
+`web/lib/db/queries*.ts`, renders with `web/components/*`, and posts a server action in
+`web/lib/actions/*` that calls one mutation in `web/lib/db/mutations.ts`. Every mutation appends
+to `events`; `first_due_on` is locked by trigger; outcomes are derived in the `task_outcome` view,
+never stored. `web/lib/model/` turns a note into drafts (fixture drafter by default, Anthropic
+drafter with a key, a stub checker in Jev's place) behind the vendor gate in `gate.ts`.
+`web/lib/sends/` holds the draft → approved → sent state machine and writes to a local outbox.
+`web/lib/jobs/` are the Monday, Friday and at-risk jobs, run from `/dev/jobs`. Login is a dev
+"act as" cookie at `/dev/act-as`; `/dev/*` is 404 in production.
+
+- Screens: `/me` (the week sheet), `/team` (the desk, with as-of scrubber), `/team/monday`,
+  `/team/ledger` (printable), `/team/week`, `/team/by-status`, `/team/load`, `/notes/:id` (the
+  drafting table), `/find` (find, ask or commit from one field), `/tasks/:id`, `/drafts`,
+  `/sends`. `docs/DESIGN-HANDOUT.md` is the design brief these screens were built from.
+- Local-only, never committed: `SPEC.local.md` (merged spec), `web/UI-REFERENCE.local.md` (sheet
+  tokens and rules, cited to the OKR page repo), `web/public/fonts/` (licensed Euclid Flex),
+  `web/.data/`, `.claude/launch.json`. All are in `.git/info/exclude`.
 
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
 - `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
 - `docs/`: `BRIEF.md`, `RESEARCH-PLAN.md`, `HANDOFF-FABLE.md`, `HOW-TEAMS-WORK.md` (the sponsor's four team types), `USE-CASES-8-OCT.md` (requests mapped to intent, slice one or spec), `DATA-MODEL.md` (Postgres DDL: people, projects, tasks, append-only events; on-time ledger derived, never stored).
 - `docs/team-page/`: the team question page, published as a private Artifact; `img/` holds vendor screenshots.
-- `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly. `denylist.txt` guards against real data.
+- `fixtures/`: synthetic people, teams, team members, projects, tasks, notes and events. `events.json` replays to `tasks.json` exactly; `check.py` verifies it. `denylist.txt` guards against real data.
 - `evals/meetings/`: 20 synthetic transcripts with expected drafts, and `check.py`.
 
 ## CONSTRAINTS
 
-- Any Nicobar surface uses the UI already designed in `~/Code/Nicobar work` (`docs/SHEET-SPEC.md`,
-  the `web/` tokens and components). No new visual language.
+- nico-desk has its own visual language, designed from the product's needs (decision 2026-10-09).
+  The OKR page's sheet language in `~/Code/Nicobar work` is not a reference for it. The rule that
+  any Nicobar surface uses that sheet language still holds for the OKR page itself.
 - Do not rebuild the tracker owner's tracker (`nicobar-okr-processor`). Read what it produces.
 - Never write to the founder's Supabase or any department Google Sheet without access granted for
   that purpose.
-- No real Nicobar data in git, fixtures or artifacts; synthetic fixtures only. Any exception is
-  the repo owner's call, recorded in DECISIONS.
+- No real Nicobar data in git, fixtures or artifacts; synthetic fixtures only. The company name and
+  its public context (team names, kinds of project, product and place words from the public site)
+  are allowed in fixtures (decision 2026-10-09). Real people, real dates, real numbers and anything
+  from a department sheet or Supabase are not. Any other exception is the repo owner's call,
+  recorded in DECISIONS.
 - No people's names in repo files. Use roles: the repo owner, the sponsor, the pilot lead, the
   founder, the tracker owner, the context layer lead, the OKR backend developer.
 - No customer PII. Nothing from `~/Code/personalised-NL/`, the Full Moon files or order exports.
@@ -62,10 +83,32 @@ No code yet. Filled in at the first code commit.
   `docs/INTENT-FABLE.md` and the repo owner's file still stands. Rollback: `git revert` commits
   `0782139` to `38c6555`.
 
+- 2026-10-09 · Fable 5.1 · v1 localhost app committed under `web/`, built to `docs/DESIGN-HANDOUT.md`
+  (ten design ideas inside the sheet language, three moods, seven screens). The merged spec and the
+  UI reference stay local-only files, since they cite the OKR page repo line by line and the font
+  files are licensed. Login is a dev "act as" cookie until Google login is agreed. Hosted model
+  calls stay behind the vendor gate (`GATE_VENDOR_APPROVED`, `GATE_TYPESAFE_ANSWERS`) until the
+  vendor is approved; the fixture drafter runs by default. Rollback: `git revert` this commit.
+- 2026-10-09 · Fable 5.1 · The sheet-language constraint is lifted for nico-desk at the repo owner's
+  call, after they reviewed the v1 and rejected its direction (dull, hard to understand, the
+  colleague dependency invisible). The redesign is briefed in `docs/DESIGN-HANDOUT.md` v2: three
+  roles, five functions, the ask as the central object, three mood sketches before any build.
+  The company name and public context are allowed in fixtures so the demo reads as Nicobar; the
+  name is removed from `fixtures/denylist.txt`. The repo owner also said to bypass anything blocked
+  on them: commits and `CLAUDE.md` edits proceed without a wait; push, deploy and sends still ask.
+  Rollback: restore the two CONSTRAINTS lines and the denylist line from this commit's parent.
+
 ## VERIFY
 
 ```
 python3 -I evals/meetings/check.py
+python3 -I fixtures/check.py
+grep -rilf fixtures/denylist.txt fixtures/*.json evals/ web/app web/components web/lib web/scripts
+cd web && npx tsc --noEmit && npm run lint && npm run build && npm run smoke
 ```
 
-expects `OK: 20 cases`. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
+Expected: `OK: 20 cases`, `OK: fixtures`, no grep output (the company name is allowed; real people,
+emails and internal hosts are not), tsc and lint silent, build green, `smoke: all 20 items ok`. Then open
+http://localhost:3000 (`npm run dev --prefix web`), act as a lead, and check `/me`, `/team` and
+`/notes/:id` at desktop and 375px, day and night, static mode on. Done still means `docs/BRIEF.md`
+answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

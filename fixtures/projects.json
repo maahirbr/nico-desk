@@ -1,6 +1,7 @@
 [
   {
     "id": "prj_landing",
+    "team_id": "team_run",
     "name": "Autumn landing page",
     "department": "Digital",
     "owner_id": "per_ada",
@@ -10,6 +11,7 @@
   },
   {
     "id": "prj_shoot",
+    "team_id": "team_run",
     "name": "Campaign shoot plan",
     "department": "Brand",
     "owner_id": "per_cy",
@@ -19,11 +21,22 @@
   },
   {
     "id": "prj_tiers",
+    "team_id": "team_run",
     "name": "Loyalty tier pilot",
     "department": "Retention",
     "owner_id": "per_fay",
     "status": "on_track",
     "status_note": "Pilot list agreed.",
     "status_at": "2026-09-14T05:10:00Z"
+  },
+  {
+    "id": "prj_capsule",
+    "team_id": "team_pipe",
+    "name": "Winter capsule samples",
+    "department": "Design",
+    "owner_id": "per_gus",
+    "status": "on_track",
+    "status_note": "Swatches requested.",
+    "status_at": "2026-10-07T05:10:00Z"
   }
 ]

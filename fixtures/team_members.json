@@ -1,0 +1,37 @@
+[
+  {
+    "team_id": "team_run",
+    "person_id": "per_ada",
+    "app_role": "lead"
+  },
+  {
+    "team_id": "team_run",
+    "person_id": "per_cy",
+    "app_role": "admin"
+  },
+  {
+    "team_id": "team_run",
+    "person_id": "per_bo",
+    "app_role": "member"
+  },
+  {
+    "team_id": "team_run",
+    "person_id": "per_dee",
+    "app_role": "member"
+  },
+  {
+    "team_id": "team_run",
+    "person_id": "per_eli",
+    "app_role": "member"
+  },
+  {
+    "team_id": "team_run",
+    "person_id": "per_fay",
+    "app_role": "member"
+  },
+  {
+    "team_id": "team_pipe",
+    "person_id": "per_gus",
+    "app_role": "lead"
+  }
+]

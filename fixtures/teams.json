@@ -1,0 +1,12 @@
+[
+  {
+    "id": "team_run",
+    "name": "Hollowmere run team",
+    "team_type": "run"
+  },
+  {
+    "id": "team_pipe",
+    "name": "Hollowmere design pipeline",
+    "team_type": "pipeline"
+  }
+]
