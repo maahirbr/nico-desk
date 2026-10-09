@@ -90,6 +90,11 @@ drafter with a key, a stub checker in Jev's place) behind the vendor gate in `ga
   types. Further model edits still need that teammate's ask. The three-way comparison with
   `docs/INTENT-FABLE.md` and the repo owner's file still stands. Rollback: `git revert` commits
   `0782139` to `38c6555`.
+- 2026-10-08 · Opus 5.5 · Granola is read through each note-taker's own MCP sign-in, with their
+  yes. This replaces "workspace key, never a personal key" above: Nicobar has no organisation-wide
+  Granola licence, so no workspace key exists. Risk: ingestion depends on personal connections, and
+  on the free plan MCP sees only the last 30 days of personal notes. A meeting's tasks come through
+  whoever took its notes, so no one account carries the whole team. Open question 9 in `INTENT.md`.
 
 - 2026-10-09 · Fable 5.1 · v1 localhost app committed under `web/`, built to `docs/DESIGN-HANDOUT.md`
   (ten design ideas inside the sheet language, three moods, seven screens). The merged spec and the

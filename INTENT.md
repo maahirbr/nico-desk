@@ -183,10 +183,10 @@ not agreed. Field-level rules go in `spec.md`.
 | 7 | An update log | founder ("let's discuss") | Pilot, shape `TBD` |
 | 8 | Ask for support: flag a task stuck on someone else, in its own column, and tag them | business lead | Pilot, tag in-app |
 | 9 | Priority set and locked by the leader, never assumed by the app | business lead ("discuss the flow") | Pilot, flow `TBD` |
-| 10 | Granola meeting notes drafted into tasks, a person approves | founder, forms | Pilot (gated on access and vendor approval) |
+| 10 | Connect the note-takers people already use (Granola, Wispr Flow and others) so tasks in their notes are drafted into nico-desk, and a person approves | founder, forms, the teammate who drafted this file | Granola in the pilot, through each person's own MCP sign-in (gated on their yes and vendor approval). Others later, one at a time |
 | 11 | Monday email to each person: their tasks, in progress and behind, so they can plan the week | business lead | Pilot, if the pilot team agrees to receive it |
 | 12 | End-of-week email, drafted for the admin, listing overdue items for everyone | founder | Pilot, admin reviews and sends |
-| 13 | Wispr Flow notes as a source | founder | Later. It is a personal dictation tool, so each person opts in |
+| 13 | Wispr Flow notes as a source | founder | Later, through request 10. It is a personal dictation tool, so each person opts in |
 | 14 | Scan Google Chat for to-dos and propose them | founder | Later. Needs admin access and everyone's consent |
 | 15 | Leadership view across teams | forms | Stage 3 |
 
@@ -203,6 +203,10 @@ not agreed. Field-level rules go in `spec.md`.
 4. **No double entry.** If the data exists (a Sheet, a Granola note), read it. Do not ask people
    to retype it.
 5. **Colour never stands alone.** Every status shows a word next to it.
+6. **Meet commitments where they are made.** Commitments start in meetings and dictated notes, so
+   nico-desk connects to the note-takers people already use instead of asking them to switch.
+   Each note-taker is one source among many: adding Wispr Flow or the next tool is a new
+   connection, not a rebuild. Whatever the source, a task arrives as a draft a person approves.
 
 ---
 
@@ -213,7 +217,13 @@ The full list is in `CLAUDE.md` CONSTRAINTS. The ones that shape the product:
 - Nothing is sent on anyone's behalf without their yes. Emails are drafted and a person sends
   them, or each recipient has agreed to receive them.
 - Read-only on department Sheets and the founder's Supabase unless access is granted for writing.
-- No recorder. Meetings are read from Granola. Recording needs everyone's consent first.
+- No recorder. Meetings are read from the note-takers people already use. Recording needs
+  everyone's consent first.
+- Note-takers connect only through the vendor's official connector (its API or MCP server). No
+  tools that read an app's local data. A personal note-taker connects only with its owner's yes.
+- Nicobar has no organisation-wide Granola licence, so there is no workspace key. Granola comes in
+  through each note-taker's own MCP sign-in. A meeting's tasks arrive through the connection of
+  whoever took its notes, so no single person's account carries the whole team.
 - Real meeting text goes to a hosted model only after Nicobar approves that vendor.
 - The existing Nicobar UI (`~/Code/Nicobar work`). No new visual language.
 - The repo is public. Synthetic data only. No names, credentials or customer data.
@@ -242,7 +252,7 @@ The full list is in `CLAUDE.md` CONSTRAINTS. The ones that shape the product:
 | 6 | Priority: who is "the leader" for a task, and how is priority agreed and locked? | the business lead, the founder | `TBD` |
 | 7 | The update log is part of the shared core (section 3). Is it a history of every change, a weekly note per task, or both? | the founder | `TBD` |
 | 8 | One backend shared with the OKR page, or separate? | the tracker owner, the OKR backend developer | `TBD` |
-| 9 | Who is the Granola admin who makes a workspace key, and is Nicobar on the Business or Enterprise plan? | `TBD` | `TBD` |
+| 9 | Granola through personal MCP sign-ins: which pilot members take notes in Granola, and on which plan? On the free plan MCP sees only the last 30 days of personal notes (`docs/RESEARCH-8-OCT.md`). What happens to ingestion when someone disconnects or leaves? | the pilot lead, the repo owner | `TBD` |
 | 10 | Single source of truth: once nico-desk exists, where does a task made in a Sheet, a note or a WhatsApp chat live? Do teams stop tracking in Sheets for pilot work, or does nico-desk read them? WhatsApp has no read access for personal chats, so commitments made there must be added by hand or forwarded in. | the sponsor, the pilot lead | `TBD` |
 | 11 | Partner work: do we track the partner's tasks too, or only Nicobar's side? If only ours, how is a partner's slip made visible? | the sponsor, the founder | `TBD` |
 | 12 | Which team type pilots first (Launch, Run, Partner, Pipeline)? Proposed: Run | the sponsor | `TBD` |
@@ -268,3 +278,4 @@ The full list is in `CLAUDE.md` CONSTRAINTS. The ones that shape the product:
 | 2026-09-30 | Read Granola, build no recorder | Granola already captures the meetings | the repo owner |
 | 2026-10-08 | Repo made public | Collaborators | the repo owner |
 | 2026-10-08 | Granola read through a workspace key, never a personal key | No one person's credential carries the pipeline | the repo owner |
+| 2026-10-08 | Superseded: Granola read through each note-taker's own MCP sign-in, with their yes | Nicobar has no organisation-wide Granola licence, so no workspace key exists | the teammate who drafted this file |
