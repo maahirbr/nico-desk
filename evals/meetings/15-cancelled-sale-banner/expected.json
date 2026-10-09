@@ -4,14 +4,14 @@
   "tasks": [
     {
       "title": "Remove the sale countdown timer from the homepage",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-11-03",
       "quote": "I will remove the sale countdown timer from the homepage by 3 November.",
       "critical": true
     },
     {
       "title": "Tell all store teams about the sale postponement",
-      "owner": "Sorrel Pike",
+      "owner": "Ishaan Bhatt",
       "due_on": "2026-11-02",
       "quote": "I will tell all store teams about the postponement today.",
       "critical": true

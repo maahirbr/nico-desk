@@ -1,23 +1,23 @@
 # Hollowmere team sync
 Meeting date: 2026-10-21 (Wednesday)
-Present: Alder Finch, Tamsin Quill, Orrin Vale, Sorrel Pike, Bexley Marsh
+Present: Arjun Nair, Meera Iyer, Kabir Sethi, Ishaan Bhatt, Ananya Rao
 
-Alder Finch: The store locator shows Harbour Street as closed on Sundays. That is wrong. Whoever is on website duty this week should correct it.
+Arjun Nair: The store locator shows Harbour Street as closed on Sundays. That is wrong. Whoever is on website duty this week should correct it.
 
-Tamsin Quill: The agency should send the staging link for the new checkout.
+Meera Iyer: The agency should send the staging link for the new checkout.
 
-Orrin Vale: I will write up the checkout test steps on 23 October.
+Kabir Sethi: I will write up the checkout test steps on 23 October.
 
-Sorrel Pike: Retail will gather the new opening hours for the holiday period.
+Ishaan Bhatt: Retail will gather the new opening hours for the holiday period.
 
-Bexley Marsh: We did a similar locator fix in March and it took forever.
+Ananya Rao: We did a similar locator fix in March and it took forever.
 
-Tamsin Quill: Who is on duty this week, anyway?
+Meera Iyer: Who is on duty this week, anyway?
 
-Orrin Vale: Not me, I swapped.
+Kabir Sethi: Not me, I swapped.
 
-Tamsin Quill: The current checkout is slow on phones and the new one is meant to fix that, but nobody has seen it yet.
+Meera Iyer: The current checkout is slow on phones and the new one is meant to fix that, but nobody has seen it yet.
 
-Bexley Marsh: The holiday opening hours are posted in the staff room already, but only on a paper sheet.
+Ananya Rao: The holiday opening hours are posted in the staff room already, but only on a paper sheet.
 
-Alder Finch: If the locator breaks again I am moving us to a paper map.
+Arjun Nair: If the locator breaks again I am moving us to a paper map.

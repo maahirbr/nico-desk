@@ -4,21 +4,21 @@
   "tasks": [
     {
       "title": "Add points balance to the account page",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-11-13",
       "quote": "I will add the points balance to the account page on 13 November.",
       "critical": false
     },
     {
-      "title": "Send loyalty tier names to Orrin",
-      "owner": "Sorrel Pike",
+      "title": "Send loyalty tier names to Kabir",
+      "owner": "Ishaan Bhatt",
       "due_on": "2026-11-10",
-      "quote": "I will send Orrin the loyalty tier names on 10 November.",
+      "quote": "I will send Kabir the loyalty tier names on 10 November.",
       "critical": false
     },
     {
       "title": "Draft the loyalty welcome email",
-      "owner": "Wren Calloway",
+      "owner": "Priya Menon",
       "due_on": "2026-11-12",
       "quote": "I will draft the loyalty welcome email by 12 November.",
       "critical": false

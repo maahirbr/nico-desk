@@ -4,14 +4,14 @@
   "tasks": [
     {
       "title": "Email the Eastgate landlord about the new year works schedule",
-      "owner": "Sorrel Pike",
+      "owner": "Ishaan Bhatt",
       "due_on": "2026-11-04",
       "quote": "I will email the landlord about the new year works schedule on 4 November.",
       "critical": false
     },
     {
       "title": "Prepare gift table signage ready for January",
-      "owner": "Bexley Marsh",
+      "owner": "Ananya Rao",
       "due_on": "missing",
       "quote": "I will prepare the gift table signage so it is ready for January.",
       "critical": false

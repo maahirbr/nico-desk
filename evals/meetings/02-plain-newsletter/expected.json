@@ -4,28 +4,28 @@
   "tasks": [
     {
       "title": "Write three subject line options",
-      "owner": "Bexley Marsh",
+      "owner": "Ananya Rao",
       "due_on": "2026-10-08",
       "quote": "I will write three subject line options and share them in the channel by 8 October",
       "critical": false
     },
     {
       "title": "Update email template so the code block sits above the story",
-      "owner": "Tamsin Quill",
+      "owner": "Meera Iyer",
       "due_on": "missing",
       "quote": "I can update the template so the code block sits above the story.",
       "critical": false
     },
     {
       "title": "Upload final lead story images to shared folder",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-10-12",
       "quote": "I will upload the final images to the shared folder on 12 October",
       "critical": false
     },
     {
       "title": "Send proof of the newsletter to the team list",
-      "owner": "Wren Calloway",
+      "owner": "Priya Menon",
       "due_on": "2026-10-14",
       "quote": "I will do a proof send to the team list on 14 October",
       "critical": true
