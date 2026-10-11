@@ -145,7 +145,7 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 - 2026-10-12 · Opus 5.5 · Google sign-in, at the repo owner's call, after the sponsor named it the next step. It talks to
   Google directly instead of porting the Supabase Auth version from `maahir/v2-hosting`: no new dependency and no Supabase
   provider setup, and the session stays the signed cookie the rest of the app already reads. Only roster people on the
-  allowed domain get in. Going live needs a Google OAuth client, `NICO_SESSION_SECRET`, and then `NICO_OPEN_DEMO` and
+  allowed domain get in. Going live needs a Google OAuth client and `NICO_SESSION_SECRET` (on Vercel, Google sign-in stays off without it, since the derived secret would let anyone with `DATABASE_URL` forge a session), and then `NICO_OPEN_DEMO` and
   `NICO_DEV_SIGNIN` unset in production, which closes the open demo over real pilot names. Roster moved into the main
   nav for admins, since in the More menu the pilot team read it as missing. Rollback: unset `GOOGLE_CLIENT_ID` on Vercel
   and redeploy, or `git revert` this commit.
@@ -159,7 +159,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `66 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `67 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

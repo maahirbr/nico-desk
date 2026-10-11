@@ -58,4 +58,18 @@ describe('authUrl and googleSignInEnabled', () => {
     process.env.GOOGLE_CLIENT_SECRET = '  ';
     expect(googleSignInEnabled()).toBe(false);
   });
+  it('stays off on Vercel until the session secret is set', () => {
+    const vercel = process.env.VERCEL;
+    const session = process.env.NICO_SESSION_SECRET;
+    try {
+      process.env.VERCEL = '1';
+      delete process.env.NICO_SESSION_SECRET;
+      expect(googleSignInEnabled()).toBe(false);
+      process.env.NICO_SESSION_SECRET = 'set';
+      expect(googleSignInEnabled()).toBe(true);
+    } finally {
+      if (vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = vercel;
+      if (session === undefined) delete process.env.NICO_SESSION_SECRET; else process.env.NICO_SESSION_SECRET = session;
+    }
+  });
 });

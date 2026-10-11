@@ -7,6 +7,9 @@ function clientId(): string { return (process.env.GOOGLE_CLIENT_ID ?? '').trim()
 function clientSecret(): string { return (process.env.GOOGLE_CLIENT_SECRET ?? '').trim(); }
 
 export function googleSignInEnabled(): boolean {
+  // On Vercel an unset session secret is derived from DATABASE_URL (lib/secret.ts), so anyone holding that URL
+  // could forge a session. Real sign-in stays off until NICO_SESSION_SECRET is set.
+  if (process.env.VERCEL && !(process.env.NICO_SESSION_SECRET ?? '').trim()) return false;
   return clientId() !== '' && clientSecret() !== '';
 }
 
