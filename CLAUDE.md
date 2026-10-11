@@ -6,7 +6,7 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
 
 ## ARCHITECTURE
 
-- `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Local sign-in is a roster picker behind `NICO_DEV_SIGNIN=1`. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
+- `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Sign-in is Google OAuth, direct to Google with no Supabase Auth (`web/lib/google.ts`, `web/app/api/auth/google/`), on when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set; the roster picker stays behind `NICO_DEV_SIGNIN=1`. Both end in the same signed `nd_session` cookie and the same `checkSignIn` roster and domain check. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
 - Hosting: `web/lib/db.ts` picks the database. `DATABASE_URL` set: postgres-js through `web/lib/pgRemote.ts` (Supabase transaction pooler), loaded by `npm run db:remote` (`web/scripts/db-remote.ts`: drops, reseeds, RLS on with no policies). Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last. Unset locally: PGlite in `web/.data/`. `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come from env or are derived (`web/lib/secret.ts`). `web/.env.example` lists every variable. Vercel project `nico-desk`, root `web`, serves https://nico-desk.vercel.app from Supabase project `nico-desk` (Mumbai): `DATABASE_URL` is set for production only, so previews still use PGlite. The live site holds the real pilot, loaded by `NICO_ROSTER=pilot/roster.local.json npm run db:remote` from the git-ignored `web/pilot/` (`drop_samples` in its `projects.local.json` leaves the fixtures out). The weekly reseed cron is off; `/api/cron/reseed` (`web/lib/reseed.ts`) still exists and never wipes a database without the fixture marker task. Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its ask columns are not in the Supabase schema.
 - Look: `DESIGN.md` (repo root) is the visual system and outranks everything visual. Every token lives in `web/app/tokens.css`; Geist comes from `next/font/google`. `web/components/motion.ts` holds the three motion gestures and `web/components/KeyboardDismiss.tsx` the mobile keyboard rule. `docs/design/moods.html` holds the three mood sketches, and each is a skin: `[data-skin]` token blocks in `tokens.css`, picked from the menu by the avatar and kept in the `nd_skin` cookie, which `layout.tsx` reads so the server HTML carries it. `web/components/keys.ts` holds the shortcuts (`/`, Cmd+K, `n`, `?`, Esc); `toast.tsx` and `skeletons.tsx` the confirmations and loading states.
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
@@ -142,6 +142,14 @@ team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HAND
   finished outcomes, and splits late into flagged early and missed, derived from when each date move was logged.
   People with no tasks are hidden on `/team` and the ledger. Rollback: `git revert` this commit.
 
+- 2026-10-12 · Opus 5.5 · Google sign-in, at the repo owner's call, after the sponsor named it the next step. It talks to
+  Google directly instead of porting the Supabase Auth version from `maahir/v2-hosting`: no new dependency and no Supabase
+  provider setup, and the session stays the signed cookie the rest of the app already reads. Only roster people on the
+  allowed domain get in. Going live needs a Google OAuth client, `NICO_SESSION_SECRET`, and then `NICO_OPEN_DEMO` and
+  `NICO_DEV_SIGNIN` unset in production, which closes the open demo over real pilot names. Roster moved into the main
+  nav for admins, since in the More menu the pilot team read it as missing. Rollback: unset `GOOGLE_CLIENT_ID` on Vercel
+  and redeploy, or `git revert` this commit.
+
 ## VERIFY
 
 ```
@@ -151,7 +159,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `61 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `66 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

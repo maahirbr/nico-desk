@@ -47,6 +47,12 @@ priority, the four views (My tasks, The week, By status, Ledger), the task page,
 reminders, roster admin, and the `/api/v1` routes in SPEC.md 4.3 to 4.5 with the 4.1 error shape,
 version checks, a same-origin check on writes and rate limits.
 
+Google sign-in (FR-54) is built with `fetch` and no extra package. `/api/auth/google` sets a random
+`state` cookie and sends the visitor to Google. `/api/auth/google/callback` checks the state, swaps the code for an
+ID token, then `checkSignIn` lets in only an active roster person on `NICO_ALLOWED_DOMAIN`. It turns on when
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`). The roster picker stays for local runs
+(`NICO_DEV_SIGNIN=1`).
+
 ### Projects
 
 `/projects` lists every project; each has its own page with a header (eyebrow, phase, launch
@@ -134,7 +140,6 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 
 | Not built | Why |
 |---|---|
-| Google sign-in (FR-54) | No Google client issued. Local sign-in is a roster picker, on only with `NICO_DEV_SIGNIN=1` (set by `npm run dev` and `npm start`). It still enforces the roster, the active flag and the allowed domain (`NICO_ALLOWED_DOMAIN`, default `example.test`) |
 | Sheet read (FR-40 to FR-43) | Needs read access to a Sheet. The fixtures' Sheet rows show as read-only mirrors |
 | Slice 2: Granola drafts, Monday digest, Friday overdue email | Gated in SPEC.md section 1 |
 | The OKR page's own tokens and components | `~/Code/Nicobar work` is not on this machine. `app/globals.css` uses the same palette as `docs/team-page`, in one block to swap |

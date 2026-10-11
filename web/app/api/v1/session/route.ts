@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { COOKIE, checkSignIn, cookieOptions, devSignInEnabled, signSession } from '@/lib/auth';
+import { checkSignIn, cookie, cookieOptions, devSignInEnabled, isHttps, signSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/errors';
 import { errorResponse, rateLimit, readBody, sameOrigin } from '@/lib/http';
 
-// Local sign-in by roster pick (NICO_DEV_SIGNIN=1). Google sign-in replaces this when a client is issued.
+// Sign-in by roster pick (NICO_DEV_SIGNIN=1), for local runs and the open demo. Real sign-in is Google, at /api/auth/google.
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
@@ -32,13 +32,4 @@ export async function DELETE(req: Request) {
   } catch (e) {
     return errorResponse(e);
   }
-}
-
-// Secure whenever the request came over HTTPS, so plain http://localhost still works.
-function isHttps(req: Request): boolean {
-  return new URL(req.url).protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
-}
-
-function cookie(value: string, maxAge: number, secure: boolean): string {
-  return [`${COOKIE}=${value}`, 'Path=/', 'HttpOnly', 'SameSite=Lax', `Max-Age=${maxAge}`, ...(secure ? ['Secure'] : [])].join('; ');
 }

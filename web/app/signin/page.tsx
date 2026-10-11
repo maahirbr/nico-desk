@@ -1,41 +1,75 @@
 import { redirect } from 'next/navigation';
 import { allowedDomain, currentMe, devSignInEnabled, openDemo } from '@/lib/auth';
 import { db, rosterFile } from '@/lib/db';
+import { googleSignInEnabled } from '@/lib/google';
 import { localOwnerId, TEAM_ID } from '@/lib/seed';
 import { listPeople } from '@/lib/service';
 import { SignInList } from '@/components/client';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SignIn() {
+const ERRORS: Record<string, string> = {
+  not_allowed: 'That account is not on the team roster. Ask the team admin to add you.',
+  state: 'Sign-in did not finish. Try again.',
+  google: 'Sign-in did not finish. Try again.',
+  cancelled: 'Sign-in did not finish. Try again.',
+  not_configured: 'Google sign-in is not set up yet.',
+};
+
+export default async function SignIn({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (!openDemo() && (await currentMe())) redirect('/');
-  if (!devSignInEnabled()) {
+  const { error } = await searchParams;
+  const message = error && Object.hasOwn(ERRORS, error) ? ERRORS[error] : null;
+  const google = googleSignInEnabled();
+  const dev = devSignInEnabled();
+  const brand = <div className="signin-brand"><span className="mark-name">nico-desk</span></div>;
+  const notice = message && <p className="err" role="alert" style={{ marginBottom: 'var(--space-sm)' }}>{message}</p>;
+
+  if (!google && !dev) {
     return (
       <div className="signin">
-        <div className="signin-brand"><span className="mark-name">nico-desk</span></div>
+        {brand}
         <h1>Sign in</h1>
         <p className="lede">Sign-in is not set up yet.</p>
+        {notice}
       </div>
     );
   }
-  const people = (await listPeople(await db(), TEAM_ID)).filter((p) => p.active && p.email.endsWith(`@${allowedDomain()}`));
+
+  const people = dev
+    ? (await listPeople(await db(), TEAM_ID)).filter((p) => p.active && p.email.endsWith(`@${allowedDomain()}`))
+    : [];
   const ownerId = localOwnerId(rosterFile());
   const owner = people.find((p) => p.id === ownerId);
   return (
     <div className="signin">
-      <div className="signin-brand"><span className="mark-name">nico-desk</span></div>
-      <h1>Choose who you are</h1>
-      {owner && (
-        <div className="card signin-me">
-          <SignInList people={[{ id: owner.id, name: owner.displayName, role: owner.role, roles: 'Continue as you' }]} />
+      {brand}
+      {google && (
+        <>
+          <h1>Sign in</h1>
+          <p className="lede">Use your {allowedDomain()} Google account.</p>
+          {notice}
+          <a className="btn" href="/api/auth/google" style={{ textDecoration: 'none' }}>Continue with Google</a>
+        </>
+      )}
+      {dev && (
+        <div style={google ? { marginTop: 'var(--space-xl)' } : undefined}>
+          {!google && <h1>Choose who you are</h1>}
+          {!google && notice}
+          {google && <p className="small dim" style={{ margin: '0 0 var(--space-xs)' }}>Or see the desk as someone else</p>}
+          {owner && !google && (
+            <div className="card signin-me">
+              <SignInList people={[{ id: owner.id, name: owner.displayName, role: owner.role, roles: 'Continue as you' }]} />
+            </div>
+          )}
+          {owner && !google && <p className="small dim" style={{ margin: 'var(--space-lg) 0 var(--space-xs)' }}>Or see the desk as someone else</p>}
+          <div className="card"><SignInList
+            people={people.filter((p) => google || p.id !== owner?.id).map((p) => ({
+              id: p.id, name: p.displayName, role: p.role, roles: p.appRoles.filter((r) => r !== 'member').join(', '),
+            }))}
+          /></div>
         </div>
       )}
-      {owner && <p className="small dim" style={{ margin: 'var(--space-lg) 0 var(--space-xs)' }}>Or see the desk as someone else</p>}
-      <div className="card"><SignInList
-        people={people.filter((p) => p.id !== owner?.id).map((p) => ({
-          id: p.id, name: p.displayName, role: p.role, roles: p.appRoles.filter((r) => r !== 'member').join(', '),
-        }))}
-      /></div>
     </div>
   );
 }

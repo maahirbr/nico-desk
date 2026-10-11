@@ -7,9 +7,9 @@ import { dataDir, db } from './db';
 import { derivedSecret } from './secret';
 import { findPersonByEmail, getPerson, teamsOf, type Person } from './service';
 
-// Sessions are a signed cookie naming a roster person. SPEC.md FR-54 asks for Google sign-in;
-// until a Google client is issued, local runs use a roster picker, enabled only by NICO_DEV_SIGNIN=1.
-// Either way the person must be on the roster, active, and on the allowed email domain.
+// Sessions are a signed cookie naming a roster person. SPEC.md FR-54 asks for Google sign-in
+// (lib/google.ts, app/api/auth/google/). Local runs can also use a roster picker, enabled only by
+// NICO_DEV_SIGNIN=1. Either way the person must be on the roster, active, and on the allowed email domain.
 
 export const COOKIE = 'nd_session';
 const MAX_AGE_S = 60 * 60 * 12;
@@ -50,6 +50,15 @@ function verify(token: string | undefined): string | null {
 }
 
 export const cookieOptions = { maxAge: MAX_AGE_S };
+
+// Secure whenever the request came over HTTPS, so plain http://localhost still works.
+export function isHttps(req: Request): boolean {
+  return new URL(req.url).protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
+}
+
+export function cookie(value: string, maxAge: number, secure: boolean, name = COOKIE): string {
+  return [`${name}=${value}`, 'Path=/', 'HttpOnly', 'SameSite=Lax', `Max-Age=${maxAge}`, ...(secure ? ['Secure'] : [])].join('; ');
+}
 
 export function allowedDomain(): string {
   return (process.env.NICO_ALLOWED_DOMAIN || 'example.test').toLowerCase();
