@@ -38,7 +38,9 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
       onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} />
   );
   const opened = [...tasks, ...later].find((t) => t.id === openId);
-  const shownPeople = people.filter(found);
+  // Only people with something in view get a card: open work this week, or coming up. Nobody else is listed.
+  const hasWork = (p: Person) => list.some((t) => t.ownerId === p.id && t.statusCategory === 'open') || ahead.some((t) => t.ownerId === p.id);
+  const shownPeople = people.filter((p) => found(p) && hasWork(p));
   const SOON = 3; // coming-up tasks shown per person before the show-more button
   const ORDER: StatusKey[] = ['blocked', 'todo', 'doing', 'done'];
 
@@ -70,7 +72,10 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
       </div>
 
-      {needle && shownPeople.length === 0 && <div className="empty-state"><p>No one matches “{q.trim()}”.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>}
+      {needle && people.filter(found).length === 0 && <div className="empty-state"><p>No one matches “{q.trim()}”.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>}
+      {view === 'person' && shownPeople.length === 0 && (needle ? people.filter(found).length > 0 : true) && (
+        <div className="empty-state"><p>{needle ? 'No tasks for that search.' : 'Nothing open or coming up.'}</p>{needle ? <button className="btn ghost" onClick={() => setQ('')}>Clear search</button> : <Link className="btn" href="/tasks/new">Add a task</Link>}</div>
+      )}
       {!needle && view === 'status' && list.length === 0 && <div className="empty-state"><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
 
       {view === 'person' ? shownPeople.map((p) => {
@@ -79,15 +84,12 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         const week = o.filter((t) => t.dueOn >= today);
         const soon = ahead.filter((t) => t.ownerId === p.id);
         const soonShown = more[p.id] ? soon : soon.slice(0, SOON);
-        // Without a search, people with nothing ahead fold into one line at the end.
-        if (!needle && !o.length && !soon.length) return null;
         return (
           <section key={p.id} className="group">
             <h2 className="person-h">
               <Avatar name={p.name} />{p.name}<span className="dim role">{p.role}</span>
               <span className="n">{o.length + soon.length} ahead{overdueN.length > 0 && <span className="late-text"> · {overdueN.length} late</span>}</span>
             </h2>
-            {!o.length && !soon.length && <p className="next-empty">Nothing next. Free to pick something up.</p>}
             {overdueN.length > 0 && <><h3 className="next-h late-text">Late</h3><div className="tlist">{overdueN.map((t) => row(t))}</div></>}
             {week.length > 0 && <><h3 className="next-h">{weekStart === thisWeek ? 'This week' : 'That week'}</h3><div className="tlist">{week.map((t) => row(t))}</div></>}
             {soon.length > 0 && (
@@ -113,11 +115,6 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           </section>
         );
       })}
-
-      {view === 'person' && !needle && (() => {
-        const idle = people.filter((p) => !list.some((t) => t.ownerId === p.id && t.statusCategory === 'open') && !ahead.some((t) => t.ownerId === p.id));
-        return idle.length > 0 && <p className="next-idle">Nothing next for {idle.map((p) => p.name).join(', ')}.</p>;
-      })()}
 
       {openId && (
         <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={opts} today={today} projectNames={projectNames}

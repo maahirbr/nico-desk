@@ -105,7 +105,7 @@
   --drawer-width: 480px;
   --search-max: 560px;
 
-  /* Skin hooks. Skin A keeps these as they are; skins B and C change some (see the skin blocks below). */
+  /* Skin hooks. Skin A keeps these as they are; skins W, B and C change some (see the skin blocks below). */
   --bar: var(--canvas);
   --avatar-bg: var(--pill);
   --avatar-you-ring: 0 0 0 0 transparent;
@@ -206,10 +206,119 @@
   --scrim: rgb(0 0 0 / 0.6);
 }
 
-/* ---------- Skins. Three moods from docs/design/moods.html, picked in the shell, kept in the nd_skin cookie
-   and set on <html data-skin> by the server. A is the default and is the values above, so it has no block.
+/* ---------- Skins. W is the default; A, B and C are the three moods from docs/design/moods.html. The pick is made
+   in the shell, kept in the nd_skin cookie and set on <html data-skin> by the server. With no cookie the server
+   sets W. A is the values above, so it has no block: the cookie value "a" matches no block and leaves them as they are.
    Each skin changes colour, face, corners and spacing and nothing else. Day is the skin block itself;
    night repeats the colours under the same two selectors the base night uses. */
+
+/* W. Warm: the pilot team's own build, warm paper, one terracotta, a dark sidebar, Fraunces headings.
+   Accent, red and amber are the team's values nudged darker where they missed 4.5:1 as text. */
+:root[data-skin="w"] {
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --type-page-title: 500 28px/1.15 var(--font-serif);
+  --type-ask-title: 500 19px/1.3 var(--font-serif);
+  --track-title: -0.02em;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --card-shadow: 0 1px 2px rgb(31 28 24 / 0.04), 0 4px 14px rgb(31 28 24 / 0.05);
+  --shadow-1: 0 1px 2px rgb(31 28 24 / 0.04), 0 4px 14px rgb(31 28 24 / 0.05);
+  --primary: #a24621;
+  --on-primary: #ffffff;
+  --primary-soft: #f6e6dc;
+  --ink: #1f1c18;
+  --ink-2: #4f493f;
+  --ink-3: #6a6357;
+  --canvas: #f5f2ec;
+  --surface: #ffffff;
+  --sunk: #ece6da;
+  --pill: #e8e1d3;
+  --hairline: #e8e2d6;
+  --line-strong: #d6cebf;
+  --late: #ae3822;
+  --late-soft: #fae5df;
+  --off: #8a560b;
+  --off-soft: #f8ecd0;
+  --bar: var(--canvas);
+  --avatar-bg: var(--pill);
+  --callout-bg: var(--primary-soft);
+  --scrim: rgb(31 28 24 / 0.4);
+  --side-bg: #1e1b17;
+  --side-hover: #2b2722;
+  --side-surface: #26231f;
+  --side-line: #38332c;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="w"]:not([data-theme="light"]) {
+    --primary: #e07b4f;
+    --on-primary: #1b1916;
+    --primary-soft: #3a261c;
+    --ink: #ede8de;
+    --ink-2: #c2baac;
+    --ink-3: #a39b8e;
+    --canvas: #12110f;
+    --surface: #1b1916;
+    --sunk: #211f1b;
+    --pill: #2b2822;
+    --hairline: #2e2b26;
+    --line-strong: #403b34;
+    --late: #f07158;
+    --late-soft: #3a1f1a;
+    --off: #e5a845;
+    --off-soft: #33281a;
+    --card-shadow: none;
+    --shadow-1: 0 0 0 1px rgb(255 255 255 / 0.02), 0 8px 24px rgb(0 0 0 / 0.35);
+    --scrim: rgb(0 0 0 / 0.6);
+    --side-bg: #0c0b0a;
+    --side-hover: #24211d;
+    --side-surface: #171513;
+    --side-line: #2e2b26;
+  }
+}
+:root[data-skin="w"][data-theme="dark"] {
+  --primary: #e07b4f;
+  --on-primary: #1b1916;
+  --primary-soft: #3a261c;
+  --ink: #ede8de;
+  --ink-2: #c2baac;
+  --ink-3: #a39b8e;
+  --canvas: #12110f;
+  --surface: #1b1916;
+  --sunk: #211f1b;
+  --pill: #2b2822;
+  --hairline: #2e2b26;
+  --line-strong: #403b34;
+  --late: #f07158;
+  --late-soft: #3a1f1a;
+  --off: #e5a845;
+  --off-soft: #33281a;
+  --card-shadow: none;
+  --shadow-1: 0 0 0 1px rgb(255 255 255 / 0.02), 0 8px 24px rgb(0 0 0 / 0.35);
+  --scrim: rgb(0 0 0 / 0.6);
+  --side-bg: #0c0b0a;
+  --side-hover: #24211d;
+  --side-surface: #171513;
+  --side-line: #2e2b26;
+}
+/* The sidebar is dark in day and night. It re-points the colour tokens on its own element only, so every
+   rule inside it keeps reading var(--ink) and friends. --avatar-bg and --ring-color are set here because
+   they were resolved at the root. The wordmark takes the serif. */
+:root[data-skin="w"] .side {
+  background: var(--side-bg);
+  --ink: #e9e3d7;
+  --ink-2: #9d9588;
+  --ink-3: #9d9588;
+  --sunk: var(--side-hover);
+  --surface: var(--side-surface);
+  --hairline: var(--side-line);
+  --line-strong: var(--side-line);
+  --primary: #e07b4f;
+  --on-primary: #1b1916;
+  --primary-soft: #3a261c;
+  --avatar-bg: var(--side-hover);
+  --ring-color: #e07b4f;
+}
+:root[data-skin="w"] .mark-name { font-family: var(--font-serif); font-weight: 600; }
 
 /* B. Calm and precise: IBM Plex, a teal, square corners, outlined states */
 :root[data-skin="b"] {

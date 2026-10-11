@@ -11,12 +11,14 @@ import { Avatar, Person } from './chips';
 // opens the tasks behind it, with each date move and its reason. The cards show delivery habits per
 // person, in name order: a coaching view, not a ranking.
 
-type Key = 'kept' | 'ahead' | 'ontime' | 'late' | 'pastdue' | 'silent' | 'movedOpen' | 'movedLate' | 'moved';
+type Key = 'kept' | 'ahead' | 'ontime' | 'late' | 'flagged' | 'missed' | 'pastdue' | 'silent' | 'movedOpen' | 'movedLate' | 'moved';
 const MATCH: Record<Key, (t: Task) => boolean> = {
   kept: (t) => t.outcome === 'ahead' || t.outcome === 'on_time',
   ahead: (t) => t.outcome === 'ahead',
   ontime: (t) => t.outcome === 'on_time',
   late: (t) => t.outcome === 'late',
+  flagged: (t) => t.lateKind === 'flagged_early',
+  missed: (t) => t.lateKind === 'missed',
   pastdue: (t) => t.overdue,
   silent: (t) => t.slippedSilently,
   movedOpen: (t) => t.renegotiations.some((r) => r.kind === 'open'),
@@ -26,7 +28,8 @@ const MATCH: Record<Key, (t: Task) => boolean> = {
 const COLS: [keyof LedgerRow, string, Key][] = [
   ['closedAhead', 'Ahead', 'ahead'],
   ['closedOnTime', 'On time', 'ontime'],
-  ['closedLate', 'Late', 'late'],
+  ['closedLateFlagged', 'Late, flagged early', 'flagged'],
+  ['closedLateMissed', 'Late, missed', 'missed'],
   ['openPastDue', 'Open, past due', 'pastdue'],
   ['silentSlips', 'Slipped silently', 'silent'],
   ['renegotiatedOpen', 'Moved in time', 'movedOpen'],
@@ -65,6 +68,27 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
       <h1>On-time ledger</h1>
       <p className="lede">Kept dates, per person per week. On time means closed by the date first given. Click any number to see the tasks behind it.</p>
 
+      <div className="card defs">
+        <div>
+          <h3>Finished</h3>
+          <dl>
+            <dt>Ahead</dt><dd>Closed before the date first given.</dd>
+            <dt>On time</dt><dd>Closed on the date first given.</dd>
+            <dt>Late</dt><dd>Closed after the date first given, even if the date was moved and the new one was met. Two kinds:</dd>
+            <dt className="sub-def">Flagged early</dt><dd>The owner moved the date on or before the date first given.</dd>
+            <dt className="sub-def">Missed</dt><dd>The date passed before any move was logged.</dd>
+          </dl>
+        </div>
+        <div>
+          <h3>Open</h3>
+          <dl>
+            <dt>Open</dt><dd>Not closed or dropped yet. Past due means today is after its current date.</dd>
+            <dt>Slipped silently</dt><dd>Open and past due, or a date moved after the old one had passed, or closed after the current date. Target 0.</dd>
+            <dt>Moved in time</dt><dd>A new date logged on or before the date it replaced. Moved late means logged after.</dd>
+          </dl>
+        </div>
+      </div>
+
       <div className="stats">
         <button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
           <div className="stat-n">{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</div><div className="stat-l">Kept on the first date, {period}</div>
@@ -73,7 +97,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           <div className="stat-n">{tasks.filter(MATCH.kept).length}</div><div className="stat-l">Closed on time or ahead</div>
         </button>
         <button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
-          <div className="stat-n">{tasks.filter(MATCH.late).length}</div><div className="stat-l">Closed late</div>
+          <div className="stat-n">{tasks.filter(MATCH.late).length}</div><div className="stat-l">Closed late <span className="dim">· {tasks.filter(MATCH.flagged).length} flagged early, {tasks.filter(MATCH.missed).length} missed</span></div>
         </button>
         <button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
           <div className="stat-n">{tasks.filter(MATCH.pastdue).length}</div><div className="stat-l">Open, past due</div>
@@ -85,12 +109,14 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 
       <h2>Delivery habits <span className="count-badge">{period}</span></h2>
       <p className="sub" style={{ marginTop: -6 }}>{seeAll ? 'One card per person, in name order. Arrows compare with the same length of time before.' : 'Your own habits. Leads see the whole team.'}</p>
+      {!people.some((p) => tasks.some((t) => t.ownerId === p.id) || openNow.some((t) => t.ownerId === p.id)) && <p className="empty">No one has tasks in this period.</p>}
       <div className="habit-grid">
         {people.map((p) => {
           const mine = tasks.filter((t) => t.ownerId === p.id);
           const before = keptOf(prev.filter((t) => t.ownerId === p.id));
           const k = keptOf(mine);
           const a = mine.filter(MATCH.ahead), o = mine.filter(MATCH.ontime), l = mine.filter(MATCH.late);
+          const lf = mine.filter(MATCH.flagged), lm = mine.filter(MATCH.missed);
           const closed = a.length + o.length + l.length;
           const lateBy = l.map((t) => days(t.firstDueOn, closedOn(t)!)).sort((x, y) => x - y);
           const median = lateBy.length ? lateBy[Math.floor(lateBy.length / 2)] : null;
@@ -102,12 +128,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           const blockedOnOthers = open.filter((t) => t.blocked);
           const othersWaiting = waitingOn.filter((t) => t.blocked?.onId === p.id);
           const trend = k.pct !== null && before.pct !== null ? k.pct - before.pct : null;
-          if (!mine.length && !open.length) return (
-            <section key={p.id} className="card habit quiet">
-              <div className="habit-head"><Avatar name={p.name} lg /><span><b>{p.name}</b><span className="dim small">{p.role}</span></span></div>
-              <p className="small dim">Nothing fell due in this period, and nothing open.</p>
-            </section>
-          );
+          if (!mine.length && !open.length) return null; // no tasks in view, no card
           return (
             <section key={p.id} className="card habit">
               <div className="habit-head">
@@ -123,8 +144,8 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
                 </span>
               </div>
               {closed > 0 && (
-                <div className="split" role="group" aria-label="Ahead, on time, late">
-                  {[['Ahead', a, 'ok'], ['On time', o, 'done'], ['Late', l, 'late']].map(([label, list, tone]) => (list as Task[]).length ? (
+                <div className="split" role="group" aria-label="Ahead, on time, late flagged early, late missed">
+                  {[['Ahead', a, 'ok'], ['On time', o, 'done'], ['Flagged early', lf, 'ok'], ['Missed', lm, 'late']].map(([label, list, tone]) => (list as Task[]).length ? (
                     <button key={label as string} className={`tone-${tone as string}`} style={{ flexGrow: (list as Task[]).length }} title={`${label}: ${(list as Task[]).length}`}
                       onClick={() => show(`${p.name}: ${(label as string).toLowerCase()}`, list as Task[])}><span>{label as string} {(list as Task[]).length}</span></button>
                   ) : null)}
@@ -160,7 +181,12 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
             <h2>Week of {fmtDate(w)} <span className="count-badge">{kw.pct === null ? 'n/a' : `${kw.pct}%`} kept</span></h2>
             {rs.length === 0 ? <div className="card"><p className="empty card-pad">No commitments fell due this week.</p></div> : (
               <div className="card table-card scroll"><table>
-                <thead><tr><th>Person</th>{COLS.map(([k, l]) => <th key={k} className="num">{l}</th>)}</tr></thead>
+                <thead>
+                  <tr className="grp"><th />
+                    <th colSpan={4} className="num">Finished</th><th className="num">Open</th><th colSpan={3} className="num">Dates</th>
+                  </tr>
+                  <tr><th>Person</th>{COLS.map(([k, l]) => <th key={k} className="num">{l}</th>)}</tr>
+                </thead>
                 <tbody>
                   {rs.map((r) => {
                     const own = wk.filter((t) => t.ownerId === r.personId);

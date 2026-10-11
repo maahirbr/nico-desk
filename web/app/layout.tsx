@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans, Source_Sans_3 } from 'next/font/google';
+import { Fraunces, Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans, Source_Sans_3 } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { currentMe } from '@/lib/auth';
@@ -20,7 +20,8 @@ export const metadata: Metadata = { title: 'nico-desk', description: 'Where a Ni
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' });
-// Skins B and C bring their own type. They load only when a page uses them.
+// Skin W (the default) takes its headings from Fraunces. Skins B and C bring their own type. The B and C faces load only when a page uses them.
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap' });
 const plexSans = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-plex-sans', display: 'swap', preload: false });
 const plexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap', preload: false });
 const sourceSans = Source_Sans_3({ subsets: ['latin'], variable: '--font-source-sans', display: 'swap', preload: false });
@@ -30,7 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const skin = skinOf((await cookies()).get(SKIN_COOKIE)?.value);
   const ownerId = localOwnerId(rosterFile());
   return (
-    <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable}`}>
+    <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable}`}>
       <body>
         <KeyboardDismiss />
         <Toaster />

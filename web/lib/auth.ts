@@ -59,8 +59,8 @@ export function devSignInEnabled(): boolean {
   return process.env.NICO_DEV_SIGNIN === '1';
 }
 
-// Open demo (NICO_OPEN_DEMO=1): no sign-in. A visitor with no session is the team lead; the
-// roster picker at /signin switches who they view as. Synthetic data only.
+// Open demo (NICO_OPEN_DEMO=1): no sign-in. A visitor with no session is the team lead (DEMO_PERSON
+// on the fixtures, else the first lead); the roster picker at /signin switches who they view as.
 export const DEMO_PERSON = 'per_ada';
 export function openDemo(): boolean {
   return process.env.NICO_OPEN_DEMO === '1';
@@ -76,14 +76,20 @@ export async function checkSignIn(email: string): Promise<{ ok: true; personId: 
 }
 
 export async function currentMe(): Promise<Me | null> {
-  const id = verify((await cookies()).get(COOKIE)?.value) ?? (openDemo() ? DEMO_PERSON : null);
-  if (!id) return null;
   const d = await db();
+  const id = verify((await cookies()).get(COOKIE)?.value) ?? (openDemo() ? await demoPerson(d) : null);
+  if (!id) return null;
   const [team] = await teamsOf(d, id);
   if (!team) return null;
   const person = await getPerson(d, team.id, id);
   if (!person?.active || person.email.split('@')[1] !== allowedDomain()) return null;
   return { person, team };
+}
+
+async function demoPerson(d: Awaited<ReturnType<typeof db>>): Promise<string | null> {
+  const { rows } = await d.query<{ id: string }>(
+    `SELECT person_id AS id FROM team_members WHERE app_role = 'lead' ORDER BY person_id = $1 DESC, person_id LIMIT 1`, [DEMO_PERSON]);
+  return rows[0]?.id ?? null;
 }
 
 export async function requireMe(): Promise<Me> {

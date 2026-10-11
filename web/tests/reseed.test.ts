@@ -24,9 +24,10 @@ describe('reseedDue', () => {
     expect(await reseedDue(db)).toBe(false);
   });
 
-  it('is due when the task row is missing', async () => {
+  // No fixture marker task means a real pilot was loaded (drop_samples): never wipe it.
+  it('is not due when the fixture marker task is missing', async () => {
     const db: Db = await openDb();
     await db.exec(`TRUNCATE tasks CASCADE`);
-    expect(await reseedDue(db)).toBe(true);
+    expect(await reseedDue(db)).toBe(false);
   });
 });

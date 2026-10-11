@@ -506,6 +506,7 @@ export async function byStatus(db: Db, teamId: string, weekStart: string, f: Fil
 
 export type LedgerRow = {
   personId: string; weekStart: string; closedAhead: number; closedOnTime: number; closedLate: number;
+  closedLateFlagged: number; closedLateMissed: number; // closedLate split by Task.lateKind
   openPastDue: number; silentSlips: number; renegotiatedOpen: number; renegotiatedLate: number;
 };
 
@@ -520,12 +521,14 @@ export async function ledger(db: Db, teamId: string, from: string, to: string, p
     if (week < from || week > to) continue;
     const key = `${week}|${t.ownerId}`;
     const r = rows.get(key) ?? {
-      personId: t.ownerId, weekStart: week, closedAhead: 0, closedOnTime: 0, closedLate: 0,
+      personId: t.ownerId, weekStart: week, closedAhead: 0, closedOnTime: 0, closedLate: 0, closedLateFlagged: 0, closedLateMissed: 0,
       openPastDue: 0, silentSlips: 0, renegotiatedOpen: 0, renegotiatedLate: 0,
     };
     if (t.outcome === 'ahead') r.closedAhead++;
     if (t.outcome === 'on_time') r.closedOnTime++;
     if (t.outcome === 'late') r.closedLate++;
+    if (t.lateKind === 'flagged_early') r.closedLateFlagged++;
+    if (t.lateKind === 'missed') r.closedLateMissed++;
     if (t.overdue) r.openPastDue++;
     if (t.slippedSilently) r.silentSlips++;
     for (const x of t.renegotiations) x.kind === 'open' ? r.renegotiatedOpen++ : r.renegotiatedLate++;

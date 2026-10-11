@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { TEAM_ID } from '../lib/seed';
+import { derive, type EventRow, type TaskRow } from '../lib/derive';
 import * as s from '../lib/service';
 
 // Acceptance checks from SPEC.md 7.2, on the synthetic fixtures. "Today" is the fixtures' as-of date.
@@ -52,6 +53,40 @@ describe('ledger (FR-33, SPEC.md C1)', () => {
     const t17 = await s.getTask(db, 'tsk_017', AS_OF);
     expect(t17.outcome).toBe('on_time');
     expect(t17.metRevisedDate).toBe(false);
+  });
+});
+
+describe('late split: flagged early versus missed', () => {
+  const row = (closedAt: string): TaskRow => ({
+    id: 't', team_id: 'tm', title: 'x', description: null, owner_id: 'o', project_id: null, workstream: null,
+    first_due_on: '2026-09-23', due_on: '2026-09-30', note: null, health: null, status: 'Done', status_category: 'done',
+    priority: null, priority_set_by: null, priority_set_at: null, blocked_on_id: null, blocked_ask: null, blocked_at: null,
+    origin: 'app', origin_ref: null, created_by: null, created_at: '2026-09-01T05:00:00Z', closed_at: closedAt, version: 1,
+  });
+  const move = (id: string, at: string, before: string, after: string): EventRow => ({
+    id, entity_type: 'task', entity_id: 't', field: 'due_on', before, after, reason: 'r', actor_id: 'o', origin: 'app', at,
+  });
+
+  it('calls a move on or before the first date flagged early', () => {
+    const t = derive(row('2026-09-29T05:00:00Z'), [move('e1', '2026-09-22T05:00:00Z', '2026-09-23', '2026-09-30')], AS_OF);
+    expect([t.outcome, t.lateKind]).toEqual(['late', 'flagged_early']);
+  });
+
+  it('calls a move after the date passed, or no move, missed', () => {
+    const lateMove = derive(row('2026-09-29T05:00:00Z'), [move('e1', '2026-09-25T05:00:00Z', '2026-09-23', '2026-09-30')], AS_OF);
+    expect([lateMove.outcome, lateMove.lateKind]).toEqual(['late', 'missed']);
+    const none = derive(row('2026-09-29T05:00:00Z'), [], AS_OF);
+    expect([none.outcome, none.lateKind]).toEqual(['late', 'missed']);
+  });
+
+  it('has no late kind unless the task closed late, and the ledger split adds up', async () => {
+    const early = derive(row('2026-09-22T05:00:00Z'), [], AS_OF);
+    expect([early.outcome, early.lateKind]).toEqual(['ahead', null]);
+    const rows = await s.ledger(db, TEAM_ID, '2026-01-05', '2026-12-28', undefined, AS_OF);
+    const sum = (k: keyof s.LedgerRow) => rows.reduce((n, r) => n + (r[k] as number), 0);
+    expect(sum('closedLateFlagged') + sum('closedLateMissed')).toBe(sum('closedLate'));
+    expect(sum('closedLateFlagged')).toBeGreaterThan(0);
+    expect(sum('closedLateMissed')).toBeGreaterThan(0);
   });
 });
 

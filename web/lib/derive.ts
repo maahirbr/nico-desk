@@ -4,6 +4,9 @@ import { istDate } from './time';
 
 export type Health = 'not_started' | 'off_track' | 'on_track' | 'ahead';
 export type Outcome = 'ahead' | 'on_time' | 'late';
+// How a late task went late. 'flagged_early': the owner moved the date on or before the date first given.
+// 'missed': the date passed with no move first (a later move, after the date passed, does not change this).
+export type LateKind = 'flagged_early' | 'missed';
 
 export type TaskRow = {
   id: string;
@@ -64,6 +67,7 @@ export type Task = {
   statusCategory: 'open' | 'done' | 'dropped';
   sourceStatus: string;
   outcome: Outcome | null;
+  lateKind: LateKind | null;
   metRevisedDate: boolean | null;
   overdue: boolean;
   slippedSilently: boolean;
@@ -105,6 +109,9 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
         ? 'on_time'
         : 'late';
 
+  // The first move decides it: a move made on or before the first date is 'open' in renegotiations().
+  const lateKind: LateKind | null = outcome !== 'late' ? null : reneg[0]?.kind === 'open' ? 'flagged_early' : 'missed';
+
   const overdue = row.status_category === 'open' && today > row.due_on;
   const slippedSilently = overdue || reneg.some((r) => r.kind === 'late') || (done && closedOn! > dueAtClose);
 
@@ -124,6 +131,7 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     statusCategory: row.status_category,
     sourceStatus: row.status,
     outcome,
+    lateKind,
     metRevisedDate: done && reneg.length > 0 ? closedOn! <= dueAtClose : null,
     overdue,
     slippedSilently,

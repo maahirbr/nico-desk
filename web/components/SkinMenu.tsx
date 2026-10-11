@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { SKINS, SKIN_COOKIE, skinOf, type SkinId } from './skins';
 
-// Picks one of three skins. The choice goes in a cookie so the server can set data-skin before first paint.
+// Picks one of the skins. The choice goes in a cookie so the server can set data-skin before first paint.
 
 export function SkinMenu({ initial }: { initial: SkinId }) {
   const [skin, setSkin] = useState<SkinId>(initial);

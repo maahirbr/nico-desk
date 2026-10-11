@@ -44,6 +44,11 @@ function load(dir: string, name: string): Row[] {
 const j = (v: unknown) => (v === null || v === undefined ? null : JSON.stringify(v));
 
 export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?: LocalProjects): Promise<void> {
+  // A real pilot (drop_samples in projects.local.json) gets only its own people and projects.
+  if (local?.drop_samples) {
+    await tx.query(`INSERT INTO teams VALUES ($1, $2, 'run')`, [TEAM_ID, local.team_name ?? 'Pilot team']);
+    return seedLocalProjects(tx, local, []);
+  }
   const people: Row[] = load(dir, 'people.json').map((p) => ({ ...p, ...(overlay?.[p.id] ?? {}) }));
   const projects = load(dir, 'projects.json');
   const tasks = load(dir, 'tasks.json');
@@ -114,7 +119,7 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
 
 // Real projects on a local run (projects.local.json, git-ignored): extra people, task boards and
 // plans. Never used by the tests or the public fixtures.
-export type LocalProjects = { team_name?: string; people?: Row[]; drop_sample_plan?: boolean; task_projects?: Row[]; plan_projects?: Row[]; reminders?: Row[] };
+export type LocalProjects = { team_name?: string; people?: Row[]; drop_samples?: boolean; drop_sample_plan?: boolean; task_projects?: Row[]; plan_projects?: Row[]; reminders?: Row[] };
 
 export function loadLocalProjects(file: string): LocalProjects | undefined {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : undefined;

@@ -596,7 +596,7 @@ The three ranked references from the handout, section 7. Take the mechanism, nev
 | 2. Linear and Things | A state is one word. Rows are dense but still breathe. The keyboard drives everything. An issue is an object with one owner. | One-word states. The row rhythm. One field that takes commands from the keyboard. The ask as its own object with an asker, an owner and a date. | Cycles, priorities, estimates, the project tree, brand purple, the round checkboxes. |
 | 3. Notion and Craft | Text turns into structure. A block keeps its source. A page prints clean. | The note turns into draft lines beside it. Picking a line lights the sentence it came from. The record prints as one page per week. | Blank-canvas freedom, slash menus, nested pages, emoji icons, cover images. |
 
-Mood page: `docs/design/moods.html`. A is the default. B and C are offered as skins (see Skins).
+Mood page: `docs/design/moods.html`. A, B and C are offered as skins, and W, the warm skin, is the default (see Skins).
 
 ## Skins
 
@@ -604,16 +604,21 @@ A skin is a block of token overrides in `web/app/tokens.css`, selected by `data-
 
 | Id | Name | Type | Accent (day / night) | Shape |
 |---|---|---|---|---|
-| a | Plain and familiar (default) | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 6px controls, soft pills, light shadow |
+| w | Warm (default) | Geist, Fraunces headings | `#a24621` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
+| a | Plain and familiar | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 6px controls, soft pills, light shadow |
 | b | Calm and precise | IBM Plex Sans, IBM Plex Mono | `#0a736e` / `#4fc2bb` | 3px corners, outlined pills, no shadow |
 | c | Soft and warm | Source Sans 3 | `#2d6a55` / `#7cc3a6` | 6px corners, warm ground, soft card shadow |
 
-- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload.
+- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value, the server sets `w`. A has no token block, so choosing it stores `a` and the base values apply.
 - The switcher is the half-filled circle next to the avatar. Its items use the names above.
 - Fonts load only through `next/font/google`. No font file is committed.
 - Skin hooks, beyond colour and type: `--bar`, `--avatar-bg`, `--avatar-you-ring`, `--pill-ring`, `--callout-bg`, `--callout-line`, `--card-shadow`, `--row-pad`, `--font-date`, `--skeleton-fill`, `--toast-bg`, `--toast-ink`.
-- Text contrast is at least 4.5:1 in all six skin and scheme sets, for ink, ink-2, ink-3, primary, late and off on canvas, surface, sunk and the bar, and for each state pill on its fill. Lowest ratios: A day 4.63, A night 4.73, B day 4.76, B night 5.17, C day 4.57, C night 5.66.
+- Text contrast is at least 4.5:1 in all eight skin and scheme sets, for ink, ink-2, ink-3, primary, late and off on canvas, surface, sunk and the bar, and for each state pill on its fill. Lowest ratios: W day 4.57, W night 4.83, A day 4.63, A night 4.73, B day 4.76, B night 5.17, C day 4.57, C night 5.66.
 - Night follows the system setting. `data-theme="light"` or `"dark"` on `<html>` overrides it.
+
+### Warm, the default skin
+
+The pilot team built its own version of this tool, and that build used a warm look: paper ground, one terracotta accent, a dark sidebar and a serif for headings. The pilot team asked for nico-desk to match it, so W is the default and A, B and C stay one click away in the menu. W takes the team's own values (paper `#f5f2ec`, ink `#1f1c18`, the dark sidebar `#1e1b17`, border `#e8e2d6`) and keeps the rules above: one accent for dates and the viewer, red for late, amber for off track, pills for states. Three values were nudged darker so they pass 4.5:1 as text: the accent from `#b5532c` to `#a24621`, the red from `#c4432b` to `#ae3822`, and the amber from `#b7791f` to `#8a560b`. The team's lighter grey `#9a9284` is not used for text, and the team's purple, green and navy ledger bars have no token here. Headings (page title, ask title, the wordmark) use Fraunces through `next/font/google`, scoped to W by `--font-serif`. Body and dates stay Geist. The sidebar is dark in day and night, set by re-pointing the colour tokens on `.side` in `tokens.css`, so no component changes.
 
 ## Keyboard
 
