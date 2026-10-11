@@ -64,8 +64,9 @@ const Icon = ({ d }: { d: React.ReactNode }) => (
 
 export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: boolean }) {
   const path = usePathname();
-  const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
-  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ...(isAdmin ? [['/admin', 'Roster']] : [])];
+  // Roster sits in the main nav for admins: inside "More" the pilot team read it as missing.
+  const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ...(isAdmin ? [['/admin', 'Roster']] : [])];
+  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : [])];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
