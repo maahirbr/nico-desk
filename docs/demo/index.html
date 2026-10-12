@@ -1,0 +1,458 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nico Desk demo run sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: a run sheet. One column of timed beats, each with what to say, what to click and the screen it lands on.
+   Colours and type are the app's own skin W (web/app/tokens.css), so the page looks like the product it shows. */
+:root {
+  --canvas: #f5f2ec;
+  --surface: #ffffff;
+  --sunk: #faf8f4;
+  --pill: #e8e1d3;
+  --hairline: #e8e2d6;
+  --line-strong: #d6cebf;
+  --ink: #1f1c18;
+  --ink-2: #6e675c;
+  --ink-3: #766e61;
+  --primary: #b3522c;
+  --on-primary: #ffffff;
+  --primary-soft: #f6e6dc;
+  --late: #b83d27;
+  --done: #22663f;
+  --done-bg: #dcf1e3;
+  --side-bg: #1e1b17;
+  --side-ink: #ede8de;
+  --side-ink-2: #c2baac;
+  --shadow: 0 1px 2px rgb(31 28 24 / 0.04), 0 4px 14px rgb(31 28 24 / 0.05);
+  --font-serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #12110f; --surface: #1b1916; --sunk: #211f1b; --pill: #2b2822; --hairline: #2e2b26; --line-strong: #403b34;
+    --ink: #ede8de; --ink-2: #a39b8e; --ink-3: #a39b8e; --primary: #e07b4f; --on-primary: #1b1916; --primary-soft: #3a261c;
+    --late: #f07158; --done: #7fd6a3; --done-bg: #1c3527; --side-bg: #0c0b0a; --side-ink: #ede8de; --side-ink-2: #a39b8e;
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.02), 0 8px 24px rgb(0 0 0 / 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas: #12110f; --surface: #1b1916; --sunk: #211f1b; --pill: #2b2822; --hairline: #2e2b26; --line-strong: #403b34;
+  --ink: #ede8de; --ink-2: #a39b8e; --ink-3: #a39b8e; --primary: #e07b4f; --on-primary: #1b1916; --primary-soft: #3a261c;
+  --late: #f07158; --done: #7fd6a3; --done-bg: #1c3527; --side-bg: #0c0b0a; --side-ink: #ede8de; --side-ink-2: #a39b8e;
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.02), 0 8px 24px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font: 400 15px/1.6 var(--font-sans); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 96px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; }
+h1, h2, h3 { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.02em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 40px); line-height: 1.1; }
+h2 { font-size: 26px; line-height: 1.2; }
+h3 { font-size: 21px; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--primary); }
+code, kbd { font: 500 13px/1.4 ui-monospace, "SF Mono", Menlo, monospace; background: var(--pill); border-radius: 5px; padding: 1px 6px; overflow-wrap: anywhere; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13.5px; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+/* Header */
+header { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink-2); font-size: 13.5px; }
+.tile { width: 30px; height: 30px; border-radius: 9px; background: var(--side-bg); color: var(--side-ink); display: grid; place-items: center; font: 600 15px var(--font-serif); }
+.deck { font-size: 17px; color: var(--ink-2); max-width: 62ch; }
+.goal { border-left: 3px solid var(--primary); padding: 4px 0 4px 16px; font: 500 19px/1.45 var(--font-serif); max-width: 60ch; }
+
+/* Timeline and timer */
+.clock { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.clock-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.time { font: 600 34px/1 var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.time small { font: 500 14px var(--font-sans); color: var(--ink-2); letter-spacing: 0; margin-left: 8px; }
+.btns { display: flex; gap: 8px; }
+button { font: 600 13.5px/1.2 var(--font-sans); border-radius: 8px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+button.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.bar { display: flex; gap: 3px; height: 40px; }
+.seg { flex: var(--s) 1 0; min-width: 0; background: var(--sunk); border: 1px solid var(--hairline); border-radius: 6px; padding: 4px 7px; font: 500 11.5px/1.25 var(--font-sans); color: var(--ink-2); overflow: hidden; position: relative; text-decoration: none; }
+.seg span { position: relative; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg .fill { position: absolute; inset: 0; width: 0; background: var(--primary-soft); }
+.seg.now { border-color: var(--primary); color: var(--ink); }
+.seg.past .fill { width: 100%; }
+.ticks { display: flex; justify-content: space-between; font: 500 11.5px var(--font-sans); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* Sections */
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; min-width: 0; }
+.card h3 { font-size: 18px; }
+ul.check { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+ul.check label { display: grid; grid-template-columns: 20px 1fr; gap: 10px; cursor: pointer; align-items: start; }
+ul.check input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--primary); }
+ul.check input:checked + span { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.warn { border-left: 3px solid var(--late); padding-left: 12px; font-size: 14px; }
+
+/* Beats */
+.beats { display: grid; gap: 28px; }
+.beat { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); box-shadow: var(--shadow); display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); overflow: hidden; scroll-margin-top: 20px; transition: border-color .2s; }
+.beat.now { border-color: var(--primary); }
+.beat-text { padding: 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; }
+.when { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.when b { font: 600 22px/1 var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.when span { font-size: 13px; color: var(--ink-2); }
+.say { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.say li { font: 500 16px/1.5 var(--font-serif); padding-left: 14px; border-left: 2px solid var(--pill); }
+.do { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; color: var(--ink-2); }
+.do b { color: var(--ink); font-weight: 600; }
+.point { font-size: 14px; background: var(--sunk); border-radius: 8px; padding: 10px 12px; }
+.point b { font-weight: 600; }
+.shots { background: var(--sunk); border-left: 1px solid var(--hairline); padding: 16px; display: grid; gap: 12px; align-content: start; }
+figure { margin: 0; display: grid; gap: 6px; }
+figure button { padding: 0; border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; background: var(--surface); cursor: zoom-in; display: block; }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { font-size: 12.5px; color: var(--ink-2); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair.phone { grid-template-columns: 3fr 2fr; align-items: start; }
+
+/* Q&A */
+dl.qa { margin: 0; display: grid; gap: 0; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); box-shadow: var(--shadow); }
+.qa div { padding: 16px 20px; border-top: 1px solid var(--hairline); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 20px; }
+.qa div:first-child { border-top: 0; }
+.qa dt { font-weight: 600; }
+.qa dd { margin: 0; color: var(--ink-2); }
+
+footer { font-size: 13px; color: var(--ink-3); }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: min(1400px, 96vw); max-height: 94vh; }
+dialog::backdrop { background: rgb(18 17 15 / 0.75); }
+dialog img { display: block; max-width: 100%; max-height: 90vh; width: auto; border-radius: 8px; }
+dialog p { color: #ede8de; font-size: 13px; padding-top: 8px; }
+
+@media (max-width: 760px) {
+  .wrap { padding-inline: 16px; padding-block: 28px 64px; gap: 36px; }
+  .beat { grid-template-columns: minmax(0, 1fr); }
+  .shots { border-left: 0; border-top: 1px solid var(--hairline); }
+  .qa div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .seg span { display: none; }
+  .bar { height: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="tile" aria-hidden="true">N</span>Nico Desk · five-minute demo</div>
+    <h1>Show the week running itself</h1>
+    <p class="deck">A timed run sheet for the demo. Each beat says what to say, what to click and the screen you land on. Rehearse with the timer below. The screenshots are from the synthetic demo team, so they are safe to show and they work as the fallback if the live site will not load.</p>
+    <p class="goal">Every commitment gets done, or gets a new date and a reason, without anyone having to chase it.</p>
+  </header>
+
+  <div class="clock" aria-label="Rehearsal timer">
+    <div class="clock-top">
+      <div class="time" id="time" aria-live="off">0:00<small id="beatname">Ready</small></div>
+      <div class="btns">
+        <button class="primary" id="go" type="button">Start</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <nav class="bar" id="bar" aria-label="Beats on the five-minute line"></nav>
+    <div class="ticks" aria-hidden="true"><span>0:00</span><span>1:00</span><span>2:00</span><span>3:00</span><span>4:00</span><span>5:00</span></div>
+    <p class="small muted">Space starts and pauses. The current beat is outlined below and scrolls into view.</p>
+  </div>
+
+  <section aria-labelledby="before">
+    <h2 id="before">Before you start</h2>
+    <div class="two">
+      <div class="card">
+        <h3>The night before</h3>
+        <ul class="check" data-list="night">
+          <li><label><input type="checkbox" id="n1"><span>Sign in at <a href="https://nico-desk.vercel.app" target="_blank" rel="noopener">nico-desk.vercel.app</a> with your Google work account. You land on Home.</span></label></li>
+          <li><label><input type="checkbox" id="n2"><span>Pick one of your own tasks that is safe to move and block on stage. Note its title here or on paper.</span></label></li>
+          <li><label><input type="checkbox" id="n3"><span>Pick the teammate you will block it on. Tell them it is a demo, since they see it on their Home.</span></label></li>
+          <li><label><input type="checkbox" id="n4"><span>Run the whole flow once on the practice copy (below) with the timer on.</span></label></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Ten minutes before</h3>
+        <ul class="check" data-list="before">
+          <li><label><input type="checkbox" id="b1"><span>Skin Warm, day mode (account menu, Appearance). Browser zoom 110 to 125% for a projector.</span></label></li>
+          <li><label><input type="checkbox" id="b2"><span>Close other tabs. Turn on Do Not Disturb.</span></label></li>
+          <li><label><input type="checkbox" id="b3"><span>Open Home, the demo task, <code>/team</code> and <code>/ledger</code> in four tabs, in that order.</span></label></li>
+          <li><label><input type="checkbox" id="b4"><span>Keep this page open on your phone or a second screen.</span></label></li>
+        </ul>
+      </div>
+    </div>
+    <p class="warn">On the live site every change is real. The owner and the project lead see a date move or a block in "Updates for you". Use your own task, and set it back after the demo. To practise with no side effects, use the branch preview: <code>nico-desk-git-maahir-mvp-…vercel.app</code>. It holds the synthetic team, needs your Vercel login, and its edits can reset between page loads.</p>
+  </section>
+
+  <section aria-labelledby="run">
+    <h2 id="run">The run</h2>
+    <div class="beats" id="beats">
+
+      <article class="beat" id="b-problem" data-start="0" data-end="30">
+        <div class="beat-text">
+          <div class="when"><b>0:00</b><span>30 seconds · the problem</span></div>
+          <h3>Why this exists</h3>
+          <ul class="say">
+            <li>Today our commitments live in Sheets, meeting notes and WhatsApp.</li>
+            <li>Leads chase people for status, and dates slip without anyone saying so.</li>
+            <li>Nico Desk is one place where a team runs its week. Every task has one owner and one date.</li>
+          </ul>
+          <ol class="do"><li>Show the sign-in page, then <b>sign in with Google</b>. You land on Home.</li></ol>
+          <p class="point"><b>Land this:</b> only people on the team list, with a company Google account, get in.</p>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/08-projects-list.png" alt="The projects list: each project with its owner, lead and people" loading="lazy"></button><figcaption>Every project and its people, in one list.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="beat" id="b-home" data-start="30" data-end="90">
+        <div class="beat-text">
+          <div class="when"><b>0:30</b><span>60 seconds · Home</span></div>
+          <h3>What I owe, on one page</h3>
+          <ul class="say">
+            <li>This is Home. Everything I owe, across every project, sorted by date.</li>
+            <li>Late and at risk are worked out from the dates. Nobody picks a colour.</li>
+            <li>Changing a status is one click, and the toast offers Undo for a few seconds.</li>
+          </ul>
+          <ol class="do">
+            <li>Point at the due dates. On <b>Team</b>, late and at-risk tasks carry a <b>Late</b> or <b>At risk</b> flag.</li>
+            <li>Open the <b>status menu</b> on a row. Pick <b>In progress</b>.</li>
+            <li>Point at the toast with <b>Undo</b>.</li>
+          </ol>
+          <p class="point"><b>Land this:</b> no one has to ask "what is on my plate". It also works on a phone, no app to install.</p>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/01-home-lead.png" alt="Home for the team lead: open tasks grouped by date" loading="lazy"></button><figcaption>Home for the team lead.</figcaption></figure>
+          <div class="pair phone">
+            <figure><button type="button"><img src="img/02-status-menu.png" alt="The status menu open on a task row" loading="lazy"></button><figcaption>Status menu: an icon per status, then Unblock, Move date… and Reassign….</figcaption></figure>
+            <figure><button type="button"><img src="img/14-phone-home.png" alt="Home at phone width" loading="lazy"></button><figcaption>The same page on a phone.</figcaption></figure>
+          </div>
+        </div>
+      </article>
+
+      <article class="beat" id="b-slip" data-start="90" data-end="150">
+        <div class="beat-text">
+          <div class="when"><b>1:30</b><span>60 seconds · a slip, in the open</span></div>
+          <h3>A date moves with a reason, never quietly</h3>
+          <ul class="say">
+            <li>Say I cannot make this date. I move it, and I have to say why.</li>
+            <li>The first date stays on record. The ledger judges on-time against it.</li>
+            <li>If I am stuck on someone, I mark it Blocked and name who I am waiting on.</li>
+          </ul>
+          <ol class="do">
+            <li>Open the demo task. Show the <b>update log</b>.</li>
+            <li><b>Move date…</b>, pick a new date, type a reason, save.</li>
+            <li>Status menu, <b>Blocked</b>. Type the reason and pick the teammate.</li>
+          </ol>
+          <p class="point"><b>Land this:</b> a late task now has a new date and a reason, logged before the old date passed.</p>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/03-task-panel.png" alt="A task open in the side panel with its update log" loading="lazy"></button><figcaption>The update log keeps the first date and the reason for each move.</figcaption></figure>
+          <figure><button type="button"><img src="img/04-block-dialog.png" alt="The blocked form with a reason and the teammate it waits on" loading="lazy"></button><figcaption>Blocked: a reason, and who it waits on.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="beat" id="b-reach" data-start="150" data-end="195">
+        <div class="beat-text">
+          <div class="when"><b>2:30</b><span>45 seconds · it reaches the right people</span></div>
+          <h3>The people involved hear about it</h3>
+          <ul class="say">
+            <li>The project lead sees the date move and the block under "Updates for you".</li>
+            <li>The teammate I am waiting on sees it on their own Home, under "Waiting on you".</li>
+            <li>When they are done, they say what they did, and the block clears. Nobody chased anyone.</li>
+          </ul>
+          <ol class="do">
+            <li>Account menu, <b>View as someone else</b>, pick the teammate. Show <b>Waiting on you</b>.</li>
+            <li>Switch back. Show <b>Updates for you</b> on the lead's Home.</li>
+          </ol>
+          <p class="point"><b>Land this:</b> View as is read only. You see their screen and nothing is written as them.</p>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/05-waiting-on-you.png" alt="The teammate's Home with the Waiting on you card" loading="lazy"></button><figcaption>The teammate's Home: Waiting on you.</figcaption></figure>
+          <figure><button type="button"><img src="img/06-updates-for-you.png" alt="Updates for you on the lead's Home" loading="lazy"></button><figcaption>The lead's Home: Updates for you.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="beat" id="b-lead" data-start="195" data-end="240">
+        <div class="beat-text">
+          <div class="when"><b>3:15</b><span>45 seconds · the lead's week</span></div>
+          <h3>The weekly review, without a round of messages</h3>
+          <ul class="say">
+            <li>The team page shows everyone's open work, by person or by status.</li>
+            <li>Each project has its own board, with its own people.</li>
+            <li>Adding a task is one line: what, when, who and which project.</li>
+          </ul>
+          <ol class="do">
+            <li>Open <b>Team</b>, then <b>By status</b>. Point at Blocked.</li>
+            <li>Open a project from <b>Projects</b>.</li>
+            <li>Press <kbd>n</kbd> and type a quick-add line, such as <code>Send deck to vendor fri @name #project</code>.</li>
+          </ol>
+          <p class="point"><b>Land this:</b> a task in a project goes only to that project's people.</p>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/09-team-status.png" alt="The team page by status" loading="lazy"></button><figcaption>Team, by status.</figcaption></figure>
+          <div class="pair">
+            <figure><button type="button"><img src="img/07-project-board.png" alt="A project board" loading="lazy"></button><figcaption>A project board.</figcaption></figure>
+            <figure><button type="button"><img src="img/12-new-task.png" alt="The new task form with a quick-add line" loading="lazy"></button><figcaption>Quick add fills the fields.</figcaption></figure>
+          </div>
+        </div>
+      </article>
+
+      <article class="beat" id="b-ledger" data-start="240" data-end="275">
+        <div class="beat-text">
+          <div class="when"><b>4:00</b><span>35 seconds · the record</span></div>
+          <h3>Who closed on time, and what needs attention</h3>
+          <ul class="say">
+            <li>The ledger shows, per person, how many dates were kept, against the date first given.</li>
+            <li>A date moved before it passed is fine. A date that slips with no word is "slipped silently", and the target is zero.</li>
+            <li>Below, Needs attention lists each late task, why, and the next step.</li>
+            <li>Reminders open a draft in my own Gmail. The app never sends anything. I press Send.</li>
+          </ul>
+          <ol class="do">
+            <li>Open <b>Ledger</b> from <b>More</b>. Point at one person card, then scroll to <b>Needs attention</b>.</li>
+            <li>Open <b>Reminders</b>. Read the line under the title aloud.</li>
+          </ol>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/10-ledger.png" alt="The ledger: kept dates per person, then Needs attention" loading="lazy"></button><figcaption>Ledger: kept dates per person, then what needs attention.</figcaption></figure>
+          <figure><button type="button"><img src="img/11-reminders.png" alt="The reminders page" loading="lazy"></button><figcaption>Reminders: Gmail drafts, you press Send. On the live site the link in the email is the site address.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="beat" id="b-close" data-start="275" data-end="300">
+        <div class="beat-text">
+          <div class="when"><b>4:35</b><span>25 seconds · close</span></div>
+          <h3>What happens next</h3>
+          <ul class="say">
+            <li>The pilot team uses it every day from now. New to-dos go here, not in a sheet.</li>
+            <li>We review what blocked people on Wednesday 14 October and fix it.</li>
+            <li>If the first days hold, a second team starts on Monday 19 October.</li>
+          </ul>
+          <p class="point"><b>End on the ask:</b> who here runs a team that could be next?</p>
+        </div>
+        <div class="shots">
+          <figure><button type="button"><img src="img/13-help-mode.png" alt="Help mode with a tooltip open" loading="lazy"></button><figcaption>If asked how people learn it: the <kbd>?</kbd> button explains each term in place.</figcaption></figure>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="qa">
+    <h2 id="qa">If they ask</h2>
+    <dl class="qa">
+      <div><dt>Does it email or message people for me?</dt><dd>No. Reminders open a draft in your own Gmail, from your address, and you press Send. Inside the app, people see notices on their Home.</dd></div>
+      <div><dt>Who can sign in?</dt><dd>Only people on the team list, with a Google account on the company domain. A few named outside addresses can be allowed one by one.</dd></div>
+      <div><dt>Who can change my task?</dt><dd>You, the project's owner or lead, team leads and admins. Admins can also view anyone's screens, read only.</dd></div>
+      <div><dt>What if I cannot make a date?</dt><dd>Move it before it passes and give a reason. The ledger counts that as a moved date, not a silent slip.</dd></div>
+      <div><dt>How do I say I am stuck on someone?</dt><dd>Mark the task Blocked and name the teammate. It shows on their Home under "Waiting on you", and they clear it with a note.</dd></div>
+      <div><dt>Can it read our meeting notes?</dt><dd>Yes, per project: Import minutes, paste the notes or pull them from Granola or Fireflies, and accept the tasks it proposes. Reading every note-taker on its own comes after the pilot.</dd></div>
+      <div><dt>Priorities? Locked due dates?</dt><dd>Not yet. Both are on the list after the first review.</dd></div>
+      <div><dt>Where is the data?</dt><dd>In a database in Mumbai. Only the app reads it, and only after a sign-in.</dd></div>
+      <div><dt>Why can I not change some tasks?</dt><dd>Tasks read from a Sheet stay read only, so the Sheet and the desk never disagree. Change them in the Sheet.</dd></div>
+      <div><dt>Is there an app?</dt><dd>It runs in the browser on a laptop or a phone. Nothing to install.</dd></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="broken">
+    <h2 id="broken">If something breaks</h2>
+    <div class="two">
+      <div class="card"><h3>The site will not load</h3><p class="muted">Present from this page. Each beat has its screens. Click a screenshot to open it full size.</p></div>
+      <div class="card"><h3>A page shows an error</h3><p class="muted">Reload once. If it stays, go to the next beat and say you will follow up. Note the page and the step.</p></div>
+      <div class="card"><h3>Sign-in fails for you</h3><p class="muted">Use "Use another account" in Google and pick the work account. If that fails, present from this page.</p></div>
+      <div class="card"><h3>You run long</h3><p class="muted">Cut the project board and quick add in beat five. Keep the slip, the block and the ledger: they carry the point.</p></div>
+    </div>
+  </section>
+
+  <footer>Screenshots: the synthetic demo team, skin Warm, built from <code>maahir/mvp</code> on 13 October 2026. No real names or tasks.</footer>
+</div>
+
+<dialog id="zoom"><img alt=""><p></p></dialog>
+
+<script>
+(function () {
+  var beats = Array.prototype.slice.call(document.querySelectorAll('.beat'));
+  var bar = document.getElementById('bar');
+  var timeEl = document.getElementById('time');
+  var nameEl = document.getElementById('beatname');
+  var go = document.getElementById('go');
+  var TOTAL = 300;
+
+  // The bar is drawn to scale: each segment's width is its beat's length in seconds.
+  var segs = beats.map(function (b) {
+    var s = +b.dataset.start, e = +b.dataset.end;
+    var a = document.createElement('a');
+    a.className = 'seg';
+    a.href = '#' + b.id;
+    a.style.setProperty('--s', e - s);
+    a.innerHTML = '<i class="fill"></i><span></span>';
+    a.lastChild.textContent = b.querySelector('h3').textContent;
+    bar.appendChild(a);
+    return a;
+  });
+
+  var elapsed = 0, startedAt = null, timer = null, current = -1;
+  function fmt(t) { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); }
+  function now() { return elapsed + (startedAt ? (Date.now() - startedAt) / 1000 : 0); }
+  function paint() {
+    var t = Math.min(now(), TOTAL);
+    var idx = beats.findIndex(function (b) { return t < +b.dataset.end; });
+    if (idx === -1) idx = beats.length - 1;
+    timeEl.firstChild.nodeValue = fmt(t);
+    var b = beats[idx];
+    var left = +b.dataset.end - t;
+    nameEl.textContent = t >= TOTAL ? 'Time' : (startedAt || elapsed ? b.querySelector('h3').textContent + ' · ' + fmt(left) + ' left' : 'Ready');
+    segs.forEach(function (s, i) {
+      var bs = +beats[i].dataset.start, be = +beats[i].dataset.end;
+      s.classList.toggle('past', t >= be);
+      s.classList.toggle('now', i === idx && (startedAt || elapsed));
+      s.firstChild.style.width = (t >= be ? 100 : t <= bs ? 0 : ((t - bs) / (be - bs)) * 100) + '%';
+    });
+    if (idx !== current && (startedAt || elapsed)) {
+      beats.forEach(function (x, i) { x.classList.toggle('now', i === idx); });
+      if (startedAt) b.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      current = idx;
+    }
+    if (t >= TOTAL && startedAt) toggle();
+  }
+  function toggle() {
+    if (startedAt) { elapsed = now(); startedAt = null; clearInterval(timer); go.textContent = 'Resume'; }
+    else { if (now() >= TOTAL) elapsed = 0; startedAt = Date.now(); timer = setInterval(paint, 250); go.textContent = 'Pause'; }
+    paint();
+  }
+  go.addEventListener('click', toggle);
+  document.getElementById('reset').addEventListener('click', function () {
+    clearInterval(timer); startedAt = null; elapsed = 0; current = -1; go.textContent = 'Start';
+    beats.forEach(function (x) { x.classList.remove('now'); });
+    paint();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' && !/INPUT|TEXTAREA|BUTTON|A/.test(document.activeElement.tagName)) { e.preventDefault(); toggle(); }
+  });
+  paint();
+
+  // Checklists remember their ticks in this browser only.
+  document.querySelectorAll('ul.check input').forEach(function (box) {
+    var key = 'nd-demo-' + box.id;
+    try { box.checked = localStorage.getItem(key) === '1'; } catch (e) {}
+    box.addEventListener('change', function () { try { localStorage.setItem(key, box.checked ? '1' : '0'); } catch (e) {} });
+  });
+
+  // Click a screenshot to see it full size.
+  var dlg = document.getElementById('zoom');
+  document.querySelectorAll('figure button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var img = btn.querySelector('img');
+      dlg.querySelector('img').src = img.src;
+      dlg.querySelector('img').alt = img.alt;
+      dlg.querySelector('p').textContent = btn.parentNode.querySelector('figcaption').textContent + ' Click anywhere or press Esc to close.';
+      dlg.showModal();
+    });
+  });
+  dlg.addEventListener('click', function () { dlg.close(); });
+})();
+</script>

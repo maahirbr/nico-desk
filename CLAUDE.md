@@ -16,6 +16,7 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
 - `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
 - `docs/`: `BRIEF.md`, `RESEARCH-PLAN.md`, `HANDOFF-FABLE.md`, `HOW-TEAMS-WORK.md` (the sponsor's four team types), `USE-CASES-8-OCT.md` (requests mapped to intent, slice one or spec), `DATA-MODEL.md` (Postgres DDL: people, projects, tasks, append-only events; on-time ledger derived, never stored).
+- `docs/demo/index.html`: the five-minute demo run sheet with a rehearsal timer. Its screenshots in `docs/demo/img/` come from the synthetic team only.
 - `docs/team-page/`: the team question page, published as a private Artifact; `img/` holds vendor screenshots.
 - `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly. `denylist.txt` guards against real data.
 - `evals/meetings/`: 20 synthetic transcripts with expected drafts, and `check.py`.

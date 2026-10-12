@@ -5,6 +5,20 @@ after the 12 Oct demo. Roles, not names, as everywhere in this repo: the repo ow
 app on `local-desk` is the baseline), the pilot sponsor (runs the first pilot project), the sponsor
 (runs the demo), the product teammate (shared the project sheets).
 
+## 0. State on 13 Oct
+
+Sections 6 and 6a below are the record of 12 Oct. Everything in them has landed.
+
+- Production runs `47c54d7` from `maahir/mvp`. The hosted database has had `npm run db:upgrade` for `lead_id` and
+  `update_seen`.
+- Section 6a items 1 to 5 are merged, and so is the whole UI plan (`docs/PLAN-UI-PASS.md` workstreams 1 to 8, plus
+  "Copy invite" as the stand-in for workstream 9).
+- The PM's later work is merged: a project lead (owner rights on that project), "Updates for you" on Home only, with
+  seen marks saved on the account instead of a cookie, and "Waiting on you" on Home. The person a block waits on
+  clears it with a note. Section 6 still says Updates shows on `/team` and uses a cookie. Both are no longer true.
+- A five-minute demo run sheet, with screenshots from the synthetic team, is in `docs/demo/index.html`.
+- Next: the first review on Wed 14 Oct (section 7).
+
 ## 1. The goal for the demo
 
 The desk must work end to end, on real pilot data, so the demo shows the product in action:
