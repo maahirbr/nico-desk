@@ -84,18 +84,6 @@ export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: bo
   );
 }
 
-export function SignOut() {
-  const router = useRouter();
-  return (
-    <button className="act" title="Sign out" aria-label="Sign out"
-      onClick={async () => { await api('/session', 'DELETE'); router.push('/signin'); router.refresh(); }}>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-      </svg>
-    </button>
-  );
-}
-
 // Shown when the desk owner is looking at the desk as someone else.
 export function SwitchToOwner({ id, viewing }: { id: string; viewing: string }) {
   const router = useRouter();

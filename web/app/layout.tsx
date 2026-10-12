@@ -3,11 +3,10 @@ import { Fraunces, Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans, Inter, Sourc
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { currentMe } from '@/lib/auth';
-import { Avatar } from '@/components/chips';
-import { Nav, SignOut, SwitchToOwner } from '@/components/client';
+import { Nav, SwitchToOwner } from '@/components/client';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { Shortcuts } from '@/components/Shortcuts';
-import { SkinMenu } from '@/components/SkinMenu';
+import { ProfileMenu } from '@/components/ProfileMenu';
 import { SKIN_COOKIE, skinOf } from '@/components/skins';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
@@ -44,20 +43,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="mark-logo" aria-hidden>n</span>
                 <span className="mark-text">
                   <span className="mark-name">nico-desk</span>
-                  <span className="mark-sub">{me.team.name}</span>
+                  <span className="mark-sub">Nicobar</span>
                 </span>
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={me.person.appRoles.includes('lead')} />
               {ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
-              <div className="who">
-                <Avatar name={me.person.displayName} you />
-                <span className="who-text">
-                  <div className="who-name">{me.person.displayName}</div>
-                  <div className="who-role">{me.person.appRoles.filter((r) => r !== 'member').join(' · ') || 'member'}</div>
-                </span>
-                <SkinMenu initial={skin} />
-                <SignOut />
-              </div>
+              <ProfileMenu name={me.person.displayName} email={me.person.email} isAdmin={me.person.appRoles.includes('admin')} initial={skin}
+                role={me.person.appRoles.filter((r) => r !== 'member').join(' · ') || 'member'} />
             </aside>
             <main className="main"><div className="topbar"><TopSearch /></div><div className="page">{children}</div></main>
           </div>
