@@ -131,3 +131,14 @@ type scale and motion.
 - The keyboard rule for every new field.
 - No real names or projects in repo files.
 - A DECISIONS entry with a rollback line for each merged workstream.
+
+## 9. Later: invite a user
+
+Asked for by the PM on 12 Oct. An admin adds a person (name, email, role) from the roster page, and the app sends
+them an invite email with the sign-in link. Today a new person needs a database script.
+
+- Blocked on a mail sender. Ask the tech team which email service the company already sends through and for an API
+  key, or check whether a Resend account exists. The key goes only in Vercel env, never in the repo.
+- This is the first thing the app would send itself. It sends only to the person being invited, only when an admin
+  presses Invite. Reminders stay Gmail drafts.
+- Until then: an admin adds the person, and the app shows a "Copy invite" text with the site link to paste anywhere.
