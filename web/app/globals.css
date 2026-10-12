@@ -621,6 +621,8 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .callout h2 { margin: 0 0 var(--space-xs); font: var(--type-heading); }
 .callout-row { display: block; width: 100%; text-align: left; font: inherit; background: none; border: 0; padding: var(--space-xs) 0; cursor: pointer; color: inherit; }
 .callout-row:hover { color: var(--primary); }
+.callout-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); }
+.updates + .callout, .updates + .group { margin-top: var(--space-md); }
 .notice-bar { display: flex; gap: var(--space-xs); align-items: center; width: 100%; text-align: left; font: inherit; cursor: pointer; margin: 0 0 var(--space-md);
   background: var(--primary-soft); border: 0; border-radius: var(--radius-card); padding: var(--space-sm) var(--space-md); color: var(--ink); }
 .notice-bar .act { margin-left: auto; }
