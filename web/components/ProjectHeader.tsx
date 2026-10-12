@@ -5,6 +5,7 @@ import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
 import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
+import { CopyLink } from './CopyLink';
 import { Help } from './HelpMode';
 import { ProjectForm } from './ProjectForm';
 import { Modal, type Opt } from './task-ui';
@@ -36,7 +37,10 @@ export function ProjectHeader({ project: p, members, names, people, meId, canEdi
           ))}
         </div>
       </div>
-      {canEdit && <button className="btn ghost" onClick={() => setEditing(true)}>Settings</button>}
+      <div className="phead-actions">
+        <CopyLink path={`/projects/${p.id}`} what="project" />
+        {canEdit && <button className="btn ghost" onClick={() => setEditing(true)}>Settings</button>}
+      </div>
       {editing && (
         <Modal title="Project settings" onClose={() => setEditing(false)} wide>
           <ProjectForm people={people} meId={meId} projectId={p.id} onDone={() => setEditing(false)} initial={{
