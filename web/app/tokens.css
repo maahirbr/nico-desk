@@ -672,3 +672,319 @@
 :root[data-skin="w"] .split button:hover { opacity: 1; }
 :root[data-skin="w"] .habit-facts { font-size: 13.5px; gap: 6px 10px; }
 :root[data-skin="w"] .habit-facts dt { color: var(--ink-2); }
+
+/* ---------- M, Mac: reads as a native macOS app ----------
+   System font stack (nothing to download), a translucent source-list sidebar, white grouped cards on a light grey
+   window, hairline separators, a segmented control for pickers, Apple system blue, green, orange and red, each darkened
+   until its text passes 4.5:1. Cookie value "m". Night is macOS dark. The blur is added only where the browser
+   supports it; without it the sidebar and the top bar are the solid colour. */
+:root[data-skin="m"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-date: var(--font-sans);
+  --type-date-xl: 600 28px/1.05 var(--font-sans);
+  --type-date-lg: 600 21px/1.05 var(--font-sans);
+  --type-date-phone: 600 34px/1.05 var(--font-sans);
+  --type-page-title: 700 26px/1.2 var(--font-sans);
+  --type-ask-title: 600 17px/1.3 var(--font-sans);
+  --type-line: 500 14px/1.4 var(--font-sans);
+  --type-body: 400 14px/1.45 var(--font-sans);
+  --type-meta: 400 13px/1.4 var(--font-sans);
+  --type-state: 500 12px/1.3 var(--font-sans);
+  --type-button: 500 13px/1.2 var(--font-sans);
+  --type-heading: 600 15px/1.3 var(--font-sans);
+  --type-small: 400 12px/1.4 var(--font-sans);
+  --track-title: -0.015em;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-pill: 6px;
+  --row-pad: 11px;
+  --side-width: 240px;
+  --nav-pad-y: 6px;
+  --pill-pad-y: 2px;
+  --pill-pad-x: 8px;
+  --card-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.08);
+  --shadow-1: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 8px 28px rgb(0 0 0 / 0.16);
+  --scrim: rgb(0 0 0 / 0.3);
+  --primary: #0062cc;
+  --on-primary: #ffffff;
+  --primary-soft: #e3eefc;
+  --ink: #1d1d1f;
+  --ink-2: #515156;
+  --ink-3: #636368;
+  --canvas: #f5f5f7;
+  --surface: #ffffff;
+  --sunk: #f0f0f3;
+  --pill: #e8e8ed;
+  --hairline: #e3e3e8;
+  --line-strong: #c7c7cc;
+  --ui-line: #85858b;
+  --late: #c4001a;
+  --late-soft: #fde7e9;
+  --off: #9e4b00;
+  --off-soft: #fff0dc;
+  --m-green: #1b7a34;
+  --m-green-soft: #e1f4e6;
+  --m-teal: #0a6e78;
+  --m-teal-soft: #ddf1f3;
+  --seg-track: #e3e3e8;
+  --seg-on: #ffffff;
+  --side-sunk: #e4e4ea;
+  --bar: #ececf0;
+  --bar-glass: rgb(236 236 240 / 0.82);
+  --avatar-bg: var(--pill);
+  --callout-bg: var(--primary-soft);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="m"]:not([data-theme="light"]) {
+    --card-shadow: none;
+    --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 12px 32px rgb(0 0 0 / 0.5);
+    --scrim: rgb(0 0 0 / 0.55);
+    --primary: #64a8ff;
+    --on-primary: #0a1626;
+    --primary-soft: #1e3350;
+    --ink: #f5f5f7;
+    --ink-2: #b4b4ba;
+    --ink-3: #a1a1a7;
+    --canvas: #1e1e1e;
+    --surface: #2a2a2a;
+    --sunk: #343434;
+    --pill: #3a3a3c;
+    --hairline: #3c3c3e;
+    --line-strong: #545456;
+    --ui-line: #8a8a90;
+    --late: #ff8a84;
+    --late-soft: #4a2022;
+    --off: #ffb45c;
+    --off-soft: #46301a;
+    --m-green: #5fd27c;
+    --m-green-soft: #1e3b28;
+    --m-teal: #5cd0da;
+    --m-teal-soft: #1b3a3e;
+    --seg-track: #3a3a3c;
+    --seg-on: #636366;
+    --side-sunk: #363636;
+    --bar: #282828;
+    --bar-glass: rgb(40 40 40 / 0.8);
+  }
+}
+:root[data-skin="m"][data-theme="dark"] {
+  --card-shadow: none;
+  --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 12px 32px rgb(0 0 0 / 0.5);
+  --scrim: rgb(0 0 0 / 0.55);
+  --primary: #64a8ff;
+  --on-primary: #0a1626;
+  --primary-soft: #1e3350;
+  --ink: #f5f5f7;
+  --ink-2: #b4b4ba;
+  --ink-3: #a1a1a7;
+  --canvas: #1e1e1e;
+  --surface: #2a2a2a;
+  --sunk: #343434;
+  --pill: #3a3a3c;
+  --hairline: #3c3c3e;
+  --line-strong: #545456;
+  --ui-line: #8a8a90;
+  --late: #ff8a84;
+  --late-soft: #4a2022;
+  --off: #ffb45c;
+  --off-soft: #46301a;
+  --m-green: #5fd27c;
+  --m-green-soft: #1e3b28;
+  --m-teal: #5cd0da;
+  --m-teal-soft: #1b3a3e;
+  --seg-track: #3a3a3c;
+  --seg-on: #636366;
+  --side-sunk: #363636;
+  --bar: #282828;
+  --bar-glass: rgb(40 40 40 / 0.8);
+}
+
+/* Glass only where the browser can blur. The blurred sidebar and top bar let a scrolling page show faintly through. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  :root[data-skin="m"] .side, :root[data-skin="m"] .topbar {
+    background: var(--bar-glass);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+}
+
+/* Source list: the selected row is a darker grey rounded rectangle, icons take the accent */
+:root[data-skin="m"] .side { --sunk: var(--side-sunk); }
+:root[data-skin="m"] .nav { gap: 2px; }
+:root[data-skin="m"] .nav a { border-radius: 6px; }
+:root[data-skin="m"] .nav a[aria-current="page"] { font-weight: 600; }
+:root[data-skin="m"] .nav a:not(.nav-new) svg { color: var(--primary); }
+:root[data-skin="m"] .mark-name { font: 600 15px/1.3 var(--font-sans); }
+
+/* Colour tones: Apple system colours. Done is green, ahead is teal, blocked and at risk are orange, late is red. */
+:root[data-skin="m"] .tone-done { --tone-bg: var(--m-green-soft); --tone-fg: var(--m-green); }
+:root[data-skin="m"] .tone-ok { --tone-bg: var(--m-teal-soft); --tone-fg: var(--m-teal); }
+
+/* Pickers: a segmented control, a grey track with a raised segment */
+:root[data-skin="m"] .seg { padding: 2px; gap: 2px; background: var(--seg-track); border: 0; border-radius: 9px; overflow: visible; }
+:root[data-skin="m"] .seg button, :root[data-skin="m"] .seg-link { background: transparent; border-radius: 7px; min-height: calc(var(--button-height) - 4px); color: var(--ink-2); }
+:root[data-skin="m"] .seg button:hover:not([aria-pressed="true"]) { background: transparent; color: var(--ink); }
+:root[data-skin="m"] .seg button[aria-pressed="true"], :root[data-skin="m"] .seg-link.on { background: var(--seg-on); color: var(--ink);
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.16); }
+:root[data-skin="m"] .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+
+/* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
+:root[data-skin="m"] :is(input, select, textarea):not(.drawer-title, .drawer-desc, :focus) { border-color: var(--ui-line); }
+:root[data-skin="m"] .btn.ghost { background: var(--surface); }
+
+/* Grouped inset lists, as in System Settings: rows separated by a line that starts inside the card edge */
+:root[data-skin="m"] .tlist .trow { border-top: 0; background-image: linear-gradient(var(--hairline), var(--hairline));
+  background-size: calc(100% - 44px) 1px; background-position: right top; background-repeat: no-repeat; }
+:root[data-skin="m"] .tlist .trow:first-child { background-image: none; }
+:root[data-skin="m"] .tlist .trow:hover { background-color: var(--sunk); }
+
+/* ---------- I, Ink: content first, in the manner of Notion ----------
+   An off-white page, near-black ink, no shadows, 4 to 6px corners, grey hover rows, and status as muted colour tags
+   with coloured text on a soft tint. Text is Inter (loaded for W); titles stay in the same sans, heavier. Cookie value "i".
+   Night is Notion dark: tags become darker tints with light text. */
+:root[data-skin="i"] {
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-date: var(--font-sans);
+  --type-date-xl: 600 28px/1.1 var(--font-sans);
+  --type-date-lg: 600 21px/1.1 var(--font-sans);
+  --type-date-phone: 600 34px/1.1 var(--font-sans);
+  --type-page-title: 700 30px/1.2 var(--font-sans);
+  --type-ask-title: 600 18px/1.3 var(--font-sans);
+  --type-line: 500 14.5px/1.5 var(--font-sans);
+  --type-body: 400 14.5px/1.55 var(--font-sans);
+  --type-meta: 400 13.5px/1.5 var(--font-sans);
+  --type-state: 500 12.5px/1.4 var(--font-sans);
+  --type-button: 500 13.5px/1.2 var(--font-sans);
+  --type-heading: 600 15.5px/1.3 var(--font-sans);
+  --type-small: 400 12.5px/1.5 var(--font-sans);
+  --track-title: -0.02em;
+  --radius-control: 4px;
+  --radius-card: 6px;
+  --radius-pill: 3px;
+  --pill-pad-y: 1px;
+  --pill-pad-x: 6px;
+  --row-pad: 9px;
+  --page-max: 1000px;
+  --side-width: 240px;
+  --card-shadow: none;
+  --shadow-1: none;
+  --scrim: rgb(15 15 15 / 0.45);
+  --primary: #1b63ae;
+  --on-primary: #ffffff;
+  --primary-soft: #e4eff8;
+  --ink: #37352f;
+  --ink-2: #65635d;
+  --ink-3: #6a6863;
+  --canvas: #fbfbfa;
+  --surface: #ffffff;
+  --sunk: #f1f1ef;
+  --pill: #ebebe8;
+  --hairline: #e9e9e7;
+  --line-strong: #d3d2ce;
+  --ui-line: #8c8a84;
+  --late: #b8291f;
+  --late-soft: #ffe2dd;
+  --off: #8a5200;
+  --off-soft: #fdecc8;
+  --i-grey-bg: #e3e2e0;
+  --i-grey-fg: #46443f;
+  --i-blue-bg: #d3e5ef;
+  --i-blue-fg: #1a5a94;
+  --i-green-bg: #dbeddb;
+  --i-green-fg: #1b6b3a;
+  --i-purple-bg: #e8deee;
+  --i-purple-fg: #6b3c8f;
+  --side-sunk: #eeeeeb;
+  --bar: #f7f7f5;
+  --avatar-bg: var(--pill);
+  --callout-bg: var(--sunk);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="i"]:not([data-theme="light"]) {
+    --scrim: rgb(0 0 0 / 0.6);
+    --primary: #6bb0e8;
+    --on-primary: #0e1a26;
+    --primary-soft: #1f3a52;
+    --ink: #e3e3e3;
+    --ink-2: #aeadaa;
+    --ink-3: #9b9a97;
+    --canvas: #191919;
+    --surface: #222222;
+    --sunk: #2c2c2c;
+    --pill: #333333;
+    --hairline: #313131;
+    --line-strong: #4a4a48;
+    --ui-line: #7c7b78;
+    --late: #f29b94;
+    --late-soft: #4a2523;
+    --off: #e6c26e;
+    --off-soft: #43391f;
+    --i-grey-bg: #3a3a38;
+    --i-grey-fg: #d6d5d2;
+    --i-blue-bg: #1f3a52;
+    --i-blue-fg: #8dc1f0;
+    --i-green-bg: #243a2e;
+    --i-green-fg: #8fd3a6;
+    --i-purple-bg: #3a2c4a;
+    --i-purple-fg: #c4a5e8;
+    --side-sunk: #2e2e2e;
+    --bar: #202020;
+  }
+}
+:root[data-skin="i"][data-theme="dark"] {
+  --scrim: rgb(0 0 0 / 0.6);
+  --primary: #6bb0e8;
+  --on-primary: #0e1a26;
+  --primary-soft: #1f3a52;
+  --ink: #e3e3e3;
+  --ink-2: #aeadaa;
+  --ink-3: #9b9a97;
+  --canvas: #191919;
+  --surface: #222222;
+  --sunk: #2c2c2c;
+  --pill: #333333;
+  --hairline: #313131;
+  --line-strong: #4a4a48;
+  --ui-line: #7c7b78;
+  --late: #f29b94;
+  --late-soft: #4a2523;
+  --off: #e6c26e;
+  --off-soft: #43391f;
+  --i-grey-bg: #3a3a38;
+  --i-grey-fg: #d6d5d2;
+  --i-blue-bg: #1f3a52;
+  --i-blue-fg: #8dc1f0;
+  --i-green-bg: #243a2e;
+  --i-green-fg: #8fd3a6;
+  --i-purple-bg: #3a2c4a;
+  --i-purple-fg: #c4a5e8;
+  --side-sunk: #2e2e2e;
+  --bar: #202020;
+}
+
+/* Quiet chrome: a light grey sidebar, the top bar the same colour as the page */
+:root[data-skin="i"] .side { --sunk: var(--side-sunk); }
+:root[data-skin="i"] .topbar { background: var(--canvas); border-bottom-color: transparent; }
+:root[data-skin="i"] .nav a { border-radius: 4px; }
+:root[data-skin="i"] .mark-name { font: 600 15px/1.3 var(--font-sans); }
+:root[data-skin="i"] h1 { margin-bottom: var(--space-xs); }
+
+/* Tags: soft tint, coloured text. Each pair passes 4.5:1 on its tint and on the page. */
+:root[data-skin="i"] .tone-idle { --tone-bg: var(--i-grey-bg); --tone-fg: var(--i-grey-fg); }
+:root[data-skin="i"] .tone-active { --tone-bg: var(--i-blue-bg); --tone-fg: var(--i-blue-fg); }
+:root[data-skin="i"] .tone-done { --tone-bg: var(--i-green-bg); --tone-fg: var(--i-green-fg); }
+:root[data-skin="i"] .tone-ok { --tone-bg: var(--i-purple-bg); --tone-fg: var(--i-purple-fg); }
+
+/* Pickers: a hairline box, the chosen one a grey fill and not an inverted block */
+:root[data-skin="i"] .seg { border-color: var(--line-strong); border-radius: 4px; }
+:root[data-skin="i"] .seg button, :root[data-skin="i"] .seg-link { background: transparent; }
+:root[data-skin="i"] .seg button[aria-pressed="true"], :root[data-skin="i"] .seg-link.on,
+:root[data-skin="i"] .pill[aria-pressed="true"] { background: var(--pill); color: var(--ink); border-color: var(--line-strong); }
+:root[data-skin="i"] .btn.ghost { background: var(--surface); }
+
+/* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
+:root[data-skin="i"] :is(input, select, textarea):not(.drawer-title, .drawer-desc, :focus) { border-color: var(--ui-line); }
+
+/* The status picker keeps room for its chevron when the pill padding is tight. */
+:root[data-skin="m"] .st-pick, :root[data-skin="i"] .st-pick { padding-right: 26px; }

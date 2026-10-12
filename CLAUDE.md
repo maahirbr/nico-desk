@@ -152,6 +152,11 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   `NICO_DEV_SIGNIN` unset in production, which closes the open demo over real pilot names. Roster moved into the main
   nav for admins, since in the More menu the pilot team read it as missing. Rollback: unset `GOOGLE_CLIENT_ID` on Vercel
   and redeploy, or `git revert` this commit.
+- 2026-10-12 · Sonnet 5.5 · Two more skins, Mac (`m`) and Ink (`i`), at the repo owner's call, to compare a native
+  macOS look and a Notion-like look on real screens. The default stays W and skins W, A, B and C are untouched. Mac uses
+  the system font stack, so nothing is downloaded. Ink reuses the loaded Inter. Both are token blocks plus a few
+  skin-scoped rules in `web/app/tokens.css` for what tokens cannot do (sidebar tone, segmented pickers, field edges,
+  status tags). Every pair passes AA in day and night. Rollback: `git revert` this commit.
 - 2026-10-12 · Opus 5.5 · Skin W now matches the PM's build (`local-desk`) screen for screen, at the PM's call, on branch
   `mvp-local-desk-look` for the repo owner to review: Inter text, the logo tile, rust buttons, a colour per person,
   outlined status pickers, boxed Late and At risk flags (Late shows beside "3 days late" too), the moved-date mark, the

@@ -608,12 +608,14 @@ A skin is a block of token overrides in `web/app/tokens.css`, selected by `data-
 | a | Plain and familiar | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 6px controls, soft pills, light shadow |
 | b | Calm and precise | IBM Plex Sans, IBM Plex Mono | `#0a736e` / `#4fc2bb` | 3px corners, outlined pills, no shadow |
 | c | Soft and warm | Source Sans 3 | `#2d6a55` / `#7cc3a6` | 6px corners, warm ground, soft card shadow |
+| m | Mac | System font stack, no download | `#0062cc` / `#64a8ff` | 8px controls, 12px cards, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
+| i | Ink | Inter | `#1b63ae` / `#6bb0e8` | 4px controls, 6px cards, off-white page, no shadow, muted tinted tags for status |
 
 - The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value, the server sets `w`. A has no token block, so choosing it stores `a` and the base values apply.
 - The switcher is the half-filled circle next to the avatar. Its items use the names above.
 - Fonts load only through `next/font/google`. No font file is committed.
 - Skin hooks, beyond colour and type: `--bar`, `--avatar-bg`, `--avatar-you-ring`, `--pill-ring`, `--callout-bg`, `--callout-line`, `--card-shadow`, `--row-pad`, `--font-date`, `--skeleton-fill`, `--toast-bg`, `--toast-ink`.
-- Text contrast is at least 4.5:1 in all eight skin and scheme sets, for ink, ink-2, ink-3, primary, late and off on canvas, surface, sunk and the bar, and for each state pill on its fill. Lowest ratios: W day 4.57, W night 4.83, A day 4.63, A night 4.73, B day 4.76, B night 5.17, C day 4.57, C night 5.66.
+- Text contrast is at least 4.5:1 in all twelve skin and scheme sets, for ink, ink-2, ink-3, primary, late and off on canvas, surface, sunk and the bar, and for each state pill on its fill. Lowest ratios: W day 4.57, W night 4.83, A day 4.63, A night 4.73, B day 4.76, B night 5.17, C day 4.57, C night 5.66, M day 4.58, M night 4.70, I day 4.79, I night 4.83. M and I also keep 3:1 on field edges and the focus ring.
 - Night follows the system setting. `data-theme="light"` or `"dark"` on `<html>` overrides it.
 
 ### Warm, the default skin

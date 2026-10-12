@@ -6,6 +6,8 @@ export const SKINS = [
   { id: 'a', name: 'Plain and familiar' },
   { id: 'b', name: 'Calm and precise' },
   { id: 'c', name: 'Soft and warm' },
+  { id: 'm', name: 'Mac' },
+  { id: 'i', name: 'Ink' },
 ] as const;
 
 export type SkinId = (typeof SKINS)[number]['id'];
