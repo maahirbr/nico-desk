@@ -273,6 +273,13 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   drill lists take the same default, and every finished list gets a sort picker (`web/components/SortPick.tsx`): newest
   finished first, oldest finished first, or due date. In the ledger the date option sorts by the first due date, since the
   ledger judges on-time against that date. The choice lasts until the page reloads. Rollback: `git revert -m 1` the merge.
+- 2026-10-12 · Sonnet 5.5 · Archive and restore a project (workstream 6b). The project owner, a lead or an admin can
+  archive a project, and the same people can restore it. Archive is refused while the project has open tasks or open plan
+  lines, so nothing open goes out of sight. Archived projects sit in a closed "Archived" group on `/projects`. When a task
+  moves to a new owner, the previous owner gets an in-app notice (`MovedAwayCard`), so the task does not just vanish from
+  their list. The view-as gutter on Home is closed. The hosted database needs the new columns before any build with this
+  change is promoted: `cd web && npx tsx --env-file=.env.remote.local scripts/upgrade-project-archive.ts` (adds columns only,
+  keeps all data). Rollback: `git revert -m 1 06c336a`. The columns can stay, since nothing else reads them.
 
 ## VERIFY
 
@@ -283,7 +290,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `159 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `173 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
