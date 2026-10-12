@@ -66,18 +66,24 @@ describe('updates for you (pure)', () => {
     expect(i.taskId).toBe('t1');
   });
 
-  it('tells the person a task is blocked on, with the reason', () => {
+  it('leaves a block on you out of updates (it shows under Waiting on you), and tells the owner when you clear it', () => {
     const at = '2026-10-11T09:00:00.000Z';
     const e = [
       ev({ entity_id: 't2', field: 'blocked_ask', after: 'Need the supplier contact', actor_id: 'bo', at }),
       ev({ entity_id: 't2', field: 'blocked_on_id', after: 'dee', actor_id: 'bo', at }),
     ];
-    const [i] = run(e, 'dee');
-    expect(i.kind).toBe('blocked_on_you');
-    expect(i.text).toBe('Kabir is blocked on you for “Order samples”: Need the supplier contact');
-    // Not shown to the wrong person, and gone once the block is cleared.
+    expect(run(e, 'dee')).toEqual([]);
     expect(run(e, 'ana')).toEqual([]);
-    expect(buildUpdates({ events: e, tasks: [{ ...tasks[1], blocked: null }], leadOf, names, viewerId: 'dee', now: NOW })).toEqual([]);
+    const cleared = '2026-10-11T11:00:00.000Z';
+    const done = [...e,
+      ev({ entity_id: 't2', field: 'blocked_ask', before: 'Need the supplier contact', after: null, reason: 'Sent it on email', actor_id: 'dee', at: cleared }),
+      ev({ entity_id: 't2', field: 'blocked_on_id', before: 'dee', after: null, actor_id: 'dee', at: cleared }),
+    ];
+    const [o] = run(done, 'bo');
+    expect(o.kind).toBe('unblocked');
+    expect(o.text).toBe('Ishaan cleared the block on your task “Order samples”: Sent it on email');
+    expect(run(done, 'lee').map((i) => i.kind)).toEqual(['unblocked', 'blocked']);
+    expect(run(done, 'dee')).toEqual([]);
   });
 
   it('shows the project lead a date move, with the reason or "no reason given"', () => {
@@ -154,14 +160,35 @@ describe('updates for you (through the service)', () => {
     expect(await s.updatesFor(db, OWNER, TEAM_ID, nm, new Date(Date.now() + 1000).toISOString())).toEqual([]);
   });
 
-  it('tells the person waited on, while the block stands', async () => {
+  it('lets the person waited on clear the block with a note, which the owner then sees', async () => {
     const people = await s.listPeople(db, TEAM_ID);
     const nm = Object.fromEntries(people.map((p) => [p.id, p.displayName]));
     const t = (await s.teamTasks(db, TEAM_ID)).find((x) => x.statusCategory === 'open' && x.origin === 'app' && x.ownerId === OWNER && !x.blocked);
     if (!t) throw new Error('fixture has no open per_bo task');
-    await s.blockTask(db, OWNER, t.id, { version: t.version, onId: WAITED, ask: 'Need the final sizes' });
-    const [i] = (await s.updatesFor(db, WAITED, TEAM_ID, nm)).filter((x) => x.taskId === t.id);
-    expect(i.kind).toBe('blocked_on_you');
-    expect(i.text).toContain('Need the final sizes');
+    const b = await s.blockTask(db, OWNER, t.id, { version: t.version, onId: WAITED, ask: 'Need the final sizes' });
+    expect((await s.updatesFor(db, WAITED, TEAM_ID, nm)).filter((x) => x.taskId === t.id)).toEqual([]);
+    const cleared = await s.unblockTask(db, WAITED, t.id, { version: b.version, note: 'Sent the sizes' });
+    expect(cleared.blocked).toBeNull();
+    const [i] = (await s.updatesFor(db, OWNER, TEAM_ID, nm)).filter((x) => x.taskId === t.id);
+    expect(i.kind).toBe('unblocked');
+    expect(i.text).toContain('Sent the sizes');
+  });
+
+  it('keeps seen on the account: all at once, or one task at a time', async () => {
+    const people = await s.listPeople(db, TEAM_ID);
+    const nm = Object.fromEntries(people.map((p) => [p.id, p.displayName]));
+    const t = (await s.teamTasks(db, TEAM_ID)).find((x) => x.statusCategory === 'open' && x.origin === 'app' && x.ownerId === OWNER && !x.blocked);
+    if (!t) throw new Error('fixture has no open per_bo task');
+    await s.renegotiate(db, LEAD, t.id, { version: t.version, newDueOn: '2999-01-01', reason: 'Launch moved' });
+    const view = async () => {
+      const m = await s.seenMarks(db, OWNER);
+      return (await s.updatesFor(db, OWNER, TEAM_ID, nm, m.all, new Date(), m.byTask)).filter((x) => x.taskId === t.id);
+    };
+    expect(await view()).toHaveLength(1);
+    await s.markUpdatesSeen(db, OWNER, TEAM_ID, { taskIds: [t.id, 'not_a_task'] });
+    expect(await view()).toEqual([]);
+    expect(Object.keys((await s.seenMarks(db, OWNER)).byTask)).toEqual([t.id]);
+    await s.markUpdatesSeen(db, OWNER, TEAM_ID, {});
+    expect((await s.seenMarks(db, OWNER)).all).not.toBeNull();
   });
 });

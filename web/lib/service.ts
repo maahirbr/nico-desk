@@ -404,8 +404,10 @@ export async function unblockTask(db: Db, meId: string, id: string, input: { ver
     (c) => c.isOwner || c.isLead || c.row.blocked_on_id === meId,
     (c) => {
       if (!c.row.blocked_ask) throw bad('invalid_body', 'The task is not blocked.');
-      // Clearing a block is good news; a note on what unblocked it is welcome, not required.
+      // The owner or a lead can clear a block without a word. The person it waits on says what they did,
+      // since that is what the owner hears ("Priya cleared the block: sent the numbers").
       const note = input.note?.trim().slice(0, 280);
+      if (!note && !c.isOwner && !c.isLead) throw bad('reason_required', 'Say in a few words what you did.', 'note');
       return { set: { blocked_on_id: null, blocked_ask: null, blocked_at: null }, ...(note ? { reasons: { blocked_ask: note } } : {}) };
     },
   );
@@ -677,17 +679,42 @@ export async function ledgerTasks(db: Db, teamId: string, from: string, to: stri
 
 // ---------- updates for you ----------
 
+// What a person has marked seen: a cut-off for everything, and one per task (opening it, or a project's "Mark seen").
+export type SeenMarks = { all: string | null; byTask: Record<string, string> };
+export async function seenMarks(db: Db, personId: string): Promise<SeenMarks> {
+  const { rows } = await db.query<{ scope: string; seen_at: string | Date }>(`SELECT scope, seen_at FROM update_seen WHERE person_id = $1`, [personId]);
+  const out: SeenMarks = { all: null, byTask: {} };
+  for (const r of rows) { const at = new Date(r.seen_at).toISOString(); if (r.scope === '*') out.all = at; else out.byTask[r.scope] = at; }
+  return out;
+}
+
+// Mark updates seen. No task ids: everything up to `upTo` (the newest update the person saw, so one that lands a
+// moment later stays new). Task ids: those tasks, up to now. A task only from the person's own team.
+export async function markUpdatesSeen(db: Db, personId: string, teamId: string, input: { taskIds?: string[]; upTo?: string }): Promise<void> {
+  const now = new Date();
+  if (!input.taskIds?.length) {
+    const upTo = input.upTo && !Number.isNaN(Date.parse(input.upTo)) && new Date(input.upTo) <= now ? new Date(input.upTo) : now;
+    await db.query(`INSERT INTO update_seen (person_id, scope, seen_at) VALUES ($1, '*', $2)
+      ON CONFLICT (person_id, scope) DO UPDATE SET seen_at = GREATEST(update_seen.seen_at, EXCLUDED.seen_at)`, [personId, upTo.toISOString()]);
+    return;
+  }
+  const { rows } = await db.query<{ id: string }>(`SELECT id FROM tasks WHERE team_id = $1 AND id = ANY($2::text[])`, [teamId, input.taskIds.slice(0, 200)]);
+  for (const r of rows) await db.query(`INSERT INTO update_seen (person_id, scope, seen_at) VALUES ($1, $2, $3)
+    ON CONFLICT (person_id, scope) DO UPDATE SET seen_at = GREATEST(update_seen.seen_at, EXCLUDED.seen_at)`, [personId, r.id, now.toISOString()]);
+}
+
 // Major changes to tasks made by someone else that this person should hear about (see lib/updates.ts).
-// Read from the events of the last week; `seenAt` is the person's "mark all seen" moment (a cookie).
+// Read from the events of the last week; `seenAt` is the person's "mark all seen" moment, `seenByTask` the per-task marks.
 export async function updatesFor(
-  db: Db, meId: string, teamId: string, names: Record<string, string>, seenAt?: string | null, now = new Date(),
+  db: Db, meId: string, teamId: string, names: Record<string, string>, seenAt?: string | null, now = new Date(), seenByTask: Record<string, string> = {},
 ): Promise<UpdateItem[]> {
-  return (await updatesView(db, meId, teamId, names, {}, seenAt, now)).items;
+  return (await updatesView(db, meId, teamId, names, {}, seenAt, now, seenByTask)).items;
 }
 
 // The same items, and the grouped view: by project, one line per task.
 export async function updatesView(
   db: Db, meId: string, teamId: string, names: Record<string, string>, projectNames: Record<string, string>, seenAt?: string | null, now = new Date(),
+  seenByTask: Record<string, string> = {},
 ): Promise<{ items: UpdateItem[]; groups: UpdateGroup[] }> {
   const since = new Date(now.getTime() - UPDATE_DAYS * 86_400_000).toISOString();
   const [tasks, events, projects] = await Promise.all([
@@ -702,6 +729,6 @@ export async function updatesView(
   ]);
   const items = buildUpdates({
     events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, [p.owner_id, ...(p.lead_id ? [p.lead_id] : [])]])), names, viewerId: meId, now, seenAt,
-  });
+  }).filter((i) => !seenByTask[i.taskId] || i.at > seenByTask[i.taskId]);
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }

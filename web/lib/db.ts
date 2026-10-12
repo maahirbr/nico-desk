@@ -80,9 +80,21 @@ export async function upgrade(db: Db) {
   await db.exec(`INSERT INTO project_members (project_id, person_id, project_role)
     SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND status_category = 'open'
     ON CONFLICT (project_id, person_id) DO NOTHING;`);
+  // 13 Oct: "seen" for Updates lives on the person's account, not in a browser cookie.
+  await db.exec(UPDATE_SEEN_UPGRADE);
   // 13 Oct: a project can have a lead who is not its owner.
   await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id text REFERENCES people(id);`);
 }
+
+// Idempotent: a database made before 13 Oct gets the table. RLS on with no policies, like every other table.
+export const UPDATE_SEEN_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS update_seen (
+    person_id  text NOT NULL REFERENCES people(id),
+    scope      text NOT NULL,
+    seen_at    timestamptz NOT NULL,
+    PRIMARY KEY (person_id, scope)
+  );
+  ALTER TABLE update_seen ENABLE ROW LEVEL SECURITY;`;
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };
 

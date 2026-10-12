@@ -177,6 +177,14 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   projects you are on. The target date is a Deadline, Launch, Event, Quarter End or a typed label. The hosted
   database needs `npm run db:upgrade` once more (adds `projects.lead_id`; keeps all data). Rollback: `git revert` the
   commit; the extra column can stay.
+- 2026-10-13 · Opus 5.5 · Updates and blocks, at the PM's call, on branch `mvp-local-desk-look`. "Updates for you" shows
+  on Home only, with names in bold. A block on you leaves Updates and stays under "Waiting on you" until it is cleared;
+  its Done button clears the block with a few words on what you did (required for the person waited on, still optional
+  for the owner or a lead), and the owner and project lead see "X cleared the block" in Updates. "Seen" moved from a
+  browser cookie to the account (`update_seen`): Mark all seen, a project's own Mark seen, and opening a task each clear
+  lines on every device; the old cookie still counts so nothing comes back on the switch. The hosted database needs
+  `npm run db:upgrade` once more (adds the `update_seen` table with RLS on; keeps all data). Rollback: `git revert` the
+  commit; the table can stay.
 
 ## VERIFY
 
@@ -187,7 +195,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `94 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `95 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

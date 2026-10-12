@@ -5,15 +5,16 @@ import { fmtDate } from './time';
 //
 //   owner of the task    -> assigned to you (_created or owner_id), due_on moved, status_category
 //                           done or dropped, title changed
-//   blocked_on_id person -> "X is blocked on you", with the block reason (blocked_ask)
+//   blocked_on_id person -> nothing here: a block on you shows under "Waiting on you" until it is cleared
 //   project lead         -> due_on moved (with its reason), blocked_ask set, dropped, owner_id changed
+//   owner and lead       -> someone else cleared the block, with what they did
 //   nobody               -> sees their own actions (actor_id = viewer)
 
 export type UpdateEvent = {
   id: string; entity_id: string; field: string; before: unknown; after: unknown; reason: string | null; actor_id: string | null; at: string | Date;
 };
 export type UpdateTask = { id: string; title: string; ownerId: string; projectId: string | null; blocked: { onId: string | null } | null; dueOn?: string; statusCategory?: string };
-export type UpdateKind = 'assigned' | 'due_moved' | 'blocked' | 'blocked_on_you' | 'dropped' | 'done' | 'renamed' | 'reassigned';
+export type UpdateKind = 'assigned' | 'due_moved' | 'blocked' | 'unblocked' | 'dropped' | 'done' | 'renamed' | 'reassigned';
 // text: the full sentence. who + clause: the same change as a short phrase about "it", for one line per task.
 // fold: a change the grouped view leaves out (a small rename, or a tidy-up right after assigning).
 export type UpdateItem = { id: string; taskId: string; projectId: string | null; kind: UpdateKind; text: string; at: string; who: string; clause: string; fold?: boolean };
@@ -76,12 +77,13 @@ export function buildUpdates(input: {
         `moved it to ${fmtDate(str(e.after))} (was ${fmtDate(str(e.before))})${why ? `, “${why}”` : lead ? ', no reason given' : ''}`);
     } else if (e.field === 'blocked_ask' && e.after) {
       const on = blockOn.get(`${e.entity_id}|${iso(e.at)}`);
-      if (on === viewerId) {
-        // Only while the task is still blocked on them.
-        if (t.blocked?.onId === viewerId) item('blocked_on_you', `${who} is blocked on you for ${title}: ${str(e.after)}`, `is waiting on you${said(str(e.after))}`);
-      } else if (lead) {
+      if (on !== viewerId && lead) {
         item('blocked', `${who} blocked ${subject}${on ? ` on ${first(on)}` : ''}: ${str(e.after)}`, `blocked it${on ? ` on ${first(on)}` : ''}${said(str(e.after))}`);
       }
+    } else if (e.field === 'blocked_ask' && e.before && !e.after && (owner || lead)) {
+      // Done or dropped also clears a block; that change speaks for itself.
+      const closedThen = events.some((x) => x.entity_id === e.entity_id && x.field === 'status_category' && iso(x.at) === iso(e.at));
+      if (!closedThen) item('unblocked', `${who} cleared the block on ${subject}${why ? `: ${why}` : ''}`, `cleared the block${said(why)}`);
     } else if (e.field === 'status_category' && e.after === 'dropped' && (owner || lead)) {
       item('dropped', `${who} dropped ${subject}: ${why || 'no reason given'}`, `dropped it${why ? said(why) : ', no reason given'}`);
     } else if (e.field === 'status_category' && e.after === 'done' && owner) {
@@ -93,15 +95,8 @@ export function buildUpdates(input: {
     }
   }
 
-  // Newest first; then one blocked-on-you line per task (the latest block).
-  out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.id < b.id ? 1 : -1));
-  const blockedSeen = new Set<string>();
-  return out.filter((i) => {
-    if (i.kind !== 'blocked_on_you') return true;
-    if (blockedSeen.has(i.taskId)) return false;
-    blockedSeen.add(i.taskId);
-    return true;
-  });
+  // Newest first.
+  return out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.id < b.id ? 1 : -1));
 }
 
 // Same title give or take: one contains the other, or under a quarter of it changed.

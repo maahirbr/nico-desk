@@ -6,6 +6,7 @@ import type { Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
+import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
@@ -52,17 +53,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 
-      {waiting.length > 0 && (
-        <section className="callout">
-          <h2>Waiting on you</h2>
-          {waiting.map((t) => (
-            <button key={t.id} className="callout-row" onClick={() => open(t.id)}>
-              <b>{names[t.ownerId]?.split(' ')[0]}</b> needs: {t.blocked?.ask}
-              <span className="dim"> · for “{t.title}”</span>
-            </button>
-          ))}
-        </section>
-      )}
+      <WaitingCard tasks={waiting} names={names} projectNames={projectNames} now={updates.now} onOpen={(id) => open(id)} />
 
       {groups.length === 0 && (
         <div className="empty-state">
