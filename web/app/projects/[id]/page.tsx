@@ -4,6 +4,7 @@ import { requireMe } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
 import { getProject, pendingProposals, planState, projectMembers, type Project } from '@/lib/plan';
+import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
@@ -34,6 +35,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} names={names} people={opts} meId={me.person.id}
         canEdit={!readOnly && (p.ownerId === me.person.id || isLead || isAdmin)} today={today()} />
+      {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
+      <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={await planState(d, p.id)} people={active} names={names} meId={me.person.id} today={today()} />
       ) : (
@@ -50,10 +53,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           proposals={await pendingProposals(d, p.id)}
           log={groupLog(await projectLog(d, p.id, 60), names, { [p.id]: p.name }).map((e) => ({
             id: e.key, at: fmtStamp(e.at), whoId: e.actor_id, who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
-            text: e.text, task: e.taskTitle, taskId: e.entity_id, reason: null,
+            text: e.text, task: e.taskTitle, taskId: e.entity_type === 'project' ? null : e.entity_id, reason: null,
           }))}
         />
       )}
+      </ReadOnlyProvider>
     </>
   );
 }

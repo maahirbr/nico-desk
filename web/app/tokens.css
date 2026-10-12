@@ -628,6 +628,7 @@
 /* Task rows: a bordered list, no shadow; green tick; outlined status picker; boxed flags */
 :root[data-skin="w"] .tlist { box-shadow: none; }
 :root[data-skin="w"] .trow { padding: 0 14px 0 6px; min-height: 52px; }
+:root[data-skin="w"] .trow.no-check { padding-left: 14px; }
 :root[data-skin="w"] .trow-main { gap: 2px; }
 :root[data-skin="w"] .trow-sub { color: var(--ink-2); }
 :root[data-skin="w"] .trow-check input { accent-color: var(--w-green); }

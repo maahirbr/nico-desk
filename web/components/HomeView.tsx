@@ -6,15 +6,16 @@ import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { PersonLink } from './chips';
 import { useOpenTask } from './taskUrl';
+import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; movedAway: MovedAway[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
   const readOnly = useReadOnly();
@@ -53,6 +54,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       </header>
 
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
+
+      <MovedAwayCard items={movedAway} />
 
       {waiting.length > 0 && (
         <section className="callout">

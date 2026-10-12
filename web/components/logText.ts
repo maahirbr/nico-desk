@@ -8,7 +8,7 @@ import { HEALTH } from './chips';
 // the status word, the category and the closed time). groupLog folds them into one sentence.
 
 const FIELD: Record<string, string> = {
-  _created: 'Created', _update: 'Update', _reopened: 'Reopened', title: 'Title', description: 'Description', note: 'Note', project_id: 'Project', workstream: 'Sub-project',
+  _created: 'Created', _archived: 'Archived', _restored: 'Restored', _update: 'Update', _reopened: 'Reopened', title: 'Title', description: 'Description', note: 'Note', project_id: 'Project', workstream: 'Sub-project',
   owner_id: 'Owner', health: 'Health', due_on: 'Due date', status: 'Status word', status_category: 'Status',
   closed_at: 'Closed', blocked_on_id: 'Blocked on', blocked_ask: 'Ask', priority: 'Priority', status_note: 'Status note',
 };
@@ -32,6 +32,8 @@ export function logLine(e: LogLine, names: Names, projects: Names) {
     return `Created for ${names[a.owner_id] ?? a.owner_id}, due ${a.due_on ? fmtDate(a.due_on) : '?'}`;
   }
   if (e.field === '_update') return String(e.after);
+  if (e.field === '_archived') return 'Archived the project';
+  if (e.field === '_restored') return 'Restored the project';
   if (e.field === '_reopened') return 'Reopened';
   if (e.field === '_link_added') return `Added link ${linkName(e.after)}`;
   if (e.field === '_link_removed') return `Removed link ${linkName(e.before)}`;
@@ -53,6 +55,8 @@ export function actionText(events: LogLine[], names: Names, projects: Names): st
 
   const created = take('_created');
   if (created) return logLine(created, names, projects);
+  const arch = take('_archived') ?? take('_restored');
+  if (arch) return logLine(arch, names, projects);
   const upd = take('_update');
   if (upd) return logLine(upd, names, projects);
   const added = take('_link_added');

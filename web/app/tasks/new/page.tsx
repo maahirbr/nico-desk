@@ -11,7 +11,7 @@ export default async function NewTask() {
   const me = await requireMe();
   if (me.viewingAs) redirect('/me'); // read-only view: nothing to create
   const { d, activeOpts } = await lookups(me);
-  const projects = (await teamProjects(d, me.team.id)).filter((p) => p.kind === 'tasks');
+  const projects = (await teamProjects(d, me.team.id)).filter((p) => p.kind === 'tasks' && !p.archivedAt);
   return (
     <NewTaskPage people={activeOpts} meId={me.person.id} today={today()}
       projects={projects.map((p) => ({ id: p.id, name: p.name }))}

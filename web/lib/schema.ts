@@ -51,6 +51,8 @@ CREATE TABLE projects (
   workstreams    jsonb NOT NULL DEFAULT '[]',  -- sub-projects inside a task board
   target_label   text,                         -- what the date is: Launch, Go-live, Quarter end
   created_by     text REFERENCES people(id),
+  archived_at    timestamptz,                  -- set when the project is closed; null while it is live
+  archived_by    text REFERENCES people(id),
   UNIQUE (team_id, name)
 );
 
@@ -125,7 +127,7 @@ CREATE TABLE notices (
   id          text PRIMARY KEY,
   person_id   text NOT NULL REFERENCES people(id),
   task_id     text NOT NULL REFERENCES tasks(id),
-  kind        text NOT NULL CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned')),
+  kind        text NOT NULL CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned','reassigned_away')),
   for_date    date NOT NULL,
   created_at  timestamptz NOT NULL,
   read_at     timestamptz,

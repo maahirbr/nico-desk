@@ -29,7 +29,7 @@ export default async function Team({ searchParams }: { searchParams: SP }) {
     <TeamView
       tasks={tasks} later={later} weekStart={weekStart} thisWeek={mondayOf(t)} today={t} view={one(sp.view) === 'status' ? 'status' : 'person'}
       people={people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName, role: p.role }))}
-      names={names} projectNames={projectNames} projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+      names={names} projectNames={projectNames} projects={projects.filter((p) => !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       meId={me.person.id} isLead={isLead} opts={activeOpts} updates={updates}
     />

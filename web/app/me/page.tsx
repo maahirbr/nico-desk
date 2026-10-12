@@ -25,6 +25,11 @@ export default async function Home() {
   // Dropped tasks fold away under Home's own collapsed list. A drop sets no closed_at, so all of them show there.
   const dropped = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'dropped');
   const assignedNotice = Object.fromEntries(notices.filter((n) => n.kind === 'assigned').map((n) => [n.taskId, n.id]));
+  // Tasks that were mine and went to someone else (an in-app notice, nothing is sent outside the app).
+  const ownerNow = new Map(all.map((x) => [x.id, x.ownerId]));
+  const movedAway = notices.filter((n) => n.kind === 'reassigned_away').map((n) => ({
+    noticeId: n.id, taskId: n.taskId, title: n.taskTitle, toName: names[ownerNow.get(n.taskId) ?? ''] ?? null,
+  }));
   return (
     <HomeView
       greeting={`${greeting()}, ${me.person.displayName.split(' ')[0]}`}
@@ -36,13 +41,14 @@ export default async function Home() {
       mine={[...mine.assigned, ...mine.tasks]}
       newIds={mine.assigned.map((x) => x.id)}
       assignedNotice={assignedNotice}
+      movedAway={movedAway}
       waiting={mine.blockedOnMe}
       done={doneThisWeek}
       dropped={dropped}
       names={names}
       projectNames={projectNames}
       people={activeOpts}
-      projects={projects.filter((p) => p.kind === 'tasks').map((p) => ({ id: p.id, name: p.name }))}
+      projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
     />
   );

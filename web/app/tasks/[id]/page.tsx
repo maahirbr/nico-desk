@@ -97,7 +97,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
 
         {acts && (
           <aside>
-            <TaskActions t={t} may={may} people={activeOpts} projects={projects} today={today()} />
+            <TaskActions t={t} may={may} people={activeOpts} projects={projects.filter((p) => !p.archived || p.id === t.projectId)} today={today()} />
           </aside>
         )}
       </div>
