@@ -1,5 +1,6 @@
 import type { Tx } from './db';
 import { bad, forbidden } from './errors';
+import { isLeadOrAdmin } from './roles';
 import { daysBetween, nextCheckpoint } from './planUtil';
 import { planState, teamProjects } from './plan';
 import { newId, teamTasks } from './service';
@@ -103,5 +104,5 @@ export async function logReminder(db: Tx, teamId: string, meId: string, r: { per
 }
 
 export function mayRemind(appRoles: string[]): void {
-  if (!appRoles.includes('lead') && !appRoles.includes('admin')) throw forbidden('Only a lead can draft reminders.');
+  if (!isLeadOrAdmin(appRoles)) throw forbidden('Only a lead can draft reminders.');
 }

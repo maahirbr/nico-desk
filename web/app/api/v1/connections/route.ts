@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { forbidden } from '@/lib/errors';
+import { isLeadOrAdmin } from '@/lib/roles';
 import { readBody, route } from '@/lib/http';
 import { connectionStatus, removeConnection, saveConnection } from '@/lib/connectors';
 
 // Meeting-notes connections for the team. Only leads and admins add or remove keys; the key
 // itself never comes back from the server, only whether it is set and its last four characters.
-const lead = (roles: string[]) => { if (!roles.includes('lead') && !roles.includes('admin')) throw forbidden('Only a lead can manage connections.'); };
+const lead = (roles: string[]) => { if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can manage connections.'); };
 
 export const GET = route(async () => connectionStatus());
 

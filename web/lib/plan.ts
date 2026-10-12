@@ -1,5 +1,6 @@
 import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
+import { isLeadOrAdmin } from './roles';
 import { createTask, newId } from './service';
 import { today as todayIst } from './time';
 import {
@@ -612,7 +613,7 @@ async function rolesOf(tx: Tx, teamId: string, personId: string): Promise<Set<st
 
 export async function createProject(db: Db, meId: string, teamId: string, input: ProjectInput): Promise<Project> {
   const roles = await rolesOf(db, teamId, meId);
-  if (!roles.has('lead') && !roles.has('admin')) throw forbidden('Only a lead can start a project.');
+  if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can start a project.');
   const c = clean(input);
   const id = newId('prj');
   await db.transaction(async (tx) => {
@@ -640,7 +641,7 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
 export async function updateProject(db: Db, meId: string, id: string, input: ProjectInput): Promise<Project> {
   const p = await getProject(db, id);
   const roles = await rolesOf(db, p.teamId, meId);
-  if (p.ownerId !== meId && !roles.has('lead') && !roles.has('admin')) throw forbidden('Only the project owner or a lead can change the project.');
+  if (p.ownerId !== meId && !isLeadOrAdmin(roles)) throw forbidden('Only the project owner or a lead can change the project.');
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
   const c = clean(input);
   await db.transaction(async (tx) => {

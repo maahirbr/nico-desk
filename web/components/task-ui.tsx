@@ -7,7 +7,8 @@ import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
 import { Avatar, type Tone } from './chips';
-import { logLine } from './logText';
+import { groupLog } from './logText';
+import { canMoveTo } from './statusRules';
 import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
 import { notify } from './toast';
 
@@ -122,8 +123,8 @@ export async function api(path: string, method: string, body?: unknown) {
 
 // onStatus, when given, turns the status word into a picker. One-click moves happen in place;
 // blocked, dropped and going back to not started open the side panel, which asks for the words.
-export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; onOpen: () => void; onStatus?: (s: StatusKey) => void;
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, onOpen, onStatus }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; onOpen: () => void; onStatus?: (s: StatusKey) => void;
 }) {
   const desc = t.description;
   const router = useRouter();
@@ -171,7 +172,7 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
               try { await quickMove(t, s); notify(`Status set to ${STATUS[s].word}`); router.refresh(); }
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }}>
-            {PICK.map((s) => <option key={s} value={s}>{STATUS[s].word}</option>)}
+            {PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked').map((s) => <option key={s} value={s}>{STATUS[s].word}</option>)}
           </select>
         ) : <span className={`st tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}>{STATUS[key].word}</span>}
         <FlagChip t={t} today={today} hideLate={due.late} />
@@ -238,6 +239,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   }
 
   const names = Object.fromEntries(people.map((p) => [p.id, p.name]));
+  const entries = groupLog(log, names, projectNames);
   const can = !!t && !t.readOnly && (t.ownerId === meId || isLead);
   const canEdit = !!t && !t.readOnly && (can || t.createdBy === meId);
   const open = t?.statusCategory === 'open';
@@ -290,7 +292,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {open ? (
               <div className="status-picker" role="group" aria-label="Status">
-                {PICK.map((s) => (
+                {PICK.filter((s) => s === key || canMoveTo(t, s, meId, isLead)).map((s) => (
                   <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={!can || busy} onClick={() => setStatus(s)}>
                     {STATUS[s].word}
                   </button>
@@ -385,14 +387,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             </div>
 
             <button className="log-toggle small-toggle" aria-expanded={showLog} onClick={() => setShowLog(!showLog)}>
-              <span aria-hidden>{showLog ? '▾' : '▸'}</span> History <span className="count-badge">{log.length}</span>
+              <span aria-hidden>{showLog ? '▾' : '▸'}</span> History <span className="count-badge">{entries.length}</span>
             </button>
             {showLog && (
               <ol className="log">
-                {log.map((e) => (
-                  <li key={e.id}>
+                {entries.map((e) => (
+                  <li key={e.key}>
                     <span className="when">{fmtStamp(e.at)}</span>
-                    <span><b>{e.actorName ?? 'System'}</b> {logLine(e, names, projectNames)}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
+                    <span><b>{e.actorName ?? 'System'}</b> {e.text}</span>
                   </li>
                 ))}
               </ol>

@@ -1,6 +1,7 @@
 import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
+import { isLeadOrAdmin } from './roles';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 import { buildUpdates, UPDATE_DAYS, type UpdateItem } from './updates';
 
@@ -186,7 +187,7 @@ async function mutate(
     if (roles.size === 0) throw forbidden('You are not on this task’s team.');
     if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
     if (row.version !== version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
-    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId, isLead: roles.has('lead') };
+    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId, isLead: isLeadOrAdmin(roles) };
     if (!allow(ctx)) throw forbidden();
     const change = build(ctx);
     const at = new Date().toISOString();
@@ -342,7 +343,7 @@ export async function reopenTask(db: Db, meId: string, id: string, input: { vers
     if (!row) throw notFound('No such task.');
     const roles = await rolesIn(tx, row.team_id, meId);
     if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
-    if (!roles.has('lead')) throw forbidden('Only a lead can reopen a task.');
+    if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can reopen a task.');
     if (row.version !== input.version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
     if (row.status_category === 'open') throw bad('invalid_body', 'The task is already open.');
     const at = new Date().toISOString();
@@ -412,7 +413,7 @@ export async function addUpdate(db: Db, meId: string, id: string, text: string):
     if (!row) throw notFound('No such task.');
     if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
     const roles = await rolesIn(tx, row.team_id, meId);
-    if (row.owner_id !== meId && !roles.has('lead')) throw forbidden();
+    if (row.owner_id !== meId && !isLeadOrAdmin(roles)) throw forbidden();
     await insertEvent(tx, { entityId: id, field: '_update', before: null, after: t, actorId: meId, at: new Date().toISOString() });
   });
 }

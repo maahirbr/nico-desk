@@ -10,6 +10,7 @@ import { Person } from './chips';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
+import { canMoveTo } from './statusRules';
 import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, statusKey, TaskDrawer, type StatusKey } from './task-ui';
 import { notify } from './toast';
 
@@ -140,7 +141,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           <td>
             <StateSelect className={`status-sel tone-${st.tone}`} aria-label={`Status of “${t.title}”`} value={s} disabled={!can || busy || t.statusCategory === 'dropped'}
               onChange={(e) => changeStatus(t, e.target.value as StatusKey)}>
-              {PICK.map((k) => <option key={k} value={k}>{STATUS[k].word}</option>)}
+              {PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)).map((k) => <option key={k} value={k}>{STATUS[k].word}</option>)}
             </StateSelect>
             <div><FlagChip t={t} today={today} /></div>
           </td>

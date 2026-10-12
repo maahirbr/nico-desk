@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { currentMe } from '@/lib/auth';
+import { isLeadOrAdmin } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,5 +8,5 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const me = await currentMe();
   if (!me) redirect('/signin');
-  redirect(me.person.appRoles.some((r) => r === 'lead' || r === 'admin') ? '/team' : '/me');
+  redirect(isLeadOrAdmin(me.person.appRoles) ? '/team' : '/me');
 }

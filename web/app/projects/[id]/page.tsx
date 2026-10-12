@@ -6,7 +6,7 @@ import { lookups } from '@/lib/page';
 import { getProject, pendingProposals, planState, projectMembers, type Project } from '@/lib/plan';
 import { projectLog, projectTasks } from '@/lib/service';
 import { fmtStamp, today } from '@/lib/time';
-import { logLine } from '@/components/logText';
+import { groupLog } from '@/components/logText';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
 import { TaskBoard } from '@/components/TaskBoard';
@@ -48,9 +48,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           today={today()}
           workstreams={p.workstreams}
           proposals={await pendingProposals(d, p.id)}
-          log={(await projectLog(d, p.id)).map((e) => ({
-            id: e.id, at: fmtStamp(e.at), who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
-            text: `${logLine(e, names, { [p.id]: p.name })}`, task: e.taskTitle, taskId: e.entity_id, reason: e.reason,
+          log={groupLog(await projectLog(d, p.id, 60), names, { [p.id]: p.name }).map((e) => ({
+            id: e.key, at: fmtStamp(e.at), who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
+            text: e.text, task: e.taskTitle, taskId: e.entity_id, reason: null,
           }))}
         />
       )}

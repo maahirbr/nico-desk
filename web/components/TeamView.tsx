@@ -37,7 +37,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   };
   const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ');
   const row = (t: Task, owner?: string) => (
-    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)}
+    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)} canBlock={!t.readOnly && t.ownerId === meId}
       onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} />
   );
   const opened = [...tasks, ...later].find((t) => t.id === openId);

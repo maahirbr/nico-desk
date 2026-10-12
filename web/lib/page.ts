@@ -1,4 +1,5 @@
 import { db } from './db';
+import { isLeadOrAdmin } from './roles';
 import { cookies } from 'next/headers';
 import { listPeople, listProjects, updatesFor } from './service';
 import { seenCookieName } from './updates';
@@ -15,7 +16,7 @@ export async function lookups(me: Me) {
     names: Object.fromEntries(people.map((p) => [p.id, p.displayName])) as Record<string, string>,
     projectNames: Object.fromEntries(projects.map((p) => [p.id, p.name])) as Record<string, string>,
     activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
-    isLead: me.person.appRoles.includes('lead'),
+    isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),
   };
 }

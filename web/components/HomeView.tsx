@@ -73,7 +73,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}>{g.label} <span className="n">{g.items.length}</span></h2>
           <div className="tlist">
-            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </div>
         </section>
       ))}

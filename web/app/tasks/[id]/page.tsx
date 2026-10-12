@@ -7,7 +7,7 @@ import { fmtDate, fmtStamp, today } from '@/lib/time';
 import Link from 'next/link';
 import { Person, StatusChips, dueLine } from '@/components/chips';
 import { TaskActions } from '@/components/client';
-import { logLine as line } from '@/components/logText';
+import { groupLog } from '@/components/logText';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,12 +80,11 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           <div className="card card-pad">
             <p className="section-title">Update log</p>
             <ol className="log">
-              {log.map((e) => (
-                <li key={e.id}>
+              {groupLog(log, names, projectNames).map((e) => (
+                <li key={e.key}>
                   <span className="when">{fmtStamp(e.at)}</span>
                   <span>
-                    <b>{e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System')}</b>{' '}{line(e, names, projectNames)}
-                    {e.reason && <div className="why">Reason: {e.reason}</div>}
+                    <b>{e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System')}</b>{' '}{e.text}
                   </span>
                 </li>
               ))}
