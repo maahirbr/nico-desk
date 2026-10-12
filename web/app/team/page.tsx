@@ -17,7 +17,7 @@ export default async function Team({ searchParams }: { searchParams: SP }) {
   const weekStart = w && isDate(w) ? mondayOf(w) : mondayOf(t);
   const weekEnd = addDays(weekStart, 6);
   const { d, names, people, projectNames, activeOpts, isLead, isAdmin } = await lookups(me);
-  const updates = isLead || isAdmin ? await homeUpdates(me, d, names) : null;
+  const updates = isLead || isAdmin ? await homeUpdates(me, d, names, projectNames) : null;
   const [all, projects] = await Promise.all([teamTasks(d, me.team.id), teamProjects(d, me.team.id)]);
   // In view: open work due by the end of the week (so overdue too), and anything closed during it.
   const tasks = all.filter((x) =>

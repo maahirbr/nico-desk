@@ -2,7 +2,7 @@ import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
-import { buildUpdates, UPDATE_DAYS, type UpdateItem } from './updates';
+import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
 // Every write goes through here, so the rules in SPEC.md section 2 hold for the API and the pages alike.
 
@@ -682,6 +682,13 @@ export async function ledgerTasks(db: Db, teamId: string, from: string, to: stri
 export async function updatesFor(
   db: Db, meId: string, teamId: string, names: Record<string, string>, seenAt?: string | null, now = new Date(),
 ): Promise<UpdateItem[]> {
+  return (await updatesView(db, meId, teamId, names, {}, seenAt, now)).items;
+}
+
+// The same items, and the grouped view: by project, one line per task.
+export async function updatesView(
+  db: Db, meId: string, teamId: string, names: Record<string, string>, projectNames: Record<string, string>, seenAt?: string | null, now = new Date(),
+): Promise<{ items: UpdateItem[]; groups: UpdateGroup[] }> {
   const since = new Date(now.getTime() - UPDATE_DAYS * 86_400_000).toISOString();
   const [tasks, events, projects] = await Promise.all([
     teamTasks(db, teamId),
@@ -693,7 +700,8 @@ export async function updatesFor(
     ),
     db.query<{ id: string; owner_id: string }>(`SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]),
   ]);
-  return buildUpdates({
+  const items = buildUpdates({
     events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, p.owner_id])), names, viewerId: meId, now, seenAt,
   });
+  return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }

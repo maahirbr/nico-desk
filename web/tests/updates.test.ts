@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../lib/db';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
-import { ago, buildUpdates, type UpdateEvent, type UpdateTask } from '../lib/updates';
+import { ago, buildUpdates, groupUpdates, smallEdit, type UpdateEvent, type UpdateTask } from '../lib/updates';
 
 // "Updates for you": who is told about what, derived from the events table alone.
 const NOW = '2026-10-12T10:00:00.000Z';
@@ -18,6 +18,39 @@ const ev = (o: Partial<UpdateEvent> & { field: string; actor_id: string | null }
   ({ id: `e${++n}`, entity_id: 't1', before: null, after: null, reason: null, at: '2026-10-11T08:00:00.000Z', ...o });
 const run = (events: UpdateEvent[], viewerId: string, extra: { seenAt?: string } = {}) =>
   buildUpdates({ events, tasks, leadOf, names, viewerId, now: NOW, ...extra });
+
+describe('updates for you, grouped', () => {
+  const g = (events: UpdateEvent[], viewerId: string, ts: UpdateTask[] = tasks) =>
+    groupUpdates(buildUpdates({ events, tasks: ts, leadOf, names, viewerId, now: NOW }), ts, { p1: 'Gift hampers' }, names, viewerId, '2026-10-12');
+
+  it('puts one line per task under its project, with who did what in order', () => {
+    const ts: UpdateTask[] = [{ ...tasks[0], dueOn: '2026-10-12', statusCategory: 'open' }, { id: 't3', title: 'Book the shoot', ownerId: 'bo', projectId: null, blocked: null, dueOn: '2026-10-20', statusCategory: 'open' }];
+    const e = [
+      ev({ field: '_created', after: { owner_id: 'bo', due_on: '2026-10-10' }, actor_id: 'lee', at: '2026-10-11T01:00:00.000Z' }),
+      ev({ field: 'due_on', before: '2026-10-10', after: '2026-10-12', reason: 'samples late', actor_id: 'lee', at: '2026-10-11T02:00:00.000Z' }),
+      ev({ field: 'status_category', before: 'open', after: 'done', actor_id: 'ana', entity_id: 't3', at: '2026-10-11T03:00:00.000Z' }),
+    ];
+    const out = g(e, 'bo', ts);
+    expect(out.map((x) => x.name)).toEqual(['Gift hampers', 'No project']);
+    expect(out[0].rows).toEqual([expect.objectContaining({
+      title: 'Draft copy', summary: 'Meera assigned it to you, due 10 Oct, then moved it to 12 Oct (was 10 Oct), “samples late”', due: { label: 'Due today', tone: 'soon' },
+    })]);
+    expect(out[1].rows[0].summary).toBe('Ananya marked it done');
+  });
+
+  it('leaves out small renames and tidy-ups right after assigning, keeps real renames', () => {
+    expect(smallEdit('Approve hamper samples', 'Aprove hamper samples')).toBe(true);
+    expect(smallEdit('Define a rota plan TBC 30 Nov', 'Define a rota plan')).toBe(true);
+    expect(smallEdit('Draft copy', 'Book the photo shoot')).toBe(false);
+    const tidy = [
+      ev({ field: '_created', after: { owner_id: 'bo' }, actor_id: 'lee', at: '2026-10-11T01:00:00.000Z' }),
+      ev({ field: 'title', before: 'Write the hamper copy', after: 'Draft copy', actor_id: 'lee', at: '2026-10-11T02:00:00.000Z' }),
+    ];
+    expect(g(tidy, 'bo')[0].rows[0].summary).toBe('Meera assigned it to you');
+    const real = [ev({ field: 'title', before: 'Write the hamper copy', after: 'Draft copy', actor_id: 'lee' })];
+    expect(g(real, 'bo')[0].rows[0].summary).toBe('Meera renamed it');
+  });
+});
 
 describe('updates for you (pure)', () => {
   it('never shows a person their own actions', () => {
