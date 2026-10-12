@@ -184,6 +184,10 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   `/api/v1/jobs/reminders` by GET with Vercel's `CRON_SECRET`, and the route refuses while that secret is unset. It writes
   notices and never sends or wipes anything. Reminders stay Gmail drafts the lead sends. Rollback: delete `web/vercel.json`.
 
+- 2026-10-12 · Opus 5.5 · Everyone, lead and admin included, now lands on Home (`/me`) after sign-in, at the repo owner's call.
+  This replaces "a lead or admin lands on `/team`" from 2026-10-09. `/team` stays one click away in the nav.
+  Rollback: `git revert` this commit.
+
 ## VERIFY
 
 ```

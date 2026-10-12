@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation';
 import { currentMe } from '@/lib/auth';
-import { isLeadOrAdmin } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
-// Leads and admins open on the team's week, members on their own.
+// Everyone opens on Home (/me), at the repo owner's call. Leads and admins reach the team's week from the nav.
 export default async function Home() {
   const me = await currentMe();
   if (!me) redirect('/signin');
-  redirect(isLeadOrAdmin(me.person.appRoles) ? '/team' : '/me');
+  redirect('/me');
 }
