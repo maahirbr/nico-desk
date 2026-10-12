@@ -253,7 +253,11 @@ textarea { resize: vertical; min-height: 4.5em; width: 100%; }
 .notice-kind { display: inline-block; font: var(--type-state); color: var(--ink-3); margin-right: var(--space-xs); }
 
 /* ---------- sign in ---------- */
-.signin-brand { margin-bottom: var(--space-lg); }
+.signin-brand { margin-bottom: var(--space-lg); display: flex; align-items: center; gap: var(--space-sm); }
+.signin-logo { display: block; width: 132px; aspect-ratio: 414 / 63; background: var(--ink);
+  -webkit-mask: url(/brand/nicobar-wordmark.svg) center / contain no-repeat; mask: url(/brand/nicobar-wordmark.svg) center / contain no-repeat; }
+.signin-logo + .mark-name { padding-left: var(--space-sm); border-left: var(--rule) solid var(--line-strong); color: var(--ink-2); }
+@media (forced-colors: active) { .signin-logo { background: CanvasText; forced-color-adjust: none; } }
 .signin h1 { margin-bottom: var(--space-md); }
 .signin-brand .mark-name { font: var(--type-heading); }
 .signin ul { list-style: none; padding: 0; margin: 0; }

@@ -24,7 +24,8 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   const message = error && Object.hasOwn(ERRORS, error) ? ERRORS[error] : null;
   const google = googleSignInEnabled();
   const dev = devSignInEnabled();
-  const brand = <div className="signin-brand"><span className="mark-name">nico-desk</span></div>;
+  // The wordmark is a mask filled with the skin's ink, so it follows every skin in day and night.
+  const brand = <div className="signin-brand"><span className="signin-logo" role="img" aria-label="Nicobar" /><span className="mark-name">nico-desk</span></div>;
   const notice = message && <p className="err" role="alert" style={{ marginBottom: 'var(--space-sm)' }}>{message}</p>;
 
   if (!google && !dev) {
