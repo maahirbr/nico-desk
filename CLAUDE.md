@@ -262,6 +262,11 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   with this change is promoted: `cd web && npx tsx --env-file=.env.remote.local scripts/upgrade-task-links.ts` (adds the
   table only, keeps all data). `npm run db:upgrade` also creates it. Rollback: `git revert -m 1 7595485`, then
   `DROP TABLE task_links;` on the hosted database if it was created.
+- 2026-10-12 · Opus 5.5 · The app is called "Nico Desk" wherever it shows a name (tab title, sidebar, sign-in, task origin),
+  at the repo owner's call. The repo, package, Vercel project and URL keep `nico-desk`. The sidebar shows the company wordmark
+  under the name, as the same CSS mask the sign-in page uses, tinted with the sub-label colour. The "Help is on" bar is gone,
+  at the repo owner's call: the pressed `?` button shows that help is on, and the account menu opens the shortcut sheet.
+  Rollback: `git revert` this commit.
 
 ## VERIFY
 

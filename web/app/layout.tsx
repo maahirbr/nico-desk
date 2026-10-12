@@ -6,7 +6,7 @@ import { currentMe } from '@/lib/auth';
 import { isLeadOrAdmin } from '@/lib/roles';
 import { Nav, SwitchToOwner } from '@/components/client';
 import { HELP_COOKIE, helpOf } from '@/components/help';
-import { HelpBar, HelpProvider, HelpToggle } from '@/components/HelpMode';
+import { HelpProvider, HelpToggle } from '@/components/HelpMode';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { Shortcuts } from '@/components/Shortcuts';
 import { ProjectPeopleProvider } from '@/components/OwnerPicker';
@@ -23,7 +23,7 @@ import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
 import './globals.css';
 
-export const metadata: Metadata = { title: 'nico-desk', description: 'Where a Nicobar team runs its week.' };
+export const metadata: Metadata = { title: 'Nico Desk', description: 'Where a Nicobar team runs its week.' };
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' });
@@ -64,8 +64,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link className="mark" href="/me">
                 <span className="mark-logo" aria-hidden>n</span>
                 <span className="mark-text">
-                  <span className="mark-name">nico-desk</span>
-                  <span className="mark-sub">Nicobar</span>
+                  <span className="mark-name">Nico Desk</span>
+                  <span className="mark-sub mark-wordmark" role="img" aria-label="Nicobar" />
                 </span>
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} />
@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ProfileMenu name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /><HelpToggle /></div><HelpBar /><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
+            <main className="main"><div className="topbar"><TopSearch /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ReadOnlyProvider>
         ) : (

@@ -49,21 +49,6 @@ export function HelpToggle() {
   );
 }
 
-// The slim bar under the top bar while help mode is on. The shortcut list lives here now.
-export function HelpBar() {
-  const { on, toggle } = useContext(HelpCtx);
-  if (!on) return null;
-  return (
-    <div className="help-bar">
-      <span>Help is on. Hover, focus or tap an underlined word to see what it means.</span>
-      <span className="help-bar-acts">
-        <button type="button" onClick={() => window.dispatchEvent(new Event('nd:shortcuts'))}>Keyboard shortcuts</button>
-        <button type="button" onClick={toggle}>Turn off</button>
-      </span>
-    </div>
-  );
-}
-
 const GAP = 6;
 const EDGE = 8;
 

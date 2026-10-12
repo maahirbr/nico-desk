@@ -38,6 +38,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .mark { display: block; padding: 0 var(--nav-pad-x); text-decoration: none; }
 .mark-name { display: block; font: var(--type-heading); letter-spacing: var(--track-title); }
 .mark-sub { display: block; font: var(--type-small); color: var(--ink-3); }
+/* The company wordmark, masked so it takes the sub-label colour in every skin, day and night. */
+.mark-wordmark { width: 72px; aspect-ratio: 414 / 63; margin-top: 4px; background: currentColor;
+  -webkit-mask: url(/brand/nicobar-wordmark.svg) left center / contain no-repeat; mask: url(/brand/nicobar-wordmark.svg) left center / contain no-repeat; }
+@media (forced-colors: active) { .mark-wordmark { background: CanvasText; forced-color-adjust: none; } }
 /* Pieces only skin W shows (tokens.css): the logo tile, Home's own New task button, the moved-date mark,
    and a Late flag beside a red "3 days late". Every other skin keeps them hidden. */
 .mark-logo, .head-new, .mv-mark, .flag-again { display: none; }
@@ -870,19 +874,13 @@ table.board td.title { width: 48%; }
 .ts-all.on, .ts-all:hover { text-decoration: underline; }
 @media (max-width: 860px) { .topbar { padding: var(--space-xs) var(--page-pad); position: static; } .kbd { display: none; } .topsearch input { padding-right: var(--space-md); } .ts-hit { grid-template-columns: minmax(0, 1fr) auto; } .ts-kind { display: none; } }
 
-/* Help mode (components/HelpMode.tsx): the ? button, the bar under the top bar, dotted underlines, tooltips.
-   Only existing tokens: the button and tooltip are ink on canvas (the toast pair), the bar is ink on sunk (the view banner pair). */
+/* Help mode (components/HelpMode.tsx): the ? button, dotted underlines, tooltips.
+   Only existing tokens: the button and tooltip are ink on canvas (the toast pair). */
 .help-toggle { position: absolute; right: var(--page-pad); width: var(--button-height); height: var(--button-height); display: grid; place-items: center; padding: 0;
   font: var(--type-button); color: var(--ink); background: var(--canvas); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-pill); cursor: pointer;
   transition: background var(--dur-state) var(--ease), color var(--dur-state) var(--ease); }
 .help-toggle:hover { background: var(--sunk); }
 .help-toggle[aria-pressed="true"] { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
-.help-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); padding: var(--space-xs) var(--page-pad);
-  background: var(--sunk); color: var(--ink); border-bottom: var(--rule) solid var(--hairline); font: var(--type-small); }
-.help-bar-acts { display: inline-flex; gap: var(--space-xs); }
-.help-bar button { font: var(--type-button); color: var(--ink); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control);
-  padding: 0 var(--space-sm); min-height: 32px; cursor: pointer; white-space: nowrap; }
-.help-bar button:hover { background: var(--canvas); }
 .help-term, .help-host { text-decoration: underline dotted; text-decoration-thickness: var(--rule); text-underline-offset: var(--space-xxs); cursor: help; }
 .help-term:focus-visible { border-radius: var(--radius-control); }
 .stat.help-host { text-decoration: none; }
@@ -891,7 +889,7 @@ table.board td.title { width: 48%; }
   background: var(--toast-bg); color: var(--toast-ink); border-radius: var(--radius-control); font: var(--type-small); text-decoration: none; font-weight: 400; text-align: left; }
 .help-tip p { margin: 0; }
 .help-tip .help-note { margin-top: var(--space-xxs); }
-@media (max-width: 860px) { .help-toggle { position: static; flex: none; margin-left: var(--space-xs); } .help-bar { padding: var(--space-xs) var(--page-pad); } }
+@media (max-width: 860px) { .help-toggle { position: static; flex: none; margin-left: var(--space-xs); } }
 
 /* ledger: clickable numbers, delivery habits, drill-down */
 .num-btn { font: inherit; font-variant-numeric: tabular-nums; background: none; border: 0; padding: var(--rule) var(--space-xxs); margin: calc(var(--rule) * -1) calc(var(--space-xxs) * -1); border-radius: var(--radius-control); cursor: pointer;
