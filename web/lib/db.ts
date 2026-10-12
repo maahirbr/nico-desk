@@ -82,7 +82,23 @@ export async function upgrade(db: Db) {
     ON CONFLICT (project_id, person_id) DO NOTHING;`);
   // 12 Oct: links on a task. The same statements are in scripts/upgrade-task-links.ts for the hosted database.
   await db.exec(TASK_LINKS_UPGRADE);
+  // 12 Oct: archive a project, and tell the previous owner when a task is reassigned. Same statements as scripts/upgrade-project-archive.ts.
+  await db.exec(PROJECT_ARCHIVE_UPGRADE);
 }
+
+// Idempotent: adds the archive columns and lets a notice be of kind reassigned_away. No new table, so no new RLS step.
+export const PROJECT_ARCHIVE_UPGRADE = `
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS archived_by text REFERENCES people(id);
+  DO $$ DECLARE c text; BEGIN
+    SELECT conname INTO c FROM pg_constraint WHERE conrelid = 'notices'::regclass AND contype = 'c'
+      AND pg_get_constraintdef(oid) LIKE '%due_tomorrow%' AND pg_get_constraintdef(oid) NOT LIKE '%reassigned_away%';
+    IF c IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE notices DROP CONSTRAINT %I', c);
+      ALTER TABLE notices ADD CONSTRAINT notices_kind_check
+        CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned','reassigned_away'));
+    END IF;
+  END $$;`;
 
 // Idempotent: a database made before 12 Oct gets the table; a new one already has it from SCHEMA.
 export const TASK_LINKS_UPGRADE = `

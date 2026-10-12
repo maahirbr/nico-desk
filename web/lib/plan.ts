@@ -22,13 +22,14 @@ export type Project = {
   kind: 'tasks' | 'plan'; eyebrow: string | null; phase: string | null; intro: string | null; launchOn: string | null;
   pills: Pill[]; pillars: { key: string; label: string }[]; partnerName: string | null; partnerPeople: string[]; cadence: Cadence[];
   workstreams: string[]; targetLabel: string | null; createdBy: string | null;
+  archivedAt: string | null; archivedBy: string | null; // set while the project is closed
 };
 
 type ProjectRow = {
   id: string; team_id: string; name: string; department: string; owner_id: string; status: Project['status']; status_note: string | null;
   kind: Project['kind']; eyebrow: string | null; phase: string | null; intro: string | null; launch_on: string | null;
   pills: Pill[]; pillars: Project['pillars']; partner_name: string | null; partner_people: string[]; cadence: Cadence[];
-  workstreams: string[]; target_label: string | null; created_by: string | null;
+  workstreams: string[]; target_label: string | null; created_by: string | null; archived_at: string | null; archived_by: string | null;
 };
 
 const toProject = (r: ProjectRow): Project => ({
@@ -36,6 +37,7 @@ const toProject = (r: ProjectRow): Project => ({
   kind: r.kind, eyebrow: r.eyebrow, phase: r.phase, intro: r.intro, launchOn: r.launch_on, pills: r.pills ?? [],
   pillars: r.pillars ?? [], partnerName: r.partner_name, partnerPeople: r.partner_people ?? [], cadence: r.cadence ?? [],
   workstreams: r.workstreams ?? [], targetLabel: r.target_label, createdBy: r.created_by,
+  archivedAt: r.archived_at, archivedBy: r.archived_by,
 });
 
 export async function teamProjects(db: Tx, teamId: string): Promise<Project[]> {
@@ -186,6 +188,7 @@ const MINUTES_OPS = new Set(['importMinutes', 'acceptProposal', 'rejectProposal'
 
 export async function planOp(db: Db, meId: string, projectId: string, o: PlanOp, today = todayIst()): Promise<{ note?: string }> {
   const project = await getProject(db, projectId);
+  if (project.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if (project.kind !== 'plan' && !MINUTES_OPS.has(o.op)) throw bad('not_a_plan', 'This project has no plan board.');
   // On a task board, an accepted step becomes a task, with all the task rules (owner, a date kept for good).
   if (project.kind === 'tasks' && (o.op === 'acceptProposal' || o.op === 'acceptSure')) return acceptAsTasks(db, meId, project, o);
@@ -585,7 +588,7 @@ export async function projectPeopleMap(db: Tx, teamId: string): Promise<Record<s
 // Mirrors the joinProject rule in lib/service.ts, so the owner picker offers "+ Add someone" only where it will work.
 export async function projectsMayAddTo(db: Tx, teamId: string, personId: string, lead: boolean): Promise<string[]> {
   const { rows } = await db.query<{ id: string }>(
-    `SELECT id FROM projects WHERE team_id = $1 AND ($3 OR owner_id = $2)`, [teamId, personId, lead]);
+    `SELECT id FROM projects WHERE team_id = $1 AND archived_at IS NULL AND ($3 OR owner_id = $2)`, [teamId, personId, lead]);
   return rows.map((r) => r.id);
 }
 
@@ -655,10 +658,53 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
   return getProject(db, id);
 }
 
+// Archive and restore (12 Oct). The project owner, a lead or an admin, the same rule as updateProject.
+// Archiving is refused while work is open, so nothing is left hanging: finish, drop or move it first.
+// An archived project keeps its tasks and log, and takes no new tasks. Both moves are logged as project events.
+async function archiveContext(tx: Tx, meId: string, id: string): Promise<Project> {
+  const { rows } = await tx.query<ProjectRow>(`SELECT * FROM projects WHERE id = $1 FOR UPDATE`, [id]);
+  if (!rows[0]) throw notFound('No such project.');
+  const p = toProject(rows[0]);
+  const roles = await rolesOf(tx, p.teamId, meId);
+  if (roles.size === 0) throw forbidden('You are not on this project’s team.');
+  if (p.ownerId !== meId && !isLeadOrAdmin(roles)) throw forbidden('Only the project owner or a lead can archive or restore a project.');
+  return p;
+}
+
+export async function archiveProject(db: Db, meId: string, id: string): Promise<Project> {
+  await db.transaction(async (tx) => {
+    const p = await archiveContext(tx, meId, id);
+    if (p.archivedAt) throw bad('invalid_body', 'This project is already archived.');
+    const { rows: t } = await tx.query<{ n: number }>(`SELECT count(*)::int AS n FROM tasks WHERE project_id = $1 AND status_category = 'open'`, [id]);
+    const { rows: l } = await tx.query<{ n: number }>(`SELECT count(*)::int AS n FROM plan_lines WHERE project_id = $1 AND NOT removed AND status <> 'Done'`, [id]);
+    const parts = [
+      t[0].n ? `${t[0].n} open ${t[0].n === 1 ? 'task' : 'tasks'}` : '',
+      l[0].n ? `${l[0].n} open ${l[0].n === 1 ? 'line of work' : 'lines of work'}` : '',
+    ].filter(Boolean);
+    if (parts.length) throw bad('open_work', `This project still has ${parts.join(' and ')}. Finish, drop or move them first, then archive it.`);
+    await tx.query(`UPDATE projects SET archived_at = now(), archived_by = $2 WHERE id = $1`, [id, meId]);
+    await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,'_archived',NULL,$3::jsonb,$4,'app',now())`,
+      [newId('evt'), id, JSON.stringify({ name: p.name }), meId]);
+  });
+  return getProject(db, id);
+}
+
+export async function restoreProject(db: Db, meId: string, id: string): Promise<Project> {
+  await db.transaction(async (tx) => {
+    const p = await archiveContext(tx, meId, id);
+    if (!p.archivedAt) throw bad('invalid_body', 'This project is not archived.');
+    await tx.query(`UPDATE projects SET archived_at = NULL, archived_by = NULL WHERE id = $1`, [id]);
+    await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,'_restored',NULL,$3::jsonb,$4,'app',now())`,
+      [newId('evt'), id, JSON.stringify({ name: p.name }), meId]);
+  });
+  return getProject(db, id);
+}
+
 export async function updateProject(db: Db, meId: string, id: string, input: ProjectInput): Promise<Project> {
   const p = await getProject(db, id);
   const roles = await rolesOf(db, p.teamId, meId);
   if (p.ownerId !== meId && !isLeadOrAdmin(roles)) throw forbidden('Only the project owner or a lead can change the project.');
+  if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
   const c = clean(input);
   await db.transaction(async (tx) => {

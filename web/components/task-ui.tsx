@@ -156,7 +156,9 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 }) {
   const desc = t.description;
   const router = useRouter();
-  if (useReadOnly()) { canTick = false; onStatus = undefined; } // viewing as someone else: look, do not change
+  // Viewing as someone else: look, do not change. No checkbox and no empty gutter where it was, so rows still line up.
+  const readOnly = useReadOnly();
+  if (readOnly) { canTick = false; onStatus = undefined; }
   const [ticked, setTicked] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const due = dueText(t, today);
@@ -175,8 +177,8 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
     </button>
   );
   return (
-    <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}`}>
-      <span className="trow-check">
+    <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}${readOnly ? ' no-check' : ''}`}>
+      {!readOnly && <span className="trow-check">
         {!closed && canTick && (
           <input type="checkbox" aria-label={`Mark “${t.title}” done`} checked={ticked} disabled={ticked}
             onChange={async () => {
@@ -185,7 +187,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               catch (e) { setTicked(false); setErr((e as Error).message); }
             }} />
         )}
-      </span>
+      </span>}
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
       {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar name={owner} />{owner.split(' ')[0]}</PersonLink>}
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>

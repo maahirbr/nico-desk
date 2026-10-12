@@ -95,9 +95,9 @@ async function activeMember(db: Tx, teamId: string, personId: string, field: str
   if (roles.size === 0) throw bad('owner_not_on_roster', 'That person is not an active member of this team.', field);
 }
 
-export async function listProjects(db: Tx, teamId: string): Promise<{ id: string; name: string }[]> {
-  const { rows } = await db.query<{ id: string; name: string }>(
-    `SELECT id, name FROM projects WHERE team_id = $1 ORDER BY name`,
+export async function listProjects(db: Tx, teamId: string): Promise<{ id: string; name: string; archived: boolean }[]> {
+  const { rows } = await db.query<{ id: string; name: string; archived: boolean }>(
+    `SELECT id, name, archived_at IS NOT NULL AS archived FROM projects WHERE team_id = $1 ORDER BY name`,
     [teamId],
   );
   return rows;
@@ -258,8 +258,9 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
     if (roles.size === 0) throw forbidden('You are not on this team.');
     await activeMember(tx, input.teamId, input.ownerId, 'ownerId');
     if (input.projectId) {
-      const { rows } = await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND team_id = $2`, [input.projectId, input.teamId]);
+      const { rows } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, input.teamId]);
       if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
+      if (rows[0].archived_at) throw bad('project_archived', 'This project is archived. Restore it to add tasks.', 'projectId');
       await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
     const at = new Date().toISOString();
@@ -306,10 +307,13 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
       if (input.ownerId !== undefined && input.ownerId !== c.row.owner_id) {
         await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
         if (input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
+        // The person who had the task hears it moved, in the app only. Not when they moved it themselves.
+        if (c.row.owner_id !== meId) await notice(tx, c.row.owner_id, id, 'reassigned_away', todayIst());
       }
       if (input.projectId) {
-        const { rows } = await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND team_id = $2`, [input.projectId, c.row.team_id]);
+        const { rows } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, c.row.team_id]);
         if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
+        if (rows[0].archived_at && input.projectId !== c.row.project_id) throw bad('project_archived', 'That project is archived. Restore it to move a task into it.', 'projectId');
       }
       const projectId = input.projectId !== undefined ? input.projectId : c.row.project_id;
       const ownerId = input.ownerId ?? c.row.owner_id;
@@ -386,6 +390,10 @@ export async function reopenTask(db: Db, meId: string, id: string, input: { vers
     if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can reopen a task.');
     if (row.version !== input.version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
     if (row.status_category === 'open') throw bad('invalid_body', 'The task is already open.');
+    if (row.project_id) {
+      const { rows: pr } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1`, [row.project_id]);
+      if (pr[0]?.archived_at) throw bad('project_archived', 'This task’s project is archived. Restore the project to reopen the task.');
+    }
     const at = new Date().toISOString();
     await tx.query(
       `UPDATE tasks SET status = 'open', status_category = 'open', closed_at = NULL, health = COALESCE(health, 'on_track'),
@@ -720,13 +728,15 @@ export async function patchPerson(
 
 // ---------- project log ----------
 
-// The update log across one project's tasks, newest first.
+// The update log across one project's tasks, newest first. It also holds the project's own archive and restore events.
 export async function projectLog(db: Tx, projectId: string, limit = 30): Promise<(LogLine & { taskTitle: string })[]> {
   const { rows } = await db.query<LogLine & { taskTitle: string }>(
-    `SELECT e.*, p.display_name AS "actorName", t.title AS "taskTitle" FROM events e
-     JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
+    `SELECT e.*, p.display_name AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
+     LEFT JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
+     LEFT JOIN projects pr ON pr.id = e.entity_id AND e.entity_type = 'project'
      LEFT JOIN people p ON p.id = e.actor_id
-     WHERE t.project_id = $1 ORDER BY e.at DESC, e.id DESC LIMIT $2`,
+     WHERE t.project_id = $1 OR (e.entity_type = 'project' AND e.entity_id = $1 AND e.field IN ('_archived','_restored'))
+     ORDER BY e.at DESC, e.id DESC LIMIT $2`,
     [projectId, limit],
   );
   return rows;

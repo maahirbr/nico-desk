@@ -27,7 +27,7 @@ import { notify } from './toast';
 // row; edits open in the row; the side panel has the full detail. Every change goes through /api/v1.
 
 type P = { id: string; name: string; role: string; department: string };
-type LogItem = { id: string; at: string; who: string; whoId?: string | null; text: string; task: string; taskId: string; reason: string | null };
+type LogItem = { id: string; at: string; who: string; whoId?: string | null; text: string; task: string; taskId: string | null; reason: string | null };
 
 async function call(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
@@ -261,7 +261,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             <ol className="log">
               {log.map((e) => (
                 <li key={e.id}>
-                  <span className="when">{e.at} · <Link href={`/tasks/${e.taskId}`}>{e.task}</Link></span>
+                  <span className="when">{e.at} · {e.taskId ? <Link href={`/tasks/${e.taskId}`}>{e.task}</Link> : <span>{e.task}</span>}</span>
                   <span><PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
                 </li>
               ))}

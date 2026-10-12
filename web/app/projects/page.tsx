@@ -14,55 +14,64 @@ export default async function Projects() {
   const { d, names, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
   const [projects, counts] = await Promise.all([teamProjects(d, me.team.id), projectCounts(d, me.team.id)]);
   const t = today();
-  const sorted = [...projects].sort((a, b) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999'));
+  const bySoonest = (a: (typeof projects)[number], b: (typeof projects)[number]) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999');
+  const live = projects.filter((p) => !p.archivedAt).sort(bySoonest);
+  const archived = projects.filter((p) => p.archivedAt).sort(bySoonest); // closed projects: out of the main list, still readable
   const members = Object.fromEntries(await Promise.all(projects.map(async (p) => [p.id, await projectMembers(d, p.id)] as const)));
   const STATUS: Record<string, { word: string; tone: string }> = {
     on_track: { word: 'On track', tone: 'ok' }, at_risk: { word: 'At risk', tone: 'risk' }, off_track: { word: 'Off track', tone: 'late' },
   };
+  const card = (p: (typeof projects)[number]) => {
+    const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
+    const total = c.open + c.done;
+    const cd = p.launchOn ? countdown(t, p.launchOn) : null;
+    const team = [p.ownerId, ...membersExceptLead(members[p.id] ?? [], p.ownerId).map((m) => m.personId)];
+    const st = STATUS[p.status];
+    return (
+      <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
+        <div className="pcard-top">
+          <h2 className="pcard-name">{p.name}</h2>
+          {p.archivedAt ? <span className="st st-status tone-idle">Archived</span> : <span className={`st st-status tone-${st.tone}`}>{st.word}</span>}
+        </div>
+        <div className="kind-tag">
+          <span className="kind-word">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>
+          {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
+        </div>
+        {p.intro && <p className="pcard-goal">{p.intro}</p>}
+        <div className="pcard-progress">
+          <span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span>
+          <span className="small"><b>{c.done}</b> done · <b>{c.open}</b> open{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>
+        </div>
+        <div className="pcard-foot">
+          <span className="avs" title={team.map((id) => names[id]).join(', ')}>
+            {team.slice(0, 5).map((id) => <Avatar key={id} name={names[id] ?? '?'} />)}
+            {team.length > 5 && <span className="av more">+{team.length - 5}</span>}
+          </span>
+          {p.launchOn ? (
+            <span className="pcard-date">
+              <b>{fmtDate(p.launchOn)}</b>
+              <span className={cd?.past ? 'late-text' : 'dim'}>{cd?.past ? 'passed' : `${cd?.months ? `${cd.months} mo ` : ''}${cd?.days} d to go`}</span>
+            </span>
+          ) : <span className="dim small">No date</span>}
+        </div>
+      </Link>
+    );
+  };
   return (
     <div className="calm">
       <header className="page-head">
-        <div><h1>Projects</h1><p className="summary">{projects.length} projects · soonest date first</p></div>
+        <div><h1>Projects</h1><p className="summary">{live.length} projects · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
         {(isLead || isAdmin) && !readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
       <div className="pcards">
-        {sorted.map((p) => {
-          const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
-          const total = c.open + c.done;
-          const cd = p.launchOn ? countdown(t, p.launchOn) : null;
-          const team = [p.ownerId, ...membersExceptLead(members[p.id] ?? [], p.ownerId).map((m) => m.personId)];
-          const st = STATUS[p.status];
-          return (
-            <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
-              <div className="pcard-top">
-                <h2 className="pcard-name">{p.name}</h2>
-                <span className={`st st-status tone-${st.tone}`}>{st.word}</span>
-              </div>
-              <div className="kind-tag">
-                <span className="kind-word">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>
-                {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
-              </div>
-              {p.intro && <p className="pcard-goal">{p.intro}</p>}
-              <div className="pcard-progress">
-                <span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span>
-                <span className="small"><b>{c.done}</b> done · <b>{c.open}</b> open{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>
-              </div>
-              <div className="pcard-foot">
-                <span className="avs" title={team.map((id) => names[id]).join(', ')}>
-                  {team.slice(0, 5).map((id) => <Avatar key={id} name={names[id] ?? '?'} />)}
-                  {team.length > 5 && <span className="av more">+{team.length - 5}</span>}
-                </span>
-                {p.launchOn ? (
-                  <span className="pcard-date">
-                    <b>{fmtDate(p.launchOn)}</b>
-                    <span className={cd?.past ? 'late-text' : 'dim'}>{cd?.past ? 'passed' : `${cd?.months ? `${cd.months} mo ` : ''}${cd?.days} d to go`}</span>
-                  </span>
-                ) : <span className="dim small">No date</span>}
-              </div>
-            </Link>
-          );
-        })}
+        {live.map(card)}
       </div>
+      {archived.length > 0 && (
+        <details className="archived-group">
+          <summary>Archived <span className="count-badge">{archived.length}</span></summary>
+          <div className="pcards">{archived.map(card)}</div>
+        </details>
+      )}
     </div>
   );
 }
