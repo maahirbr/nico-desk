@@ -178,6 +178,25 @@ describe('roles and mirrors', () => {
     expect([o.statusCategory, o.closedAt]).toEqual(['open', null]);
   });
 
+  it('lists finished tasks newest first, dropped ones by when they were dropped', async () => {
+    const { latestEndedFirst } = await import('../lib/derive');
+    const open = (await s.teamTasks(db, TEAM_ID, AS_OF)).filter((x) => x.statusCategory === 'open' && x.origin === 'app').slice(0, 2);
+    const first = await s.closeTask(db, open[0].ownerId, open[0].id, { version: open[0].version, as: 'done' });
+    await new Promise((r) => setTimeout(r, 5));
+    const second = await s.closeTask(db, open[1].ownerId, open[1].id, { version: open[1].version, as: 'dropped', reason: 'Not needed' });
+    expect(second.endedAt).not.toBeNull();
+    expect([first, second].sort(latestEndedFirst).map((t) => t.id)).toEqual([second.id, first.id]);
+  });
+
+  it('sorts finished lists newest first, oldest first or by due date, with unfinished tasks last', async () => {
+    const { sortEnded } = await import('../lib/derive');
+    type T = Parameters<typeof sortEnded>[0][number];
+    const t = (id: string, endedAt: string | null, dueOn: string, firstDueOn = dueOn) => ({ id, endedAt, dueOn, firstDueOn }) as T;
+    const list = [t('a', '2026-10-05T10:00:00.000Z', '2026-10-09'), t('b', null, '2026-10-01'), t('c', '2026-10-07T10:00:00.000Z', '2026-10-02', '2026-10-12')];
+    const ids = (by: 'recent' | 'oldest' | 'due', due?: 'dueOn' | 'firstDueOn') => sortEnded(list, by, due).map((x) => x.id).join('');
+    expect([ids('recent'), ids('oldest'), ids('due'), ids('due', 'firstDueOn')]).toEqual(['cab', 'acb', 'bca', 'bac']);
+  });
+
   it('lets an admin reopen, since an admin can do what a lead can', async () => {
     const t = await openAppTask();
     const d = await s.closeTask(db, t.ownerId, t.id, { version: t.version, as: 'done' });

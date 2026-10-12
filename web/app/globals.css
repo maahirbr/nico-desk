@@ -766,6 +766,10 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .drawer-foot { display: flex; gap: var(--space-md); flex-wrap: wrap; padding-top: var(--space-sm); border-top: var(--rule) solid var(--hairline); }
 .act.danger { color: var(--late); }
 .small-toggle { font: var(--type-meta); margin: 0 0 var(--space-xs); color: var(--ink-3); }
+/* A finished list's toggle with its sort picker on the same line. */
+.list-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; margin: 0 0 var(--space-xs); }
+.list-head .small-toggle { margin: 0; }
+.sort-pick { font: var(--type-meta); }
 .st-wrap, .status-picker { display: inline-flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
 td .flag { margin-top: var(--space-xxs); }
 

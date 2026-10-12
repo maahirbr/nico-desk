@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import type { Task } from '@/lib/derive';
+import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { attentionList } from '@/lib/attention';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, Person, PersonLink } from './chips';
 import { Help } from './HelpMode';
+import { SortPick } from './SortPick';
 
 // The on-time ledger. Judged against the date first given (INTENT.md principle 1). Every number
 // opens the tasks behind it, with each date move and its reason. The cards show delivery habits per
@@ -62,7 +63,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
     const d = new Date(`${from}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i); return d.toISOString().slice(0, 10);
   }).reverse();
   const sum = (rs: LedgerRow[], k: keyof LedgerRow) => rs.reduce((n, r) => n + (r[k] as number), 0);
-  const show = (title: string, list: Task[]) => list.length && setDrill({ title, tasks: [...list].sort((a, b) => a.firstDueOn.localeCompare(b.firstDueOn)) });
+  const show = (title: string, list: Task[]) => list.length && setDrill({ title, tasks: list });
   const N = ({ n, title, list, warn }: { n: number | string; title: string; list: Task[]; warn?: boolean }) =>
     list.length ? <button className={`num-btn${warn ? ' warn' : ''}`} onClick={() => show(title, list)} title="See the tasks">{n}</button> : <span className="num-zero">{n}</span>;
   const kAll = keptOf(tasks);
@@ -285,6 +286,10 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 function DrillPanel({ drill, names, projectNames, today, onClose }: {
   drill: NonNullable<Drill>; names: Record<string, string>; projectNames: Record<string, string>; today: string; onClose: () => void;
 }) {
+  const [by, setBy] = useState<EndedSort>('recent');
+  // The ledger judges on-time against the first date, so its date sort uses that one.
+  const tasks = sortEnded(drill.tasks, by, 'firstDueOn');
+  const anyEnded = drill.tasks.some((t) => t.endedAt);
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', k);
@@ -294,8 +299,9 @@ function DrillPanel({ drill, names, projectNames, today, onClose }: {
     <div className="overlay drawer-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <aside className="drawer" role="dialog" aria-modal="true" aria-label={drill.title}>
         <div className="drawer-top"><h2 className="drill-title">{drill.title} <span className="count-badge">{drill.tasks.length}</span></h2><button className="x" aria-label="Close" onClick={onClose}>×</button></div>
+        {anyEnded && tasks.length > 1 && <div className="list-head"><SortPick value={by} onChange={setBy} dueLabel="First due date" /></div>}
         <ol className="drill-list">
-          {drill.tasks.map((t) => {
+          {tasks.map((t) => {
             const c = closedOn(t);
             const end = t.statusCategory === 'done' && c
               ? { text: `Closed ${fmtDate(c)}`, rel: days(t.firstDueOn, c), done: true }

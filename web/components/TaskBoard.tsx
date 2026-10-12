@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
-import type { Task } from '@/lib/derive';
+import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Person, PersonLink } from './chips';
@@ -17,6 +17,7 @@ import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerP
 import { useReadOnly } from './readonly';
 import { MotionRow, MovedDate } from './rowmotion';
 import { Select } from './Select';
+import { SortPick } from './SortPick';
 import { canMoveTo } from './statusRules';
 import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, StatusMenu, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
@@ -60,6 +61,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [importOpen, setImportOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
+  const [closedSort, setClosedSort] = useState<EndedSort>('recent');
   const [note, setNote] = useState<string | null>(null);
   const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
@@ -90,7 +92,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn);
   const openRows = visible.filter((t) => t.statusCategory === 'open').sort(byDue);
-  const closedRows = visible.filter((t) => t.statusCategory !== 'open').sort((a, b) => b.dueOn.localeCompare(a.dueOn));
+  const closedRows = sortEnded(visible.filter((t) => t.statusCategory !== 'open'), closedSort);
   const involved = people.filter((p) => tasks.some((t) => t.ownerId === p.id));
   const filtered = !!(tile || who || ws !== 'All');
 
@@ -238,9 +240,12 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             : <div className="empty-block"><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
           {closedRows.length > 0 && tile !== 'done' && (
             <>
-              <button className="log-toggle small-toggle" style={{ marginTop: 22 }} aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
-                <span aria-hidden>{doneOpen ? '▾' : '▸'}</span> Completed tasks <span className="count-badge">{closedRows.length}</span>
-              </button>
+              <div className="list-head" style={{ marginTop: 22 }}>
+                <button className="log-toggle small-toggle" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
+                  <span aria-hidden>{doneOpen ? '▾' : '▸'}</span> Completed tasks <span className="count-badge">{closedRows.length}</span>
+                </button>
+                {doneOpen && closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
+              </div>
               {doneOpen && table(closedRows, '')}
             </>
           )}

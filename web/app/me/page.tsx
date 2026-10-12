@@ -1,4 +1,5 @@
 import { requireMe } from '@/lib/auth';
+import { latestEndedFirst } from '@/lib/derive';
 import { homeUpdates, lookups } from '@/lib/page';
 import { listNotices, myTasks, teamTasks } from '@/lib/service';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
@@ -21,9 +22,9 @@ export default async function Home() {
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), teamTasks(d, me.team.id), teamProjects(d, me.team.id),
   ]);
   const weekStart = mondayOf(t);
-  const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart);
+  const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart).sort(latestEndedFirst);
   // Dropped tasks fold away under Home's own collapsed list. A drop sets no closed_at, so all of them show there.
-  const dropped = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'dropped');
+  const dropped = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'dropped').sort(latestEndedFirst);
   const assignedNotice = Object.fromEntries(notices.filter((n) => n.kind === 'assigned').map((n) => [n.taskId, n.id]));
   return (
     <HomeView

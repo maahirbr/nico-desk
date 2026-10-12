@@ -109,7 +109,7 @@ async function loadTasks(db: Tx, where: string, params: unknown[], today: string
   const { rows } = await db.query<TaskRow>(`SELECT * FROM tasks WHERE ${where}`, params);
   if (rows.length === 0) return [];
   const { rows: events } = await db.query<EventRow>(
-    `SELECT * FROM events WHERE entity_type = 'task' AND entity_id = ANY($1) AND field = 'due_on' ORDER BY at, id`,
+    `SELECT * FROM events WHERE entity_type = 'task' AND entity_id = ANY($1) AND field IN ('due_on', 'status_category') ORDER BY at, id`,
     [rows.map((r) => r.id)],
   );
   const byTask = new Map<string, EventRow[]>();

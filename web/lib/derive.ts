@@ -80,9 +80,22 @@ export type Task = {
   createdBy: string | null;
   createdAt: string;
   closedAt: string | null;
+  endedAt: string | null; // when it was done or dropped (a drop sets no closed_at, so its status event)
   version: number;
   links: TaskLink[]; // filled by loadTasks in lib/service.ts
 };
+
+// Completed lists: the most recently finished first.
+export const latestEndedFirst = (a: Task, b: Task) => (b.endedAt ?? '').localeCompare(a.endedAt ?? '');
+
+// The sort picker on finished lists. Ties, and tasks not yet finished, fall back to the due date.
+export type EndedSort = 'recent' | 'oldest' | 'due';
+export function sortEnded(list: Task[], by: EndedSort, due: 'dueOn' | 'firstDueOn' = 'dueOn'): Task[] {
+  const byDue = (a: Task, b: Task) => a[due].localeCompare(b[due]);
+  const oldest = (a: Task, b: Task) => !a.endedAt || !b.endedAt ? (a.endedAt ? -1 : b.endedAt ? 1 : 0) : a.endedAt.localeCompare(b.endedAt);
+  const cmp = by === 'due' ? byDue : (a: Task, b: Task) => (by === 'recent' ? latestEndedFirst(a, b) : oldest(a, b)) || byDue(a, b);
+  return [...list].sort(cmp);
+}
 
 export function renegotiations(events: EventRow[]): Renegotiation[] {
   return events
@@ -147,6 +160,9 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     createdBy: row.created_by,
     createdAt: row.created_at,
     closedAt: row.closed_at,
+    endedAt: row.status_category === 'open' ? null : row.closed_at
+      ? new Date(row.closed_at).toISOString()
+      : events.filter((e) => e.field === 'status_category').map((e) => new Date(e.at).toISOString()).sort().pop() ?? null,
     version: row.version,
     links: [],
   };

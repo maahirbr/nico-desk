@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import type { Task } from '@/lib/derive';
+import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { PersonLink } from './chips';
+import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
@@ -23,6 +24,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const [adding, setAdding] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const [showDropped, setShowDropped] = useState(false);
+  const [doneSort, setDoneSort] = useState<EndedSort>('recent');
+  const [droppedSort, setDroppedSort] = useState<EndedSort>('recent');
   const isNew = new Set(newIds);
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : '', t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const groups = [
@@ -84,19 +87,25 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {done.length > 0 && (
         <section className="group">
-          <button className="log-toggle small-toggle" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
-            <span aria-hidden>{showDone ? '▾' : '▸'}</span> Done this week <span className="count-badge">{done.length}</span>
-          </button>
-          {showDone && <div className="tlist">{done.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
+          <div className="list-head">
+            <button className="log-toggle small-toggle" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
+              <span aria-hidden>{showDone ? '▾' : '▸'}</span> Done this week <span className="count-badge">{done.length}</span>
+            </button>
+            {showDone && done.length > 1 && <SortPick value={doneSort} onChange={setDoneSort} />}
+          </div>
+          {showDone && <div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
         </section>
       )}
 
       {dropped.length > 0 && (
         <section className="group">
-          <button className="log-toggle small-toggle" aria-expanded={showDropped} onClick={() => setShowDropped(!showDropped)}>
-            <span aria-hidden>{showDropped ? '▾' : '▸'}</span> Dropped <span className="count-badge">{dropped.length}</span>
-          </button>
-          {showDropped && <div className="tlist">{dropped.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
+          <div className="list-head">
+            <button className="log-toggle small-toggle" aria-expanded={showDropped} onClick={() => setShowDropped(!showDropped)}>
+              <span aria-hidden>{showDropped ? '▾' : '▸'}</span> Dropped <span className="count-badge">{dropped.length}</span>
+            </button>
+            {showDropped && dropped.length > 1 && <SortPick value={droppedSort} onChange={setDroppedSort} />}
+          </div>
+          {showDropped && <div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
         </section>
       )}
 

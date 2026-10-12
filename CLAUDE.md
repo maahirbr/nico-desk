@@ -267,6 +267,12 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   under the name, as the same CSS mask the sign-in page uses, tinted with the sub-label colour. The "Help is on" bar is gone,
   at the repo owner's call: the pressed `?` button shows that help is on, and the account menu opens the shortcut sheet.
   Rollback: `git revert` this commit.
+- 2026-10-12 · Opus 5.5 · The PM's commit `ddd8ba2` (branch `mvp-local-desk-look`) merged: finished lists put the task
+  finished most recently on top, on Home (done this week, dropped) and on project boards. A drop sets no close time, so its
+  time comes from the task's last status event (`endedAt` in `web/lib/derive.ts`). At the repo owner's call, the ledger's
+  drill lists take the same default, and every finished list gets a sort picker (`web/components/SortPick.tsx`): newest
+  finished first, oldest finished first, or due date. In the ledger the date option sorts by the first due date, since the
+  ledger judges on-time against that date. The choice lasts until the page reloads. Rollback: `git revert -m 1` the merge.
 
 ## VERIFY
 
@@ -277,7 +283,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `157 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `159 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
