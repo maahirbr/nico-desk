@@ -5,8 +5,9 @@ import { lookups } from '@/lib/page';
 import { getTask, markAssignedSeen, taskLog } from '@/lib/service';
 import { fmtDate, fmtStamp, today } from '@/lib/time';
 import Link from 'next/link';
-import { Person, StatusChips, dueLine } from '@/components/chips';
+import { Person, PersonLink, StatusChips, dueLine } from '@/components/chips';
 import { TaskActions } from '@/components/client';
+import { TaskLinkChips } from '@/components/TaskLinks';
 import { groupLog } from '@/components/logText';
 import { Help } from '@/components/HelpMode';
 
@@ -50,7 +51,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
       </div>
       {t.blocked && (
         <div className="ask">
-          <span className="ask-label"><Help term={t.blocked.onId ? 'blocked_on' : 'status_blocked'}>{t.blocked.onId ? `Blocked on ${names[t.blocked.onId]}` : 'Blocked'}</Help></span> <span className="small dim">since {fmtStamp(t.blocked.at)}</span>
+          <span className="ask-label">{t.blocked.onId ? <><Help term="blocked_on">Blocked on</Help> <PersonLink id={t.blocked.onId}>{names[t.blocked.onId]}</PersonLink></> : <Help term="status_blocked">Blocked</Help>}</span> <span className="small dim">since {fmtStamp(t.blocked.at)}</span>
           <div>{t.blocked.ask}</div>
         </div>
       )}
@@ -59,7 +60,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           <div className="card card-pad">
             <p className="section-title">Details</p>
             <dl className="facts">
-              <dt>Owner</dt><dd><Person name={names[t.ownerId]} /></dd>
+              <dt>Owner</dt><dd><Person name={names[t.ownerId]} id={t.ownerId} /></dd>
               <dt>Due</dt><dd>{dueLine(t)}</dd>
               {t.renegotiations.length > 0 && (<><dt>Moves</dt><dd className="small">
                 {t.renegotiations.map((r) => (
@@ -70,11 +71,12 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                 Judged against the first date, {fmtDate(t.firstDueOn)}.
                 {t.metRevisedDate !== null && (t.metRevisedDate ? ' Met the renegotiated date.' : ' Missed the renegotiated date too.')}
               </dd></>)}
-              <dt>Project</dt><dd>{t.projectId ? projectNames[t.projectId] : 'None'}</dd>
+              <dt>Project</dt><dd>{t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId]}</Link> : 'None'}</dd>
+              {t.links.length > 0 && (<><dt>Links</dt><dd><TaskLinkChips links={t.links} max={t.links.length} /></dd></>)}
               {t.note && (<><dt>Note</dt><dd>{t.note}</dd></>)}
               {t.priority && (<><dt>Priority</dt><dd>{t.priority.value}, set by {names[t.priority.setBy]} on {fmtStamp(t.priority.setAt)}</dd></>)}
               <dt>Origin</dt><dd>{t.origin === 'app' ? 'Made in nico-desk' : t.origin === 'sheet' ? 'Read from a Sheet. Edit it there.' : 'From a meeting note'}</dd>
-              {t.createdBy && t.createdBy !== t.ownerId && (<><dt>Assigned by</dt><dd>{names[t.createdBy]}</dd></>)}
+              {t.createdBy && t.createdBy !== t.ownerId && (<><dt>Assigned by</dt><dd><PersonLink id={t.createdBy}>{names[t.createdBy]}</PersonLink></dd></>)}
             </dl>
           </div>
 
@@ -85,7 +87,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                 <li key={e.key}>
                   <span className="when">{fmtStamp(e.at)}</span>
                   <span>
-                    <b>{e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System')}</b>{' '}{e.text}
+                    <PersonLink id={e.actor_id}><b>{e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System')}</b></PersonLink>{' '}{e.text}
                   </span>
                 </li>
               ))}

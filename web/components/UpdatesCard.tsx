@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ago, seenCookieName, type UpdateGroup, type UpdateItem } from '@/lib/updates';
@@ -34,7 +35,7 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
       </div>
       {shown.map((g) => (
         <div key={g.projectId ?? 'none'} className="upd-group">
-          <h3 className="upd-project">{g.name}</h3>
+          <h3 className="upd-project">{g.projectId ? <Link className="rlink" href={`/projects/${g.projectId}`}>{g.name}</Link> : g.name}</h3>
           {g.rows.map((r) => (
             <button key={r.taskId} className={`callout-row upd-row${r.closed ? ' is-closed' : ''}`} onClick={() => onOpen(r.taskId)}>
               <span className="upd-mark" aria-hidden>{r.closed ? '✓' : '●'}</span>

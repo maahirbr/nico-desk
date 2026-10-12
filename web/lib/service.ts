@@ -1,6 +1,7 @@
 import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
+import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { isLeadOrAdmin } from './roles';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
@@ -113,7 +114,22 @@ async function loadTasks(db: Tx, where: string, params: unknown[], today: string
   );
   const byTask = new Map<string, EventRow[]>();
   for (const e of events) byTask.set(e.entity_id, [...(byTask.get(e.entity_id) ?? []), e]);
-  return rows.map((r) => derive(r, byTask.get(r.id) ?? [], today));
+  const links = await linksFor(db, rows.map((r) => r.id));
+  return rows.map((r) => ({ ...derive(r, byTask.get(r.id) ?? [], today), links: links.get(r.id) ?? [] }));
+}
+
+// ---------- links on a task ----------
+
+type LinkRow = { id: string; task_id: string; url: string; label: string | null; created_by: string | null; created_at: string };
+const toLink = (r: LinkRow): TaskLink => ({ id: r.id, taskId: r.task_id, url: r.url, label: r.label, createdBy: r.created_by, createdAt: r.created_at });
+
+// Oldest first, so a task's chips keep their order.
+export async function linksFor(db: Tx, taskIds: string[]): Promise<Map<string, TaskLink[]>> {
+  const out = new Map<string, TaskLink[]>();
+  if (taskIds.length === 0) return out;
+  const { rows } = await db.query<LinkRow>(`SELECT * FROM task_links WHERE task_id = ANY($1) ORDER BY created_at, id`, [taskIds]);
+  for (const r of rows) out.set(r.task_id, [...(out.get(r.task_id) ?? []), toLink(r)]);
+  return out;
 }
 
 export async function getTask(db: Tx, id: string, today = todayIst()): Promise<Task> {
@@ -448,6 +464,46 @@ export async function addUpdate(db: Db, meId: string, id: string, text: string):
   });
 }
 
+// Links share the edit rule of the task itself: its owner, a lead or admin, or the person who made it. A Sheet mirror takes none.
+// A link changes no task field, so it takes no version. Each add or remove writes one event, which the update log reads as one sentence.
+async function linkContext(tx: Tx, meId: string, taskId: string): Promise<TaskRow> {
+  const { rows } = await tx.query<TaskRow>(`SELECT * FROM tasks WHERE id = $1 FOR UPDATE`, [taskId]);
+  const row = rows[0];
+  if (!row) throw notFound('No such task.');
+  if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
+  const roles = await rolesIn(tx, row.team_id, meId);
+  if (roles.size === 0) throw forbidden('You are not on this task’s team.');
+  if (!(row.owner_id === meId || isLeadOrAdmin(roles) || row.created_by === meId)) throw forbidden();
+  return row;
+}
+
+export async function addTaskLink(db: Db, meId: string, taskId: string, input: { url: string; label?: string | null }): Promise<TaskLink> {
+  const checked = checkLinkUrl(input.url);
+  if ('error' in checked) throw bad('invalid_link', checked.error, 'url');
+  const label = input.label?.trim() || null;
+  if (label && label.length > LINK_LABEL_MAX) throw bad('invalid_link', `A label is up to ${LINK_LABEL_MAX} characters.`, 'label');
+  return db.transaction(async (tx) => {
+    await linkContext(tx, meId, taskId);
+    const { rows: have } = await tx.query<{ url: string }>(`SELECT url FROM task_links WHERE task_id = $1`, [taskId]);
+    if (have.length >= LINKS_PER_TASK) throw bad('too_many_links', `A task takes up to ${LINKS_PER_TASK} links. Remove one first.`, 'url');
+    if (have.some((h) => h.url === checked.url)) throw bad('duplicate_link', 'This task already has that link.', 'url');
+    const at = new Date().toISOString();
+    const id = newId('lnk');
+    await tx.query(`INSERT INTO task_links (id, task_id, url, label, created_by, created_at) VALUES ($1,$2,$3,$4,$5,$6)`, [id, taskId, checked.url, label, meId, at]);
+    await insertEvent(tx, { entityId: taskId, field: '_link_added', before: null, after: { id, url: checked.url, label }, actorId: meId, at });
+    return { id, taskId, url: checked.url, label, createdBy: meId, createdAt: at };
+  });
+}
+
+export async function removeTaskLink(db: Db, meId: string, taskId: string, linkId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await linkContext(tx, meId, taskId);
+    const { rows } = await tx.query<LinkRow>(`DELETE FROM task_links WHERE id = $1 AND task_id = $2 RETURNING *`, [linkId, taskId]);
+    if (!rows[0]) throw notFound('No such link on this task.');
+    await insertEvent(tx, { entityId: taskId, field: '_link_removed', before: { id: linkId, url: rows[0].url, label: rows[0].label }, after: null, actorId: meId, at: new Date().toISOString() });
+  });
+}
+
 // ---------- views ----------
 
 const byUrgency = (a: Task, b: Task) =>
@@ -719,4 +775,65 @@ export async function updatesView(
     events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, p.owner_id])), names, viewerId: meId, now, seenAt,
   });
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
+}
+
+// ---------- a person's page ----------
+
+export type PersonProject = { id: string; name: string; role: string };
+export type OnTimeRecord = { from: string; to: string; ahead: number; onTime: number; late: number; openPastDue: number; renegotiated: number };
+export type PersonView = {
+  person: Person;
+  projects: PersonProject[];
+  open: Task[]; // their open tasks
+  waitingOnThem: Task[]; // other people's open tasks blocked on this person
+  waitingOnOthers: Task[]; // their open tasks blocked on someone else
+  recent: (LogLine & { taskTitle: string })[]; // events on their tasks, or made by them, newest first
+  record: OnTimeRecord | null; // null unless the viewer is a lead, an admin, or this person (the ledger's own rule)
+};
+
+// What one teammate is doing, drawn only from what a teammate can already read: team tasks and their logs, and
+// project membership. The on-time record follows the ledger's rule: leads and admins see everyone, a member sees only their own.
+export async function personView(db: Db, teamId: string, meId: string, personId: string, today = todayIst(), weeks = 4): Promise<PersonView> {
+  const person = await getPerson(db, teamId, personId);
+  if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
+  const viewerRoles = await rolesIn(db, teamId, meId);
+  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles);
+  const tasks = await teamTasks(db, teamId, today);
+  const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
+  const open = tasks.filter((t) => t.statusCategory === 'open');
+  const [proj, rec] = await Promise.all([
+    db.query<{ id: string; name: string; role: string }>(
+      `SELECT pr.id, pr.name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
+       LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
+       WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) ORDER BY pr.name`,
+      [teamId, personId],
+    ),
+    db.query<LogLine & { taskTitle: string }>(
+      `SELECT e.*, a.display_name AS "actorName", t.title AS "taskTitle" FROM events e
+       JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
+       LEFT JOIN people a ON a.id = e.actor_id
+       WHERE t.team_id = $1 AND (t.owner_id = $2 OR e.actor_id = $2) ORDER BY e.at DESC, e.id DESC LIMIT 60`,
+      [teamId, personId],
+    ),
+  ]);
+  let record: OnTimeRecord | null = null;
+  if (mayRecord) {
+    const to = mondayOf(today);
+    const from = addDays(to, -7 * (weeks - 1));
+    const sum: OnTimeRecord = { from, to, ahead: 0, onTime: 0, late: 0, openPastDue: 0, renegotiated: 0 };
+    for (const r of await ledger(db, teamId, from, to, personId, today)) {
+      sum.ahead += r.closedAhead; sum.onTime += r.closedOnTime; sum.late += r.closedLate;
+      sum.openPastDue += r.openPastDue; sum.renegotiated += r.renegotiatedOpen + r.renegotiatedLate;
+    }
+    record = sum;
+  }
+  return {
+    person,
+    projects: proj.rows,
+    open: open.filter((t) => t.ownerId === personId).sort(byDue),
+    waitingOnThem: open.filter((t) => t.blocked?.onId === personId && t.ownerId !== personId).sort(byDue),
+    waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
+    recent: rec.rows,
+    record,
+  };
 }

@@ -1186,3 +1186,50 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 .upd-due.due-soon { color: var(--st-active-fg, var(--ink-2)); background: var(--st-active-bg, var(--sunk)); }
 .upd-due.due-later { color: var(--ink-3); background: var(--sunk); }
 @media (max-width: 520px) { .callout-row.upd-row { flex-wrap: wrap; } .upd-due { margin-left: calc(1em + var(--space-sm)); } }
+
+/* ---------- workstream 3: links on tasks, people pages, cross-links ---------- */
+/* A person's name or mark that goes to their page. Quiet until hovered. */
+a.plink { color: inherit; text-decoration: none; border-radius: var(--radius-control); }
+a.plink:hover { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.callout-link { font: inherit; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; text-align: left; }
+a.rlink { color: inherit; text-decoration: none; }
+a.rlink:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Link chips: the same pill pair as a status word, a built-in icon, opens in a new tab. */
+.lchips { display: inline-flex; flex-wrap: wrap; gap: var(--space-xs); min-width: 0; }
+.lchip-wrap { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.lchip { display: inline-flex; align-items: center; gap: var(--space-xxs); max-width: 100%; min-width: 0; font: var(--type-small); text-decoration: none; cursor: pointer;
+  padding: var(--space-xxs) var(--space-sm); border-radius: var(--radius-pill); background: var(--pill); color: var(--ink-2); box-shadow: var(--pill-ring); border: 0;
+  transition: background var(--dur-state) var(--ease), transform var(--dur-state) var(--ease); }
+.lchip:hover { background: var(--sunk); color: var(--ink); }
+.lchip:active { transform: scale(var(--press-scale)); }
+.lchip-icon { flex: none; }
+.lchip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 22ch; }
+.lchip-x { font: inherit; background: none; border: 0; cursor: pointer; color: var(--ink-3); min-width: var(--touch-min); min-height: var(--touch-min); border-radius: var(--radius-control); line-height: 1; }
+.lchip-x:hover { color: var(--ink); background: var(--sunk); }
+.trow-body { min-width: 0; display: flex; flex-direction: column; gap: var(--space-xxs); padding-bottom: var(--space-xs); }
+.trow-body .trow-main { grid-area: auto; padding-bottom: 0; }
+.drawer-links { display: flex; flex-direction: column; gap: var(--space-xs); }
+.drawer-links h3 { font: var(--type-meta); color: var(--ink-3); margin: 0; font-weight: 500; }
+.link-add { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: var(--space-xs); align-items: center; }
+.link-add input { min-width: 0; }
+@media (max-width: 520px) { .link-add { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 720px) { .trow-body { grid-area: m; } }
+
+/* People page */
+.pp-head { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+.pp-head h1 { margin: 0; }
+.person-meta { color: var(--ink-3); font: var(--type-meta); }
+.pg-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
+@media (max-width: 860px) { .pg-grid { grid-template-columns: minmax(0, 1fr); } }
+.pg-list { list-style: none; margin: 0; padding: 0; }
+.pg-list li { padding: var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); display: flex; gap: var(--space-sm); align-items: baseline; justify-content: space-between; min-width: 0; }
+.pg-list li:first-child { border-top: 0; }
+.pg-list .pg-main { min-width: 0; overflow-wrap: anywhere; }
+.pg-list .pg-side { flex: none; font: var(--type-small); color: var(--ink-3); white-space: nowrap; }
+.pg-list .pg-side.late { color: var(--late); }
+.pg-proj { font: var(--type-meta); color: var(--ink-2); font-weight: 600; margin: var(--space-md) 0 var(--space-xxs); }
+.pg-proj:first-child { margin-top: 0; }
+.pg-grid { margin-top: var(--space-md); }
+.pg-grid > .card { margin-top: 0; }
+.drawer-copy { margin-left: auto; margin-right: var(--space-xs); }

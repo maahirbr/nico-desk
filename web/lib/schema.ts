@@ -132,6 +132,17 @@ CREATE TABLE notices (
   UNIQUE (person_id, task_id, kind, for_date)
 );
 
+-- Links on a task (Docs, Sheets, Figma, decks, any web page). The task keeps its own version; a link change is logged as an event.
+CREATE TABLE task_links (
+  id          text PRIMARY KEY,
+  task_id     text NOT NULL REFERENCES tasks(id),
+  url         text NOT NULL CHECK (char_length(url) <= 2000),
+  label       text CHECK (char_length(label) BETWEEN 1 AND 80),
+  created_by  text REFERENCES people(id),
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX task_links_task ON task_links (task_id, created_at);
+
 -- Plan boards: lines of work with checkpoints, a partner's asks, and actions from meetings.
 -- A date moved later counts as a push and keeps the date first given (orig_due_on).
 

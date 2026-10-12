@@ -7,7 +7,8 @@ import { personCounts } from '@/lib/planUtil';
 import { addDays, fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
-import { Avatar } from './chips';
+import { Avatar, PersonLink } from './chips';
+import { useOpenTask } from './taskUrl';
 import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 
@@ -19,7 +20,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   meId: string; isLead: boolean; opts: Opt[]; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string } | null;
 }) {
   const [project, setProject] = useState('');
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
   const [q, setQ] = useState('');
   const [more, setMore] = useState<Record<string, boolean>>({});
@@ -94,7 +95,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         return (
           <section key={p.id} className="group">
             <h2 className="person-h">
-              <Avatar name={p.name} />{p.name}<span className="dim role">{p.role}</span>
+              <PersonLink id={p.id} className="person-cell"><Avatar name={p.name} />{p.name}</PersonLink><span className="dim role">{p.role}</span>
               <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} late</span>}</span>
             </h2>
             {overdueN.length > 0 && <><h3 className="next-h late-text">Late</h3><div className="tlist">{overdueN.map((t) => row(t))}</div></>}

@@ -6,7 +6,9 @@ import { Fragment, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
-import { Person } from './chips';
+import { Person, PersonLink } from './chips';
+import { TaskLinkChips } from './TaskLinks';
+import { useOpenTask } from './taskUrl';
 import { DateField } from './DateField';
 import { Help } from './HelpMode';
 import { ImportPanel, Inbox } from './Minutes';
@@ -24,7 +26,7 @@ import { notify } from './toast';
 // row; edits open in the row; the side panel has the full detail. Every change goes through /api/v1.
 
 type P = { id: string; name: string; role: string; department: string };
-type LogItem = { id: string; at: string; who: string; text: string; task: string; taskId: string; reason: string | null };
+type LogItem = { id: string; at: string; who: string; whoId?: string | null; text: string; task: string; taskId: string; reason: string | null };
 
 async function call(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
@@ -59,7 +61,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [addOpen, setAddOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
 
   async function planOp(body: Record<string, unknown>): Promise<boolean> {
@@ -133,9 +135,10 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             {ws === 'All' && t.workstream && <span className="ws-tag">{t.workstream}</span>}
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
-            {t.blocked && <div className="sub blocked-line"><Help term={t.blocked.onId ? 'blocked_on' : 'status_blocked'}>{t.blocked.onId ? `Waiting on ${names[t.blocked.onId]}:` : 'Blocked:'}</Help> {t.blocked.ask}</div>}
+            {t.blocked && <div className="sub blocked-line">{t.blocked.onId ? <><Help term="blocked_on">Waiting on</Help> <PersonLink id={t.blocked.onId}>{names[t.blocked.onId]}</PersonLink>: </> : <><Help term="status_blocked">Blocked</Help>: </>}{t.blocked.ask}</div>}
+            {t.links.length > 0 && <div className="sub"><TaskLinkChips links={t.links} onMore={() => { setOpenId(t.id); setStartStatus(undefined); }} /></div>}
           </td>
-          <td data-label="Owner"><Person name={names[t.ownerId] ?? t.ownerId} /></td>
+          <td data-label="Owner"><Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /></td>
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
             <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
             {t.dateMoves > 0 && t.statusCategory === 'open' && (
@@ -254,7 +257,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
               {log.map((e) => (
                 <li key={e.id}>
                   <span className="when">{e.at} · <Link href={`/tasks/${e.taskId}`}>{e.task}</Link></span>
-                  <span><b>{e.who}</b> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
+                  <span><PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
                 </li>
               ))}
             </ol>

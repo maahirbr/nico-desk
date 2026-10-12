@@ -18,7 +18,7 @@ export default async function Admin() {
         <tbody>
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}>
-              <td><Person name={p.displayName} /></td>
+              <td><Person name={p.displayName} id={p.id} /></td>
               <td data-label="Title">{p.role}</td>
               <td data-label="Email" className="mono small">{p.email}</td>
               <td data-label="Access" className="small" style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</td>
