@@ -4,6 +4,9 @@ One place where a Nicobar team runs its week: tasks and owners, projects and wha
 meeting minutes turned into tasks, linked to the company context layer. Piloted with one small
 team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HANDOFF.md` is the brief and the reading list.
 
+**Working on `maahir/mvp` before or after the 12 Oct demo? Read `docs/HANDOFF-12-OCT.md` first:** what changed,
+the baseline, the feedback and its state, the UI direction, and the work in flight.
+
 ## ARCHITECTURE
 
 - `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Sign-in is Google OAuth, direct to Google with no Supabase Auth (`web/lib/google.ts`, `web/app/api/auth/google/`), on when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set; the roster picker stays behind `NICO_DEV_SIGNIN=1`. Both end in the same signed `nd_session` cookie and the same `checkSignIn` roster and domain check. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
