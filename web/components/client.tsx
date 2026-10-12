@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
+import { CopyInvite } from './CopyLink';
 import { DateField } from './DateField';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
@@ -380,11 +381,12 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   const { busy, error, run } = useSubmit();
   const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false };
   const [f, setF] = useState(blank);
+  const [added, setAdded] = useState<string | null>(null); // the email just added, for the Copy invite line
   return (
     <form className="card form-card stack" onSubmit={async (e) => {
       e.preventDefault();
       const appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
-      if (await run(`/teams/${teamId}/people`, 'POST', { displayName: f.displayName, role: f.role, department: f.department, email: f.email, appRoles })) setF(blank);
+      if (await run(`/teams/${teamId}/people`, 'POST', { displayName: f.displayName, role: f.role, department: f.department, email: f.email, appRoles })) { setAdded(f.email); setF(blank); }
     }}>
       <div className="row">
         <label className="f"><span>Name</span><input required value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} /></label>
@@ -398,11 +400,12 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
         <button className="btn" disabled={busy}>Add to roster</button>
       </div>
       <Err e={error} />
+      {added && <p className="small" role="status">Added {added}. <CopyInvite email={added} /> to paste the sign-in details to them.</p>}
     </form>
   );
 }
 
-export function PersonControls({ id, active, roles, self }: { id: string; active: boolean; roles: string[]; self: boolean }) {
+export function PersonControls({ id, active, roles, self, email }: { id: string; active: boolean; roles: string[]; self: boolean; email: string }) {
   const { busy, error, run } = useSubmit();
   const toggle = (r: string) => (roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r]).filter((x) => x !== 'member');
   return (
@@ -413,6 +416,7 @@ export function PersonControls({ id, active, roles, self }: { id: string; active
       <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('lead') })}>
         {roles.includes('lead') ? 'Remove lead' : 'Make lead'}
       </button>
+      {active && <CopyInvite email={email} />}
       <Err e={error} />
     </span>
   );
