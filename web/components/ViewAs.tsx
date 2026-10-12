@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Help } from './HelpMode';
 
 // Admin-only. The call behind "View as someone else" in the account menu, and the banner that stays
 // on screen while viewing. Both talk to /api/v1/session/view; the server checks the admin role every time.
@@ -18,7 +19,7 @@ export function ViewBanner({ name, role }: { name: string; role: string }) {
   const router = useRouter();
   return (
     <div className="view-banner" role="status">
-      <span className="vb-text">Viewing as <b>{name}</b> ({role}). Read-only.</span>
+      <span className="vb-text"><Help term="view_as">Viewing as</Help> <b>{name}</b> ({role}). Read-only.</span>
       <button className="vb-back" onClick={async () => { if (await setView(null)) { router.push('/'); router.refresh(); } }}>Back to my view</button>
     </div>
   );

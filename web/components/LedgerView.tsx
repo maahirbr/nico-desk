@@ -7,6 +7,7 @@ import { attentionList } from '@/lib/attention';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, Person } from './chips';
+import { Help } from './HelpMode';
 
 // The on-time ledger. Judged against the date first given (INTENT.md principle 1). Every number
 // opens the tasks behind it, with each date move and its reason. The cards show delivery habits per
@@ -77,25 +78,25 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 
   return (
     <>
-      <h1>On-time ledger</h1>
+      <h1><Help term="on_time_record">On-time ledger</Help></h1>
       <p className="lede">Kept dates, per person per week. On time means closed by the date first given. Click any number to see the tasks behind it.</p>
 
       <div className="stats">
-        <button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
+        <Help term="ledger_kept" host><button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
           <div className="stat-n">{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</div><div className="stat-l">Kept on the first date, {period}</div>
-        </button>
-        <button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
+        </button></Help>
+        <Help term="ledger_closed_ok" host><button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
           <div className="stat-n">{tasks.filter(MATCH.kept).length}</div><div className="stat-l">Closed on time or ahead</div>
-        </button>
-        <button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
+        </button></Help>
+        <Help term="ledger_closed_late" host><button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
           <div className="stat-n">{tasks.filter(MATCH.late).length}</div><div className="stat-l">Closed late</div>
-        </button>
-        <button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
+        </button></Help>
+        <Help term="ledger_pastdue" host><button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
           <div className="stat-n">{tasks.filter(MATCH.pastdue).length}</div><div className="stat-l">Open, past due</div>
-        </button>
-        <button className={`card stat${tasks.some(MATCH.silent) ? ' warn' : ''}`} onClick={() => show(`Slipped silently, ${period}`, tasks.filter(MATCH.silent))}>
+        </button></Help>
+        <Help term="slipped_silently" host><button className={`card stat${tasks.some(MATCH.silent) ? ' warn' : ''}`} onClick={() => show(`Slipped silently, ${period}`, tasks.filter(MATCH.silent))}>
           <div className="stat-n">{tasks.filter(MATCH.silent).length}</div><div className="stat-l">Slipped silently <span className="dim">· target 0</span></div>
-        </button>
+        </button></Help>
       </div>
 
       <h2>Delivery habits <span className="count-badge">{period}</span></h2>
@@ -129,7 +130,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
                 <button className="big" onClick={() => show(`${p.name}: kept on the first date`, mine.filter(MATCH.kept))} disabled={!k.closed}>
                   {k.pct === null ? '–' : `${k.pct}%`}
                 </button>
-                <span className="small">kept on the first date{closed ? ` (${closed} closed)` : ''}
+                <span className="small"><Help term="on_time_record">kept on the first date</Help>{closed ? ` (${closed} closed)` : ''}
                   {trend !== null && <span className={trend > 0 ? 'up' : trend < 0 ? 'down' : 'dim'}> · {trend > 0 ? '↑' : trend < 0 ? '↓' : '→'} {trend === 0 ? 'same as' : `${Math.abs(trend)} pts vs`} before</span>}
                 </span>
               </div>
@@ -145,9 +146,9 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
               <dl className="habit-facts">
                 <dt>When late</dt>
                 <dd>{median === null ? <span className="dim">Never late</span> : <N n={`usually ${median} day${median === 1 ? '' : 's'}`} title={`${p.name}: closed late`} list={l} />}</dd>
-                <dt>Moved dates</dt>
+                <dt><Help term="moved_date">Moved dates</Help></dt>
                 <dd>{moves.length ? <><N n={`${moves.length}×`} title={`${p.name}: dates moved`} list={mine.filter(MATCH.moved)} /> <span className="dim">· {early} in time, {moves.length - early} after the date</span></> : <span className="dim">None</span>}</dd>
-                <dt>Slipped silently</dt>
+                <dt><Help term="slipped_silently">Slipped silently</Help></dt>
                 <dd><N n={silent.length} title={`${p.name}: slipped silently`} list={silent} warn={silent.length > 0} /></dd>
                 <dt>Right now</dt>
                 <dd>
@@ -194,14 +195,14 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           <>
             <p className="summary">
               <N n={`${keptDone.length} on time or ahead`} title={`Closed on time or ahead, ${period}`} list={keptDone} /> ({tasks.filter(MATCH.ahead).length} ahead, {tasks.filter(MATCH.ontime).length} on time)
-              {' · '}<N n={`${lateDone.length} late`} title={`Closed late, ${period}`} list={lateDone} warn={lateDone.length > 0} /> ({tasks.filter(MATCH.flagged).length} flagged early, {tasks.filter(MATCH.missed).length} missed)
+              {' · '}<N n={`${lateDone.length} late`} title={`Closed late, ${period}`} list={lateDone} warn={lateDone.length > 0} /> ({tasks.filter(MATCH.flagged).length} <Help term="flagged_early">flagged early</Help>, {tasks.filter(MATCH.missed).length} <Help term="missed">missed</Help>)
             </p>
             {lateDone.length > 0 && (
               <ul className="fin-list">
                 {[...lateDone].sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)).slice(0, FIN_SHOWN).map((t) => (
                   <li key={t.id}>
                     <Link href={`/tasks/${t.id}`} className="drill-name">{t.title}</Link>
-                    <span className="small dim"> · {names[t.ownerId]} · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? 'flagged early' : 'missed'}</span>
+                    <span className="small dim"> · {names[t.ownerId]} · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? <Help term="flagged_early">flagged early</Help> : <Help term="missed">missed</Help>}</span>
                   </li>
                 ))}
               </ul>
@@ -216,19 +217,19 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         <div>
           <h3>Finished</h3>
           <dl>
-            <dt>Ahead</dt><dd>Closed before the date first given.</dd>
-            <dt>On time</dt><dd>Closed on the date first given.</dd>
-            <dt>Late</dt><dd>Closed after the date first given, even if the date was moved and the new one was met. Two kinds:</dd>
-            <dt className="sub-def">Flagged early</dt><dd>The owner moved the date on or before the date first given.</dd>
-            <dt className="sub-def">Missed</dt><dd>The date passed before any move was logged.</dd>
+            <dt><Help term="ahead">Ahead</Help></dt><dd>Closed before the date first given.</dd>
+            <dt><Help term="on_time">On time</Help></dt><dd>Closed on the date first given.</dd>
+            <dt><Help term="late">Late</Help></dt><dd>Closed after the date first given, even if the date was moved and the new one was met. Two kinds:</dd>
+            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>The owner moved the date on or before the date first given.</dd>
+            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>The date passed before any move was logged.</dd>
           </dl>
         </div>
         <div>
           <h3>Open</h3>
           <dl>
             <dt>Open</dt><dd>Not closed or dropped yet. Past due means today is after its current date.</dd>
-            <dt>Slipped silently</dt><dd>Open and past due, or a date moved after the old one had passed, or closed after the current date. Target 0.</dd>
-            <dt>Moved in time</dt><dd>A new date logged on or before the date it replaced. Moved late means logged after.</dd>
+            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Open and past due, or a date moved after the old one had passed, or closed after the current date. Target 0.</dd>
+            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>A new date logged on or before the date it replaced. Moved late means logged after.</dd>
           </dl>
         </div>
       </div>

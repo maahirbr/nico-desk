@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { currentMe } from '@/lib/auth';
 import { isLeadOrAdmin } from '@/lib/roles';
 import { Nav, SwitchToOwner } from '@/components/client';
+import { HELP_COOKIE, helpOf } from '@/components/help';
+import { HelpBar, HelpProvider, HelpToggle } from '@/components/HelpMode';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { Shortcuts } from '@/components/Shortcuts';
 import { ProjectPeopleProvider } from '@/components/OwnerPicker';
@@ -34,7 +36,9 @@ const sourceSans = Source_Sans_3({ subsets: ['latin'], variable: '--font-source-
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const me = await currentMe();
-  const skin = skinOf((await cookies()).get(SKIN_COOKIE)?.value);
+  const jar = await cookies();
+  const skin = skinOf(jar.get(SKIN_COOKIE)?.value);
+  const help = helpOf(jar.get(HELP_COOKIE)?.value); // like the skin: read here so the server HTML already shows help mode
   const ownerId = localOwnerId(rosterFile());
   // "View as" is for admins only, judged on the real session person, never on the person being viewed.
   const realAdmin = !!me && me.realPerson.appRoles.includes('admin');
@@ -48,6 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body data-viewing={me?.viewingAs ? '1' : undefined}>
+        <HelpProvider initial={help} enabled={!!me}>
         {me?.viewingAs && <ViewBanner name={me.person.displayName} role={roleWord(me.person.appRoles)} />}
         <KeyboardDismiss />
         <Toaster />
@@ -68,12 +73,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ProfileMenu name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
+            <main className="main"><div className="topbar"><TopSearch /><HelpToggle /></div><HelpBar /><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ReadOnlyProvider>
         ) : (
           <main className="page-solo">{children}</main>
         )}
+        </HelpProvider>
       </body>
     </html>
   );

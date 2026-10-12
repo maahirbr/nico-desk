@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Person, StatusChips, dueLine } from '@/components/chips';
 import { TaskActions } from '@/components/client';
 import { groupLog } from '@/components/logText';
+import { Help } from '@/components/HelpMode';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
       </div>
       {t.blocked && (
         <div className="ask">
-          <span className="ask-label">{t.blocked.onId ? `Blocked on ${names[t.blocked.onId]}` : 'Blocked'}</span> <span className="small dim">since {fmtStamp(t.blocked.at)}</span>
+          <span className="ask-label"><Help term={t.blocked.onId ? 'blocked_on' : 'status_blocked'}>{t.blocked.onId ? `Blocked on ${names[t.blocked.onId]}` : 'Blocked'}</Help></span> <span className="small dim">since {fmtStamp(t.blocked.at)}</span>
           <div>{t.blocked.ask}</div>
         </div>
       )}

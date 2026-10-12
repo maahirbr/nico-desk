@@ -17,6 +17,7 @@ import { Select } from './Select';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
+import { Help, useHelpOn } from './HelpMode';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -86,16 +87,17 @@ export function flagOf(t: Task, today: string): Flag | null {
 // hideLate: the row already says "3 days late" in red, so most skins do not say Late a second time.
 // Skin W, the PM's build, does: the flag is rendered with flag-again and tokens.css shows it there only.
 export function FlagChip({ t, today, hideLate = false }: { t: Task; today: string; hideLate?: boolean }) {
+  const help = useHelpOn(); // in help mode the tooltip carries the reason, so the native title steps aside
   const f = flagOf(t, today);
   if (!f) return null;
-  return <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' ? ' flag-again' : ''}`} title={f.why}>{f.word}</span>;
+  return <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' ? ' flag-again' : ''}`} title={help ? undefined : f.why}><Help term={f.key} note={f.why}>{f.word}</Help></span>;
 }
 
 export function StatusLabel({ t, today }: { t: Task; today?: string }) {
   const s = STATUS[statusKey(t)];
   return (
     <span className="st-wrap">
-      <span className={`st st-status tone-${s.tone}`}>{s.word}</span>
+      <span className={`st st-status tone-${s.tone}`}><Help term={`status_${statusKey(t)}`}>{s.word}</Help></span>
       {today && <FlagChip t={t} today={today} />}
     </span>
   );
@@ -184,7 +186,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
-        {t.dateMoves > 0 && !closed && <span className="moved" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span>}
+        {t.dateMoves > 0 && !closed && <Help term="moved_date"><span className="moved" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span></Help>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
@@ -199,7 +201,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               try { await quickMove(t, a); notify(t.blocked && a === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[a].word}`); router.refresh(); }
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }} />
-        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} />{STATUS[key].word}</span>}
+        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
     </div>
@@ -216,12 +218,12 @@ export function StatusMenu({ t, current, statuses, canReassign, disabled, set, o
   const pick = (a: RowAction) => { setOpen(false); btn.current?.focus(); onPick(a); };
   return (
     <span className="menu-wrap st-menu-wrap">
-      <button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
+      <Help term={`status_${current}`} host><button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
         aria-label={`Status of “${t.title}”: ${STATUS[current].word}`} disabled={disabled}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}>
         <StatusIcon s={current} />{STATUS[current].word}
-      </button>
+      </button></Help>
       <AnimatePresence>
         {open && (
           <Popover anchor={btn} onClose={() => setOpen(false)} align="end" role="menu" label="Status" className="menu st-menu">
@@ -416,7 +418,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {t.blocked && (
               <div className="ask">
-                <span className="ask-label">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId] ?? 'someone'}` : 'Blocked'}</span>
+                <span className="ask-label"><Help term={t.blocked.onId ? 'blocked_on' : 'status_blocked'}>{t.blocked.onId ? `Waiting on ${names[t.blocked.onId] ?? 'someone'}` : 'Blocked'}</Help></span>
                 <div>{t.blocked.ask}</div>
                 {can && open && (
                   <div className="ask-unblock">

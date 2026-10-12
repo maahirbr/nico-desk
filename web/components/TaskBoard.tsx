@@ -8,6 +8,7 @@ import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Person } from './chips';
 import { DateField } from './DateField';
+import { Help } from './HelpMode';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
@@ -132,7 +133,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             {ws === 'All' && t.workstream && <span className="ws-tag">{t.workstream}</span>}
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
-            {t.blocked && <div className="sub blocked-line">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId]}: ` : 'Blocked: '}{t.blocked.ask}</div>}
+            {t.blocked && <div className="sub blocked-line"><Help term={t.blocked.onId ? 'blocked_on' : 'status_blocked'}>{t.blocked.onId ? `Waiting on ${names[t.blocked.onId]}:` : 'Blocked:'}</Help> {t.blocked.ask}</div>}
           </td>
           <td data-label="Owner"><Person name={names[t.ownerId] ?? t.ownerId} /></td>
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">

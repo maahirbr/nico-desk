@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './chips';
+import { Help } from './HelpMode';
 import { SKINS, SKIN_COOKIE, skinOf, type SkinId } from './skins';
 import { setView, type ViewPerson } from './ViewAs';
 
@@ -66,9 +67,9 @@ export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId 
           </div>
           {viewPeople && (
             <div className="pm-looks">
-              <button role="menuitem" aria-haspopup="menu" aria-expanded={who} onClick={() => { setWho(!who); setLooks(false); }}>
+              <Help term="view_as" host><button role="menuitem" aria-haspopup="menu" aria-expanded={who} onClick={() => { setWho(!who); setLooks(false); }}>
                 View as someone else<span className="pm-chev" aria-hidden>▸</span>
-              </button>
+              </button></Help>
               {who && (
                 <div className="menu pm-flyout va-menu" role="menu" aria-label="View as">
                   <button role="menuitemradio" aria-checked={viewingId === null} onClick={() => viewAs(null)}>
@@ -103,7 +104,7 @@ export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId 
               </div>
             )}
           </div>
-          <button role="menuitem" className="pm-sep" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:help')); }}>Keyboard shortcuts</button>
+          <button role="menuitem" className="pm-sep" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>
           <button role="menuitem" className="pm-sep" onClick={signOut}>Sign out</button>
         </div>
       )}
