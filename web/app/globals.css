@@ -913,6 +913,22 @@ details.breakdown > .defs { margin-top: 0; }
   background-position: calc(100% - var(--space-sm) - var(--chevron)) 50%, calc(100% - var(--space-sm)) 50%;
   box-shadow: var(--pill-ring); transition: transform var(--dur-state) var(--ease); }
 .st-pick:active { transform: scale(var(--press-scale)); }
+button.st-pick { display: inline-flex; align-items: center; gap: var(--space-xxs); white-space: nowrap;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-size: var(--chevron) var(--chevron); background-repeat: no-repeat; }
+button.st-pick:disabled { cursor: default; opacity: .85; }
+.st-icon { flex: none; }
+.st:has(.st-icon), .status-picker button { display: inline-flex; align-items: center; gap: var(--space-xxs); }
+/* The status menu: each status with its icon in its tone colour, then the actions under a rule */
+.st-menu { position: fixed; z-index: 40; }
+.st-menu > .st-opt, .st-menu > .st-act { display: flex; align-items: center; gap: var(--space-xs); white-space: nowrap; }
+.st-opt .st-icon { color: var(--sf, var(--tone-fg, var(--ink-3))); }
+.st-opt[aria-checked="true"] { background: var(--sunk); font-weight: 600; }
+.st-act { color: var(--ink-2); }
+.menu > .st-menu-sep { height: var(--rule); padding: 0; margin: var(--space-xxs) var(--space-xs); background: var(--hairline); cursor: default; }
+.menu > .st-menu-sep:hover { background: var(--hairline); }
+.ask-unblock { display: flex; gap: var(--space-xs); margin-top: var(--space-sm); }
+.ask-unblock input { flex: 1; min-width: 0; }
 
 /* ---------- motion: three small gestures, transform and opacity only ---------- */
 @keyframes arrive { from { opacity: 0; transform: translateY(var(--rise)); } to { opacity: 1; transform: none; } }

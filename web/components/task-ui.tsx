@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
@@ -32,6 +32,22 @@ export const STATUS: Record<StatusKey, { word: string; tone: Tone }> = {
   done: { word: 'Done', tone: 'done' },
   dropped: { word: 'Dropped', tone: 'quiet' },
 };
+
+// Each status also has an icon, so it reads without colour: circle, half circle, bar, tick, cross.
+export function StatusIcon({ s }: { s: StatusKey }) {
+  return (
+    <svg className="st-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="6" r="4.6" />
+      {s === 'doing' && <path d="M6 1.4a4.6 4.6 0 0 1 0 9.2z" fill="currentColor" stroke="none" />}
+      {s === 'blocked' && <path d="M3.6 6h4.8" strokeWidth="1.8" />}
+      {s === 'done' && <path d="M3.9 6.2l1.5 1.5 2.8-3" />}
+      {s === 'dropped' && <path d="M4.4 4.4l3.2 3.2M7.6 4.4l-3.2 3.2" />}
+    </svg>
+  );
+}
+
+// What a row's status menu can ask the side panel to open: a status that needs words, a date move, or a new owner.
+export type RowAction = StatusKey | 'date' | 'reassign';
 
 export function statusKey(t: Task): StatusKey {
   if (t.statusCategory === 'done') return 'done';
@@ -90,9 +106,11 @@ export function formFor(t: Task, s: StatusKey): 'blocked' | 'drop' | 'status' | 
   return null;
 }
 
-// The one-click moves: done, in progress, or not started when nothing was begun. Clears a block first.
+// The one-click moves: done, in progress, or not started when nothing was begun. Clears a block first;
+// a blocked task going to in progress is one change (unblock with resume).
 export async function quickMove(t: Task, s: StatusKey, reason?: string): Promise<unknown> {
   let v = t.version;
+  if (t.blocked && s === 'doing') return api(`/tasks/${t.id}/unblock`, 'POST', { version: v, resume: true });
   if (t.blocked) v = (await api(`/tasks/${t.id}/unblock`, 'POST', { version: v })).version;
   if (s === 'done') return api(`/tasks/${t.id}/close`, 'POST', { version: v, as: 'done' });
   if (s === 'doing' && (!t.health || t.health === 'not_started')) return api(`/tasks/${t.id}/health`, 'POST', { version: v, health: 'on_track' });
@@ -123,10 +141,10 @@ export async function api(path: string, method: string, body?: unknown) {
 
 // ---------- row ----------
 
-// onStatus, when given, turns the status word into a picker. One-click moves happen in place;
-// blocked, dropped and going back to not started open the side panel, which asks for the words.
-export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, onOpen, onStatus }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; onOpen: () => void; onStatus?: (s: StatusKey) => void;
+// onStatus, when given, turns the status word into a menu. One-click moves happen in place;
+// blocked, dropped, going back to not started, a date move and a new owner open the side panel.
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, onOpen, onStatus }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void;
 }) {
   const desc = t.description;
   const router = useRouter();
@@ -166,21 +184,86 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, onOpe
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
-          <select className={`st-pick tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`} value={key} aria-label={`Status of “${t.title}”`} disabled={ticked}
-            onChange={async (e) => {
-              const s = e.target.value as StatusKey;
-              if (formFor(t, s)) return onStatus(s);
-              if (s === 'done') setTicked(true);
+          <StatusMenu t={t} current={key} disabled={ticked} set={stateFrom !== undefined}
+            statuses={PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked')} canReassign={canReassign}
+            onPick={async (a) => {
+              if (a === 'date' || a === 'reassign') return onStatus(a);
+              if (a === key) return;
+              if (formFor(t, a)) return onStatus(a);
+              if (a === 'done') setTicked(true);
               setErr(null);
-              try { await quickMove(t, s); notify(`Status set to ${STATUS[s].word}`); router.refresh(); }
+              try { await quickMove(t, a); notify(t.blocked && a === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[a].word}`); router.refresh(); }
               catch (er) { setTicked(false); setErr((er as Error).message); }
-            }}>
-            {PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked').map((s) => <option key={s} value={s}>{STATUS[s].word}</option>)}
-          </select>
-        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}>{STATUS[key].word}</span>}
+            }} />
+        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} />{STATUS[key].word}</span>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
     </div>
+  );
+}
+
+// The row's status as a menu button: the statuses, each with its icon and colour, then Unblock when
+// blocked, Move date… and, for leads and admins, Reassign…. Arrow keys move, Enter picks, Esc closes.
+function StatusMenu({ t, current, statuses, canReassign, disabled, set, onPick }: {
+  t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; disabled: boolean; set: boolean; onPick: (a: RowAction) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  // Fixed to the viewport, since the task list clips what overflows it. Opens upward near the bottom.
+  const [at, setAt] = useState<React.CSSProperties>({});
+  const wrap = useRef<HTMLSpanElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [])];
+  useEffect(() => {
+    if (!open) return;
+    (items().find((b) => b.getAttribute('aria-checked') === 'true') ?? items()[0])?.focus();
+    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
+    const shut = () => setOpen(false);
+    document.addEventListener('pointerdown', away);
+    window.addEventListener('scroll', shut, true);
+    window.addEventListener('resize', shut);
+    return () => { document.removeEventListener('pointerdown', away); window.removeEventListener('scroll', shut, true); window.removeEventListener('resize', shut); };
+  }, [open]);
+  function toggle() {
+    const r = btn.current?.getBoundingClientRect();
+    if (!open && r) {
+      const right = Math.max(8, window.innerWidth - r.right);
+      setAt(r.bottom + 280 > window.innerHeight && r.top > 280 ? { right, bottom: window.innerHeight - r.top + 4 } : { right, top: r.bottom + 4 });
+    }
+    setOpen(!open);
+  }
+  function key(e: React.KeyboardEvent) {
+    const list = items();
+    const i = list.indexOf(document.activeElement as HTMLButtonElement);
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length]?.focus();
+    } else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); list[e.key === 'Home' ? 0 : list.length - 1]?.focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setOpen(false); btn.current?.focus(); }
+    else if (e.key === 'Tab') setOpen(false);
+  }
+  const pick = (a: RowAction) => { setOpen(false); btn.current?.focus(); onPick(a); };
+  return (
+    <span className="menu-wrap st-menu-wrap" ref={wrap} onKeyDown={open ? key : undefined}>
+      <button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
+        aria-label={`Status of “${t.title}”: ${STATUS[current].word}`} disabled={disabled}
+        onClick={toggle}
+        onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); toggle(); } }}>
+        <StatusIcon s={current} />{STATUS[current].word}
+      </button>
+      {open && (
+        <span className="menu st-menu" role="menu" aria-label="Status" style={at}>
+          {statuses.map((s) => (
+            <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
+              <StatusIcon s={s} /><span>{STATUS[s].word}</span>
+            </button>
+          ))}
+          <span className="st-menu-sep" role="separator" />
+          {t.blocked && <button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button>}
+          <button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button>
+          {canReassign && <button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button>}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -203,11 +286,11 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
   );
 }
 
-type Mode = null | 'blocked' | 'date' | 'drop' | 'reopen' | 'status';
+type Mode = null | 'blocked' | 'date' | 'drop' | 'reopen' | 'status' | 'reassign';
 
 export function TaskDrawer({ id, meId, isLead, people, workstreams = [], projectNames = {}, today, onClose, startStatus }: {
   id: string; meId: string; isLead: boolean; people: Opt[]; workstreams?: string[]; projectNames?: Record<string, string>;
-  today: string; onClose: () => void; startStatus?: StatusKey;
+  today: string; onClose: () => void; startStatus?: RowAction;
 }) {
   const router = useRouter();
   const [t, setT] = useState<Task | null>(null);
@@ -220,6 +303,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [pickKey, setPickKey] = useState(0); // starts the owner picker afresh on discard
   const [showLog, setShowLog] = useState(false);
   const [target, setTarget] = useState<StatusKey>('todo');
+  const [unNote, setUnNote] = useState('');
   const [closing, close] = useClosing(onClose);
 
   async function load() {
@@ -255,7 +339,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (!t || s === key) return;
     const f = formFor(t, s);
     if (f) { setTarget(s); setMode(f); return; }
-    run(() => quickMove(t, s), `Status set to ${STATUS[s].word}`);
+    run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`);
   }
 
   // Opened from a row's status picker: go straight to the question for that status.
@@ -263,6 +347,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   useEffect(() => {
     if (!t || started || !startStatus) return;
     setStarted(true);
+    if (startStatus === 'date' || startStatus === 'reassign') { if (can && open) setMode(startStatus); return; }
     if (startStatus === key) return;
     const f = formFor(t, startStatus);
     if (f) { setTarget(startStatus); setMode(f); }
@@ -300,7 +385,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               <div className="status-picker" role="group" aria-label="Status">
                 {PICK.filter((s) => s === key || canMoveTo(t, s, meId, isLead)).map((s) => (
                   <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={!can || busy} onClick={() => setStatus(s)}>
-                    {STATUS[s].word}
+                    <StatusIcon s={s} />{STATUS[s].word}
                   </button>
                 ))}
                 <FlagChip t={t} today={today} />
@@ -312,7 +397,20 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               </div>
             )}
 
-            {mode && (
+            {mode === 'reassign' && (
+              <div className="drawer-form">
+                <div className="small"><b>Give this task to someone else. The new owner sees it on their home page.</b></div>
+                <label className="f"><span>New owner</span>
+                  <OwnerPicker key={pickKey} projectId={t.projectId} value={edit.ownerId} people={people} onChange={(ownerId, ownerRole) => setEdit({ ...edit, ownerId, ownerRole })} />
+                </label>
+                <div className="row">
+                  <button className="btn" disabled={busy || edit.ownerId === t.ownerId || !ownerReady(edit.ownerId, edit.ownerRole)}
+                    onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), `Given to ${names[edit.ownerId] ?? 'the new owner'}`)}>Save</button>
+                  <button className="btn ghost" onClick={() => { setEdit({ ...edit, ownerId: t.ownerId, ownerRole: undefined }); setPickKey((k) => k + 1); setMode(null); }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {mode && mode !== 'reassign' && (
               <div className="drawer-form">
                 <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop?`, blocked: 'Why is it blocked? A block reason is needed.', date: 'Move the date. The first date stays on record. Moving it before the date passes counts as moved in time.', drop: 'Drop this task. A reason is needed, and it stays on record.', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><input type="date" min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
@@ -346,12 +444,21 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               <div className="ask">
                 <span className="ask-label">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId] ?? 'someone'}` : 'Blocked'}</span>
                 <div>{t.blocked.ask}</div>
+                {can && open && (
+                  <div className="ask-unblock">
+                    <input value={unNote} maxLength={280} placeholder="What unblocked it? (optional)" aria-label="What unblocked it (optional)" onChange={(e) => setUnNote(e.target.value)} />
+                    <button className="btn" disabled={busy}
+                      onClick={() => run((v) => api(`/tasks/${t.id}/unblock`, 'POST', { version: v, resume: true, ...(unNote.trim() ? { note: unNote.trim() } : {}) }), 'Unblocked, in progress').then(() => setUnNote(''))}>
+                      Unblock
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
             <dl className="drawer-facts">
               <dt>Owner</dt>
-              <dd>{can && open ? (
+              <dd>{can && open && mode !== 'reassign' ? (
                 <OwnerPicker key={pickKey} projectId={t.projectId} value={edit.ownerId} people={people} onChange={(ownerId, ownerRole) => setEdit({ ...edit, ownerId, ownerRole })} />
               ) : <span className="person-cell"><Avatar name={names[t.ownerId] ?? t.ownerId} />{names[t.ownerId] ?? t.ownerId}</span>}</dd>
 
@@ -379,7 +486,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 : t.note || <span className="dim">None</span>}</dd>
             </dl>
 
-            {dirty && (
+            {dirty && mode !== 'reassign' && (
               <div className="row">
                 <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved')}>Save changes</button>
                 <button className="btn ghost" onClick={() => { setEdit({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined, workstream: t.workstream ?? '' }); setPickKey((k) => k + 1); }}>Discard</button>

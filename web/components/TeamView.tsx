@@ -8,7 +8,7 @@ import { addDays, fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
 import { Avatar } from './chips';
-import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
+import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 
 type Person = { id: string; name: string; role: string };
 
@@ -19,7 +19,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
 }) {
   const [project, setProject] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
-  const [startStatus, setStartStatus] = useState<StatusKey | undefined>();
+  const [startStatus, setStartStatus] = useState<RowAction | undefined>();
   const [q, setQ] = useState('');
   const [more, setMore] = useState<Record<string, boolean>>({});
   const needle = q.trim().toLowerCase();
@@ -37,7 +37,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   };
   const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ');
   const row = (t: Task, owner?: string) => (
-    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)} canBlock={!t.readOnly && t.ownerId === meId}
+    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)} canBlock={!t.readOnly && (t.ownerId === meId || isLead)} canReassign={!t.readOnly && isLead}
       onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} />
   );
   const opened = [...tasks, ...later].find((t) => t.id === openId);

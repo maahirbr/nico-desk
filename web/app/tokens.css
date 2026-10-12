@@ -645,15 +645,16 @@
 :root[data-skin="w"] .st { gap: 6px; font: 500 12px/1 var(--font-sans); padding: 5px 9px 5px 8px; color: var(--tone-fg, var(--ink-2));
   background: color-mix(in srgb, var(--tone-fg, var(--ink-2)) 11%, transparent); box-shadow: none; }
 :root[data-skin="w"] .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+:root[data-skin="w"] .st:has(.st-icon)::before { content: none; }
 :root[data-skin="w"] .flag, :root[data-skin="w"] .flag-again { display: inline-block; font: 600 10.5px/1 var(--font-sans); letter-spacing: .03em; text-transform: uppercase;
   color: var(--tone-fg, var(--ink-2)); border: 1px solid color-mix(in srgb, var(--tone-fg, var(--ink-2)) 45%, transparent); border-radius: 4px; padding: 3px 5px; }
 
 /* Picked statuses as filled pills. Only the status controls and chips; the ledger keeps its own colours. */
-:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-idle { --sf: var(--st-idle-fg); --sb: var(--st-idle-bg); }
-:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-active { --sf: var(--st-active-fg); --sb: var(--st-active-bg); }
-:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-blocked { --sf: var(--st-blocked-fg); --sb: var(--st-blocked-bg); }
-:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-done { --sf: var(--st-done-fg); --sb: var(--st-done-bg); }
-:root[data-skin="w"] :is(.st-pick, .status-sel, .st-status).tone-quiet { --sf: var(--st-quiet-fg); --sb: var(--st-quiet-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st, .st-opt).tone-idle { --sf: var(--st-idle-fg); --sb: var(--st-idle-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st, .st-opt).tone-active { --sf: var(--st-active-fg); --sb: var(--st-active-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st, .st-opt).tone-blocked { --sf: var(--st-blocked-fg); --sb: var(--st-blocked-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st, .st-opt).tone-done { --sf: var(--st-done-fg); --sb: var(--st-done-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st-status, .st-opt).tone-quiet { --sf: var(--st-quiet-fg); --sb: var(--st-quiet-bg); }
 :root[data-skin="w"] :is(.st-pick, .status-sel)[class*="tone-"] { color: var(--sf); background-color: var(--sb); border: 1px solid color-mix(in srgb, var(--sf) 22%, transparent); }
 :root[data-skin="w"] :is(.st-pick, .status-sel)[class*="tone-"]:hover { border-color: color-mix(in srgb, var(--sf) 55%, transparent); }
 :root[data-skin="w"] .st[class*="tone-"] { color: var(--sf, var(--tone-fg, var(--ink-2))); background: var(--sb, color-mix(in srgb, var(--tone-fg, var(--ink-2)) 11%, transparent)); }

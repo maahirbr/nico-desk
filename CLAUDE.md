@@ -214,6 +214,14 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   lives in `joinProject` (`web/lib/service.ts`), the same rule as `updateProject`; the owner picker shows "+ Add someone
   to this project" only on projects in `projectsMayAddTo` (`web/lib/plan.ts`). A member can still give a task to the
   project's own people, and accepting minutes for an outsider now needs one of those three. Rollback: `git revert` this commit.
+- 2026-10-12 · Opus 5.5 · The row status picker is a menu, at the repo owner's call (`StatusMenu` in
+  `web/components/task-ui.tsx`). Each status shows its icon (circle, half circle, bar, tick, cross) in its tone colour, so
+  it reads without colour. Under the statuses: Unblock when blocked, Move date… and, for leads and admins, Reassign…,
+  which open the side panel. A lead or admin can now block a task (`blockTask`), since they often hear of a block
+  first. Unblock is one step: `unblockTask` with `resume` clears the block and sets In progress in one change, with an
+  optional note; the person a task waits on can still clear a block but not set it in progress. The menu is fixed to
+  the viewport, since the task list clips overflow. View as still shows the plain status chip. Rollback: `git revert`
+  this commit.
 
 ## VERIFY
 

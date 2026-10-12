@@ -6,7 +6,7 @@ import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
-import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
+import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
@@ -17,7 +17,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 }) {
   const readOnly = useReadOnly();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [startStatus, setStartStatus] = useState<StatusKey | undefined>();
+  const [startStatus, setStartStatus] = useState<RowAction | undefined>();
   const [adding, setAdding] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const [showDropped, setShowDropped] = useState(false);
@@ -30,7 +30,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
     { key: 'later', label: 'Later', items: mine.filter((t) => t.dueOn > weekEnd) },
   ].filter((g) => g.items.length);
   const overdue = mine.filter((t) => t.dueOn < today).length;
-  const open = (id: string, s?: StatusKey) => {
+  const open = (id: string, s?: RowAction) => {
     setOpenId(id); setStartStatus(s);
     if (assignedNotice[id] && !readOnly) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
   };
@@ -75,7 +75,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}>{g.label} <span className="n">{g.items.length}</span></h2>
           <div className="tlist">
-            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign={isLead} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </div>
         </section>
       ))}

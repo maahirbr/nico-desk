@@ -6,7 +6,7 @@ import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
 import { canMoveTo } from '../components/statusRules';
 
-// An admin without the lead role does everything a lead does on a task, except block it.
+// An admin without the lead role does everything a lead does on a task, blocking included.
 const ADMIN = 'per_fay'; // fixtures: admin only, not a lead
 const AS_OF = '2026-10-09';
 let db: Db;
@@ -71,9 +71,23 @@ describe('admin acts as a lead on another person’s task', () => {
     expect(back.statusCategory).toBe('open');
   });
 
-  it('still cannot block someone else’s task (owner-only)', async () => {
+  it('can block someone else’s task, and unblock it straight to in progress', async () => {
+    const t0 = await task();
+    const t = t0.health === 'not_started' ? t0 : await s.setHealth(db, ADMIN, t0.id, { version: t0.version, health: 'not_started', reason: 'Not begun yet' });
+    const b = await s.blockTask(db, ADMIN, t.id, { version: t.version, ask: 'Waiting on the supplier to confirm' });
+    expect(b.blocked).toBeTruthy();
+    const u = await s.unblockTask(db, ADMIN, t.id, { version: b.version, note: 'Supplier confirmed', resume: true });
+    expect(u.blocked).toBeFalsy();
+    expect(u.health).toBe('on_track');
+    expect(u.version).toBe(b.version + 1); // one change, not two
+  });
+
+  it('lets the person a task waits on clear the block, but not set it in progress', async () => {
     const t = await task();
-    expect(await code(s.blockTask(db, ADMIN, t.id, { version: t.version, ask: 'Waiting on the supplier to confirm' }))).toBe('403 not_allowed');
+    const m = await otherMember(t.ownerId);
+    const b = await s.blockTask(db, t.ownerId, t.id, { version: t.version, onId: m, ask: 'Need your sign-off' });
+    expect(await code(s.unblockTask(db, m, t.id, { version: b.version, resume: true }))).toBe('403 not_allowed');
+    expect(await code(s.unblockTask(db, m, t.id, { version: b.version }))).toBe('ok');
   });
 });
 
@@ -93,9 +107,10 @@ describe('a plain member still cannot', () => {
 
 describe('status controls match the service', () => {
   const t = { ownerId: 'o', readOnly: false, statusCategory: 'open' as const };
-  it('blocked is owner-only, other moves are owner or lead/admin', () => {
+  it('every open move, blocked included, is owner or lead/admin', () => {
     expect(canMoveTo(t, 'blocked', 'o', false)).toBe(true);
-    expect(canMoveTo(t, 'blocked', 'lead', true)).toBe(false);
+    expect(canMoveTo(t, 'blocked', 'lead', true)).toBe(true);
+    expect(canMoveTo(t, 'blocked', 'm', false)).toBe(false);
     expect(canMoveTo(t, 'done', 'lead', true)).toBe(true);
     expect(canMoveTo(t, 'doing', 'o', false)).toBe(true);
     expect(canMoveTo(t, 'done', 'm', false)).toBe(false);

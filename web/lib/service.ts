@@ -394,7 +394,8 @@ export async function blockTask(db: Db, meId: string, id: string, input: { versi
   if (!ask || ask.length > 280) throw bad('reason_required', 'Give a block reason (up to 280 characters).', 'ask');
   return mutate(
     db, meId, id, input.version,
-    (c) => c.isOwner,
+    // The owner, or a lead or admin who hears of the block first (repo owner, 12 Oct).
+    (c) => c.isOwner || c.isLead,
     (c) => {
       openOnly(c);
       if (onId && onId === c.row.owner_id) throw bad('invalid_body', 'A task cannot be blocked on its own owner.', 'onId');
@@ -408,15 +409,19 @@ export async function blockTask(db: Db, meId: string, id: string, input: { versi
   );
 }
 
-export async function unblockTask(db: Db, meId: string, id: string, input: { version: number; note?: string }): Promise<Task> {
+// resume: also set In progress in the same change, so "Unblock" is one step. Only the owner or a
+// lead may set the working state; the person it waited on can still clear the block alone.
+export async function unblockTask(db: Db, meId: string, id: string, input: { version: number; note?: string; resume?: boolean }): Promise<Task> {
   return mutate(
     db, meId, id, input.version,
     (c) => c.isOwner || c.isLead || c.row.blocked_on_id === meId,
     (c) => {
       if (!c.row.blocked_ask) throw bad('invalid_body', 'The task is not blocked.');
+      if (input.resume && !c.isOwner && !c.isLead) throw forbidden('Only the owner or a lead can set this task in progress.');
       // Clearing a block is good news; a note on what unblocked it is welcome, not required.
       const note = input.note?.trim().slice(0, 280);
-      return { set: { blocked_on_id: null, blocked_ask: null, blocked_at: null }, ...(note ? { reasons: { blocked_ask: note } } : {}) };
+      const set: Partial<TaskRow> = { blocked_on_id: null, blocked_ask: null, blocked_at: null, ...(input.resume && c.row.status_category === 'open' ? { health: 'on_track' as const } : {}) };
+      return { set, ...(note ? { reasons: { blocked_ask: note } } : {}) };
     },
   );
 }
