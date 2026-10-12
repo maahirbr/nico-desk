@@ -1183,7 +1183,11 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
   .act, .linkbtn, .mini-btn, .row-btn, .tab, .proj-tab, .seg-link, .callout-row, .log-toggle, .small-toggle, .num-btn { min-height: var(--button-height); }
   .act, .linkbtn, .mini-btn, .row-btn, .tab, .proj-tab, .seg-link, .log-toggle, .small-toggle { display: inline-flex; align-items: center; justify-content: center; }
   .row-btn { min-width: var(--button-height); }
-  .num-btn { display: inline-flex; align-items: center; }
+  .num-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; }
+  /* Plain links and the row opener are shorter than 24px; the hit area grows, the look does not. */
+  .row-open { min-height: 24px; }
+  a.plink, .drill-name { position: relative; }
+  a.plink::after, .drill-name::after { content: ""; position: absolute; inset: -4px 0; }
   .task-link { display: inline-block; padding: var(--space-xs) 0; }
   .st-pick, .status-sel, .status-picker button { min-height: var(--button-height); }
   .chip button { min-width: var(--button-height); min-height: var(--button-height); margin: calc(var(--space-xs) * -1) calc(var(--space-xs) * -1) calc(var(--space-xs) * -1) 0; }
