@@ -327,6 +327,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   projects you are on. The target date is a Deadline, Launch, Event, Quarter End or a typed label. The hosted
   database needs `npm run db:upgrade` once more (adds `projects.lead_id`; keeps all data). Rollback: `git revert` the
   commit; the extra column can stay.
+- 2026-10-13 · Sonnet 5.5 · The PM's Start a Project work (commit `e246790`, branch `mvp-local-desk-look`) merged onto the mvp
+  base on branch `ws11-pm-lead`, at the repo owner's call. The merge keeps `Select`, `DateField`, archive, `task_links`, help
+  mode and sentence case. It adds the lead, Internal and Partner kinds, optional sub-projects and Your projects on Home.
+  The lead now has the owner's rights: archive, restore, edit and add people (`archiveContext`, `updateProject`, `joinProject`
+  and `projectsMayAddTo`). Home leaves out archived projects. A change of owner or lead is a project event, shown in the update
+  log. The form says why Start or Save is off, and clears a lead who is no longer valid. The description limit is 600 characters
+  in the form and in `web/lib/projectBody.ts`. The plan board falls back to all lines when the sub-project controls are hidden.
+  The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds `projects.lead_id`; keeps all data).
+  Rollback: `git revert -m 1 c13ecb3`. The extra column can stay.
 
 ## VERIFY
 
@@ -337,7 +346,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `241 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `246 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
