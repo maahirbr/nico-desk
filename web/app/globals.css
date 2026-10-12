@@ -1313,3 +1313,26 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .pg-grid { margin-top: var(--space-md); }
 .pg-grid > .card { margin-top: 0; }
 .drawer-copy { margin-left: auto; margin-right: var(--space-xs); }
+
+/* ---------- phone: a quiet edge fade on the tab rows that scroll sideways, so a cut item reads as "more this way" ---------- */
+@property --fade-l { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --fade-r { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@keyframes fade-l-in { from { --fade-l: 0px; } to { --fade-l: 24px; } }
+@keyframes fade-r-out { from { --fade-r: 24px; } to { --fade-r: 0px; } }
+@media (max-width: 860px) {
+  .nav, .tabs, .proj-tabs {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  }
+  @supports not (animation-timeline: scroll()) {
+    .nav, .tabs, .proj-tabs { --fade-r: 24px; }
+  }
+  /* Where scroll-driven animation exists, each fade shows only on the side that still has more. A row that does not scroll gets none. Elsewhere the right fade stays. */
+  @supports (animation-timeline: scroll()) {
+    .nav, .tabs, .proj-tabs {
+      animation: fade-l-in linear both, fade-r-out linear both;
+      animation-timeline: scroll(self inline), scroll(self inline);
+      animation-range: 0px 24px, calc(100% - 24px) 100%;
+    }
+  }
+}
