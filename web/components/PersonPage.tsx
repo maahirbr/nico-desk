@@ -6,6 +6,8 @@ import type { OnTimeRecord, PersonProject } from '@/lib/service';
 import { Avatar, PersonLink } from './chips';
 import { useOpenTask } from './taskUrl';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
+import { Stagger } from './motion-ui';
+import { DitherArt } from './DitherArt';
 
 // One teammate's page: their open work by project, who waits on them and whom they wait on, what changed lately,
 // their on-time record (only where the viewer may see it) and their projects. Every row links on: a task opens in
@@ -30,7 +32,8 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
   return (
     <div className="calm">
       <Link className="crumb" href="/team">← Team</Link>
-      <header className="page-head">
+      <header className="page-head pp-banner">
+        <DitherArt field="glow" cols={96} rows={12} className="dither-banner" />
         <div className="pp-head">
           <Avatar name={name} lg you={mine} />
           <div>
@@ -64,11 +67,11 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
         {[...byProject.entries()].map(([pid, items]) => (
           <div key={pid || 'none'}>
             <p className="pg-proj">{pid ? <Link className="rlink" href={`/projects/${pid}`}>{projectNames[pid] ?? 'Project'}</Link> : 'No project'}</p>
-            <div className="tlist">
+            <Stagger id="person" className="tlist">
               {items.map((t) => (
                 <TaskRow key={t.id} t={t} today={today} sub={t.workstream ?? ''} canTick={false} onOpen={() => setOpenId(t.id)} />
               ))}
-            </div>
+            </Stagger>
           </div>
         ))}
       </section>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
+import { DitherArt } from './DitherArt';
 import type { Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
@@ -15,10 +16,10 @@ import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
-import { MotionRow, MovedDate } from './rowmotion';
+import { BoardStatusMenu, MotionRow, MovedDate } from './rowmotion';
 import { Select } from './Select';
 import { canMoveTo } from './statusRules';
-import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, StatusMenu, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
+import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
@@ -150,7 +151,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </td>
           <td>
             {can && t.statusCategory === 'open' ? (
-              <StatusMenu t={t} current={s} disabled={busy} set={false} statuses={PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead))} canReassign={isLead}
+              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead))} canReassign={isLead}
                 onPick={(a) => (a === 'date' || a === 'reassign' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
             ) : <span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span>}
             <div><FlagChip t={t} today={today} /></div>
@@ -234,8 +235,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         )}
         <div style={{ minWidth: 0 }}>
           {table(openRows, filtered
-            ? <div className="empty-block"><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
-            : <div className="empty-block"><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
+            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
+            : <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
           {closedRows.length > 0 && tile !== 'done' && (
             <>
               <button className="log-toggle small-toggle" style={{ marginTop: 22 }} aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>

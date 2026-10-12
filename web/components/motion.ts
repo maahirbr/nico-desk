@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MotionProps } from 'motion/react';
+import { COUNT_MS, countUpValue, isFirst } from '@/lib/motionMath';
 
 // The three gestures in DESIGN.md Motion need a little state: a line that just arrived, a date
 // that just moved, a state that was just set. The movement itself is CSS (globals.css, .arrive,
 // .date-old, .date-new, .state-set), on transform and opacity only.
 
-const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Ids of tasks this browser tab just made. The row that shows one of them rises in, once.
 export const arrivals = new Set<string>();
@@ -87,4 +89,72 @@ export function fadeShift(index = 0) {
 // a real keyboard: a phone keeps the keyboard closed until the person taps a field.
 export function focusOnDesktop(el: HTMLElement | null) {
   if (el && typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) el.focus();
+}
+
+// ---------- motion pass (workstream 4) ----------
+// Every value below stays under 0.3s, except the first-load stagger, which is CSS (globals.css .stagger).
+// Each preset returns nothing that moves under reduced motion.
+
+const EASE_OUT = [0.2, 0, 0, 1] as [number, number, number, number];
+
+// A side drawer springing in from the right. Pass `closing` to send it back out.
+// Spread on a `motion.aside`.
+export function drawerMotion(closing = false): MotionProps {
+  if (reduced()) return { initial: false, animate: { opacity: closing ? 0 : 1 }, transition: { duration: 0 } };
+  const out = { duration: 0.16, ease: EASE_OUT };
+  const spring = { type: 'spring' as const, visualDuration: 0.28, bounce: 0.12 };
+  return { initial: { opacity: 0, x: 32 }, animate: closing ? { opacity: 0, x: 32, transition: out } : { opacity: 1, x: 0 }, transition: spring };
+}
+
+// A dialog rising a little and settling with a small spring. Spread on a `motion.div`.
+export function modalMotion(closing = false): MotionProps {
+  if (reduced()) return { initial: false as const, animate: { opacity: closing ? 0 : 1 }, transition: { duration: 0 } };
+  return {
+    initial: { opacity: 0, y: 12, scale: 0.98 },
+    animate: closing ? { opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.14, ease: EASE_OUT } } : { opacity: 1, y: 0, scale: 1 },
+    transition: { type: 'spring' as const, visualDuration: 0.26, bounce: 0.1 },
+  };
+}
+
+// The marker that slides between the items of a nav or a tab row (a shared layout animation).
+export function indicatorMotion(): MotionProps {
+  return { transition: reduced() ? { duration: 0 } : { type: 'spring' as const, visualDuration: 0.24, bounce: 0 } };
+}
+
+// Keys of lists already shown in this tab. A list staggers in the first time only.
+const seenViews = new Set<string>();
+
+// True the first time a list with this key mounts in this browser tab, false after. It reads the set in the
+// first render and writes it in an effect, so React may render twice without losing the answer.
+export function useFirstView(key: string): boolean {
+  const [first] = useState(() => isFirst(seenViews, key));
+  useEffect(() => { seenViews.add(key); }, [key]);
+  return first && !reduced();
+}
+
+// Set once the app has hydrated. A page that is part of the first document load keeps its numbers as the
+// server wrote them (counting would flash the final value first), so a count-up only runs on later visits.
+let hydrated = false;
+export function markHydrated() { setTimeout(() => { hydrated = true; }, 0); }
+
+// Counts a whole number up from 0 once per session per key. The first render, the server render and reduced
+// motion all show the true value, so the number is never wrong, only late to arrive.
+export function useCountUp(to: number, key: string): number {
+  const [first] = useState(() => hydrated && !reduced() && isFirst(seenViews, `count:${key}`));
+  const [shown, setShown] = useState(first ? 0 : to);
+  const done = useRef(!first);
+  useEffect(() => {
+    seenViews.add(`count:${key}`);
+    if (done.current) { setShown(to); return; }
+    let raf = 0;
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const t = (now - t0) / COUNT_MS;
+      setShown(countUpValue(to, t));
+      if (t < 1) raf = requestAnimationFrame(step); else done.current = true;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [to, key]);
+  return shown;
 }

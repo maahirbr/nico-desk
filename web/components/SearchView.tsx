@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { DitherArt } from './DitherArt';
 import type { SearchHit } from '@/lib/search';
 import { fmtDate } from '@/lib/time';
 
@@ -42,7 +43,7 @@ export function SearchView({ initial }: { initial: string }) {
           if (e.key === 'ArrowUp') { e.preventDefault(); setSel(Math.max(sel - 1, 0)); }
           if (e.key === 'Enter' && flat[sel]) router.push(flat[sel].href);
         }} />
-      {hits && hits.length === 0 && <div className="empty-state"><p>Nothing matches “{q.trim()}”.</p></div>}
+      {hits && hits.length === 0 && <div className="empty-state"><DitherArt field="bands" className="dither-empty" /><p>Nothing matches “{q.trim()}”.</p></div>}
       {kinds.map((k) => (
         <section key={k} className="group">
           <h2>{LABEL[k]} <span className="n">{hits!.filter((h) => h.kind === k).length}</span></h2>

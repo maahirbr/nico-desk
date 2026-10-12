@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
@@ -12,7 +12,7 @@ import { LinkChip, TaskLinkChips } from './TaskLinks';
 import { LINKS_PER_TASK } from '@/lib/links';
 import { groupLog } from './logText';
 import { canMoveTo } from './statusRules';
-import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
+import { arrivals, drawerMotion, focusOnDesktop, modalMotion, useClosing, usePreviousWhileChanging } from './motion';
 import { DateField } from './DateField';
 import { Popover } from './popover';
 import { Select } from './Select';
@@ -42,15 +42,24 @@ export const STATUS: Record<StatusKey, { word: string; tone: Tone }> = {
 
 // Each status also has an icon, so it reads without colour: circle, half circle, bar, tick, cross.
 export function StatusIcon({ s }: { s: StatusKey }) {
+  // The ring stays; the glyph inside is keyed by status, so a change plays a small pop-in (.state-set .st-glyph).
+  // The tick has pathLength 1 so it can draw itself (.st-tick).
   return (
     <svg className="st-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="6" cy="6" r="4.6" />
-      {s === 'doing' && <path d="M6 1.4a4.6 4.6 0 0 1 0 9.2z" fill="currentColor" stroke="none" />}
-      {s === 'blocked' && <path d="M3.6 6h4.8" strokeWidth="1.8" />}
-      {s === 'done' && <path d="M3.9 6.2l1.5 1.5 2.8-3" />}
-      {s === 'dropped' && <path d="M4.4 4.4l3.2 3.2M7.6 4.4l-3.2 3.2" />}
+      <g key={s} className="st-glyph">
+        {s === 'doing' && <path d="M6 1.4a4.6 4.6 0 0 1 0 9.2z" fill="currentColor" stroke="none" />}
+        {s === 'blocked' && <path d="M3.6 6h4.8" strokeWidth="1.8" />}
+        {s === 'done' && <path className="st-tick" d="M3.9 6.2l1.5 1.5 2.8-3" pathLength={1} />}
+        {s === 'dropped' && <path d="M4.4 4.4l3.2 3.2M7.6 4.4l-3.2 3.2" />}
+      </g>
     </svg>
   );
+}
+
+// The tick inside a checkbox. The box is drawn in CSS; this sits over it and draws itself when it is checked.
+export function CheckTick() {
+  return <svg className="check-tick" viewBox="0 0 12 12" aria-hidden><path d="M2.9 6.3l2.2 2.2 4-4.6" pathLength={1} /></svg>;
 }
 
 // What a row's status menu can ask the side panel to open: a status that needs words, a date move, or a new owner.
@@ -185,6 +194,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               catch (e) { setTicked(false); setErr((e as Error).message); }
             }} />
         )}
+        {!closed && canTick && <CheckTick />}
       </span>
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
       {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar name={owner} />{owner.split(' ')[0]}</PersonLink>}
@@ -259,10 +269,10 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
   }, [close]);
   return (
     <div className={`overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
-      <div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
+      <motion.div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} {...modalMotion(closing)}>
         <div className="modal-head"><h2>{title}</h2><button className="x" aria-label="Close" onClick={close}>×</button></div>
         {children}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -363,7 +373,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
   return (
     <div className={`overlay drawer-overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
-      <aside className="drawer" role="dialog" aria-modal="true" aria-label="Task">
+      <motion.aside className="drawer" role="dialog" aria-modal="true" aria-label="Task" {...drawerMotion(closing)}>
         <div className="drawer-top">
           <span className="small dim">
             {t && (t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId] ?? 'Project'}</Link> : 'No project')}
@@ -538,7 +548,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
           </>
         )}
-      </aside>
+      </motion.aside>
     </div>
   );
 }

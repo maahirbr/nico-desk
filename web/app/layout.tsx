@@ -8,6 +8,7 @@ import { Nav, SwitchToOwner } from '@/components/client';
 import { HELP_COOKIE, helpOf } from '@/components/help';
 import { HelpProvider, HelpToggle } from '@/components/HelpMode';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
+import { MotionBoot } from '@/components/MotionBoot';
 import { Shortcuts } from '@/components/Shortcuts';
 import { ProjectPeopleProvider } from '@/components/OwnerPicker';
 import { ProfileMenu } from '@/components/ProfileMenu';
@@ -55,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <HelpProvider initial={help} enabled={!!me}>
         {me?.viewingAs && <ViewBanner name={me.person.displayName} role={roleWord(me.person.appRoles)} />}
         <KeyboardDismiss />
+        <MotionBoot />
         <Toaster />
         {me && <Shortcuts />}
         {me ? (

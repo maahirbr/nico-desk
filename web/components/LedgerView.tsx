@@ -8,6 +8,9 @@ import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, Person, PersonLink } from './chips';
 import { Help } from './HelpMode';
+import { motion } from 'motion/react';
+import { drawerMotion } from './motion';
+import { CountUp } from './motion-ui';
 
 // The on-time ledger. Judged against the date first given (INTENT.md principle 1). Every number
 // opens the tasks behind it, with each date move and its reason. The cards show delivery habits per
@@ -83,19 +86,19 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 
       <div className="stats">
         <Help term="ledger_kept" host><button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
-          <div className="stat-n">{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</div><div className="stat-l">Kept on the first date, {period}</div>
+          <div className="stat-n">{kAll.pct === null ? 'n/a' : <><CountUp id="ledger-kept" value={kAll.pct} />%</>}</div><div className="stat-l">Kept on the first date, {period}</div>
         </button></Help>
         <Help term="ledger_closed_ok" host><button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
-          <div className="stat-n">{tasks.filter(MATCH.kept).length}</div><div className="stat-l">Closed on time or ahead</div>
+          <div className="stat-n"><CountUp id="ledger-closed-ok" value={tasks.filter(MATCH.kept).length} /></div><div className="stat-l">Closed on time or ahead</div>
         </button></Help>
         <Help term="ledger_closed_late" host><button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
-          <div className="stat-n">{tasks.filter(MATCH.late).length}</div><div className="stat-l">Closed late</div>
+          <div className="stat-n"><CountUp id="ledger-closed-late" value={tasks.filter(MATCH.late).length} /></div><div className="stat-l">Closed late</div>
         </button></Help>
         <Help term="ledger_pastdue" host><button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
-          <div className="stat-n">{tasks.filter(MATCH.pastdue).length}</div><div className="stat-l">Open, past due</div>
+          <div className="stat-n"><CountUp id="ledger-pastdue" value={tasks.filter(MATCH.pastdue).length} /></div><div className="stat-l">Open, past due</div>
         </button></Help>
         <Help term="slipped_silently" host><button className={`card stat${tasks.some(MATCH.silent) ? ' warn' : ''}`} onClick={() => show(`Slipped silently, ${period}`, tasks.filter(MATCH.silent))}>
-          <div className="stat-n">{tasks.filter(MATCH.silent).length}</div><div className="stat-l">Slipped silently <span className="dim">· target 0</span></div>
+          <div className="stat-n"><CountUp id="ledger-silent" value={tasks.filter(MATCH.silent).length} /></div><div className="stat-l">Slipped silently <span className="dim">· target 0</span></div>
         </button></Help>
       </div>
 
@@ -292,7 +295,7 @@ function DrillPanel({ drill, names, projectNames, today, onClose }: {
   }, [onClose]);
   return (
     <div className="overlay drawer-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <aside className="drawer" role="dialog" aria-modal="true" aria-label={drill.title}>
+      <motion.aside className="drawer" role="dialog" aria-modal="true" aria-label={drill.title} {...drawerMotion()}>
         <div className="drawer-top"><h2 className="drill-title">{drill.title} <span className="count-badge">{drill.tasks.length}</span></h2><button className="x" aria-label="Close" onClick={onClose}>×</button></div>
         <ol className="drill-list">
           {drill.tasks.map((t) => {
@@ -327,7 +330,7 @@ function DrillPanel({ drill, names, projectNames, today, onClose }: {
             );
           })}
         </ol>
-      </aside>
+      </motion.aside>
     </div>
   );
 }

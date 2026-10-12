@@ -6,6 +6,7 @@ import { fmtDate } from '@/lib/time';
 import { PersonLink } from './chips';
 import { DateField } from './DateField';
 import { Select } from './Select';
+import { SlideInd } from './motion-ui';
 
 // Meeting minutes in, proposals out: nothing changes until a person accepts each one.
 
@@ -23,10 +24,11 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
       <div className="imp-head"><h3>Import meeting minutes</h3></div>
       <nav className="tabs imp-tabs" aria-label="Where the minutes come from">
         {(Object.keys(NAME) as Source[]).map((k) => (
-          <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{NAME[k]}</button>
+          <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-minutes" className="tab-ind" />}{NAME[k]}</button>
         ))}
       </nav>
       <p className="sub">Next steps become proposals to review. Nothing changes on the {what === 'plan' ? 'plan' : 'board'} until someone accepts them{what === 'tasks' ? '; each accepted step becomes a task with an owner and a date' : ''}.</p>
+      <div key={tab} className="tab-panel">
       {tab === 'paste' && (
         <div className="stack">
           <div className="row">
@@ -51,6 +53,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
           </ol>
         </div>
       )}
+      </div>
     </div>
   );
 }
