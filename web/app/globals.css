@@ -434,6 +434,8 @@ tr.line-row.is-open td { background: var(--sunk); border-bottom-color: transpare
 .mode { display: table; margin-top: var(--space-xxs); font: var(--type-small); color: var(--ink-3); }
 .mode.coach { color: var(--off); }
 td.by { font: var(--type-small); font-feature-settings: var(--features-date); }
+/* the pushed-date note wraps inside a narrow Due column instead of running into the status chip */
+table.plan td.by .pushed { white-space: normal; }
 .by-main { font-weight: 500; }
 .by-main.overdue { color: var(--late); }
 .ms-count { color: var(--ink-3); font: var(--type-small); }
