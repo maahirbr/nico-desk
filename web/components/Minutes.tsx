@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { PlanLine, Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
+import { DateField } from './DateField';
+import { Select } from './Select';
 
 // Meeting minutes in, proposals out: nothing changes until a person accepts each one.
 
@@ -27,7 +29,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
       {tab === 'paste' && (
         <div className="stack">
           <div className="row">
-            <label className="f" style={{ flex: '0 1 180px' }}><span>Meeting date</span><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
+            <label className="f" style={{ flex: '0 1 180px' }}><span>Meeting date</span><DateField value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
             <label className="f"><span>Meeting name</span><input value={f.title} placeholder="e.g. Weekly working session" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           </div>
           <textarea rows={7} value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })}
@@ -87,9 +89,9 @@ function SourceList({ provider, busy, onRead }: { provider: 'granola' | 'firefli
       <div className="row">
         <input type="search" className="search" placeholder={`Search ${NAME[provider]} meetings`} value={q} aria-label="Search meetings"
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') load(days, q); }} />
-        <select value={days} aria-label="How far back" onChange={(e) => { setDays(Number(e.target.value)); load(Number(e.target.value), q); }}>
+        <Select value={String(days)} aria-label="How far back" onChange={(v) => { setDays(Number(v)); load(Number(v), q); }}>
           <option value={7}>Last 7 days</option><option value={14}>Last 14 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option>
-        </select>
+        </Select>
         <button className="btn ghost" onClick={() => load(days, q)}>Search</button>
       </div>
       {msg && <p className="err" role="alert">{msg}</p>}
@@ -169,21 +171,21 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
       <div className="pc-top">
         <span className={`pc-badge${unsure ? ' unsure' : ''}`}>{unsure ? (mode === 'plan' ? 'Check the line' : 'Needs owner and date') : mode === 'plan' ? 'Sure' : 'Ready'}</span>
         {mode === 'plan' ? (
-          <select className="pc-line" value={lineId} aria-label="Line for this action" onChange={(e) => setLineId(e.target.value)}>
+          <Select className="pc-line" value={lineId} aria-label="Line for this action" onChange={setLineId}>
             <option value="">Other actions (no line)</option>
             {[...lines].sort((a, b) => a.num - b.num).map((l) => <option key={l.id} value={l.id}>{l.num}. {l.what}{p.alt.includes(l.id) ? '  (maybe)' : ''}</option>)}
-          </select>
+          </Select>
         ) : (
           <>
-            <select className="pc-line" value={ownerId} aria-label="Owner" onChange={(e) => setOwnerId(e.target.value)}>
+            <Select className="pc-line" value={ownerId} aria-label="Owner" onChange={setOwnerId}>
               <option value="">Owner: pick from the roster{p.ownerName ? ` (minutes say “${p.ownerName}”)` : ''}</option>
               {people.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
+            </Select>
             {workstreams.length > 0 && (
-              <select className="pc-line" value={ws} aria-label="Sub-project" onChange={(e) => setWs(e.target.value)}>
+              <Select className="pc-line" value={ws} aria-label="Sub-project" onChange={setWs}>
                 <option value="">No sub-project</option>
                 {workstreams.map((w) => <option key={w}>{w}</option>)}
-              </select>
+              </Select>
             )}
           </>
         )}
@@ -195,7 +197,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
           <div className="row">
             <input value={f.ownerName} placeholder="Owner" aria-label="Owner" onChange={(e) => setF({ ...f, ownerName: e.target.value })} />
             <input value={f.ownerWith} placeholder="Supported by" aria-label="Supported by" onChange={(e) => setF({ ...f, ownerWith: e.target.value })} />
-            <input type="date" value={f.dueOn} aria-label="Due date" onChange={(e) => setF({ ...f, dueOn: e.target.value })} />
+            <DateField value={f.dueOn} aria-label="Due date" onChange={(e) => setF({ ...f, dueOn: e.target.value })} />
           </div>
         </div>
       ) : (

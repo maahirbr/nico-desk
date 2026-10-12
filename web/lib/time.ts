@@ -27,6 +27,19 @@ export function mondayOf(date: string): string {
   return addDays(date, dow === 0 ? -6 : 1 - dow);
 }
 
+// The shortcut dates of a date field, counted from `from` (a local day). Weeks run Monday to Sunday:
+// Friday is this week's, or next week's once `from` is Friday or later; Next Monday is the first
+// Monday after `from`.
+export function quickDates(from: string) {
+  const dow = new Date(`${from}T00:00:00Z`).getUTCDay() || 7; // Monday 1 ... Sunday 7
+  return {
+    today: from,
+    tomorrow: addDays(from, 1),
+    friday: addDays(from, dow < 5 ? 5 - dow : 12 - dow),
+    nextMonday: addDays(mondayOf(from), 7),
+  };
+}
+
 export function isDate(s: unknown): s is string {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 }

@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
@@ -10,6 +11,9 @@ import { Avatar, type Tone } from './chips';
 import { groupLog } from './logText';
 import { canMoveTo } from './statusRules';
 import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
+import { DateField } from './DateField';
+import { Popover } from './popover';
+import { Select } from './Select';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
@@ -208,66 +212,31 @@ export function StatusMenu({ t, current, statuses, canReassign, disabled, set, o
   t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; disabled: boolean; set: boolean; onPick: (a: RowAction) => void;
 }) {
   const [open, setOpen] = useState(false);
-  // Fixed to the viewport, since the task list clips what overflows it. Opens upward near the bottom.
-  const [at, setAt] = useState<React.CSSProperties>({});
-  const wrap = useRef<HTMLSpanElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
-  const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [])];
-  // Anchored to the button's right edge; on a phone the button can sit at the left, so pull it back on screen.
-  useLayoutEffect(() => {
-    const m = open ? wrap.current?.querySelector<HTMLElement>('.st-menu') : null;
-    if (m && m.getBoundingClientRect().left < 8) setAt((a) => ({ ...a, left: 8, right: 'auto' }));
-  }, [open]);
-  useEffect(() => {
-    if (!open) return;
-    (items().find((b) => b.getAttribute('aria-checked') === 'true') ?? items()[0])?.focus();
-    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
-    const shut = () => setOpen(false);
-    document.addEventListener('pointerdown', away);
-    window.addEventListener('scroll', shut, true);
-    window.addEventListener('resize', shut);
-    return () => { document.removeEventListener('pointerdown', away); window.removeEventListener('scroll', shut, true); window.removeEventListener('resize', shut); };
-  }, [open]);
-  function toggle() {
-    const r = btn.current?.getBoundingClientRect();
-    if (!open && r) {
-      const right = Math.max(8, window.innerWidth - r.right);
-      setAt(r.bottom + 280 > window.innerHeight && r.top > 280 ? { right, top: 'auto', bottom: window.innerHeight - r.top + 4 } : { right, top: r.bottom + 4 });
-    }
-    setOpen(!open);
-  }
-  function key(e: React.KeyboardEvent) {
-    const list = items();
-    const i = list.indexOf(document.activeElement as HTMLButtonElement);
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length]?.focus();
-    } else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); list[e.key === 'Home' ? 0 : list.length - 1]?.focus(); }
-    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setOpen(false); btn.current?.focus(); }
-    else if (e.key === 'Tab') setOpen(false);
-  }
   const pick = (a: RowAction) => { setOpen(false); btn.current?.focus(); onPick(a); };
   return (
-    <span className="menu-wrap st-menu-wrap" ref={wrap} onKeyDown={open ? key : undefined}>
+    <span className="menu-wrap st-menu-wrap">
       <button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
         aria-label={`Status of “${t.title}”: ${STATUS[current].word}`} disabled={disabled}
-        onClick={toggle}
-        onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); toggle(); } }}>
+        onClick={() => setOpen(!open)}
+        onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}>
         <StatusIcon s={current} />{STATUS[current].word}
       </button>
-      {open && (
-        <span className="menu st-menu" role="menu" aria-label="Status" style={at}>
-          {statuses.map((s) => (
-            <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
-              <StatusIcon s={s} /><span>{STATUS[s].word}</span>
-            </button>
-          ))}
-          <span className="st-menu-sep" role="separator" />
-          {t.blocked && <button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button>}
-          <button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button>
-          {canReassign && <button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button>}
-        </span>
-      )}
+      <AnimatePresence>
+        {open && (
+          <Popover anchor={btn} onClose={() => setOpen(false)} align="end" role="menu" label="Status" className="menu st-menu">
+            {statuses.map((s) => (
+              <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
+                <StatusIcon s={s} /><span>{STATUS[s].word}</span>
+              </button>
+            ))}
+            <span className="st-menu-sep" role="separator" />
+            {t.blocked && <button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button>}
+            <button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button>
+            {canReassign && <button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button>}
+          </Popover>
+        )}
+      </AnimatePresence>
     </span>
   );
 }
@@ -418,16 +387,16 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
                 <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop?`, blocked: 'Why is it blocked? A block reason is needed.', date: 'Move the date. The first date stays on record. Moving it before the date passes counts as moved in time.', drop: 'Drop this task. A reason is needed, and it stays on record.', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
-                {mode === 'date' && <label className="f"><span>New date</span><input type="date" min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
+                {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
                 <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'}</span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
                 </label>
                 {mode === 'blocked' && (
                   <label className="f"><span>Waiting on someone in the team? (optional)</span>
-                    <select value={form.person} onChange={(e) => setForm({ ...form, person: e.target.value })}>
+                    <Select value={form.person} onChange={(v) => setForm({ ...form, person: v })}>
                       <option value="">No one, or someone outside</option>
                       {people.filter((p) => p.id !== t.ownerId).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    </Select>
                   </label>
                 )}
                 <div className="row">
@@ -479,9 +448,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               {(workstreams.length > 0 || t.workstream) && (<>
                 <dt>Sub-project</dt>
                 <dd>{canEdit && open ? (
-                  <select value={edit.workstream} onChange={(e) => setEdit({ ...edit, workstream: e.target.value })}>
+                  <Select value={edit.workstream} onChange={(v) => setEdit({ ...edit, workstream: v })}>
                     <option value="">None</option>{[...new Set([...workstreams, ...(t.workstream ? [t.workstream] : [])])].map((w) => <option key={w}>{w}</option>)}
-                  </select>
+                  </Select>
                 ) : t.workstream}</dd>
               </>)}
 
@@ -554,22 +523,22 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         <label className="f"><span>Owner</span>
           <OwnerPicker key={f.projectId} projectId={f.projectId || null} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
-        <label className="f"><span>Due</span><input type="date" required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
+        <label className="f"><span>Due</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
       {(projects || workstreams.length > 0) && (
         <div className="row">
           {projects && (
             <label className="f"><span>Project</span>
-              <select value={f.projectId} onChange={(e) => { const p = e.target.value; setF({ ...f, projectId: p, workstream: '', ownerRole: undefined, ownerId: !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
+              <Select value={f.projectId} onChange={(p) => { setF({ ...f, projectId: p, workstream: '', ownerRole: undefined, ownerId: !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
                 <option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              </Select>
             </label>
           )}
           {workstreams.length > 0 && (
             <label className="f"><span>Sub-project</span>
-              <select value={f.workstream} onChange={(e) => setF({ ...f, workstream: e.target.value })}>
+              <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
-              </select>
+              </Select>
             </label>
           )}
         </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { arrivals, usePreviousWhileChanging } from './motion';
+import { Select } from './Select';
 
 // The three gestures for the board tables, which render their own rows. Same classes and timings as
 // TaskRow: arrive, move a date, set a state. All movement is CSS (globals.css, Motion).
@@ -24,7 +25,7 @@ export function MovedDate({ value, text, fmt }: { value: string; text: string; f
 }
 
 // A status control that crossfades when its value changes.
-export function StateSelect({ value, className = '', children, ...rest }: React.SelectHTMLAttributes<HTMLSelectElement> & { value: string }) {
+export function StateSelect({ value, className = '', ...rest }: React.ComponentProps<typeof Select> & { value: string }) {
   const from = usePreviousWhileChanging(value, 140);
-  return <select {...rest} value={value} className={`${className}${from !== undefined ? ' state-set' : ''}`.trim()}>{children}</select>;
+  return <Select {...rest} value={value} className={`${className}${from !== undefined ? ' state-set' : ''}`.trim()} />;
 }

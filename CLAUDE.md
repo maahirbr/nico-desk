@@ -231,6 +231,14 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   call. It is a CSS mask of `web/public/brand/nicobar-wordmark.svg` filled with `--ink`, so every skin tints it in day and
   night with no copy per skin, and forced-colours mode paints it in the system text colour. Rollback: `git revert` this
   commit.
+- 2026-10-12 · Sonnet 5.5 · Foundations for the UI pass. Each status has one fg and bg token pair in every skin, day and
+  night (`--status-*` at the end of `web/app/tokens.css`): grey, blue, red, green, and a muted Dropped with a strike. Skin W
+  keeps yellow for In progress. Every pair passes AA. One `Select` (`web/components/Select.tsx`) replaces every native
+  select, and `DateField` (`web/components/DateField.tsx`) adds Today, Tomorrow, Friday and Next Monday to every date input.
+  Both sit on one `Popover` (`web/components/popover.tsx`), which `StatusMenu` also uses: it is a bottom sheet under 768px and
+  follows the keyboard rule. Shortcut dates come from `quickDates` in `web/lib/time.ts`. Motion presets live in
+  `web/components/motion.ts`, stop under reduced motion and stay under 300ms; the `motion` package is new. Rollback: `git
+  revert` this commit.
 
 ## VERIFY
 

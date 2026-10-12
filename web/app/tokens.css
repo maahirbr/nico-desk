@@ -857,7 +857,7 @@
 :root[data-skin="m"] .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 
 /* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
-:root[data-skin="m"] :is(input, select, textarea):not(.drawer-title, .drawer-desc, :focus) { border-color: var(--ui-line); }
+:root[data-skin="m"] :is(input, select, textarea, .sel-btn):not(.drawer-title, .drawer-desc, :focus, [aria-expanded="true"]) { border-color: var(--ui-line); }
 :root[data-skin="m"] .btn.ghost { background: var(--surface); }
 
 /* Grouped inset lists, as in System Settings: rows separated by a line that starts inside the card edge */
@@ -1011,7 +1011,80 @@
 :root[data-skin="i"] .btn.ghost { background: var(--surface); }
 
 /* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
-:root[data-skin="i"] :is(input, select, textarea):not(.drawer-title, .drawer-desc, :focus) { border-color: var(--ui-line); }
+:root[data-skin="i"] :is(input, select, textarea, .sel-btn):not(.drawer-title, .drawer-desc, :focus, [aria-expanded="true"]) { border-color: var(--ui-line); }
 
 /* The status picker keeps room for its chevron when the pill padding is tight. */
 :root[data-skin="m"] .st-pick, :root[data-skin="i"] .st-pick { padding-right: 26px; }
+
+/* ---------- Status colours: one fg and one bg per status, in every skin ----------
+   Not started is grey, In progress blue, Blocked red, Done green, Dropped muted (its label is struck through in
+   globals.css). Skin W keeps its own yellow In progress at the PM's call. Each pair passes 4.5:1 for text, and the
+   fg alone passes 3:1 on the menu (surface and the checked row) for the icon. Skin A is the :root values; a skin
+   that matches a token reuses it. Late and at risk are flags, with their own tones, and do not read these. */
+:root {
+  --status-todo-bg: var(--pill); --status-todo-fg: var(--ink-2);
+  --status-doing-bg: var(--primary-soft); --status-doing-fg: var(--primary);
+  --status-blocked-bg: var(--late-soft); --status-blocked-fg: var(--late);
+  --status-done-bg: #dff3e5; --status-done-fg: #1d6b3a;
+  --status-dropped-bg: var(--sunk); --status-dropped-fg: var(--ink-3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --status-done-bg: #17301f; --status-done-fg: #7fd6a3;
+  }
+}
+:root[data-theme="dark"] {
+  --status-done-bg: #17301f; --status-done-fg: #7fd6a3;
+}
+:root[data-skin="w"] {
+  --status-todo-bg: var(--st-idle-bg); --status-todo-fg: var(--st-idle-fg);
+  --status-doing-bg: var(--st-active-bg); --status-doing-fg: var(--st-active-fg);
+  --status-blocked-bg: var(--st-blocked-bg); --status-blocked-fg: var(--st-blocked-fg);
+  --status-done-bg: var(--st-done-bg); --status-done-fg: var(--st-done-fg);
+  --status-dropped-bg: var(--st-quiet-bg); --status-dropped-fg: var(--st-quiet-fg);
+}
+/* B has no pill fills, so every bg is clear and the fg reads on the page. */
+:root[data-skin="b"] {
+  --status-todo-bg: transparent; --status-todo-fg: var(--ink-2);
+  --status-doing-bg: transparent; --status-doing-fg: #2457c5;
+  --status-blocked-bg: transparent; --status-blocked-fg: var(--late);
+  --status-done-bg: transparent; --status-done-fg: #1d6b3a;
+  --status-dropped-bg: transparent; --status-dropped-fg: var(--ink-3);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="b"]:not([data-theme="light"]) {
+    --status-doing-fg: #8fb1ff; --status-done-fg: #6fd09a;
+  }
+}
+:root[data-skin="b"][data-theme="dark"] {
+  --status-doing-fg: #8fb1ff; --status-done-fg: #6fd09a;
+}
+:root[data-skin="c"] {
+  --status-todo-bg: var(--pill); --status-todo-fg: var(--ink-2);
+  --status-doing-bg: #e3ecf8; --status-doing-fg: #2a5aa6;
+  --status-blocked-bg: var(--late-soft); --status-blocked-fg: var(--late);
+  --status-done-bg: var(--primary-soft); --status-done-fg: var(--primary);
+  --status-dropped-bg: var(--sunk); --status-dropped-fg: var(--ink-3);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="c"]:not([data-theme="light"]) {
+    --status-doing-bg: #1f2a3d; --status-doing-fg: #8fb3ef;
+  }
+}
+:root[data-skin="c"][data-theme="dark"] {
+  --status-doing-bg: #1f2a3d; --status-doing-fg: #8fb3ef;
+}
+:root[data-skin="m"] {
+  --status-todo-bg: var(--pill); --status-todo-fg: var(--ink-2);
+  --status-doing-bg: var(--primary-soft); --status-doing-fg: var(--primary);
+  --status-blocked-bg: var(--late-soft); --status-blocked-fg: var(--late);
+  --status-done-bg: var(--m-green-soft); --status-done-fg: var(--m-green);
+  --status-dropped-bg: var(--sunk); --status-dropped-fg: var(--ink-3);
+}
+:root[data-skin="i"] {
+  --status-todo-bg: var(--i-grey-bg); --status-todo-fg: var(--i-grey-fg);
+  --status-doing-bg: var(--i-blue-bg); --status-doing-fg: var(--i-blue-fg);
+  --status-blocked-bg: var(--late-soft); --status-blocked-fg: var(--late);
+  --status-done-bg: var(--i-green-bg); --status-done-fg: var(--i-green-fg);
+  --status-dropped-bg: var(--sunk); --status-dropped-fg: var(--ink-3);
+}

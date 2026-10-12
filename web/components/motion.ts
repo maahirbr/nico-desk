@@ -46,6 +46,43 @@ export function useClosing(onClose: () => void): [boolean, () => void] {
   return [closing, close];
 }
 
+// Shared presets for the `motion` package (Select, date picker). Each returns props to spread on a
+// `motion.*` element. Under reduced motion they return no animation at all. Nothing runs over 0.3s.
+const OFF = { initial: false as const, transition: { duration: 0 } };
+
+// A bottom sheet or drawer rising from the edge.
+export function sheetMotion() {
+  if (reduced()) return { ...OFF, exit: { opacity: 0, transition: { duration: 0 } } };
+  return {
+    initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%', transition: { duration: 0.16 } },
+    transition: { type: 'spring' as const, visualDuration: 0.24, bounce: 0 },
+  };
+}
+
+// The scrim behind a bottom sheet.
+export function scrimMotion() {
+  if (reduced()) return { ...OFF, exit: { opacity: 0, transition: { duration: 0 } } };
+  return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0, transition: { duration: 0.16 } }, transition: { duration: 0.16 } };
+}
+
+// A pop-up scaling out of the point it was opened from (`origin` is a CSS transform-origin).
+export function popoverMotion(origin: string) {
+  if (reduced()) return { ...OFF, style: { transformOrigin: origin }, exit: { opacity: 0, transition: { duration: 0 } } };
+  return {
+    initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96, transition: { duration: 0.1 } },
+    transition: { duration: 0.14, ease: [0.2, 0, 0, 1] as [number, number, number, number] }, style: { transformOrigin: origin },
+  };
+}
+
+// Content that fades in with a small shift. `index` staggers a row of them on first load (0.03s steps).
+export function fadeShift(index = 0) {
+  if (reduced()) return OFF;
+  return {
+    initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.16, delay: Math.min(index, 6) * 0.03, ease: [0.2, 0, 0, 1] as [number, number, number, number] },
+  };
+}
+
 // Ref callback for a field that should take focus on open. Only where there is a hover pointer and
 // a real keyboard: a phone keeps the keyboard closed until the person taps a field.
 export function focusOnDesktop(el: HTMLElement | null) {
