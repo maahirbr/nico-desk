@@ -161,6 +161,11 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   per person split ahead, on time, late); needs attention, finished and the full breakdown follow. Home folds done and
   dropped tasks into two closed lists. Also fixes the sidebar wordmark and name, which drew in dark ink on the dark
   sidebar. Rollback: do not merge the branch, or `git revert` its commit.
+- 2026-10-12 · Opus 5.5 · An admin can now do everything a lead can (`web/lib/roles.ts`, `isLeadOrAdmin`), at the repo owner's call:
+  before, an admin without the lead role could not edit, move, close or reopen others' tasks. Block stays owner-only, and the
+  status buttons now offer only moves the service allows. The update log reads one sentence per action. The phone nav starts
+  at the gutter in every skin. On the live site the repo owner, the PM, the pilot sponsor, the sponsor and the product teammate
+  are admins; the open demo is off, so the first screen is Google sign-in. Rollback: `git revert` the two fix commits.
 
 ## VERIFY
 
@@ -171,7 +176,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `67 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `101 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
