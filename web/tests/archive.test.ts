@@ -199,3 +199,36 @@ describe('the routes during view-as', () => {
     expect((await restoreRoute(post(`/api/v1/projects/${p.id}/restore`), params)).status).toBe(200);
   });
 });
+
+describe('a project lead who does not own it', () => {
+  // per_cy leads, per_bo is a plain member, and neither holds the lead or admin role on the team.
+  const withLead = { ...base, leadId: 'per_cy' };
+  const joiner = { ...task, ownerRole: 'Gift wrap' };
+
+  it('can archive, restore, edit and add a person, as the owner can', async () => {
+    const p = await createProject(db, LEAD, TEAM_ID, withLead);
+    expect(await code(archiveProject(db, 'per_cy', p.id))).toBe('ok');
+    expect((await getProject(db, p.id)).archivedAt).not.toBeNull();
+    expect(await code(restoreProject(db, 'per_cy', p.id))).toBe('ok');
+    expect(await code(updateProject(db, 'per_cy', p.id, { ...withLead, goal: 'Edited by the lead' }))).toBe('ok');
+    expect(await code(s.createTask(db, 'per_cy', { ...joiner, ownerId: 'per_dee', projectId: p.id }))).toBe('ok');
+    expect(await projectsMayAddTo(db, TEAM_ID, 'per_cy', false)).toContain(p.id); // per_cy also owns a fixture project
+  });
+
+  it('is not a stand-in for a plain member, who can do none of it', async () => {
+    const p = await createProject(db, LEAD, TEAM_ID, withLead);
+    expect(await code(archiveProject(db, 'per_bo', p.id))).toBe('403 not_allowed');
+    expect(await code(updateProject(db, 'per_bo', p.id, { ...withLead, goal: 'Nope' }))).toBe('403 not_allowed');
+    expect(await code(s.createTask(db, 'per_bo', { ...joiner, ownerId: 'per_dee', projectId: p.id }))).toBe('403 not_allowed');
+    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toEqual([]);
+  });
+
+  it('logs a change of owner or lead as a project event', async () => {
+    const p = await createProject(db, LEAD, TEAM_ID, withLead);
+    await updateProject(db, 'per_cy', p.id, { ...withLead, leadId: 'per_dee' });
+    await updateProject(db, LEAD, p.id, { ...withLead, ownerId: 'per_dee', leadId: null });
+    const names = { per_ada: 'Ada', per_cy: 'Cy', per_dee: 'Dee', per_bo: 'Bo' };
+    const lines = groupLog(await s.projectLog(db, p.id, 20), names, { [p.id]: p.name }).map((e) => e.text);
+    expect(lines).toEqual(expect.arrayContaining(['Project lead changed to Dee', 'Project owner changed to Dee']));
+  });
+});

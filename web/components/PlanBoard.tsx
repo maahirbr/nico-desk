@@ -78,7 +78,11 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     view: oneOf(raw.view, ['pillar', 'date'], 'pillar') as 'pillar' | 'date',
     tab: oneOf(raw.tab, ['lines', 'soon', 'asks', 'rhythm', 'log'], 'lines') as 'lines' | 'soon' | 'asks' | 'rhythm' | 'log',
   }));
-  const { pillar, tile, who, view, tab } = kept;
+  // With one sub-project the pillar picker and the order toggle are hidden, so a remembered pillar or order cannot apply.
+  const multi = project.pillars.length > 1;
+  const { tile, who, tab } = kept;
+  const pillar = multi ? kept.pillar : 'All';
+  const view = multi ? kept.view : 'pillar';
   const setPillar = (v: string) => keep('pillar', v);
   const setTile = (v: string | null) => keep('tile', v);
   const setWho = (v: string | null) => keep('who', v);
@@ -173,7 +177,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const emptyNode = emptyReason
     ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
     : pillar !== 'All'
-      ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this pillar yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all pillars</button></div>
+      ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this sub-project yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all sub-projects</button></div>
       : <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this plan yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a line</button>}</div>;
 
   const byNext = (a: PlanLine, b: PlanLine) => {
@@ -315,7 +319,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   if (view === 'date') board = table([...visible].sort(byNext), emptyNode);
   else {
     const groups = project.pillars.map((p) => ({ p, ls: visible.filter((l) => l.pillar === p.key).sort((a, b) => a.num - b.num) })).filter((g) => g.ls.length);
-    board = groups.length ? groups.map((g) => <Fragment key={g.p.key}><h3 className="pillar">{g.p.label}</h3>{table(g.ls, '')}</Fragment>) : table([], emptyNode);
+    board = groups.length ? groups.map((g) => <Fragment key={g.p.key}>{multi && <h3 className="pillar">{g.p.label}</h3>}{table(g.ls, '')}</Fragment>) : table([], emptyNode);
   }
 
   const other = actionsFor(null).filter((a) =>
@@ -351,16 +355,16 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
               <optgroup label="Our team">{ours.filter((id) => lines.some((l) => l.ownerId === id)).map((id) => <option key={id} value={id}>{names[id]}</option>)}</optgroup>
               <optgroup label={partner}>{project.partnerPeople.map((n) => <option key={n} value={n}>{n}</option>)}</optgroup>
             </Select>
-            <Select value={pillar} aria-label="Pillar" onChange={setPillar}>
-              <option value="All">All pillars</option>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-            </Select>
+            {multi && <Select value={pillar} aria-label="Sub-project" onChange={setPillar}>
+              <option value="All">All sub-projects</option>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </Select>}
             <Select value={tile ?? ''} aria-label="Show" onChange={(v) => setTile(v || null)}>
               <option value="">All lines</option>{TILES.map((t) => <option key={t.key} value={t.key}>{t.label}{t.sub ? ` (${t.sub})` : ''}</option>)}
             </Select>
-            <span className="seg" role="group" aria-label="Order lines">
-              <button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By pillar</button>
+            {multi && <span className="seg" role="group" aria-label="Order lines">
+              <button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By sub-project</button>
               <button aria-pressed={view === 'date'} onClick={() => setView('date')}>By date</button>
-            </span>
+            </span>}
             {filtered && <button className="act" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear</button>}
             <span className="toolbar-end">
               {!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>+ Add line</button>}
@@ -625,7 +629,7 @@ function AddLine({ project, people, pillar, busy, op }: { project: Project; peop
       if (await op({ op: 'addLine', ...f, ownerId: f.ownerId || null, dueOn: f.dueOn || null })) setF(blank);
     }}>
       <div className="row">
-        <label className="f"><span>Pillar</span><Select value={f.pillar} onChange={(v) => setF({ ...f, pillar: v })}>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</Select></label>
+        {project.pillars.length > 1 && <label className="f"><span>Sub-project</span><Select value={f.pillar} onChange={(v) => setF({ ...f, pillar: v })}>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</Select></label>}
         <label className="f"><span>Our owner</span><Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v })}><option value="">Pending</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></label>
         <label className="f"><span>{project.partnerName ?? 'Partner'} owner</span><Select value={f.partner} onChange={(v) => setF({ ...f, partner: v })}><option value="">Pending</option>{project.partnerPeople.map((n) => <option key={n}>{n}</option>)}</Select></label>
         <label className="f" style={{ flex: '0 1 170px' }}><span>Due date</span><DateField value={f.dueOn} onChange={set('dueOn')} /></label>

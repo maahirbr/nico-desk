@@ -320,6 +320,13 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   rows fade at the edge that still has more to scroll, driven by scroll position where the browser supports it. The Mac ledger
   count-up flash could not be reproduced in dev or in a production build, in any skin, so that code is unchanged.
   Rollback: `git revert -m 1` the merge.
+- 2026-10-13 · Opus 5.5 · A project has an owner and a lead, at the PM's call, on branch `mvp-local-desk-look`. The
+  owner is accountable for the outcome; the lead runs it day to day; one person can be both (the default). Both can
+  edit the project. The two kinds are now called Internal and Partner / Collaboration; a partner project's
+  sub-projects (pillars) are optional, and one with none keeps its lines in a single hidden group. Home lists the
+  projects you are on. The target date is a Deadline, Launch, Event, Quarter End or a typed label. The hosted
+  database needs `npm run db:upgrade` once more (adds `projects.lead_id`; keeps all data). Rollback: `git revert` the
+  commit; the extra column can stay.
 
 ## VERIFY
 

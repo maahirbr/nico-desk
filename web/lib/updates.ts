@@ -27,7 +27,7 @@ const str = (v: unknown) => (v === null || v === undefined ? '' : String(v));
 export function buildUpdates(input: {
   events: UpdateEvent[];
   tasks: UpdateTask[];
-  leadOf: Record<string, string>; // project id -> projects.owner_id
+  leadOf: Record<string, string | string[]>; // project id -> its owner and lead
   names: Record<string, string>;
   viewerId: string;
   now: string | Date;
@@ -51,7 +51,7 @@ export function buildUpdates(input: {
     if (!Number.isNaN(seen) && ms <= seen) continue;
 
     const owner = t.ownerId === viewerId;
-    const lead = !!t.projectId && leadOf[t.projectId] === viewerId;
+    const lead = !!t.projectId && [leadOf[t.projectId] ?? []].flat().includes(viewerId);
     const who = first(e.actor_id);
     const title = q(t.title);
     // "your task", the bare title when the owner did it, else "Priya’s".

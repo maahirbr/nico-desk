@@ -34,7 +34,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} names={names} people={opts} meId={me.person.id}
-        canEdit={!readOnly && (p.ownerId === me.person.id || isLead || isAdmin)} today={today()} />
+        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={today()} />
       {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
       {p.kind === 'plan' ? (

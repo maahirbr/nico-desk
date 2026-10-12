@@ -111,6 +111,7 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
     await tx.query(`UPDATE tasks SET owner_id = $2 WHERE owner_id = $1`, [id, to]);
     await tx.query(`UPDATE tasks SET blocked_on_id = $2 WHERE blocked_on_id = $1`, [id, to]);
     await tx.query(`UPDATE projects SET owner_id = $2 WHERE owner_id = $1`, [id, to]);
+    await tx.query(`UPDATE projects SET lead_id = $2 WHERE lead_id = $1`, [id, to]);
     await tx.query(`UPDATE plan_lines SET owner_id = $2 WHERE owner_id = $1`, [id, to]);
     await tx.query(`DELETE FROM team_members WHERE person_id = $1`, [id]);
     await tx.query(`UPDATE people SET active = false WHERE id = $1`, [id]);

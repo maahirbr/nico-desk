@@ -84,6 +84,8 @@ export async function upgrade(db: Db) {
   await db.exec(TASK_LINKS_UPGRADE);
   // 12 Oct: archive a project, and tell the previous owner when a task is reassigned. Same statements as scripts/upgrade-project-archive.ts.
   await db.exec(PROJECT_ARCHIVE_UPGRADE);
+  // 13 Oct: a project can have a lead who is not its owner.
+  await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id text REFERENCES people(id);`);
 }
 
 // Idempotent: adds the archive columns and lets a notice be of kind reassigned_away. No new table, so no new RLS step.

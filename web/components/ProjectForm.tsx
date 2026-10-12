@@ -9,16 +9,21 @@ import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
 
 // Starting a project, or changing one later. What a project needs before it starts: a name,
-// what done looks like, a lead, and a date. Everything else (team roles, sub-projects, a partner)
+// an owner (who may also lead it), and a date; a one-line description helps. Only the people added
+// here appear in the project's owner pickers and on their own Home. Everything else (team roles, sub-projects, a partner)
 // can be added now or later.
 
 export type ProjectValues = {
-  name: string; kind: 'tasks' | 'plan'; ownerId: string; goal: string; eyebrow: string; phase: string;
+  name: string; kind: 'tasks' | 'plan'; ownerId: string; leadId: string; goal: string; eyebrow: string; phase: string;
   launchOn: string; targetLabel: string; workstreams: string[]; members: { personId: string; role: string }[];
   partnerName: string; partnerPeople: string[];
 };
 
-const LABELS = ['Launch', 'Go-live', 'Send date', 'Event date', 'End date', 'Quarter end'];
+// What the target date is. Anything else is typed in under Other.
+const LABELS = ['Deadline', 'Launch', 'Event', 'Quarter end'];
+const OTHER = 'Other…';
+// The description's length limit. It matches the server's rule in lib/projectBody.ts.
+const GOAL_MAX = 600;
 
 function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder: string }) {
   const [draft, setDraft] = useState('');
@@ -32,7 +37,7 @@ function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChang
       {value.map((v) => (
         <span key={v} className="chip">{v}<button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(value.filter((x) => x !== v))}>×</button></span>
       ))}
-      <input value={draft} placeholder={value.length ? 'Add another' : placeholder} onChange={(e) => setDraft(e.target.value)}
+      <input value={draft} enterKeyHint="done" autoComplete="off" placeholder={value.length ? 'Add another' : placeholder} onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(); } if (e.key === 'Backspace' && !draft && value.length) onChange(value.slice(0, -1)); }}
         onBlur={add} />
     </div>
@@ -45,20 +50,29 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
   const router = useRouter();
   const editing = !!projectId;
   const [f, setF] = useState<ProjectValues>(initial ?? {
-    name: '', kind: 'tasks', ownerId: meId, goal: '', eyebrow: '', phase: '', launchOn: '', targetLabel: 'Launch',
+    name: '', kind: 'tasks', ownerId: meId, leadId: meId, goal: '', eyebrow: '', phase: '', launchOn: '', targetLabel: 'Deadline',
     workstreams: [], members: [], partnerName: '', partnerPeople: [],
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const set = <K extends keyof ProjectValues>(k: K, v: ProjectValues[K]) => setF({ ...f, [k]: v });
-  const free = people.filter((p) => p.id !== f.ownerId && !f.members.some((m) => m.personId === p.id));
-  const ready = f.name.trim().length >= 2 && (f.kind === 'tasks' || f.workstreams.length > 0);
+  const [otherLabel, setOtherLabel] = useState(!LABELS.includes(f.targetLabel));
+  const [sameLead, setSameLead] = useState(f.leadId === f.ownerId);
+  // With the tick on, the owner leads. The stored leadId is then not used, and is cleared so it cannot come back stale.
+  const leadId = sameLead ? f.ownerId : f.leadId;
+  const taken = (id: string) => id === f.ownerId || id === leadId;
+  const free = people.filter((p) => !taken(p.id) && !f.members.some((m) => m.personId === p.id));
+  // Why Start or Save is off, in plain words, shown beside the button.
+  const why = f.name.trim().length < 2 ? 'Give the project a name.'
+    : !leadId ? 'Pick a project lead, or tick that the owner is also the lead.'
+    : otherLabel && !f.targetLabel.trim() ? 'Type what the date is, or pick one from the list.'
+    : null;
 
   return (
     <form className="pform" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr(null);
       const body = {
-        name: f.name, kind: f.kind, ownerId: f.ownerId, goal: f.goal, eyebrow: f.eyebrow, phase: f.phase, launchOn: f.launchOn || null,
+        name: f.name, kind: f.kind, ownerId: f.ownerId, leadId, goal: f.goal, eyebrow: f.eyebrow, phase: f.phase, launchOn: f.launchOn || null,
         targetLabel: f.targetLabel, workstreams: f.workstreams, members: f.members.filter((m) => m.personId),
         ...(f.kind === 'plan' ? { partnerName: f.partnerName, partnerPeople: f.partnerPeople } : {}),
       };
@@ -71,75 +85,98 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
     }}>
       <fieldset>
         <legend>The project</legend>
-        <label className="f"><span>Name</span><input ref={focusOnDesktop} required maxLength={80} value={f.name} placeholder="e.g. Festive gifting" onChange={(e) => set('name', e.target.value)} /></label>
+        <label className="f"><span>Project name</span><input ref={focusOnDesktop} required maxLength={80} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
             <button type="button" role="radio" aria-checked={f.kind === 'tasks'} onClick={() => set('kind', 'tasks')}>
-              <b>Task board</b><span>A list of tasks with owners and dates, grouped by sub-project. Most projects.</span>
+              <b>Internal</b><span>A task board the Nicobar team runs, with owners and dates.</span>
             </button>
             <button type="button" role="radio" aria-checked={f.kind === 'plan'} onClick={() => set('kind', 'plan')}>
-              <b>Partner plan</b><span>Lines of work with an outside partner, checkpoints, and what they need from us.</span>
+              <b>Partner / collaboration</b><span>Work shared with an outside partner who owns some tasks, like a brand collab or a consultant.</span>
             </button>
           </div>
         )}
-        <label className="f"><span>What done looks like (optional)</span>
-          <textarea rows={2} maxLength={600} value={f.goal} placeholder="One or two sentences anyone on the team would agree with" onChange={(e) => set('goal', e.target.value)} />
+        <label className="f"><span>Project description (optional)</span>
+          <textarea rows={2} maxLength={GOAL_MAX} enterKeyHint="done" value={f.goal} placeholder="A line or two on what this project is" onChange={(e) => set('goal', e.target.value)} />
         </label>
-        <label className="f"><span>Category line (optional)</span><input maxLength={120} value={f.eyebrow} placeholder="e.g. Gifting · Hampers · Corporate orders" onChange={(e) => set('eyebrow', e.target.value)} /></label>
+        <label className="f"><span>Category line (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
       </fieldset>
 
       <fieldset>
         <legend>Dates</legend>
         <div className="row">
-          <label className="f" style={{ flex: '0 1 160px' }}><span>The date is a</span>
-            <Select value={f.targetLabel} onChange={(v) => set('targetLabel', v)}>{LABELS.map((l) => <option key={l}>{l}</option>)}</Select>
-          </label>
-          <label className="f"><span>Date</span><DateField value={f.launchOn} onChange={(e) => set('launchOn', e.target.value)} /></label>
-          <label className="f"><span>Phase (optional)</span><input maxLength={60} value={f.phase} placeholder="e.g. Sampling" onChange={(e) => set('phase', e.target.value)} /></label>
+          <div className="f target-date"><span>Target date</span>
+            <div className="target-date-pair">
+              <Select aria-label="What the date is" value={otherLabel ? OTHER : f.targetLabel}
+                onChange={(v) => { setOtherLabel(v === OTHER); set('targetLabel', v === OTHER ? '' : v); }}>
+                {[...LABELS, OTHER].map((l) => <option key={l}>{l}</option>)}
+              </Select>
+              {otherLabel && <input className="other-label" aria-label="Your label" maxLength={40} enterKeyHint="done" autoComplete="off" placeholder="e.g. Delivery" value={f.targetLabel} onChange={(e) => set('targetLabel', e.target.value)} />}
+              <DateField aria-label="Target date" value={f.launchOn} onChange={(e) => set('launchOn', e.target.value)} />
+            </div>
+          </div>
+          <label className="f"><span>Phase (optional)</span><input maxLength={60} enterKeyHint="done" autoComplete="off" value={f.phase} placeholder="e.g. Sampling" onChange={(e) => set('phase', e.target.value)} /></label>
         </div>
       </fieldset>
 
       <fieldset>
         <legend>People</legend>
-        <label className="f"><span>Project lead</span>
-          <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v, members: f.members.filter((m) => m.personId !== v) })}>
+        {f.kind === 'plan' && <span className="pform-side">Nicobar</span>}
+        <label className="f"><span>Project owner</span>
+          <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v, leadId: f.leadId === v ? '' : f.leadId, members: f.members.filter((m) => m.personId !== v) })}>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </Select>
         </label>
+        <label className="same-lead">
+          <input type="checkbox" checked={sameLead} onChange={(e) => {
+            setSameLead(e.target.checked);
+            // On: drop any separate lead. Off: start with none chosen, so the person picks on purpose.
+            setF({ ...f, leadId: '' });
+          }} />
+          The owner is also the project lead
+        </label>
+        {!sameLead && (
+          <label className="f"><span>Project lead</span>
+            <Select value={f.leadId} onChange={(v) => setF({ ...f, leadId: v, members: f.members.filter((m) => m.personId !== v) })}>
+              <option value="" disabled>Pick a person</option>
+              {people.filter((p) => p.id !== f.ownerId).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </Select>
+          </label>
+        )}
+        <span className="pform-sub">Other people</span>
+        <p className="dim small pform-note">Only the people added here can own tasks in this project, and they will see it in their view.</p>
         {f.members.map((m, i) => (
           <div key={i} className="member-row">
             <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v } : x)))}>
               <option value="">Pick a person</option>
-              {people.filter((p) => p.id === m.personId || (p.id !== f.ownerId && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
-            <input value={m.role} maxLength={60} placeholder="Their role, e.g. Packaging POC" aria-label="Role on this project"
+            <input value={m.role} maxLength={60} enterKeyHint="done" autoComplete="off" placeholder="Their role in this project, e.g. Sourcing, Design" aria-label="Role on this project"
               onChange={(e) => set('members', f.members.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))} />
             <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>
           </div>
         ))}
         {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add a person and their role</button>}
+
+        {f.kind === 'plan' && (
+          <>
+            <span className="pform-side">Partner</span>
+            <label className="f"><span>Partner name</span><input maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. Studio" onChange={(e) => set('partnerName', e.target.value)} /></label>
+            <div className="f"><span>Their people</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="Names. Press Enter after each" /></div>
+          </>
+        )}
       </fieldset>
 
       <fieldset>
-        <legend>{f.kind === 'plan' ? 'Pillars' : 'Sub-projects (optional)'}</legend>
-        <ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)}
-          placeholder={f.kind === 'plan' ? 'e.g. Foundations, People, Use cases. Press Enter after each' : 'e.g. Hampers, Packaging. Press Enter after each'} />
+        <legend>Sub-projects (optional)</legend>
+        <ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Hampers, Packaging. Press Enter after each" />
       </fieldset>
 
-      {f.kind === 'plan' && (
-        <fieldset>
-          <legend>Partner</legend>
-          <div className="row">
-            <label className="f" style={{ flex: '0 1 220px' }}><span>Partner name</span><input maxLength={80} value={f.partnerName} placeholder="e.g. Studio" onChange={(e) => set('partnerName', e.target.value)} /></label>
-            <div className="f"><span>Their people</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="First names. Press Enter after each" /></div>
-          </div>
-        </fieldset>
-      )}
-
       {err && <p className="err banner" role="alert">{err}</p>}
-      <div className="row" style={{ justifyContent: 'flex-end' }}>
+      <div className="row pform-actions">
+        {why && <p className="dim small pform-why" id="pform-why">{why}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn" disabled={busy || !ready}>{editing ? 'Save project' : 'Start project'}</button>
+        <button className="btn" disabled={busy || !!why} aria-describedby={why ? 'pform-why' : undefined}>{editing ? 'Save project' : 'Start project'}</button>
       </div>
     </form>
   );

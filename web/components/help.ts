@@ -38,7 +38,8 @@ export const HELP = {
   moved_date: 'Moved date. The date was changed after it was first given. Each move needs a reason. The first date stays on record.',
   moved_in_time: 'Moved in time. The new date was logged on or before the date it replaced.',
   blocked_on: 'Blocked on. The task cannot go on until this is sorted out. The person it waits on can clear the block.',
-  project_lead: 'Project lead. The person who owns the project. They, and any team lead or admin, can add people to it.',
+  project_owner: 'Project owner. The person accountable for the project. They, the project lead, and any team lead or admin, can change it and add people to it.',
+  project_lead: 'Project lead. The person who runs the project day to day. When no separate lead is set, the owner is the lead.',
   view_as: 'View as. An admin sees the app as another person sees it. It is read-only, so nothing can be changed.',
 
   // Reminders

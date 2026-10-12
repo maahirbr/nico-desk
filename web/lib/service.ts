@@ -234,15 +234,15 @@ export type CreateInput = { teamId: string; title: string; description?: string 
 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
-// Only the project owner, a lead or an admin may bring someone new in, the same rule as updateProject.
+// Only the project owner, its lead, a team lead or an admin may bring someone new in, the same rule as updateProject.
 async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined, meId: string, isLead: boolean): Promise<void> {
-  const { rows } = await tx.query<{ owner_id: string; member: boolean }>(
-    `SELECT owner_id, EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2) AS member FROM projects WHERE id = $1`,
+  const { rows } = await tx.query<{ owner_id: string; lead_id: string | null; member: boolean }>(
+    `SELECT owner_id, lead_id, EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2) AS member FROM projects WHERE id = $1`,
     [projectId, personId]);
   const p = rows[0];
   if (!p || p.member) return;
-  if (p.owner_id !== personId && p.owner_id !== meId && !isLead) {
-    throw forbidden('Only the project owner or a lead can add someone to this project. Pick one of its people.');
+  if (p.owner_id !== personId && p.lead_id !== personId && p.owner_id !== meId && p.lead_id !== meId && !isLead) {
+    throw forbidden('Only the project owner, its lead or a team lead can add someone to this project. Pick one of its people.');
   }
   const r = role === undefined ? 'Member' : role.trim();
   if (r.length < 2 || r.length > 60) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'ownerRole');
@@ -728,14 +728,14 @@ export async function patchPerson(
 
 // ---------- project log ----------
 
-// The update log across one project's tasks, newest first. It also holds the project's own archive and restore events.
+// The update log across one project's tasks, newest first. It also holds the project's own archive, restore, owner and lead events.
 export async function projectLog(db: Tx, projectId: string, limit = 30): Promise<(LogLine & { taskTitle: string })[]> {
   const { rows } = await db.query<LogLine & { taskTitle: string }>(
     `SELECT e.*, p.display_name AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
      LEFT JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
      LEFT JOIN projects pr ON pr.id = e.entity_id AND e.entity_type = 'project'
      LEFT JOIN people p ON p.id = e.actor_id
-     WHERE t.project_id = $1 OR (e.entity_type = 'project' AND e.entity_id = $1 AND e.field IN ('_archived','_restored'))
+     WHERE t.project_id = $1 OR (e.entity_type = 'project' AND e.entity_id = $1 AND e.field IN ('_archived','_restored','owner_id','lead_id'))
      ORDER BY e.at DESC, e.id DESC LIMIT $2`,
     [projectId, limit],
   );
@@ -779,10 +779,10 @@ export async function updatesView(
          AND e.field IN ('_created','owner_id','due_on','blocked_ask','blocked_on_id','status_category','title')`,
       [teamId, since],
     ),
-    db.query<{ id: string; owner_id: string }>(`SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]),
+    db.query<{ id: string; owner_id: string; lead_id: string | null }>(`SELECT id, owner_id, lead_id FROM projects WHERE team_id = $1`, [teamId]),
   ]);
   const items = buildUpdates({
-    events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, p.owner_id])), names, viewerId: meId, now, seenAt,
+    events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, [p.owner_id, ...(p.lead_id ? [p.lead_id] : [])]])), names, viewerId: meId, now, seenAt,
   });
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }

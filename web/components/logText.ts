@@ -9,7 +9,7 @@ import { HEALTH } from './chips';
 
 const FIELD: Record<string, string> = {
   _created: 'Created', _archived: 'Archived', _restored: 'Restored', _update: 'Update', _reopened: 'Reopened', title: 'Title', description: 'Description', note: 'Note', project_id: 'Project', workstream: 'Sub-project',
-  owner_id: 'Owner', health: 'Health', due_on: 'Due date', status: 'Status word', status_category: 'Status',
+  owner_id: 'Owner', lead_id: 'Lead', health: 'Health', due_on: 'Due date', status: 'Status word', status_category: 'Status',
   closed_at: 'Closed', blocked_on_id: 'Blocked on', blocked_ask: 'Ask', priority: 'Priority', status_note: 'Status note',
 };
 
@@ -17,7 +17,7 @@ type Names = Record<string, string>;
 
 function show(field: string, v: unknown, names: Names, projects: Names): string {
   if (v === null || v === undefined || v === '') return 'none';
-  if (field === 'owner_id' || field === 'blocked_on_id') return names[String(v)] ?? String(v);
+  if (field === 'owner_id' || field === 'lead_id' || field === 'blocked_on_id') return names[String(v)] ?? String(v);
   if (field === 'project_id') return projects[String(v)] ?? String(v);
   if (field === 'health') return HEALTH[v as keyof typeof HEALTH]?.word ?? String(v);
   if (field === 'due_on' && typeof v === 'string') return fmtDate(v);
@@ -123,7 +123,9 @@ export function actionText(events: LogLine[], names: Names, projects: Names): st
   const title = by.get('title');
   if (title) { used.add('title'); out.push(`Renamed to “${title.after}”`); }
   const owner = by.get('owner_id');
-  if (owner) { used.add('owner_id'); out.push(`Reassigned to ${show('owner_id', owner.after, names, projects)}`); }
+  if (owner) { used.add('owner_id'); out.push(`${owner.entity_type === 'project' ? 'Project owner changed to' : 'Reassigned to'} ${show('owner_id', owner.after, names, projects)}`); }
+  const lead = by.get('lead_id');
+  if (lead) { used.add('lead_id'); out.push(`Project lead changed to ${show('lead_id', lead.after, names, projects)}`); }
   const proj = by.get('project_id');
   if (proj) { used.add('project_id'); out.push(set(proj.after) ? `Moved to project ${show('project_id', proj.after, names, projects)}` : 'Taken out of its project'); }
   const ws = by.get('workstream');

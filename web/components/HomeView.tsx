@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { endedSortOf } from '@/lib/remember';
@@ -18,10 +19,11 @@ import { DitherArt } from './DitherArt';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; movedAway: MovedAway[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
+  myProjects: { id: string; name: string; role: string }[];
 }) {
   const readOnly = useReadOnly();
   const [openId, setOpenId] = useOpenTask();
@@ -97,6 +99,17 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
           </Stagger>
         </section>
       ))}
+
+      {myProjects.length > 0 && (
+        <section className="group">
+          <h2>Your projects <span className="n">{myProjects.length}</span></h2>
+          <div className="my-projects">
+            {myProjects.map((p) => (
+              <Link key={p.id} href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b><span className="dim">{p.role}</span></Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {done.length > 0 && (
         <section className="group">
