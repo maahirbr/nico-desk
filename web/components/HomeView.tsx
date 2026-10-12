@@ -9,15 +9,16 @@ import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } fro
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, waiting, done, names, projectNames, people, projects, workstreamsByProject }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [startStatus, setStartStatus] = useState<StatusKey | undefined>();
   const [adding, setAdding] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [showDropped, setShowDropped] = useState(false);
   const isNew = new Set(newIds);
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : '', t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const groups = [
@@ -31,7 +32,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
     setOpenId(id); setStartStatus(s);
     if (assignedNotice[id]) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
   };
-  const opened = [...mine, ...waiting, ...done].find((t) => t.id === openId);
+  const opened = [...mine, ...waiting, ...done, ...dropped].find((t) => t.id === openId);
 
   return (
     <div className="calm">
@@ -44,6 +45,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             <span className="dim"> · {fmtDate(today)}</span>
           </p>
         </div>
+        <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>
       </header>
 
       <UpdatesCard items={updates.items} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
@@ -82,6 +84,15 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             <span aria-hidden>{showDone ? '▾' : '▸'}</span> Done this week <span className="count-badge">{done.length}</span>
           </button>
           {showDone && <div className="tlist">{done.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
+        </section>
+      )}
+
+      {dropped.length > 0 && (
+        <section className="group">
+          <button className="log-toggle small-toggle" aria-expanded={showDropped} onClick={() => setShowDropped(!showDropped)}>
+            <span aria-hidden>{showDropped ? '▾' : '▸'}</span> Dropped <span className="count-badge">{dropped.length}</span>
+          </button>
+          {showDropped && <div className="tlist">{dropped.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
         </section>
       )}
 

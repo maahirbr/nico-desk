@@ -50,7 +50,9 @@ export function dueLine(t: Task): string {
 // Initials on a neutral mark. The viewer's own mark is the one blue one.
 export function Avatar({ name, lg = false, you = false }: { name: string; lg?: boolean; you?: boolean }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  return <span className={`av${lg ? ' lg' : ''}${you ? ' you' : ''}`} aria-hidden>{initials}</span>;
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return <span className={`av${lg ? ' lg' : ''}${you ? ' you' : ''}`} style={{ '--h': h } as React.CSSProperties} aria-hidden>{initials}</span>;
 }
 
 export function Person({ name }: { name: string }) {

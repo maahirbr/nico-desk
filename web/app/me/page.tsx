@@ -22,6 +22,8 @@ export default async function Home() {
   ]);
   const weekStart = mondayOf(t);
   const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart);
+  // Dropped tasks fold away under Home's own collapsed list. A drop sets no closed_at, so all of them show there.
+  const dropped = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'dropped');
   const assignedNotice = Object.fromEntries(notices.filter((n) => n.kind === 'assigned').map((n) => [n.taskId, n.id]));
   return (
     <HomeView
@@ -36,6 +38,7 @@ export default async function Home() {
       assignedNotice={assignedNotice}
       waiting={mine.blockedOnMe}
       done={doneThisWeek}
+      dropped={dropped}
       names={names}
       projectNames={projectNames}
       people={activeOpts}

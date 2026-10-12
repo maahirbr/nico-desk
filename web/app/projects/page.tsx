@@ -38,7 +38,10 @@ export default async function Projects() {
                 <h2 className="pcard-name">{p.name}</h2>
                 <span className={`st tone-${st.tone}`}>{st.word}</span>
               </div>
-              <div className="kind-tag">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}{p.eyebrow ? ` · ${p.eyebrow}` : ''}</div>
+              <div className="kind-tag">
+                <span className="kind-word">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>
+                {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
+              </div>
               {p.intro && <p className="pcard-goal">{p.intro}</p>}
               <div className="pcard-progress">
                 <span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span>

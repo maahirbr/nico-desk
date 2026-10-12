@@ -30,6 +30,11 @@ button { -webkit-tap-highlight-color: transparent; }
 .mark { display: block; padding: 0 var(--nav-pad-x); text-decoration: none; }
 .mark-name { display: block; font: var(--type-heading); letter-spacing: var(--track-title); }
 .mark-sub { display: block; font: var(--type-small); color: var(--ink-3); }
+/* Pieces only skin W shows (tokens.css): the logo tile, Home's own New task button, the moved-date mark,
+   and a Late flag beside a red "3 days late". Every other skin keeps them hidden. */
+.mark-logo, .head-new, .mv-mark, .flag-again { display: none; }
+.mark-text { display: block; }
+.kind-eyebrow::before { content: " · "; }
 .nav { display: flex; flex-direction: column; gap: var(--space-xxs); flex: 1; overflow-y: auto; }
 .nav a { display: flex; align-items: center; gap: var(--space-sm); padding: var(--nav-pad-y) var(--nav-pad-x); min-height: var(--button-height);
   border-radius: var(--radius-control); text-decoration: none; color: var(--ink-2); white-space: nowrap;

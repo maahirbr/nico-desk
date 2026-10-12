@@ -60,11 +60,12 @@ export function flagOf(t: Task, today: string): Flag | null {
   return null;
 }
 
-// hideLate: the row already says "3 days late" in red, so it does not say Late a second time.
+// hideLate: the row already says "3 days late" in red, so most skins do not say Late a second time.
+// Skin W, the PM's build, does: the flag is rendered with flag-again and tokens.css shows it there only.
 export function FlagChip({ t, today, hideLate = false }: { t: Task; today: string; hideLate?: boolean }) {
   const f = flagOf(t, today);
-  if (!f || (hideLate && f.key === 'late')) return null;
-  return <span className={`flag tone-${f.tone}`} title={f.why}>{f.word}</span>;
+  if (!f) return null;
+  return <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' ? ' flag-again' : ''}`} title={f.why}>{f.word}</span>;
 }
 
 export function StatusLabel({ t, today }: { t: Task; today?: string }) {
@@ -157,7 +158,7 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
-        {t.dateMoves > 0 && !closed && <span className="moved" aria-label={`moved ${t.dateMoves} times`}>moved {t.dateMoves}×</span>}
+        {t.dateMoves > 0 && !closed && <span className="moved" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (

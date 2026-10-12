@@ -152,6 +152,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   `NICO_DEV_SIGNIN` unset in production, which closes the open demo over real pilot names. Roster moved into the main
   nav for admins, since in the More menu the pilot team read it as missing. Rollback: unset `GOOGLE_CLIENT_ID` on Vercel
   and redeploy, or `git revert` this commit.
+- 2026-10-12 · Opus 5.5 · Skin W now matches the PM's build (`local-desk`) screen for screen, at the PM's call, on branch
+  `mvp-local-desk-look` for the repo owner to review: Inter text, the logo tile, rust buttons, a colour per person,
+  outlined status pickers, boxed Late and At risk flags (Late shows beside "3 days late" too), the moved-date mark, the
+  card layout on `/projects`, a green progress bar. The PM's small-caps labels come back in normal case and bold, since
+  eyebrows are banned. Amber and the faintest grey are darkened just enough for 4.5:1. Skins A, B and C are unchanged.
+  Roster goes back under More, reversing the 12 Oct move. The ledger opens on the PM's view (tiles, then a habits card
+  per person split ahead, on time, late); needs attention, finished and the full breakdown follow. Home folds done and
+  dropped tasks into two closed lists. Also fixes the sidebar wordmark and name, which drew in dark ink on the dark
+  sidebar. Rollback: do not merge the branch, or `git revert` its commit.
 
 ## VERIFY
 

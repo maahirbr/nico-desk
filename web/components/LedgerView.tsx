@@ -78,14 +78,89 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   return (
     <>
       <h1>On-time ledger</h1>
-      <p className="lede">Kept dates, judged against the date first given. What got late, why, and what to do about it come first. The full breakdown by person and week is below.</p>
+      <p className="lede">Kept dates, per person per week. On time means closed by the date first given. Click any number to see the tasks behind it.</p>
 
-      <p className="summary ledger-summary">
-        <b>{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</b> kept on the first date, {period}
-        {' · '}<N n={`${pastDue.length} open past due`} title={`Open, past due, ${period}`} list={pastDue} warn={pastDue.length > 0} />
-        {' · '}<N n={`${silent.length} slipped silently`} title={`Slipped silently, ${period}`} list={silent} warn={silent.length > 0} />
-        {' · '}<N n={`${lateDone.length} finished late`} title={`Closed late, ${period}`} list={lateDone} />
-      </p>
+      <div className="stats">
+        <button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
+          <div className="stat-n">{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</div><div className="stat-l">Kept on the first date, {period}</div>
+        </button>
+        <button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
+          <div className="stat-n">{tasks.filter(MATCH.kept).length}</div><div className="stat-l">Closed on time or ahead</div>
+        </button>
+        <button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
+          <div className="stat-n">{tasks.filter(MATCH.late).length}</div><div className="stat-l">Closed late</div>
+        </button>
+        <button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
+          <div className="stat-n">{tasks.filter(MATCH.pastdue).length}</div><div className="stat-l">Open, past due</div>
+        </button>
+        <button className={`card stat${tasks.some(MATCH.silent) ? ' warn' : ''}`} onClick={() => show(`Slipped silently, ${period}`, tasks.filter(MATCH.silent))}>
+          <div className="stat-n">{tasks.filter(MATCH.silent).length}</div><div className="stat-l">Slipped silently <span className="dim">· target 0</span></div>
+        </button>
+      </div>
+
+      <h2>Delivery habits <span className="count-badge">{period}</span></h2>
+      <p className="sub" style={{ marginTop: -6 }}>{seeAll ? 'One card per person, in name order. Arrows compare with the same length of time before.' : 'Your own habits. Leads see the whole team.'}</p>
+      {!people.some((p) => tasks.some((t) => t.ownerId === p.id) || openNow.some((t) => t.ownerId === p.id)) && <p className="empty">No one has tasks in this period.</p>}
+      <div className="habit-grid">
+        {people.map((p) => {
+          const mine = tasks.filter((t) => t.ownerId === p.id);
+          const before = keptOf(prev.filter((t) => t.ownerId === p.id));
+          const k = keptOf(mine);
+          const a = mine.filter(MATCH.ahead), o = mine.filter(MATCH.ontime), l = mine.filter(MATCH.late);
+          const closed = a.length + o.length + l.length;
+          const lateBy = l.map((t) => days(t.firstDueOn, closedOn(t)!)).sort((x, y) => x - y);
+          const median = lateBy.length ? lateBy[Math.floor(lateBy.length / 2)] : null;
+          const moves = mine.flatMap((t) => t.renegotiations);
+          const early = moves.filter((r) => r.kind === 'open').length;
+          const silent = mine.filter(MATCH.silent);
+          const open = openNow.filter((t) => t.ownerId === p.id);
+          const overdue = open.filter((t) => t.overdue);
+          const blockedOnOthers = open.filter((t) => t.blocked);
+          const othersWaiting = waitingOn.filter((t) => t.blocked?.onId === p.id);
+          const trend = k.pct !== null && before.pct !== null ? k.pct - before.pct : null;
+          if (!mine.length && !open.length) return null; // no tasks in view, no card
+          return (
+            <section key={p.id} className="card habit">
+              <div className="habit-head">
+                <Avatar name={p.name} lg /><span><b>{p.name}</b><span className="dim small">{p.role}</span></span>
+              </div>
+
+              <div className="habit-kept">
+                <button className="big" onClick={() => show(`${p.name}: kept on the first date`, mine.filter(MATCH.kept))} disabled={!k.closed}>
+                  {k.pct === null ? '–' : `${k.pct}%`}
+                </button>
+                <span className="small">kept on the first date{closed ? ` (${closed} closed)` : ''}
+                  {trend !== null && <span className={trend > 0 ? 'up' : trend < 0 ? 'down' : 'dim'}> · {trend > 0 ? '↑' : trend < 0 ? '↓' : '→'} {trend === 0 ? 'same as' : `${Math.abs(trend)} pts vs`} before</span>}
+                </span>
+              </div>
+              {closed > 0 && (
+                <div className="split" role="group" aria-label="Ahead, on time, late">
+                  {[['Ahead', a, 'ok'], ['On time', o, 'done'], ['Late', l, 'late']].map(([label, list, tone]) => (list as Task[]).length ? (
+                    <button key={label as string} className={`tone-${tone as string}`} style={{ flexGrow: (list as Task[]).length }} title={`${label}: ${(list as Task[]).length}`}
+                      onClick={() => show(`${p.name}: ${(label as string).toLowerCase()}`, list as Task[])}><span>{label as string} {(list as Task[]).length}</span></button>
+                  ) : null)}
+                </div>
+              )}
+
+              <dl className="habit-facts">
+                <dt>When late</dt>
+                <dd>{median === null ? <span className="dim">Never late</span> : <N n={`usually ${median} day${median === 1 ? '' : 's'}`} title={`${p.name}: closed late`} list={l} />}</dd>
+                <dt>Moved dates</dt>
+                <dd>{moves.length ? <><N n={`${moves.length}×`} title={`${p.name}: dates moved`} list={mine.filter(MATCH.moved)} /> <span className="dim">· {early} in time, {moves.length - early} after the date</span></> : <span className="dim">None</span>}</dd>
+                <dt>Slipped silently</dt>
+                <dd><N n={silent.length} title={`${p.name}: slipped silently`} list={silent} warn={silent.length > 0} /></dd>
+                <dt>Right now</dt>
+                <dd>
+                  <N n={`${open.length} open`} title={`${p.name}: open now`} list={open} />
+                  {overdue.length > 0 && <> · <N n={`${overdue.length} overdue`} title={`${p.name}: overdue now`} list={overdue} warn /></>}
+                  {blockedOnOthers.length > 0 && <> · <N n={`${blockedOnOthers.length} waiting on others`} title={`${p.name}: waiting on others`} list={blockedOnOthers} /></>}
+                  {othersWaiting.length > 0 && <> · <N n={`${othersWaiting.length} others waiting on them`} title={`Waiting on ${p.name}`} list={othersWaiting} warn /></>}
+                </dd>
+              </dl>
+            </section>
+          );
+        })}
+      </div>
 
       <h2>Needs attention <span className="count-badge">{attention.length}</span></h2>
       {attention.length === 0 ? <div className="card"><p className="empty card-pad">Nothing is late, slipped or blocked in this view.</p></div> : (
@@ -156,89 +231,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
             <dt>Moved in time</dt><dd>A new date logged on or before the date it replaced. Moved late means logged after.</dd>
           </dl>
         </div>
-      </div>
-
-      <div className="stats">
-        <button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
-          <div className="stat-n">{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</div><div className="stat-l">Kept on the first date, {period}</div>
-        </button>
-        <button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
-          <div className="stat-n">{tasks.filter(MATCH.kept).length}</div><div className="stat-l">Closed on time or ahead</div>
-        </button>
-        <button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
-          <div className="stat-n">{tasks.filter(MATCH.late).length}</div><div className="stat-l">Closed late <span className="dim">· {tasks.filter(MATCH.flagged).length} flagged early, {tasks.filter(MATCH.missed).length} missed</span></div>
-        </button>
-        <button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
-          <div className="stat-n">{tasks.filter(MATCH.pastdue).length}</div><div className="stat-l">Open, past due</div>
-        </button>
-        <button className={`card stat${tasks.some(MATCH.silent) ? ' warn' : ''}`} onClick={() => show(`Slipped silently, ${period}`, tasks.filter(MATCH.silent))}>
-          <div className="stat-n">{tasks.filter(MATCH.silent).length}</div><div className="stat-l">Slipped silently <span className="dim">· target 0</span></div>
-        </button>
-      </div>
-
-      <h2>Delivery habits <span className="count-badge">{period}</span></h2>
-      <p className="sub" style={{ marginTop: -6 }}>{seeAll ? 'One card per person, in name order. Arrows compare with the same length of time before.' : 'Your own habits. Leads see the whole team.'}</p>
-      {!people.some((p) => tasks.some((t) => t.ownerId === p.id) || openNow.some((t) => t.ownerId === p.id)) && <p className="empty">No one has tasks in this period.</p>}
-      <div className="habit-grid">
-        {people.map((p) => {
-          const mine = tasks.filter((t) => t.ownerId === p.id);
-          const before = keptOf(prev.filter((t) => t.ownerId === p.id));
-          const k = keptOf(mine);
-          const a = mine.filter(MATCH.ahead), o = mine.filter(MATCH.ontime), l = mine.filter(MATCH.late);
-          const lf = mine.filter(MATCH.flagged), lm = mine.filter(MATCH.missed);
-          const closed = a.length + o.length + l.length;
-          const lateBy = l.map((t) => days(t.firstDueOn, closedOn(t)!)).sort((x, y) => x - y);
-          const median = lateBy.length ? lateBy[Math.floor(lateBy.length / 2)] : null;
-          const moves = mine.flatMap((t) => t.renegotiations);
-          const early = moves.filter((r) => r.kind === 'open').length;
-          const silent = mine.filter(MATCH.silent);
-          const open = openNow.filter((t) => t.ownerId === p.id);
-          const overdue = open.filter((t) => t.overdue);
-          const blockedOnOthers = open.filter((t) => t.blocked);
-          const othersWaiting = waitingOn.filter((t) => t.blocked?.onId === p.id);
-          const trend = k.pct !== null && before.pct !== null ? k.pct - before.pct : null;
-          if (!mine.length && !open.length) return null; // no tasks in view, no card
-          return (
-            <section key={p.id} className="card habit">
-              <div className="habit-head">
-                <Avatar name={p.name} lg /><span><b>{p.name}</b><span className="dim small">{p.role}</span></span>
-              </div>
-
-              <div className="habit-kept">
-                <button className="big" onClick={() => show(`${p.name}: kept on the first date`, mine.filter(MATCH.kept))} disabled={!k.closed}>
-                  {k.pct === null ? '–' : `${k.pct}%`}
-                </button>
-                <span className="small">kept on the first date{closed ? ` (${closed} closed)` : ''}
-                  {trend !== null && <span className={trend > 0 ? 'up' : trend < 0 ? 'down' : 'dim'}> · {trend > 0 ? '↑' : trend < 0 ? '↓' : '→'} {trend === 0 ? 'same as' : `${Math.abs(trend)} pts vs`} before</span>}
-                </span>
-              </div>
-              {closed > 0 && (
-                <div className="split" role="group" aria-label="Ahead, on time, late flagged early, late missed">
-                  {[['Ahead', a, 'ok'], ['On time', o, 'done'], ['Flagged early', lf, 'ok'], ['Missed', lm, 'late']].map(([label, list, tone]) => (list as Task[]).length ? (
-                    <button key={label as string} className={`tone-${tone as string}`} style={{ flexGrow: (list as Task[]).length }} title={`${label}: ${(list as Task[]).length}`}
-                      onClick={() => show(`${p.name}: ${(label as string).toLowerCase()}`, list as Task[])}><span>{label as string} {(list as Task[]).length}</span></button>
-                  ) : null)}
-                </div>
-              )}
-
-              <dl className="habit-facts">
-                <dt>When late</dt>
-                <dd>{median === null ? <span className="dim">Never late</span> : <N n={`usually ${median} day${median === 1 ? '' : 's'}`} title={`${p.name}: closed late`} list={l} />}</dd>
-                <dt>Moved dates</dt>
-                <dd>{moves.length ? <><N n={`${moves.length}×`} title={`${p.name}: dates moved`} list={mine.filter(MATCH.moved)} /> <span className="dim">· {early} in time, {moves.length - early} after the date</span></> : <span className="dim">None</span>}</dd>
-                <dt>Slipped silently</dt>
-                <dd><N n={silent.length} title={`${p.name}: slipped silently`} list={silent} warn={silent.length > 0} /></dd>
-                <dt>Right now</dt>
-                <dd>
-                  <N n={`${open.length} open`} title={`${p.name}: open now`} list={open} />
-                  {overdue.length > 0 && <> · <N n={`${overdue.length} overdue`} title={`${p.name}: overdue now`} list={overdue} warn /></>}
-                  {blockedOnOthers.length > 0 && <> · <N n={`${blockedOnOthers.length} waiting on others`} title={`${p.name}: waiting on others`} list={blockedOnOthers} /></>}
-                  {othersWaiting.length > 0 && <> · <N n={`${othersWaiting.length} others waiting on them`} title={`Waiting on ${p.name}`} list={othersWaiting} warn /></>}
-                </dd>
-              </dl>
-            </section>
-          );
-        })}
       </div>
 
       {weekList.map((w) => {
