@@ -16,9 +16,11 @@ const ERRORS: Record<string, string> = {
   not_configured: 'Google sign-in is not set up yet.',
 };
 
-export default async function SignIn({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if (!openDemo() && (await currentMe())) redirect('/');
-  const { error } = await searchParams;
+export default async function SignIn({ searchParams }: { searchParams: Promise<{ error?: string; switch?: string }> }) {
+  const { error, switch: switching } = await searchParams;
+  const me = await currentMe();
+  // An admin may come here from the account menu to see the desk as someone else.
+  if (!openDemo() && me && !(switching && me.person.appRoles.includes('admin'))) redirect('/');
   const message = error && Object.hasOwn(ERRORS, error) ? ERRORS[error] : null;
   const google = googleSignInEnabled();
   const dev = devSignInEnabled();
