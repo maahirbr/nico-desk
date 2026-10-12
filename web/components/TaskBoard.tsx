@@ -22,6 +22,8 @@ import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusK
 import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
+import { oneOf } from '@/lib/remember';
+import { useRemembered } from './remember';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
 import { FreshDot } from './viewer';
@@ -42,6 +44,8 @@ async function call(path: string, method: string, body?: unknown) {
   return data;
 }
 
+const TILE_KEYS = ['open', 'doing', 'at_risk', 'overdue', 'done'] as const; // the keys of `tiles` in TaskBoard
+
 type Prompt =
   | { kind: 'status'; t: Task }
   | { kind: 'blocked'; t: Task }
@@ -54,14 +58,19 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   meId: string; isLead: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
 }) {
   const router = useRouter();
-  const [tile, setTile] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
-  const [who, setWho] = useState<string | null>(null);
-  const [ws, setWs] = useState<string>('All');
+  // The filters come back the next time this project is opened in this browser (components/remember.ts).
+  const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All' }, (raw) => ({
+    tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, people.map((p) => p.id), null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
+  }));
+  const { tile, who, ws } = kept;
+  const setTile = (v: string | null) => keep('tile', v);
+  const setWho = (v: string | null) => keep('who', v);
+  const setWs = (v: string) => keep('ws', v);
   const [importOpen, setImportOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);

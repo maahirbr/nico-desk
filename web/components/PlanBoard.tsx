@@ -1,5 +1,7 @@
 'use client';
 
+import { oneOf } from '@/lib/remember';
+import { useRemembered } from './remember';
 import { useRouter } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { PlanState, Project } from '@/lib/plan';
@@ -21,6 +23,8 @@ import { useReadOnly } from './readonly';
 // A partner plan: lines of work, each with an owner on our side, a partner person, a mode,
 // checkpoints and a status. Rows open for detail. Every change is one call to
 // /api/v1/projects/:id/plan, logged on the server.
+
+const TILE_KEYS = ['open', 'progress', 'late', 'pending', 'pushed', 'done'] as const; // the keys of TILES in PlanBoard
 
 type P = { id: string; name: string; role: string; department: string };
 
@@ -62,11 +66,23 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
 }) {
   const router = useRouter();
   const partner = project.partnerName ?? 'Partner';
-  const [pillar, setPillar] = useState('All');
-  const [tile, setTile] = useState<string | null>(null);
-  const [who, setWho] = useState<string | null>(null);
+  // The filters, order and tab come back the next time this plan is opened in this browser (components/remember.ts).
+  const [kept, keep] = useRemembered(`plan:${project.id}`, {
+    pillar: 'All', tile: null as string | null, who: null as string | null, view: 'pillar' as 'pillar' | 'date', tab: 'lines' as 'lines' | 'soon' | 'asks' | 'rhythm' | 'log',
+  }, (raw) => ({
+    pillar: oneOf(raw.pillar, ['All', ...project.pillars.map((p) => p.key)], 'All'),
+    tile: oneOf(raw.tile, TILE_KEYS, null),
+    who: oneOf(raw.who, [...project.partnerPeople, ...state.lines.map((l) => l.ownerId ?? '').filter(Boolean)], null),
+    view: oneOf(raw.view, ['pillar', 'date'], 'pillar') as 'pillar' | 'date',
+    tab: oneOf(raw.tab, ['lines', 'soon', 'asks', 'rhythm', 'log'], 'lines') as 'lines' | 'soon' | 'asks' | 'rhythm' | 'log',
+  }));
+  const { pillar, tile, who, view, tab } = kept;
+  const setPillar = (v: string) => keep('pillar', v);
+  const setTile = (v: string | null) => keep('tile', v);
+  const setWho = (v: string | null) => keep('who', v);
+  const setView = (v: 'pillar' | 'date') => keep('view', v);
+  const setTab = (v: 'lines' | 'soon' | 'asks' | 'rhythm' | 'log') => keep('tab', v);
   const [q, setQ] = useState('');
-  const [view, setView] = useState<'pillar' | 'date'>('pillar');
   const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -77,7 +93,6 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-  const [tab, setTab] = useState<'lines' | 'soon' | 'asks' | 'rhythm' | 'log'>('lines');
   const [addOpen, setAddOpen] = useState(false);
   const [menu, setMenu] = useState(false);
   const [reviewing, setReviewing] = useState(false);
