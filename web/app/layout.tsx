@@ -15,11 +15,14 @@ import { SKIN_COOKIE, skinOf } from '@/components/skins';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
 import { ReadOnlyProvider } from '@/components/readonly';
+import { ViewerProvider } from '@/components/viewer';
 import { ViewBanner } from '@/components/ViewAs';
 import { db, rosterFile } from '@/lib/db';
+import { freshFor } from '@/lib/page';
 import { projectPeopleMap, projectsMayAddTo } from '@/lib/plan';
 import { listPeople } from '@/lib/service';
 import { localOwnerId } from '@/lib/seed';
+import { today as todayIst } from '@/lib/time';
 import './tokens.css';
 import './globals.css';
 
@@ -49,6 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     : [];
   const projectPeople = me ? await projectPeopleMap(await db(), me.team.id) : {};
   const mayAddTo = me ? await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles)) : [];
+  const fresh = me ? await freshFor(me, await db()) : {};
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body data-viewing={me?.viewingAs ? '1' : undefined}>
@@ -59,6 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {me && <Shortcuts />}
         {me ? (
           <ReadOnlyProvider readOnly={me.viewingAs}>
+          <ViewerProvider meId={me.person.id} isLead={isLeadOrAdmin(me.person.appRoles)} today={todayIst()} fresh={fresh}>
           <div className="shell">
             <aside className="side">
               <Link className="mark" href="/me">
@@ -75,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </aside>
             <main className="main"><div className="topbar"><TopSearch /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
+          </ViewerProvider>
           </ReadOnlyProvider>
         ) : (
           <main className="page-solo">{children}</main>

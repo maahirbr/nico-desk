@@ -20,6 +20,11 @@ import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerP
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
 import { Help, useHelpOn } from './HelpMode';
+import { editFields, statusFields, type UndoField } from '@/lib/undo';
+import type { QuickParse } from '@/lib/quickadd';
+import { QuickAddField } from './QuickAdd';
+import { TASK_CHANGED, useUndo } from './undo';
+import { FreshDot, useViewer } from './viewer';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -156,6 +161,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 }) {
   const desc = t.description;
   const router = useRouter();
+  const undo = useUndo();
   if (useReadOnly()) { canTick = false; onStatus = undefined; } // viewing as someone else: look, do not change
   const [ticked, setTicked] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -169,7 +175,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
   const stateFrom = usePreviousWhileChanging(key, 140);
   const main = (
     <button className="trow-main" onClick={onOpen}>
-      <span className="trow-title">{t.title}</span>
+      <span className="trow-title">{t.title}<FreshDot id={t.id} /></span>
       {desc && <span className="trow-desc">{desc}</span>}
       {(sub || err) && <span className={`trow-sub${err ? ' err' : ''}`}>{err ?? sub}</span>}
     </button>
@@ -181,7 +187,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
           <input type="checkbox" aria-label={`Mark “${t.title}” done`} checked={ticked} disabled={ticked}
             onChange={async () => {
               setTicked(true); setErr(null);
-              try { await api(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'done' }); notify('Marked done'); router.refresh(); }
+              try { await api(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'done' }); undo.announce('Marked done', t, statusFields(t, 'done')); router.refresh(); }
               catch (e) { setTicked(false); setErr((e as Error).message); }
             }} />
         )}
@@ -203,7 +209,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               if (formFor(t, a)) return onStatus(a);
               if (a === 'done') setTicked(true);
               setErr(null);
-              try { await quickMove(t, a); notify(t.blocked && a === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[a].word}`); router.refresh(); }
+              try { await quickMove(t, a); undo.announce(t.blocked && a === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[a].word}`, t, statusFields(t, a)); router.refresh(); }
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }} />
         ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span>}
@@ -287,6 +293,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [unNote, setUnNote] = useState('');
   const [linkForm, setLinkForm] = useState({ url: '', label: '' });
   const [closing, close] = useClosing(onClose);
+  const undo = useUndo();
+  const { markSeen } = useViewer();
+  useEffect(() => { markSeen(id); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps -- opening a task is looking at it (a no-op while viewing as someone)
 
   async function load() {
     const [task, lines] = await Promise.all([api(`/tasks/${id}`, 'GET'), api(`/tasks/${id}/log?limit=100`, 'GET')]);
@@ -295,16 +304,22 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     setPickKey((k) => k + 1);
   }
   useEffect(() => { load().catch((e) => setErr(e.message)); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { // an undo made from a toast changed this task: read it again
+    const on = (e: Event) => { if ((e as CustomEvent).detail === id) load().catch(() => {}); };
+    window.addEventListener(TASK_CHANGED, on);
+    return () => window.removeEventListener(TASK_CHANGED, on);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, [close]);
 
-  async function run(fn: (v: number) => Promise<unknown>, done?: string) {
+  // fields: what the change touched, so its toast can offer Undo (lib/undo.ts). None, no Undo.
+  async function run(fn: (v: number) => Promise<unknown>, done?: string, fields?: UndoField[]) {
     if (!t) return;
     setBusy(true); setErr(null);
-    try { await fn(t.version); if (done) notify(done); setMode(null); setForm({ date: '', text: '', person: '' }); await load(); router.refresh(); }
+    try { await fn(t.version); if (done) { if (fields) undo.announce(done, t, fields); else notify(done); } setMode(null); setForm({ date: '', text: '', person: '' }); await load(); router.refresh(); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -321,7 +336,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (!t || s === key) return;
     const f = formFor(t, s);
     if (f) { setTarget(s); setMode(f); return; }
-    run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`);
+    run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`, statusFields(t, s));
   }
 
   // Opened from a row's status picker: go straight to the question for that status.
@@ -339,14 +354,19 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (!t) return;
     setBusy(true); setErr(null);
     try {
-      await api(`/tasks/${t.id}/links`, 'POST', { url: linkForm.url.trim(), label: linkForm.label.trim() || null });
-      notify('Link added'); setLinkForm({ url: '', label: '' }); await load(); router.refresh();
+      const made = await api(`/tasks/${t.id}/links`, 'POST', { url: linkForm.url.trim(), label: linkForm.label.trim() || null });
+      undo.announceWith('Link added', t.id, () => api(`/tasks/${t.id}/links/${made.id}`, 'DELETE')); setLinkForm({ url: '', label: '' }); await load(); router.refresh();
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
   async function removeLink(linkId: string) {
     if (!t) return;
     setBusy(true); setErr(null);
-    try { await api(`/tasks/${t.id}/links/${linkId}`, 'DELETE'); notify('Link removed'); await load(); router.refresh(); }
+    const gone = t.links.find((l) => l.id === linkId);
+    try {
+      await api(`/tasks/${t.id}/links/${linkId}`, 'DELETE');
+      if (gone) undo.announceWith('Link removed', t.id, () => api(`/tasks/${t.id}/links`, 'POST', { url: gone.url, label: gone.label }));
+      else notify('Link removed'); await load(); router.refresh();
+    }
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
 
@@ -409,7 +429,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 </label>
                 <div className="row">
                   <button className="btn" disabled={busy || edit.ownerId === t.ownerId || !ownerReady(edit.ownerId, edit.ownerRole)}
-                    onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), `Given to ${names[edit.ownerId] ?? 'the new owner'}`)}>Save</button>
+                    onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), `Given to ${names[edit.ownerId] ?? 'the new owner'}`, ['owner'])}>Save</button>
                   <button className="btn ghost" onClick={() => { setEdit({ ...edit, ownerId: t.ownerId, ownerRole: undefined }); setPickKey((k) => k + 1); setMode(null); }}>Cancel</button>
                 </div>
               </div>
@@ -437,7 +457,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                       if (mode === 'date') return api(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, newDueOn: form.date, reason: form.text });
                       if (mode === 'drop') return api(`/tasks/${t.id}/close`, 'POST', { version: v, as: 'dropped', reason: form.text });
                       return api(`/tasks/${t.id}/reopen`, 'POST', { version: v, reason: form.text });
-                    }, { status: 'Status set to Not started', blocked: 'Marked blocked', date: `Date moved to ${fmtDate(form.date)}`, drop: 'Task dropped', reopen: 'Task reopened' }[mode])}>Save</button>
+                    }, { status: 'Status set to Not started', blocked: 'Marked blocked', date: `Date moved to ${fmtDate(form.date)}`, drop: 'Task dropped', reopen: 'Task reopened' }[mode],
+                      { status: statusFields(t, 'todo'), blocked: ['blocked'], date: ['due'], drop: statusFields(t, 'dropped'), reopen: ['category'] }[mode] as UndoField[])}>Save</button>
                   <button className="btn ghost" onClick={() => setMode(null)}>Cancel</button>
                 </div>
               </div>
@@ -452,7 +473,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                   <div className="ask-unblock">
                     <input value={unNote} maxLength={280} placeholder="What unblocked it? (optional)" aria-label="What unblocked it (optional)" onChange={(e) => setUnNote(e.target.value)} />
                     <button className="btn" disabled={busy}
-                      onClick={() => run((v) => api(`/tasks/${t.id}/unblock`, 'POST', { version: v, resume: true, ...(unNote.trim() ? { note: unNote.trim() } : {}) }), 'Unblocked, in progress').then(() => setUnNote(''))}>
+                      onClick={() => run((v) => api(`/tasks/${t.id}/unblock`, 'POST', { version: v, resume: true, ...(unNote.trim() ? { note: unNote.trim() } : {}) }), 'Unblocked, in progress', ['blocked', 'health']).then(() => setUnNote(''))}>
                       Unblock
                     </button>
                   </div>
@@ -512,7 +533,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {dirty && mode !== 'reassign' && (
               <div className="row">
-                <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved')}>Save changes</button>
+                <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved', editFields(body))}>Save changes</button>
                 <button className="btn ghost" onClick={() => { setEdit({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined, workstream: t.workstream ?? '' }); setPickKey((k) => k + 1); }}>Discard</button>
               </div>
             )}
@@ -557,6 +578,26 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const workstreams = wsByProject ? wsByProject[f.projectId] ?? [] : fixedWs;
+
+  // Quick add (components/QuickAdd.tsx) fills these fields from one line; they stay editable.
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  function applyQuick(p: QuickParse): string[] {
+    const notes: string[] = [];
+    const next = { ...f, title: p.title || f.title };
+    if (p.dueOn && p.dueOn >= today) next.dueOn = p.dueOn;
+    if (p.project?.status === 'matched' && projects) {
+      const id = p.project.item.id;
+      next.projectId = id; next.workstream = ''; next.ownerRole = undefined;
+      next.ownerId = (map[id] ?? []).includes(f.ownerId) ? f.ownerId : '';
+    }
+    if (p.owner?.status === 'matched') {
+      const o = p.owner.item;
+      if (!next.projectId || (map[next.projectId] ?? []).includes(o.id)) { next.ownerId = o.id; next.ownerRole = undefined; }
+      else notes.push(`${o.name} is not on that project, so pick the owner below.`);
+    }
+    setF(next);
+    return notes;
+  }
   return (
     <form className="stack" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr(null);
@@ -567,7 +608,8 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         router.refresh(); onDone();
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
-      <label className="f"><span>Task</span><input ref={focusOnDesktop} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
+      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
