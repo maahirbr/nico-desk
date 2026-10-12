@@ -5,6 +5,7 @@ import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
 import { fmtDate } from '@/lib/time';
 import { Avatar } from './chips';
+import { Help } from './HelpMode';
 import { ProjectForm } from './ProjectForm';
 import { Modal, type Opt } from './task-ui';
 
@@ -29,7 +30,7 @@ export function ProjectHeader({ project: p, members, names, people, meId, canEdi
         </p>
         {p.intro && <p className="phead-goal">{p.intro}</p>}
         <div className="phead-team">
-          <span className="tm"><Avatar name={names[p.ownerId] ?? '?'} /><span><b>{names[p.ownerId]}</b><span className="dim">Project lead</span></span></span>
+          <span className="tm"><Avatar name={names[p.ownerId] ?? '?'} /><span><b>{names[p.ownerId]}</b><span className="dim"><Help term="project_lead">Project lead</Help></span></span></span>
           {membersExceptLead(members, p.ownerId).map((m) => (
             <span key={m.personId} className="tm"><Avatar name={names[m.personId] ?? '?'} /><span><b>{names[m.personId]}</b><span className="dim">{m.role}</span></span></span>
           ))}

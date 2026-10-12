@@ -1,5 +1,7 @@
 import type { Health, Outcome, Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
+import type { HelpTerm } from './help';
+import { Help } from './HelpMode';
 
 // A word in a quiet pill, always. The tone only picks a token pair in globals.css (.tone-*).
 
@@ -20,20 +22,20 @@ export const OUTCOME: Record<Outcome, { word: string; tone: Tone }> = {
   late: { word: 'Closed late', tone: 'done' },
 };
 
-export function Chip({ word, tone = 'idle' }: { word: string; tone?: Tone }) {
-  return <span className={`st tone-${tone}`}>{word}</span>;
+export function Chip({ word, tone = 'idle', help }: { word: string; tone?: Tone; help?: HelpTerm }) {
+  return <span className={`st tone-${tone}`}>{help ? <Help term={help}>{word}</Help> : word}</span>;
 }
 
 export function StatusChips({ t, names }: { t: Task; names?: Record<string, string> }) {
   return (
     <span className="chips">
-      {t.statusCategory === 'open' && t.health && <Chip {...HEALTH[t.health]} />}
+      {t.statusCategory === 'open' && t.health && <Chip {...HEALTH[t.health]} help={t.health === 'not_started' ? 'status_todo' : 'status_doing'} />}
       {t.statusCategory === 'open' && !t.health && <Chip word={t.sourceStatus} tone="quiet" />}
       {t.outcome && <Chip {...OUTCOME[t.outcome]} />}
-      {t.statusCategory === 'dropped' && <Chip word="Dropped" tone="quiet" />}
-      {t.overdue && <Chip word="Late" tone="late" />}
-      {t.slippedSilently && <Chip word="Slipped silently" tone="late" />}
-      {t.blocked && <Chip word={t.blocked.onId ? `Blocked on ${names?.[t.blocked.onId] ?? 'someone'}` : 'Blocked'} tone="blocked" />}
+      {t.statusCategory === 'dropped' && <Chip word="Dropped" tone="quiet" help="status_dropped" />}
+      {t.overdue && <Chip word="Late" tone="late" help="late" />}
+      {t.slippedSilently && <Chip word="Slipped silently" tone="late" help="slipped_silently" />}
+      {t.blocked && <Chip word={t.blocked.onId ? `Blocked on ${names?.[t.blocked.onId] ?? 'someone'}` : 'Blocked'} tone="blocked" help={t.blocked.onId ? 'blocked_on' : 'status_blocked'} />}
       {t.priority && <Chip word={`Priority ${t.priority.value}`} tone="quiet" />}
       {t.readOnly && <Chip word="From Sheet" tone="quiet" />}
     </span>

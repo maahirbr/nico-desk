@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ReminderDraft } from '@/lib/reminders';
 import { Avatar } from './chips';
+import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
 
 // Each draft opens in the lead's own Gmail (or mail app) with the text filled in. The lead
@@ -41,14 +42,14 @@ function Card({ d }: { d: ReminderDraft }) {
       <label className="f"><span>Subject</span><input value={subject} readOnly={readOnly} maxLength={200} onChange={(e) => setSubject(e.target.value)} /></label>
       <label className="f"><span>Email</span><textarea readOnly={readOnly} rows={Math.min(16, 6 + d.items.length * 2)} value={body} onChange={(e) => setBody(e.target.value)} /></label>
       {!readOnly && <div className="row remind-actions">
-        <a className={`btn${to ? '' : ' disabled'}`} href={to ? gmail : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!to}
-          onClick={(e) => { if (!to) { e.preventDefault(); return; } mark('gmail'); setSaid('Opened in Gmail. Check it and press Send there.'); }}>Open in Gmail</a>
-        <a className={`btn ghost${to ? '' : ' disabled'}`} href={to ? mailto : undefined} aria-disabled={!to}
-          onClick={(e) => { if (!to) { e.preventDefault(); return; } mark('mail_app'); setSaid('Opened in your mail app.'); }}>Mail app</a>
-        <button className="btn ghost" onClick={async () => {
+        <Help term="remind_gmail" host><a className={`btn${to ? '' : ' disabled'}`} href={to ? gmail : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!to}
+          onClick={(e) => { if (!to) { e.preventDefault(); return; } mark('gmail'); setSaid('Opened in Gmail. Check it and press Send there.'); }}>Open in Gmail</a></Help>
+        <Help term="remind_mail" host><a className={`btn ghost${to ? '' : ' disabled'}`} href={to ? mailto : undefined} aria-disabled={!to}
+          onClick={(e) => { if (!to) { e.preventDefault(); return; } mark('mail_app'); setSaid('Opened in your mail app.'); }}>Mail app</a></Help>
+        <Help term="remind_copy" host><button className="btn ghost" onClick={async () => {
           try { await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`); mark('copy'); setSaid('Copied. Paste it into an email or chat.'); }
           catch { setSaid('Could not copy. Select the text and copy it.'); }
-        }}>Copy</button>
+        }}>Copy</button></Help>
         {said && <span className="small dim">{said}</span>}
       </div>}
     </section>

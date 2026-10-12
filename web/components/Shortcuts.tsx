@@ -10,7 +10,7 @@ import { Modal } from './task-ui';
 const LIST: [string, string][] = [
   ['/ or Ctrl/Cmd K', 'Search'],
   ['n', 'New task'],
-  ['?', 'This list'],
+  ['?', 'Help mode on or off'],
   ['Esc', 'Close a panel, a menu or the search'],
 ];
 
@@ -19,10 +19,11 @@ export function Shortcuts() {
   const path = usePathname();
   const [help, setHelp] = useState(false);
 
+  // The list opens from the account menu and from the help bar, which both send this event.
   useEffect(() => {
     const open = () => setHelp(true);
-    window.addEventListener('nd:help', open);
-    return () => window.removeEventListener('nd:help', open);
+    window.addEventListener('nd:shortcuts', open);
+    return () => window.removeEventListener('nd:shortcuts', open);
   }, []);
 
   useEffect(() => {
@@ -30,7 +31,6 @@ export function Shortcuts() {
       if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       if (e.key === 'n' && path !== '/tasks/new') { e.preventDefault(); router.push('/tasks/new'); }
-      if (e.key === '?') { e.preventDefault(); setHelp(true); }
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
