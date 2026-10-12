@@ -209,6 +209,11 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   the header wordmark as an SVG (fill set to `currentColor`, so each skin can tint it) and the stacked mark as a white PNG.
   Both come from the public nicobar.com site, so they add nothing internal to this public repo. They go if the company
   objects. Rollback: delete `web/public/brand/` and its uses.
+- 2026-10-12 · Opus 5.5 · Only the project owner, a lead or an admin can bring someone new onto a project, at the repo
+  owner's call, after a security review found that any member could add any teammate by assigning them a task. The rule
+  lives in `joinProject` (`web/lib/service.ts`), the same rule as `updateProject`; the owner picker shows "+ Add someone
+  to this project" only on projects in `projectsMayAddTo` (`web/lib/plan.ts`). A member can still give a task to the
+  project's own people, and accepting minutes for an outsider now needs one of those three. Rollback: `git revert` this commit.
 
 ## VERIFY
 

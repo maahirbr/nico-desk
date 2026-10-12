@@ -9,6 +9,7 @@ import { TEAM_ID } from '../lib/seed';
 const AS_OF = '2026-10-09';
 const ME = 'per_ada';
 const PLAN = 'prj_studio';
+const ADMIN = 'per_fay';
 
 let db: Db;
 beforeEach(async () => {
@@ -218,6 +219,26 @@ describe('a project task goes to one of its people', () => {
     expect(e.ownerId).toBe('per_dee');
     expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_dee', role: 'Member' });
     expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy', 'per_dee']);
+  });
+
+  it('lets only the project owner, a lead or an admin bring someone new in', async () => {
+    const { createProject, projectMembers, projectsMayAddTo } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const p = await createProject(db, ME, TEAM_ID, base); // the lead owns it; per_bo is a member
+    // A member may give a task to the project's people, but not pull a teammate in.
+    const own = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo', projectId: p.id });
+    expect(await code(s.createTask(db, 'per_bo', { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' }))).toBe('403 not_allowed');
+    expect(await code(s.editTask(db, 'per_bo', own.id, { version: own.version, ownerId: 'per_cy', ownerRole: 'Gift wrap' }))).toBe('403 not_allowed');
+    expect((await projectMembers(db, p.id)).map((m) => m.personId)).toEqual(['per_bo']);
+    // An admin may.
+    await s.createTask(db, ADMIN, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' });
+    // A member who owns the project may.
+    const q = await createProject(db, ME, TEAM_ID, { ...base, name: 'Hamper run', ownerId: 'per_bo', members: [] });
+    await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_dee', projectId: q.id, ownerRole: 'Hampers' });
+    expect(await projectMembers(db, q.id)).toEqual([{ personId: 'per_dee', role: 'Hampers' }]);
+    // The owner picker offers "+ Add someone" on exactly these projects.
+    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toEqual([q.id]);
+    expect((await projectsMayAddTo(db, TEAM_ID, ME, true))).toEqual(expect.arrayContaining([p.id, q.id]));
   });
 
   it('keeps someone on the project while they own open tasks in it', async () => {

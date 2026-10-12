@@ -15,7 +15,7 @@ import { TopSearch } from '@/components/TopSearch';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { ViewBanner } from '@/components/ViewAs';
 import { db, rosterFile } from '@/lib/db';
-import { projectPeopleMap } from '@/lib/plan';
+import { projectPeopleMap, projectsMayAddTo } from '@/lib/plan';
 import { listPeople } from '@/lib/service';
 import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
@@ -44,6 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         .map((p) => ({ id: p.id, name: p.displayName, roles: roleWord(p.appRoles) }))
     : [];
   const projectPeople = me ? await projectPeopleMap(await db(), me.team.id) : {};
+  const mayAddTo = me ? await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles)) : [];
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body data-viewing={me?.viewingAs ? '1' : undefined}>
@@ -67,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ProfileMenu name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /></div><div className="page"><ProjectPeopleProvider value={projectPeople}>{children}</ProjectPeopleProvider></div></main>
+            <main className="main"><div className="topbar"><TopSearch /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ReadOnlyProvider>
         ) : (

@@ -581,6 +581,14 @@ export async function projectPeopleMap(db: Tx, teamId: string): Promise<Record<s
   return out;
 }
 
+// Projects this person may bring someone new into: all of them for a lead or an admin, else the ones they own.
+// Mirrors the joinProject rule in lib/service.ts, so the owner picker offers "+ Add someone" only where it will work.
+export async function projectsMayAddTo(db: Tx, teamId: string, personId: string, lead: boolean): Promise<string[]> {
+  const { rows } = await db.query<{ id: string }>(
+    `SELECT id FROM projects WHERE team_id = $1 AND ($3 OR owner_id = $2)`, [teamId, personId, lead]);
+  return rows.map((r) => r.id);
+}
+
 export type ProjectInput = {
   name: string; kind: 'tasks' | 'plan'; ownerId: string; goal: string; eyebrow?: string; phase?: string;
   launchOn?: string | null; targetLabel?: string; workstreams: string[]; members: Member[];

@@ -3,12 +3,14 @@
 import { createContext, useContext, useState } from 'react';
 
 // Each project's people by id, loaded once in the layout. A task in a project can only go to its people;
-// "+ Add someone to this project" brings someone new in, with their role, as the task is assigned.
+// "+ Add someone to this project" brings someone new in, with their role, as the task is assigned. Only the
+// project owner, a lead or an admin sees it (mayAddTo), the same rule joinProject enforces in lib/service.ts.
 
 const ProjectPeople = createContext<Record<string, string[]>>({});
+const MayAddTo = createContext<string[]>([]);
 
-export function ProjectPeopleProvider({ value, children }: { value: Record<string, string[]>; children: React.ReactNode }) {
-  return <ProjectPeople.Provider value={value}>{children}</ProjectPeople.Provider>;
+export function ProjectPeopleProvider({ value, mayAddTo, children }: { value: Record<string, string[]>; mayAddTo: string[]; children: React.ReactNode }) {
+  return <ProjectPeople.Provider value={value}><MayAddTo.Provider value={mayAddTo}>{children}</MayAddTo.Provider></ProjectPeople.Provider>;
 }
 
 type Opt = { id: string; name: string };
@@ -19,6 +21,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   projectId?: string | null; value: string; onChange: (ownerId: string, role?: string) => void; people: Opt[]; disabled?: boolean;
 }) {
   const map = useContext(ProjectPeople);
+  const mayAdd = useContext(MayAddTo).includes(projectId ?? '');
   const members = projectId ? map[projectId] ?? [] : null;
   const [adding, setAdding] = useState(false);
   const [pick, setPick] = useState('');
@@ -29,7 +32,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
     return <select value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>;
   }
   const inProject = people.filter((p) => members.includes(p.id) || p.id === value && !adding);
-  const others = people.filter((p) => !members.includes(p.id));
+  const others = mayAdd ? people.filter((p) => !members.includes(p.id)) : [];
 
   if (adding) {
     return (

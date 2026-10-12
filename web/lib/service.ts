@@ -218,7 +218,16 @@ export type CreateInput = { teamId: string; title: string; description?: string 
 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
-async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined): Promise<void> {
+// Only the project owner, a lead or an admin may bring someone new in, the same rule as updateProject.
+async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined, meId: string, isLead: boolean): Promise<void> {
+  const { rows } = await tx.query<{ owner_id: string; member: boolean }>(
+    `SELECT owner_id, EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2) AS member FROM projects WHERE id = $1`,
+    [projectId, personId]);
+  const p = rows[0];
+  if (!p || p.member) return;
+  if (p.owner_id !== personId && p.owner_id !== meId && !isLead) {
+    throw forbidden('Only the project owner or a lead can add someone to this project. Pick one of its people.');
+  }
   const r = role === undefined ? 'Member' : role.trim();
   if (r.length < 2 || r.length > 60) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'ownerRole');
   await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3) ON CONFLICT (project_id, person_id) DO NOTHING`, [projectId, personId, r]);
@@ -235,7 +244,7 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
     if (input.projectId) {
       const { rows } = await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND team_id = $2`, [input.projectId, input.teamId]);
       if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
-      await joinProject(tx, input.projectId, input.ownerId, input.ownerRole);
+      await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
     const at = new Date().toISOString();
     const row = {
@@ -288,7 +297,7 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
       }
       const projectId = input.projectId !== undefined ? input.projectId : c.row.project_id;
       const ownerId = input.ownerId ?? c.row.owner_id;
-      if (projectId && (projectId !== c.row.project_id || ownerId !== c.row.owner_id)) await joinProject(tx, projectId, ownerId, input.ownerRole);
+      if (projectId && (projectId !== c.row.project_id || ownerId !== c.row.owner_id)) await joinProject(tx, projectId, ownerId, input.ownerRole, meId, c.isLead);
     },
   );
 }
