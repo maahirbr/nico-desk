@@ -289,6 +289,13 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   streams in after the layout, so the count-up started at 0 where the server wrote the value. It now tells hydration
   from a client visit per component (`useSyncExternalStore`), `MotionBoot` is gone, and a hidden tab shows the value at
   once. Reduced motion was not emulated in the browser check. Rollback: `git revert -m 1` the merge.
+- 2026-10-12 · Sonnet 5.5 · Ease-of-use pass (workstream 6a, commits `e5affa3` to `332e250`), merged by Opus 5.5. Undo in
+  the toast makes a new change through the normal rules with the reason "Undone", never a delete (`web/lib/undo.ts`). A quick
+  add line on the new-task forms ("Send deck to vendor fri @owner #project") fills title, due date, owner and project, which
+  stay editable; it cannot pick an archived project (`web/lib/quickadd.ts`). A dot marks what changed since the viewer last
+  looked. Project board, plan board and team page keep their last filter and tab per browser (`web/lib/remember.ts`). Every
+  task, person and project page has Copy link. In the merge, the project header puts the archive refusal under its buttons,
+  since beside them it squeezed the title. No schema change. Rollback: `git revert -m 1 a2dc79e`.
 
 ## VERIFY
 
@@ -299,7 +306,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `185 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `234 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
