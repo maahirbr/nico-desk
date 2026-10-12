@@ -1,3 +1,4 @@
+import type { TaskLink } from './links';
 import { istDate } from './time';
 
 // Derived values from SPEC.md 3.4. Never stored: computed from the task row and its events.
@@ -80,6 +81,7 @@ export type Task = {
   createdAt: string;
   closedAt: string | null;
   version: number;
+  links: TaskLink[]; // filled by loadTasks in lib/service.ts
 };
 
 export function renegotiations(events: EventRow[]): Renegotiation[] {
@@ -146,6 +148,7 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     createdAt: row.created_at,
     closedAt: row.closed_at,
     version: row.version,
+    links: [],
   };
 }
 

@@ -1,6 +1,7 @@
 import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
+import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { isLeadOrAdmin } from './roles';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
@@ -113,7 +114,22 @@ async function loadTasks(db: Tx, where: string, params: unknown[], today: string
   );
   const byTask = new Map<string, EventRow[]>();
   for (const e of events) byTask.set(e.entity_id, [...(byTask.get(e.entity_id) ?? []), e]);
-  return rows.map((r) => derive(r, byTask.get(r.id) ?? [], today));
+  const links = await linksFor(db, rows.map((r) => r.id));
+  return rows.map((r) => ({ ...derive(r, byTask.get(r.id) ?? [], today), links: links.get(r.id) ?? [] }));
+}
+
+// ---------- links on a task ----------
+
+type LinkRow = { id: string; task_id: string; url: string; label: string | null; created_by: string | null; created_at: string };
+const toLink = (r: LinkRow): TaskLink => ({ id: r.id, taskId: r.task_id, url: r.url, label: r.label, createdBy: r.created_by, createdAt: r.created_at });
+
+// Oldest first, so a task's chips keep their order.
+export async function linksFor(db: Tx, taskIds: string[]): Promise<Map<string, TaskLink[]>> {
+  const out = new Map<string, TaskLink[]>();
+  if (taskIds.length === 0) return out;
+  const { rows } = await db.query<LinkRow>(`SELECT * FROM task_links WHERE task_id = ANY($1) ORDER BY created_at, id`, [taskIds]);
+  for (const r of rows) out.set(r.task_id, [...(out.get(r.task_id) ?? []), toLink(r)]);
+  return out;
 }
 
 export async function getTask(db: Tx, id: string, today = todayIst()): Promise<Task> {
@@ -445,6 +461,46 @@ export async function addUpdate(db: Db, meId: string, id: string, text: string):
     const roles = await rolesIn(tx, row.team_id, meId);
     if (row.owner_id !== meId && !isLeadOrAdmin(roles)) throw forbidden();
     await insertEvent(tx, { entityId: id, field: '_update', before: null, after: t, actorId: meId, at: new Date().toISOString() });
+  });
+}
+
+// Links share the edit rule of the task itself: its owner, a lead or admin, or the person who made it. A Sheet mirror takes none.
+// A link changes no task field, so it takes no version. Each add or remove writes one event, which the update log reads as one sentence.
+async function linkContext(tx: Tx, meId: string, taskId: string): Promise<TaskRow> {
+  const { rows } = await tx.query<TaskRow>(`SELECT * FROM tasks WHERE id = $1 FOR UPDATE`, [taskId]);
+  const row = rows[0];
+  if (!row) throw notFound('No such task.');
+  if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
+  const roles = await rolesIn(tx, row.team_id, meId);
+  if (roles.size === 0) throw forbidden('You are not on this task’s team.');
+  if (!(row.owner_id === meId || isLeadOrAdmin(roles) || row.created_by === meId)) throw forbidden();
+  return row;
+}
+
+export async function addTaskLink(db: Db, meId: string, taskId: string, input: { url: string; label?: string | null }): Promise<TaskLink> {
+  const checked = checkLinkUrl(input.url);
+  if ('error' in checked) throw bad('invalid_link', checked.error, 'url');
+  const label = input.label?.trim() || null;
+  if (label && label.length > LINK_LABEL_MAX) throw bad('invalid_link', `A label is up to ${LINK_LABEL_MAX} characters.`, 'label');
+  return db.transaction(async (tx) => {
+    await linkContext(tx, meId, taskId);
+    const { rows: have } = await tx.query<{ url: string }>(`SELECT url FROM task_links WHERE task_id = $1`, [taskId]);
+    if (have.length >= LINKS_PER_TASK) throw bad('too_many_links', `A task takes up to ${LINKS_PER_TASK} links. Remove one first.`, 'url');
+    if (have.some((h) => h.url === checked.url)) throw bad('duplicate_link', 'This task already has that link.', 'url');
+    const at = new Date().toISOString();
+    const id = newId('lnk');
+    await tx.query(`INSERT INTO task_links (id, task_id, url, label, created_by, created_at) VALUES ($1,$2,$3,$4,$5,$6)`, [id, taskId, checked.url, label, meId, at]);
+    await insertEvent(tx, { entityId: taskId, field: '_link_added', before: null, after: { id, url: checked.url, label }, actorId: meId, at });
+    return { id, taskId, url: checked.url, label, createdBy: meId, createdAt: at };
+  });
+}
+
+export async function removeTaskLink(db: Db, meId: string, taskId: string, linkId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await linkContext(tx, meId, taskId);
+    const { rows } = await tx.query<LinkRow>(`DELETE FROM task_links WHERE id = $1 AND task_id = $2 RETURNING *`, [linkId, taskId]);
+    if (!rows[0]) throw notFound('No such link on this task.');
+    await insertEvent(tx, { entityId: taskId, field: '_link_removed', before: { id: linkId, url: rows[0].url, label: rows[0].label }, after: null, actorId: meId, at: new Date().toISOString() });
   });
 }
 

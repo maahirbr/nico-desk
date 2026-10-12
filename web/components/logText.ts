@@ -1,3 +1,4 @@
+import { linkText } from '@/lib/links';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
 import { HEALTH } from './chips';
@@ -32,9 +33,13 @@ export function logLine(e: LogLine, names: Names, projects: Names) {
   }
   if (e.field === '_update') return String(e.after);
   if (e.field === '_reopened') return 'Reopened';
+  if (e.field === '_link_added') return `Added link ${linkName(e.after)}`;
+  if (e.field === '_link_removed') return `Removed link ${linkName(e.before)}`;
   return `${FIELD[e.field] ?? e.field}: ${show(e.field, e.before, names, projects)} → ${show(e.field, e.after, names, projects)}`;
 }
 
+// A link event carries the url and label as written then, so the line still reads right after the link is gone.
+const linkName = (v: unknown) => `“${linkText(v as { url: string; label: string | null })}”`;
 const withWhy = (head: string, why: string | null | undefined) => (why ? `${head}: ${why}` : head);
 const set = (v: unknown) => v !== null && v !== undefined && v !== '';
 
@@ -50,6 +55,10 @@ export function actionText(events: LogLine[], names: Names, projects: Names): st
   if (created) return logLine(created, names, projects);
   const upd = take('_update');
   if (upd) return logLine(upd, names, projects);
+  const added = take('_link_added');
+  if (added) return logLine(added, names, projects);
+  const removed = take('_link_removed');
+  if (removed) return logLine(removed, names, projects);
 
   // Status changes: the category says what happened; the status word and closed time repeat it.
   const reopened = take('_reopened');

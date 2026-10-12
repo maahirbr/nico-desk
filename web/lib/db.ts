@@ -80,7 +80,21 @@ export async function upgrade(db: Db) {
   await db.exec(`INSERT INTO project_members (project_id, person_id, project_role)
     SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND status_category = 'open'
     ON CONFLICT (project_id, person_id) DO NOTHING;`);
+  // 12 Oct: links on a task. The same statements are in scripts/upgrade-task-links.ts for the hosted database.
+  await db.exec(TASK_LINKS_UPGRADE);
 }
+
+// Idempotent: a database made before 12 Oct gets the table; a new one already has it from SCHEMA.
+export const TASK_LINKS_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS task_links (
+    id          text PRIMARY KEY,
+    task_id     text NOT NULL REFERENCES tasks(id),
+    url         text NOT NULL CHECK (char_length(url) <= 2000),
+    label       text CHECK (char_length(label) BETWEEN 1 AND 80),
+    created_by  text REFERENCES people(id),
+    created_at  timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS task_links_task ON task_links (task_id, created_at);`;
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };
 
