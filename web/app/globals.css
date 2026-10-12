@@ -564,7 +564,7 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
   table.plan tr { display: block; }
   table.plan td { display: block; border: 0; padding: 0; }
   table.plan tr.line-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr) auto;
-    grid-template-areas: "check what what act" ". owner partner partner" ". due status status";
+    grid-template-areas: "check what what act" ". owner owner owner" ". partner partner partner" ". due status status";
     gap: var(--space-sm); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-md); margin-bottom: var(--space-sm); }
   table.plan tr.line-row > td.check-cell { grid-area: check; }
   table.plan tr.line-row > td.num { display: none; }
@@ -575,6 +575,7 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
   table.plan tr.line-row > td:nth-child(7) { grid-area: status; justify-self: start; }
   table.plan tr.line-row > td.act-cell { grid-area: act; width: auto; }
   table.plan tr.line-row > td[data-label]::before { content: attr(data-label); display: block; font: var(--type-small); color: var(--ink-3); margin-bottom: var(--space-xxs); }
+  table.plan tr.line-row .tbn { margin-left: 0; }
   table.plan tr.line-row.is-open { border-radius: var(--radius-card) var(--radius-card) 0 0; margin-bottom: 0; }
   table.plan tr.detail-row, table.plan tr.prompt-row, table.plan tr.editing-row { border: var(--rule) solid var(--hairline); border-top: 0; border-radius: 0 0 var(--radius-card) var(--radius-card); margin: 0 0 var(--space-sm); overflow: hidden; }
   table.plan tr.detail-row td, table.plan tr.prompt-row td, table.plan tr.editing-row td { padding: var(--space-sm) var(--space-md); }

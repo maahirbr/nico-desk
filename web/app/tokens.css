@@ -1205,6 +1205,7 @@
 :root[data-skin="i"] .seg button, :root[data-skin="i"] .seg-link { background: transparent; border-radius: 6px; color: var(--ink-2); }
 :root[data-skin="i"] .seg button:hover:not([aria-pressed="true"]) { background: var(--sunk); color: var(--ink); }
 :root[data-skin="i"] .seg button[aria-pressed="true"], :root[data-skin="i"] .seg-link.on { background: var(--pill); color: var(--ink); font-weight: 600; }
+:root:is([data-skin="m"], [data-skin="i"]) .status-sel { padding-right: 22px; } /* the chevron sits 17px from the edge, the shared 2.2x padding left 18px (m) and 13px (i), so it touched the label */
 :root[data-skin="i"] .pill[aria-pressed="true"] { background: var(--pill); color: var(--ink); border-color: var(--line-strong); }
 :root[data-skin="i"] .btn.ghost { background: var(--surface); }
 :root[data-skin="i"] .tabs, :root[data-skin="i"] .proj-tabs { border-bottom-color: var(--hairline); }
