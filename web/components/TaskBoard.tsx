@@ -11,9 +11,9 @@ import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
-import { MotionRow, MovedDate, StateSelect } from './rowmotion';
+import { MotionRow, MovedDate } from './rowmotion';
 import { canMoveTo } from './statusRules';
-import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, statusKey, TaskDrawer, type StatusKey } from './task-ui';
+import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, StatusMenu, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
@@ -57,6 +57,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [doneOpen, setDoneOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [startStatus, setStartStatus] = useState<RowAction | undefined>();
 
   async function planOp(body: Record<string, unknown>): Promise<boolean> {
     setBusy(true); setError(null);
@@ -103,7 +104,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     if (f === 'blocked') return setPrompt({ kind: 'blocked', t });
     if (f === 'drop') return setPrompt({ kind: 'remove', t });
     if (f === 'status') return setPrompt({ kind: 'status', t });
-    await run(() => quickMove(t, s), `Status set to ${STATUS[s].word}`);
+    await run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`);
   }
 
   const row = (t: Task) => {
@@ -125,7 +126,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
               onChange={(e) => (e.target.checked ? changeStatus(t, 'done') : setPrompt({ kind: 'reopen', t }))} />
           </td>
           <td className="title">
-            <button className="task-link" onClick={() => setOpenId(t.id)}>{t.title}</button>
+            <button className="task-link" onClick={() => { setOpenId(t.id); setStartStatus(undefined); }}>{t.title}</button>
             {ws === 'All' && t.workstream && <span className="ws-tag">{t.workstream}</span>}
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
@@ -142,10 +143,10 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             )}
           </td>
           <td>
-            <StateSelect className={`status-sel tone-${st.tone}`} aria-label={`Status of “${t.title}”`} value={s} disabled={!can || busy || t.statusCategory === 'dropped'}
-              onChange={(e) => changeStatus(t, e.target.value as StatusKey)}>
-              {PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)).map((k) => <option key={k} value={k}>{STATUS[k].word}</option>)}
-            </StateSelect>
+            {can && t.statusCategory === 'open' ? (
+              <StatusMenu t={t} current={s} disabled={busy} set={false} statuses={PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead))} canReassign={isLead}
+                onPick={(a) => (a === 'date' || a === 'reassign' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
+            ) : <span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span>}
             <div><FlagChip t={t} today={today} /></div>
           </td>
           <td className="act-cell">
@@ -259,7 +260,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       )}
 
       {openId && (
-        <TaskDrawer id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList}
+        <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList}
           projectNames={projectNames} today={today} onClose={() => setOpenId(null)} />
       )}
     </>

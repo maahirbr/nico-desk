@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
@@ -204,7 +204,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 
 // The row's status as a menu button: the statuses, each with its icon and colour, then Unblock when
 // blocked, Move date… and, for leads and admins, Reassign…. Arrow keys move, Enter picks, Esc closes.
-function StatusMenu({ t, current, statuses, canReassign, disabled, set, onPick }: {
+export function StatusMenu({ t, current, statuses, canReassign, disabled, set, onPick }: {
   t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; disabled: boolean; set: boolean; onPick: (a: RowAction) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -213,6 +213,11 @@ function StatusMenu({ t, current, statuses, canReassign, disabled, set, onPick }
   const wrap = useRef<HTMLSpanElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
   const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [])];
+  // Anchored to the button's right edge; on a phone the button can sit at the left, so pull it back on screen.
+  useLayoutEffect(() => {
+    const m = open ? wrap.current?.querySelector<HTMLElement>('.st-menu') : null;
+    if (m && m.getBoundingClientRect().left < 8) setAt((a) => ({ ...a, left: 8, right: 'auto' }));
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     (items().find((b) => b.getAttribute('aria-checked') === 'true') ?? items()[0])?.focus();
@@ -227,7 +232,7 @@ function StatusMenu({ t, current, statuses, canReassign, disabled, set, onPick }
     const r = btn.current?.getBoundingClientRect();
     if (!open && r) {
       const right = Math.max(8, window.innerWidth - r.right);
-      setAt(r.bottom + 280 > window.innerHeight && r.top > 280 ? { right, bottom: window.innerHeight - r.top + 4 } : { right, top: r.bottom + 4 });
+      setAt(r.bottom + 280 > window.innerHeight && r.top > 280 ? { right, top: 'auto', bottom: window.innerHeight - r.top + 4 } : { right, top: r.bottom + 4 });
     }
     setOpen(!open);
   }

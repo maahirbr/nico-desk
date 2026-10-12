@@ -655,6 +655,8 @@
 :root[data-skin="w"] :is(.st-pick, .status-sel, .st, .st-opt).tone-blocked { --sf: var(--st-blocked-fg); --sb: var(--st-blocked-bg); }
 :root[data-skin="w"] :is(.st-pick, .status-sel, .st, .st-opt).tone-done { --sf: var(--st-done-fg); --sb: var(--st-done-bg); }
 :root[data-skin="w"] :is(.st-pick, .status-sel, .st-status, .st-opt).tone-quiet { --sf: var(--st-quiet-fg); --sb: var(--st-quiet-bg); }
+/* Dropped's chip is a dark fill with light text, so its fg vanishes on the menu's surface. */
+:root[data-skin="w"] .st-opt.tone-quiet .st-icon { color: var(--ink-3); }
 :root[data-skin="w"] :is(.st-pick, .status-sel)[class*="tone-"] { color: var(--sf); background-color: var(--sb); border: 1px solid color-mix(in srgb, var(--sf) 22%, transparent); }
 :root[data-skin="w"] :is(.st-pick, .status-sel)[class*="tone-"]:hover { border-color: color-mix(in srgb, var(--sf) 55%, transparent); }
 :root[data-skin="w"] .st[class*="tone-"] { color: var(--sf, var(--tone-fg, var(--ink-2))); background: var(--sb, color-mix(in srgb, var(--tone-fg, var(--ink-2)) 11%, transparent)); }

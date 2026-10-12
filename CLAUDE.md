@@ -222,6 +222,11 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   optional note; the person a task waits on can still clear a block but not set it in progress. The menu is fixed to
   the viewport, since the task list clips overflow. View as still shows the plain status chip. Rollback: `git revert`
   this commit.
+- 2026-10-12 · Opus 5.5 · The project page's task table now uses the same status menu (`web/components/TaskBoard.tsx`),
+  found in the browser check: it still had the native select, so project pages lacked the icons, Unblock, Move date…
+  and Reassign…. Closed tasks show the plain chip; a done task reopens from its checkbox. Two fixes to the menu: it
+  stays on screen when it opens upward or when its button sits at a phone's left edge, and Dropped's icon in skin W
+  uses the faint ink, since its own tone colour is light on a dark fill. Rollback: `git revert` this commit.
 - 2026-10-12 · Opus 5.5 · The sign-in page shows the company wordmark beside the product name, at the repo owner's
   call. It is a CSS mask of `web/public/brand/nicobar-wordmark.svg` filled with `--ink`, so every skin tints it in day and
   night with no copy per skin, and forced-colours mode paints it in the system text colour. Rollback: `git revert` this
