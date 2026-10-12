@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
-import type { UpdateItem } from '@/lib/updates';
+import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
@@ -11,7 +11,7 @@ import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } fro
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
 export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject }: {
-  greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; now: string }; mine: Task[]; newIds: string[];
+  greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
@@ -50,7 +50,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
 
-      <UpdatesCard items={updates.items} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
+      <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 
       {waiting.length > 0 && (
         <section className="callout">

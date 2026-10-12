@@ -1083,3 +1083,24 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 /* "View as" inside the account menu: a flyout like Appearance, scrolling when the roster is long. */
 .pm-flyout.va-menu { left: calc(100% + var(--space-xs)); right: auto; top: auto; bottom: 0; }
 @media (max-width: 860px)  { .pm-flyout.va-menu { position: static; max-height: 50vh; } }
+
+.owner-add { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.owner-add > select, .owner-add > input { flex: 1 1 150px; min-width: 0; }
+
+/* Updates for you: grouped by project, one line per task */
+.upd-group + .upd-group { margin-top: var(--space-sm); }
+.upd-project { font: 600 12.5px/1.3 var(--font-sans, inherit); color: var(--ink-2); margin: var(--space-sm) 0 var(--space-xxs); }
+.callout-row.upd-row { display: flex; align-items: flex-start; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); }
+.upd-group .upd-row:first-of-type { border-top: 0; }
+.upd-row:hover .upd-title { color: var(--primary); }
+.upd-mark { flex: none; width: 1em; text-align: center; color: var(--primary); font-size: 10px; line-height: 20px; }
+.upd-row.is-closed .upd-mark { color: var(--ink-3); font-size: 12px; }
+.upd-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.upd-title { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.upd-row:hover { color: inherit; }
+.upd-meta { font: var(--type-small); color: var(--ink-3); overflow-wrap: anywhere; }
+.upd-due { flex: none; font: 600 11.5px/1 var(--font-sans, inherit); padding: 4px 8px; border-radius: 999px; white-space: nowrap; margin-top: 2px; }
+.upd-due.due-late { color: var(--late); background: color-mix(in srgb, var(--late) 12%, transparent); }
+.upd-due.due-soon { color: var(--st-active-fg, var(--ink-2)); background: var(--st-active-bg, var(--sunk)); }
+.upd-due.due-later { color: var(--ink-3); background: var(--sunk); }
+@media (max-width: 520px) { .callout-row.upd-row { flex-wrap: wrap; } .upd-due { margin-left: calc(1em + var(--space-sm)); } }

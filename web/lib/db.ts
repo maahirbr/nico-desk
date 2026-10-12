@@ -56,7 +56,8 @@ export async function openDb(dir?: string, roster?: string): Promise<Db> {
 }
 
 // In-place changes for a database made by an older schema, so local data survives. Each step is idempotent.
-async function upgrade(db: Db) {
+// The hosted database gets the same steps from npm run db:upgrade, which keeps its data.
+export async function upgrade(db: Db) {
   // 9 Oct: a block needs a reason; the person is optional (was: person and ask together).
   await db.exec(`DO $$ DECLARE c text; BEGIN
     SELECT conname INTO c FROM pg_constraint WHERE conrelid = 'tasks'::regclass
@@ -66,6 +67,19 @@ async function upgrade(db: Db) {
       ALTER TABLE tasks ADD CONSTRAINT tasks_block_person_needs_reason CHECK (blocked_on_id IS NULL OR blocked_ask IS NOT NULL);
     END IF;
   END $$;`);
+  // 12 Oct: any written block reason will do (was 10 to 280 characters).
+  await db.exec(`DO $$ DECLARE c text; BEGIN
+    SELECT conname INTO c FROM pg_constraint WHERE conrelid = 'tasks'::regclass
+      AND pg_get_constraintdef(oid) LIKE '%char_length(blocked_ask) >= 10%';
+    IF c IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE tasks DROP CONSTRAINT %I', c);
+      ALTER TABLE tasks ADD CONSTRAINT tasks_blocked_ask_check CHECK (char_length(blocked_ask) BETWEEN 1 AND 280);
+    END IF;
+  END $$;`);
+  // 12 Oct: a task's owner is one of the project's people. Owners of open tasks who are not yet on the project join as Member.
+  await db.exec(`INSERT INTO project_members (project_id, person_id, project_role)
+    SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND status_category = 'open'
+    ON CONFLICT (project_id, person_id) DO NOTHING;`);
 }
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };

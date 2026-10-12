@@ -200,8 +200,8 @@ export async function planOp(db: Db, meId: string, projectId: string, o: PlanOp,
         let note = l.note;
         // Blocked, going back to not started, and reopening say why. Starting or finishing is one click.
         const why = (o.reason ?? '').trim();
-        if (needsWhy(l.status, o.status) && (why.length < 10 || why.length > 280))
-          throw bad('reason_required', o.status === 'Blocked' ? 'Say what is blocking it (10 to 280 characters).' : 'Say why the status changed (10 to 280 characters).', 'reason');
+        if (needsWhy(l.status, o.status) && (!why || why.length > 280))
+          throw bad('reason_required', o.status === 'Blocked' ? 'Say what is blocking it (up to 280 characters).' : 'Say why the status changed (up to 280 characters).', 'reason');
         let summary = `set ${ref(l)} to ${o.status}${why ? `: ${why}` : ''}`;
         if (o.status === 'Blocked') note = `Blocked: ${why}`.slice(0, 160);
         else if (l.status === 'Blocked' && note.startsWith('Blocked: ')) note = '';
@@ -262,7 +262,7 @@ export async function planOp(db: Db, meId: string, projectId: string, o: PlanOp,
         for (const c of dropped) dateLog.push(`removed checkpoint “${c.label}”`);
         // nico-desk's rule: a date moved later is renegotiated openly, with a reason.
         const why = (o.dateReason ?? '').trim();
-        if (pushed && why.length < 10) throw bad('reason_required', 'A date moved later needs a reason of at least 10 characters.', 'dateReason');
+        if (pushed && !why) throw bad('reason_required', 'A date moved later needs a reason.', 'dateReason');
 
         await tx.query(
           `UPDATE plan_lines SET what=$2, done_def=$3, note=$4, owner_id=$5, owner_with=$6, partner=$7, partner_role=$8, mode=$9,
@@ -291,7 +291,7 @@ export async function planOp(db: Db, meId: string, projectId: string, o: PlanOp,
       case 'removeLine': {
         const l = await lineFor(tx, projectId, o.lineId);
         const why = o.reason.trim();
-        if (why.length < 4) throw bad('reason_required', 'Say why the line is being removed.', 'reason');
+        if (!why) throw bad('reason_required', 'Say why the line is being removed.', 'reason');
         await tx.query(`UPDATE plan_lines SET removed = true, removed_by = $2, removed_at = now(), remove_reason = $3, updated_at = now() WHERE id = $1`, [l.id, meId, why]);
         await log(tx, projectId, meId, `removed ${ref(l)}: ${why}`);
         return {};
@@ -571,6 +571,16 @@ export async function projectMembers(db: Tx, projectId: string): Promise<Member[
   return rows.map((r) => ({ personId: r.person_id, role: r.project_role }));
 }
 
+// Each project's people by id: its members and its lead. Owner pickers on project tasks offer only these.
+export async function projectPeopleMap(db: Tx, teamId: string): Promise<Record<string, string[]>> {
+  const { rows } = await db.query<{ project_id: string; person_id: string }>(
+    `SELECT m.project_id, m.person_id FROM project_members m JOIN projects pr ON pr.id = m.project_id WHERE pr.team_id = $1
+     UNION SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]);
+  const out: Record<string, string[]> = {};
+  for (const r of rows) (out[r.project_id] ??= []).push(r.person_id);
+  return out;
+}
+
 export type ProjectInput = {
   name: string; kind: 'tasks' | 'plan'; ownerId: string; goal: string; eyebrow?: string; phase?: string;
   launchOn?: string | null; targetLabel?: string; workstreams: string[]; members: Member[];
@@ -585,7 +595,6 @@ function clean(input: ProjectInput) {
   const name = input.name.trim();
   if (name.length < 2 || name.length > 80) throw bad('invalid_body', 'Give the project a name of 2 to 80 characters.', 'name');
   const goal = input.goal.trim();
-  if (goal.length < 10) throw bad('invalid_body', 'Say in a sentence what done looks like (at least 10 characters).', 'goal');
   const ws = [...new Set(input.workstreams.map((w) => w.trim()).filter(Boolean))].slice(0, 20);
   if (ws.some((w) => w.length > 60)) throw bad('invalid_body', 'Keep each sub-project name under 60 characters.', 'workstreams');
   if (input.kind === 'plan' && ws.length === 0) throw bad('invalid_body', 'A partner plan needs at least one pillar.', 'workstreams');
@@ -596,7 +605,7 @@ function clean(input: ProjectInput) {
     ...(input.launchOn ? [{ label, value: longDate(input.launchOn) }] : []),
     ...(input.phase?.trim() ? [{ label: 'Phase', value: input.phase.trim() }] : []),
   ];
-  return { name, goal, ws, members, label, pills };
+  return { name, goal: goal || null, ws, members, label, pills };
 }
 
 async function checkPeople(tx: Tx, teamId: string, ids: string[]) {
@@ -663,6 +672,12 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
         JSON.stringify(p.kind === 'plan' ? (input.partnerPeople ?? []).map((x) => x.trim()).filter(Boolean) : []),
         JSON.stringify(p.kind === 'tasks' ? c.ws : []), c.label],
     );
+    // Someone who still owns open tasks here stays on the project until those tasks move to someone else.
+    const keep = [input.ownerId, ...c.members.map((m) => m.personId)];
+    const { rows: stuck } = await tx.query<{ display_name: string; n: number }>(
+      `SELECT p.display_name, count(*)::int AS n FROM tasks t JOIN people p ON p.id = t.owner_id
+       WHERE t.project_id = $1 AND t.status_category = 'open' AND NOT (t.owner_id = ANY($2::text[])) GROUP BY p.display_name ORDER BY p.display_name`, [id, keep]);
+    if (stuck.length) throw bad('invalid_body', `Reassign their open tasks before removing them: ${stuck.map((r) => `${r.display_name} (${r.n})`).join(', ')}.`, 'members');
     await tx.query(`DELETE FROM project_members WHERE project_id = $1`, [id]);
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);
   });

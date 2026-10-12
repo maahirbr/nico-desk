@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { personCounts } from '@/lib/planUtil';
 import { addDays, fmtDate } from '@/lib/time';
-import type { UpdateItem } from '@/lib/updates';
+import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
 import { Avatar } from './chips';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
@@ -15,7 +15,7 @@ type Person = { id: string; name: string; role: string };
 export function TeamView({ tasks, later, weekStart, thisWeek, today, view, people, names, projectNames, projects, workstreamsByProject, meId, isLead, opts, updates }: {
   tasks: Task[]; later: Task[]; weekStart: string; thisWeek: string; today: string; view: 'person' | 'status'; people: Person[];
   names: Record<string, string>; projectNames: Record<string, string>; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
-  meId: string; isLead: boolean; opts: Opt[]; updates: { items: UpdateItem[]; now: string } | null;
+  meId: string; isLead: boolean; opts: Opt[]; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string } | null;
 }) {
   const [project, setProject] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         </div>
       </header>
 
-      {updates && <UpdatesCard items={updates.items} meId={meId} now={updates.now} onOpen={(id) => { setOpenId(id); setStartStatus(undefined); }} />}
+      {updates && <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => { setOpenId(id); setStartStatus(undefined); }} />}
 
       <div className="toolbar2">
         <span className="weeknav">

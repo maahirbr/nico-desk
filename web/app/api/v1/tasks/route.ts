@@ -11,6 +11,7 @@ const Body = z.object({
   workstream: z.string().trim().max(60).nullable().optional(),
   description: z.string().max(600).nullable().optional(),
   note: z.string().max(140).nullable().optional(),
+  ownerRole: z.string().max(60).optional(),
 }).strict();
 
 export const POST = route(async ({ req, me, db }) => {

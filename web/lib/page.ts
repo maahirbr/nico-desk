@@ -1,7 +1,7 @@
 import { db } from './db';
 import { isLeadOrAdmin } from './roles';
 import { cookies } from 'next/headers';
-import { listPeople, listProjects, updatesFor } from './service';
+import { listPeople, listProjects, updatesView } from './service';
 import { seenCookieName } from './updates';
 import type { Me } from './auth';
 
@@ -26,8 +26,9 @@ export type SP = Promise<Record<string, string | string[] | undefined>>;
 export const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || undefined;
 
 // "Updates for you" for the home pages: unseen items, using this device's mark-all-seen cut-off.
-export async function homeUpdates(me: Me, d: Awaited<ReturnType<typeof db>>, names: Record<string, string>) {
+export async function homeUpdates(me: Me, d: Awaited<ReturnType<typeof db>>, names: Record<string, string>, projectNames: Record<string, string>) {
   const seen = (await cookies()).get(seenCookieName(me.person.id))?.value;
   const now = new Date();
-  return { items: await updatesFor(d, me.person.id, me.team.id, names, seen, now), now: now.toISOString() };
+  const { items, groups } = await updatesView(d, me.person.id, me.team.id, names, projectNames, seen, now);
+  return { items, groups, now: now.toISOString() };
 }

@@ -168,7 +168,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   function lineRow(l: PlanLine) {
     if (editing === l.id) return <EditLine key={l.id} l={l} project={project} people={people} busy={busy} onCancel={() => setEditing(null)}
       onSave={async (b) => { if (await op({ op: 'editLine', lineId: l.id, ...b })) setEditing(null); }} />;
-    if (removing === l.id) return <ReasonRow key={l.id} title={l.what} label="Why is this line being removed? (required)" min={4} go="Remove" busy={busy}
+    if (removing === l.id) return <ReasonRow key={l.id} title={l.what} label="Why is this line being removed? (required)" min={1} go="Remove" busy={busy}
       onCancel={() => setRemoving(null)} onGo={async (reason) => { if (await op({ op: 'removeLine', lineId: l.id, reason })) setRemoving(null); }} />;
     const open = !!openRows[l.id];
     const next = nextCheckpoint(l);
@@ -228,8 +228,8 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
         {asking?.lineId === l.id && (
           <ReasonRow
             title={asking.to === 'Blocked' ? `Why is line ${l.num} blocked?` : `Line ${l.num}: changing to “${WORD[asking.to]}”`}
-            label={asking.to === 'Blocked' ? 'Block reason (10 to 280 characters)' : 'Why? (10 to 280 characters)'}
-            min={10} go={asking.to === 'Blocked' ? 'Mark blocked' : `Set ${WORD[asking.to].toLowerCase()}`} busy={busy}
+            label={asking.to === 'Blocked' ? 'Block reason' : 'Why?'}
+            min={1} go={asking.to === 'Blocked' ? 'Mark blocked' : `Set ${WORD[asking.to].toLowerCase()}`} busy={busy}
             onCancel={() => setAsking(null)} onGo={async (reason) => { if (await op({ op: 'status', lineId: l.id, status: asking.to, reason })) setAsking(null); }} />
         )}
         {open && (

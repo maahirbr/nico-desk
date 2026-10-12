@@ -3,7 +3,7 @@ import { derive, type EventRow, type Health, type Task, type TaskRow } from './d
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
-import { buildUpdates, UPDATE_DAYS, type UpdateItem } from './updates';
+import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
 // Every write goes through here, so the rules in SPEC.md section 2 hold for the API and the pages alike.
 
@@ -24,13 +24,13 @@ export function newId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${seq.toString(36).padStart(2, '0')}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-const REASON_MIN = 10;
+const REASON_MIN = 1; // any written reason will do (12 Oct, the PM who owns the desk)
 const REASON_MAX = 280;
 
 function needReason(reason: unknown, field = 'reason'): string {
   const r = typeof reason === 'string' ? reason.trim() : '';
   if (r.length < REASON_MIN || r.length > REASON_MAX)
-    throw bad('reason_required', `A reason of ${REASON_MIN} to ${REASON_MAX} characters is required.`, field);
+    throw bad('reason_required', `Write a reason (up to ${REASON_MAX} characters).`, field);
   return r;
 }
 
@@ -84,7 +84,9 @@ async function rolesIn(db: Tx, teamId: string, personId: string): Promise<Set<Ap
      WHERE m.team_id = $1 AND m.person_id = $2 AND p.active`,
     [teamId, personId],
   );
-  return new Set(rows.map((r) => r.app_role));
+  const roles = new Set(rows.map((r) => r.app_role));
+  if (roles.has('admin')) roles.add('lead'); // an admin can do anything a lead can, such as reopening a task
+  return roles;
 }
 
 async function activeMember(db: Tx, teamId: string, personId: string, field: string): Promise<void> {
@@ -211,7 +213,16 @@ async function mutate(
   return getTask(db, taskId);
 }
 
-export type CreateInput = { teamId: string; title: string; description?: string | null; ownerId: string; dueOn: string; projectId?: string | null; workstream?: string | null; note?: string | null };
+// ownerRole: set when the owner is being added to the project as the task is assigned ("+ Add someone to this project").
+export type CreateInput = { teamId: string; title: string; description?: string | null; ownerId: string; dueOn: string; projectId?: string | null; workstream?: string | null; note?: string | null; ownerRole?: string };
+
+// A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
+// when a task reaches them another way (minutes, imports). Joining twice changes nothing.
+async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined): Promise<void> {
+  const r = role === undefined ? 'Member' : role.trim();
+  if (r.length < 2 || r.length > 60) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'ownerRole');
+  await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3) ON CONFLICT (project_id, person_id) DO NOTHING`, [projectId, personId, r]);
+}
 
 export async function createTask(db: Db, meId: string, input: CreateInput): Promise<Task> {
   const today = todayIst();
@@ -224,6 +235,7 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
     if (input.projectId) {
       const { rows } = await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND team_id = $2`, [input.projectId, input.teamId]);
       if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
+      await joinProject(tx, input.projectId, input.ownerId, input.ownerRole);
     }
     const at = new Date().toISOString();
     const row = {
@@ -244,7 +256,7 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
   return getTask(db, id);
 }
 
-export type EditInput = { version: number; title?: string; description?: string | null; note?: string | null; projectId?: string | null; workstream?: string | null; ownerId?: string };
+export type EditInput = { version: number; title?: string; description?: string | null; note?: string | null; projectId?: string | null; workstream?: string | null; ownerId?: string; ownerRole?: string };
 
 export async function editTask(db: Db, meId: string, id: string, input: EditInput): Promise<Task> {
   return mutate(
@@ -274,6 +286,9 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
         const { rows } = await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND team_id = $2`, [input.projectId, c.row.team_id]);
         if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
       }
+      const projectId = input.projectId !== undefined ? input.projectId : c.row.project_id;
+      const ownerId = input.ownerId ?? c.row.owner_id;
+      if (projectId && (projectId !== c.row.project_id || ownerId !== c.row.owner_id)) await joinProject(tx, projectId, ownerId, input.ownerRole);
     },
   );
 }
@@ -366,7 +381,8 @@ export async function reopenTask(db: Db, meId: string, id: string, input: { vers
 export async function blockTask(db: Db, meId: string, id: string, input: { version: number; onId?: string | null; ask: string }): Promise<Task> {
   const ask = input.ask.trim();
   const onId = input.onId || null;
-  if (ask.length < 10 || ask.length > 280) throw bad('reason_required', 'Give a block reason (10 to 280 characters).', 'ask');
+  // Any written block reason will do; a person it waits on is optional.
+  if (!ask || ask.length > 280) throw bad('reason_required', 'Give a block reason (up to 280 characters).', 'ask');
   return mutate(
     db, meId, id, input.version,
     (c) => c.isOwner,
@@ -667,6 +683,13 @@ export async function ledgerTasks(db: Db, teamId: string, from: string, to: stri
 export async function updatesFor(
   db: Db, meId: string, teamId: string, names: Record<string, string>, seenAt?: string | null, now = new Date(),
 ): Promise<UpdateItem[]> {
+  return (await updatesView(db, meId, teamId, names, {}, seenAt, now)).items;
+}
+
+// The same items, and the grouped view: by project, one line per task.
+export async function updatesView(
+  db: Db, meId: string, teamId: string, names: Record<string, string>, projectNames: Record<string, string>, seenAt?: string | null, now = new Date(),
+): Promise<{ items: UpdateItem[]; groups: UpdateGroup[] }> {
   const since = new Date(now.getTime() - UPDATE_DAYS * 86_400_000).toISOString();
   const [tasks, events, projects] = await Promise.all([
     teamTasks(db, teamId),
@@ -678,7 +701,8 @@ export async function updatesFor(
     ),
     db.query<{ id: string; owner_id: string }>(`SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]),
   ]);
-  return buildUpdates({
+  const items = buildUpdates({
     events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, p.owner_id])), names, viewerId: meId, now, seenAt,
   });
+  return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }

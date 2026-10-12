@@ -16,7 +16,7 @@ export default async function Home() {
   const me = await requireMe();
   const { d, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
-  const updates = await homeUpdates(me, d, names);
+  const updates = await homeUpdates(me, d, names, projectNames);
   const [mine, notices, all, projects] = await Promise.all([
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), teamTasks(d, me.team.id), teamProjects(d, me.team.id),
   ]);

@@ -7,6 +7,7 @@ import { isLeadOrAdmin } from '@/lib/roles';
 import { Nav, SwitchToOwner } from '@/components/client';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { Shortcuts } from '@/components/Shortcuts';
+import { ProjectPeopleProvider } from '@/components/OwnerPicker';
 import { ProfileMenu } from '@/components/ProfileMenu';
 import { SKIN_COOKIE, skinOf } from '@/components/skins';
 import { Toaster } from '@/components/toast';
@@ -14,6 +15,7 @@ import { TopSearch } from '@/components/TopSearch';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { ViewBanner } from '@/components/ViewAs';
 import { db, rosterFile } from '@/lib/db';
+import { projectPeopleMap } from '@/lib/plan';
 import { listPeople } from '@/lib/service';
 import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
@@ -41,6 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ? (await listPeople(await db(), me.team.id)).filter((p) => p.active && p.id !== me.realPerson.id)
         .map((p) => ({ id: p.id, name: p.displayName, roles: roleWord(p.appRoles) }))
     : [];
+  const projectPeople = me ? await projectPeopleMap(await db(), me.team.id) : {};
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body data-viewing={me?.viewingAs ? '1' : undefined}>
@@ -64,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ProfileMenu name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /></div><div className="page">{children}</div></main>
+            <main className="main"><div className="topbar"><TopSearch /></div><div className="page"><ProjectPeopleProvider value={projectPeople}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ReadOnlyProvider>
         ) : (

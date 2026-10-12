@@ -196,6 +196,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   address sits in this public repo. Each one must still be an active roster person. Google's `hd` hint still names the
   company domain, so that person may need "Use another account". Rollback: unset `NICO_ALLOWED_EMAILS` on Vercel and
   redeploy.
+- 2026-10-12 · Opus 5.5 · Four rule changes at the PM's call, on branch `mvp-local-desk-look`. Any written reason will do
+  for blocking, dropping, moving a date, reopening or going back to not started (was 10 to 280 characters), since the
+  10-character floor kept the save button greyed with no word why; a reason is still required. A project's "what done
+  looks like" is optional. An admin can do anything a lead can, such as reopening. A task in a project goes only to
+  that project's people: owner pickers list them, "+ Add someone to this project" brings a person in with a role, a
+  task reaching an outsider another way (minutes) adds them as Member, and no one leaves a project while they own open
+  tasks in it. The hosted database needs `npm run db:upgrade` once (relaxes the block-reason check, adds open-task
+  owners to their projects; keeps all data). Status pickers in skin W fill by status: grey, yellow, red, green, dark
+  grey. Rollback: `git revert` the commit and leave the database as is (the relaxed check accepts the old data).
 
 ## VERIFY
 
@@ -206,7 +215,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `121 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `126 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

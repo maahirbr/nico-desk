@@ -9,6 +9,7 @@ import { fmtDate } from '@/lib/time';
 import { Person } from './chips';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
+import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { canMoveTo } from './statusRules';
@@ -277,14 +278,14 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
     remove: 'Why drop this task? A reason is needed, and it stays in the log.',
     reopen: 'Why reopen it? Only a lead can reopen.',
   }[p.kind];
-  const ok = text.trim().length >= 10;
+  const ok = text.trim().length > 0;
   return (
     <tr className="prompt-row">
       <td colSpan={6}>
         <div className="prompt">
           <div className="small">{label}</div>
           <div className="row">
-            <label className="f"><span>{p.kind === 'blocked' ? 'Block reason' : 'Reason'} (10 to 280 characters)</span>
+            <label className="f"><span>{p.kind === 'blocked' ? 'Block reason' : 'Reason'}</span>
               <input ref={focusOnDesktop} maxLength={280} value={text} onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && ok) onGo({ text, date, person }); if (e.key === 'Escape') onCancel(); }} />
             </label>
@@ -313,15 +314,15 @@ function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, o
   t: Task; people: P[]; workstreams: string[]; today: string; busy: boolean; canReassign: boolean; onCancel: () => void;
   onSave: (body: Record<string, unknown>, due: { newDueOn: string; reason: string } | null) => void;
 }) {
-  const [f, setF] = useState({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, dueOn: t.dueOn, reason: '', workstream: t.workstream ?? '' });
+  const [f, setF] = useState({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined as string | undefined, dueOn: t.dueOn, reason: '', workstream: t.workstream ?? '' });
   const moved = f.dueOn !== t.dueOn;
   const body: Record<string, unknown> = {};
   if (f.title !== t.title) body.title = f.title;
   if (f.description !== (t.description ?? '')) body.description = f.description || null;
   if (f.note !== (t.note ?? '')) body.note = f.note || null;
-  if (f.ownerId !== t.ownerId) body.ownerId = f.ownerId;
+  if (f.ownerId !== t.ownerId) Object.assign(body, ownerFields(f.ownerId, f.ownerRole));
   if (f.workstream !== (t.workstream ?? '')) body.workstream = f.workstream || null;
-  const ok = f.title.trim().length >= 3 && (!moved || f.reason.trim().length >= 10) && (moved || Object.keys(body).length > 0);
+  const ok = f.title.trim().length >= 3 && ownerReady(f.ownerId, f.ownerRole) && (!moved || f.reason.trim().length > 0) && (moved || Object.keys(body).length > 0);
   return (
     <tr className="editing-row">
       <td colSpan={6}>
@@ -329,9 +330,7 @@ function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, o
           <label className="f wide"><span>Task</span><input value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           <label className="f wide"><span>What it’s about</span><textarea rows={2} value={f.description} maxLength={600} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
           <label className="f"><span>Owner</span>
-            <select value={f.ownerId} disabled={!canReassign} onChange={(e) => setF({ ...f, ownerId: e.target.value })}>
-              {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <OwnerPicker projectId={t.projectId} value={f.ownerId} people={people} disabled={!canReassign} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
           </label>
           {workstreams.length > 0 && (
             <label className="f"><span>Sub-project</span>
@@ -361,7 +360,8 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
   projectId: string; people: P[]; meId: string; today: string; workstreams: string[]; defaultWs: string; onDone: () => void;
 }) {
   const router = useRouter();
-  const blank = { title: '', description: '', ownerId: meId, dueOn: '', note: '', workstream: defaultWs };
+  const inProject = (useProjectPeople()[projectId] ?? []).includes(meId);
+  const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs };
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -369,7 +369,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     <form className="card add-form" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError(null);
       try {
-        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null });
+        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null });
         if (made?.id) arrivals.add(made.id);
         notify('Task added');
         setF(blank); router.refresh(); onDone();
@@ -379,7 +379,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
-          <select value={f.ownerId} onChange={(e) => setF({ ...f, ownerId: e.target.value })}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+          <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
         {workstreams.length > 0 && (
           <label className="f"><span>Sub-project</span>
@@ -393,7 +393,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn" disabled={busy}>Add task</button>
+        <button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button>
       </div>
     </form>
   );
