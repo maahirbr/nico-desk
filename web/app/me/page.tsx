@@ -1,5 +1,5 @@
 import { requireMe } from '@/lib/auth';
-import { lookups } from '@/lib/page';
+import { homeUpdates, lookups } from '@/lib/page';
 import { listNotices, myTasks, teamTasks } from '@/lib/service';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { teamProjects } from '@/lib/plan';
@@ -16,6 +16,7 @@ export default async function Home() {
   const me = await requireMe();
   const { d, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
+  const updates = await homeUpdates(me, d, names);
   const [mine, notices, all, projects] = await Promise.all([
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), teamTasks(d, me.team.id), teamProjects(d, me.team.id),
   ]);
@@ -28,6 +29,7 @@ export default async function Home() {
       today={t}
       weekEnd={addDays(weekStart, 6)}
       meId={me.person.id}
+      updates={updates}
       isLead={isLead}
       mine={[...mine.assigned, ...mine.tasks]}
       newIds={mine.assigned.map((x) => x.id)}

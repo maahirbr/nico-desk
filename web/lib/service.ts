@@ -2,6 +2,7 @@ import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
+import { buildUpdates, UPDATE_DAYS, type UpdateItem } from './updates';
 
 // Every write goes through here, so the rules in SPEC.md section 2 hold for the API and the pages alike.
 
@@ -655,5 +656,28 @@ export async function ledgerTasks(db: Db, teamId: string, from: string, to: stri
     if (t.statusCategory === 'dropped' || (personId && t.ownerId !== personId)) return false;
     const week = mondayOf(t.firstDueOn);
     return week >= from && week <= to;
+  });
+}
+
+// ---------- updates for you ----------
+
+// Major changes to tasks made by someone else that this person should hear about (see lib/updates.ts).
+// Read from the events of the last week; `seenAt` is the person's "mark all seen" moment (a cookie).
+export async function updatesFor(
+  db: Db, meId: string, teamId: string, names: Record<string, string>, seenAt?: string | null, now = new Date(),
+): Promise<UpdateItem[]> {
+  const since = new Date(now.getTime() - UPDATE_DAYS * 86_400_000).toISOString();
+  const [tasks, events, projects] = await Promise.all([
+    teamTasks(db, teamId),
+    db.query<EventRow>(
+      `SELECT e.* FROM events e JOIN tasks t ON t.id = e.entity_id
+       WHERE e.entity_type = 'task' AND t.team_id = $1 AND e.at >= $2
+         AND e.field IN ('_created','owner_id','due_on','blocked_ask','blocked_on_id','status_category','title')`,
+      [teamId, since],
+    ),
+    db.query<{ id: string; owner_id: string }>(`SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]),
+  ]);
+  return buildUpdates({
+    events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, p.owner_id])), names, viewerId: meId, now, seenAt,
   });
 }

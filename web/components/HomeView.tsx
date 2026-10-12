@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
+import type { UpdateItem } from '@/lib/updates';
+import { UpdatesCard } from './UpdatesCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds, assignedNotice, waiting, done, names, projectNames, people, projects, workstreamsByProject }: {
-  greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; mine: Task[]; newIds: string[];
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, waiting, done, names, projectNames, people, projects, workstreamsByProject }: {
+  greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
@@ -43,6 +45,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds,
           </p>
         </div>
       </header>
+
+      <UpdatesCard items={updates.items} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 
       {waiting.length > 0 && (
         <section className="callout">
@@ -88,7 +92,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, mine, newIds,
       )}
       {openId && (
         <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people} today={today} projectNames={projectNames}
-          workstreams={opened?.projectId ? workstreamsByProject[opened.projectId] ?? [] : []} onClose={() => setOpenId(null)} />
+          workstreams={workstreamsByProject[opened?.projectId ?? (updates.items).find((i) => i.taskId === openId)?.projectId ?? ''] ?? []} onClose={() => setOpenId(null)} />
       )}
     </div>
   );
