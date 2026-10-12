@@ -181,7 +181,7 @@ export function TaskActions({
   t, may, people, projects, today,
 }: {
   t: Task;
-  may: { edit: boolean; reassign: boolean; health: boolean; renegotiate: boolean; close: boolean; reopen: boolean; block: boolean; unblock: boolean; priority: boolean; update: boolean };
+  may: { edit: boolean; reassign: boolean; health: boolean; renegotiate: boolean; close: boolean; reopen: boolean; block: boolean; unblock: boolean; priority: boolean; update: boolean; unblockNote?: boolean };
   people: Opt[];
   projects: Opt[];
   today: string;
@@ -195,7 +195,7 @@ export function TaskActions({
       {open && may.close && <CloseForm t={t} />}
       {!open && may.reopen && <ReasonForm title="Reopen" path={`/tasks/${t.id}/reopen`} label="Why reopen" button="Reopen" body={(reason) => ({ version: v, reason })} />}
       {open && may.block && !t.blocked && <BlockForm t={t} people={people.filter((p) => p.id !== t.ownerId)} />}
-      {t.blocked && may.unblock && <UnblockForm t={t} />}
+      {t.blocked && may.unblock && <UnblockForm t={t} needNote={!!may.unblockNote} />}
       {may.priority && <PriorityForm t={t} />}
       {may.update && <ReasonForm title="Add an update" path={`/tasks/${t.id}/updates`} label="Update (no field changes)" button="Add to log" min={1} body={(text) => ({ text })} />}
       {may.edit && <EditForm t={t} people={people} projects={projects} canReassign={may.reassign} />}
@@ -277,14 +277,16 @@ function BlockForm({ t, people }: { t: Task; people: Opt[] }) {
   );
 }
 
-function UnblockForm({ t }: { t: Task }) {
+// The person a task waits on says what they did, since the owner hears it. The owner or a lead may leave it blank.
+function UnblockForm({ t, needNote }: { t: Task; needNote: boolean }) {
   const { busy, error, run } = useSubmit();
   const [note, setNote] = useState('');
   return (
     <form className="panel stack" onSubmit={(e) => { e.preventDefault(); run(`/tasks/${t.id}/unblock`, 'POST', { version: t.version, note }); }}>
       <h3>Clear the block</h3>
-      <label className="f"><span>What unblocked it (optional)</span><input maxLength={280} value={note} onChange={(e) => setNote(e.target.value)} /></label>
-      <div><button className="btn" disabled={busy}>Clear block</button></div>
+      <label className="f"><span>{needNote ? 'What did you do?' : 'What unblocked it (optional)'}</span><input maxLength={280} required={needNote} enterKeyHint="done" value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      <div><button className="btn" disabled={busy || (needNote && !note.trim())}>Clear block</button></div>
+      {needNote && !note.trim() && <p className="hint">Say in a few words what you did. The owner sees it.</p>}
       <Err e={error} />
     </form>
   );

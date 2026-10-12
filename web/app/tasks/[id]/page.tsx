@@ -39,6 +39,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
     reopen: !mirror && isLead,
     block: !mirror && isOwner,
     unblock: !mirror && (isOwner || isLead || t.blocked?.onId === me.person.id),
+    unblockNote: !mirror && !isOwner && !isLead && t.blocked?.onId === me.person.id,
     priority: !mirror && isLead,
     update: !mirror && (isOwner || isLead),
   };
