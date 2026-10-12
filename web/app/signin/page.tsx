@@ -5,6 +5,7 @@ import { googleSignInEnabled } from '@/lib/google';
 import { localOwnerId, TEAM_ID } from '@/lib/seed';
 import { listPeople } from '@/lib/service';
 import { SignInList } from '@/components/client';
+import { DitherArt } from '@/components/DitherArt';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,12 +26,14 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   const google = googleSignInEnabled();
   const dev = devSignInEnabled();
   // The wordmark is a mask filled with the skin's ink, so it follows every skin in day and night.
+  const art = <DitherArt field="glow" cols={56} rows={14} className="dither-signin" />;
   const brand = <div className="signin-brand"><span className="signin-logo" role="img" aria-label="Nicobar" /><span className="mark-name">Nico Desk</span></div>;
   const notice = message && <p className="err" role="alert" style={{ marginBottom: 'var(--space-sm)' }}>{message}</p>;
 
   if (!google && !dev) {
     return (
       <div className="signin">
+        {art}
         {brand}
         <h1>Sign in</h1>
         <p className="lede">Sign-in is not set up yet.</p>
@@ -46,6 +49,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   const owner = people.find((p) => p.id === ownerId);
   return (
     <div className="signin">
+      {art}
       {brand}
       {google && (
         <>

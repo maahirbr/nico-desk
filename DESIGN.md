@@ -446,22 +446,28 @@ A pill means a state or a choice of date. Nothing else is a capsule.
 
 ## Motion
 
-Three gestures, no more. Each shows a cause. Transform and opacity only. All of them drop to an instant change under `prefers-reduced-motion: reduce`.
+Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with two named exceptions: a status chip eases its colour, and a tick draws its stroke. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
 
 1. **A line arrives.** A committed or asked line fades in and rises 8px, 180ms, ease-out. It happens on the page where the line lands.
 2. **A date moves.** The old date strikes through over 160ms, then the new date slides in from 6px below, 200ms. The struck date stays.
 3. **A state is set.** The pill crossfades to its new word, 120ms, with a scale from 0.96 to 1. No bounce.
 
-Nothing loops, nothing counts up, nothing moves on its own.
+Nothing loops and nothing moves on its own.
 
 Other motion is not a gesture. It is the screen keeping up with the user.
 
-- **A page enters.** The content fades in over `--dur-enter` (140ms). No slide.
-- **A panel opens.** A drawer or dialog slides `--panel-shift` (32px) and fades over `--dur-panel` (200ms). It closes the same way, reversed.
+- **A page enters.** The content fades in and rises `--page-shift` (4px) over `--dur-enter` (140ms).
+- **A tab or nav item is chosen.** One marker slides to it (`indicatorMotion`, a spring of about 240ms with no bounce), and a tab's content cross-fades with the same 4px shift over `--dur-tab` (160ms).
+- **A panel opens.** A drawer springs in from 32px to the side and a dialog from 12px below with a scale from 0.98, both in under 300ms (`drawerMotion`, `modalMotion`). They close the same way, faster. A menu scales from the control that opened it.
+- **A list loads.** The first time a list is shown in a browser tab, its rows rise `--stagger-rise` (6px) and fade over `--dur-stagger` (200ms), 30ms apart, the delay capped at the eighth row. It never replays for a row added later. This is the one motion allowed to run past 300ms.
+- **A status changes.** The chip eases its fill and text colour over `--dur-state` (120ms) and its icon pops in from a scale of 0.5.
+- **A task is marked done.** The tick in the box draws itself over `--dur-tick` (160ms). The same tick draws in the Done chip.
+- **A number counts up.** A figure on the ledger counts from 0 to its value once per session, in 280ms. A hard page load, a repeat visit and reduced motion show the true value at once.
+- **A dithered picture is shown.** Only in empty states, the sign-in screen and the people page header. It is an ordered dither (`web/lib/dither.ts`) in `--dither-ink`, a thin tint of the skin accent. It never moves, never sits under text and is hidden from screen readers.
 - **A confirmation appears.** A small bar at the foot of the screen fades in over `--dur-toast` (160ms), stays for `--dwell-confirm`, then fades out. It has `aria-live="polite"`. At most three show at once.
 - **A page loads.** `loading.tsx` shows a skeleton shaped like the real content, in `--skeleton-fill`. The fill is static. There is no shimmer.
 
-Every duration and easing is a token in `web/app/tokens.css`. Under `prefers-reduced-motion: reduce` the three durations above become 0.
+Every duration and easing is a token in `web/app/tokens.css`. Under `prefers-reduced-motion: reduce` every duration above becomes 0 and the JS springs and count-ups do not run.
 
 ## Components
 
@@ -538,7 +544,7 @@ Check every screen against this list before showing it. An element that breaks a
 7. **One shadow per card**, and only on the cards listed under Elevation. Lines never get a shadow or a box.
 
 ### Motion
-8. **Three gestures only** (see Motion). Feedback under 200ms. Reduced motion means instant.
+8. **Only the motions listed under Motion.** Feedback under 200ms, nothing past 300ms except the first-load stagger, nothing loops. Reduced motion means instant.
 
 ### Copy
 9. Plain words, sentence case, the voice below. No em dashes, no eyebrows, no exclamation marks, no whimsy.

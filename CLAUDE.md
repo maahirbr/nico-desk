@@ -280,6 +280,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   their list. The view-as gutter on Home is closed. The hosted database needs the new columns before any build with this
   change is promoted: `cd web && npx tsx --env-file=.env.remote.local scripts/upgrade-project-archive.ts` (adds columns only,
   keeps all data). Rollback: `git revert -m 1 06c336a`. The columns can stay, since nothing else reads them.
+- 2026-10-12 · Sonnet 5.5 · Motion and visuals (workstream 4), merged by Opus 5.5. `DESIGN.md` Motion now lists each
+  move: page entry, a sliding tab and nav marker, spring drawers and dialogs, a first-load list stagger, status chips
+  easing colour, a tick that draws itself, ledger numbers counting up once per session, and still dithered pictures in
+  empty states, sign-in and the people page header. Two named exceptions to transform and opacity: chip colour and the
+  tick stroke. Nothing passes 300ms except the stagger, and reduced motion stops all of it. The dither is our own
+  (`web/lib/dither.ts`), since no DitherKit package was found. At merge, Opus fixed a hydration mismatch: each page
+  streams in after the layout, so the count-up started at 0 where the server wrote the value. It now tells hydration
+  from a client visit per component (`useSyncExternalStore`), `MotionBoot` is gone, and a hidden tab shows the value at
+  once. Reduced motion was not emulated in the browser check. Rollback: `git revert -m 1` the merge.
 
 ## VERIFY
 
@@ -290,7 +299,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `173 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `185 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

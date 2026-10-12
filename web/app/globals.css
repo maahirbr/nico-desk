@@ -48,12 +48,16 @@ button { -webkit-tap-highlight-color: transparent; }
 .mark-text { display: block; }
 .kind-eyebrow::before { content: " · "; }
 .nav { display: flex; flex-direction: column; gap: var(--space-xxs); flex: 1; overflow-y: auto; }
-.nav a { display: flex; align-items: center; gap: var(--space-sm); padding: var(--nav-pad-y) var(--nav-pad-x); min-height: var(--button-height);
+.nav a { position: relative; isolation: isolate; display: flex; align-items: center; gap: var(--space-sm); padding: var(--nav-pad-y) var(--nav-pad-x); min-height: var(--button-height);
   border-radius: var(--radius-control); text-decoration: none; color: var(--ink-2); white-space: nowrap;
   transition: background var(--dur-state) var(--ease), color var(--dur-state) var(--ease); }
 .nav a svg { width: var(--icon-size); height: var(--icon-size); flex: none; }
 .nav a:hover { background: var(--sunk); color: var(--ink); }
-.nav a[aria-current="page"] { background: var(--sunk); color: var(--ink); font-weight: 500; }
+.nav a[aria-current="page"] { color: var(--ink); font-weight: 500; }
+.nav a[aria-current="page"]:not(.nav-new) { background: transparent; }
+/* The marker behind the current link. It is one element that travels from link to link (motion layoutId). */
+.nav-ind { position: absolute; inset: 0; z-index: -1; background: var(--sunk); border-radius: inherit; pointer-events: none; }
+.nav .nav-new .nav-ind { display: none; }
 .nav .nav-new { margin-top: var(--space-sm); background: var(--primary); color: var(--on-primary); justify-content: center; font: var(--type-button); }
 .nav .nav-new:hover, .nav .nav-new[aria-current="page"] { background: color-mix(in srgb, var(--primary) 88%, var(--ink)); color: var(--on-primary); }
 .nav .nav-new:active { transform: scale(var(--press-scale)); }
@@ -105,6 +109,7 @@ h3 { font: var(--type-body); font-weight: 600; margin: 0 0 var(--space-xxs); }
 
 /* ---------- pills: one word in a soft fill ---------- */
 .st { display: inline-flex; align-items: center; font: var(--type-state); white-space: nowrap; padding: var(--pill-pad-y) var(--pill-pad-x);
+  transition: background-color var(--dur-state) var(--ease), color var(--dur-state) var(--ease);
   border-radius: var(--radius-pill); background: var(--tone-bg, var(--pill)); color: var(--tone-fg, var(--ink-2)); box-shadow: var(--pill-ring); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 
@@ -724,9 +729,11 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 
 /* tabs */
 .tabs { display: flex; gap: var(--space-xxs); border-bottom: var(--rule) solid var(--hairline); margin: 0 0 var(--space-md); overflow-x: auto; scrollbar-width: none; }
-.tab { font: var(--type-meta); background: none; border: 0; border-bottom: var(--ring-width) solid transparent; margin-bottom: calc(var(--rule) * -1); padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--ink-3); white-space: nowrap; transition: color var(--dur-state) var(--ease); }
+.tab { position: relative; font: var(--type-meta); background: none; border: 0; border-bottom: var(--ring-width) solid transparent; margin-bottom: calc(var(--rule) * -1); padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--ink-3); white-space: nowrap; transition: color var(--dur-state) var(--ease); }
 .tab:hover { color: var(--ink); }
-.tab[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.tab[aria-pressed="true"] { color: var(--ink); }
+.tab-ind { position: absolute; left: 0; right: 0; bottom: calc(var(--ring-width) * -1); height: var(--ring-width); background: var(--ink); pointer-events: none; }
+@media (forced-colors: active) { .tab-ind, .nav-ind { background: Highlight; forced-color-adjust: none; } }
 .parked-list { margin: 0; padding-left: var(--space-md); color: var(--ink-2); display: flex; flex-direction: column; gap: var(--space-xs); }
 
 /* projects list */
@@ -990,7 +997,7 @@ details.breakdown > .defs { margin-top: 0; }
 .st-pick { font: var(--type-state); color: var(--tone-fg, var(--ink-2)); background-color: var(--tone-bg, var(--pill)); border: 0; border-radius: var(--radius-pill); min-height: 0;
   padding: var(--pill-pad-y) calc(var(--pill-pad-x) * 2.2) var(--pill-pad-y) var(--pill-pad-x); cursor: pointer; max-width: var(--col-status);
   background-position: calc(100% - var(--space-sm) - var(--chevron)) 50%, calc(100% - var(--space-sm)) 50%;
-  box-shadow: var(--pill-ring); transition: transform var(--dur-state) var(--ease); }
+  box-shadow: var(--pill-ring); transition: transform var(--dur-state) var(--ease), background-color var(--dur-state) var(--ease), color var(--dur-state) var(--ease); }
 .st-pick:active { transform: scale(var(--press-scale)); }
 button.st-pick { display: inline-flex; align-items: center; gap: var(--space-xxs); white-space: nowrap;
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
@@ -1012,12 +1019,54 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 @keyframes arrive { from { opacity: 0; transform: translateY(var(--rise)); } to { opacity: 1; transform: none; } }
 @keyframes strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes slide-in { from { opacity: 0; transform: translateY(var(--slide)); } to { opacity: 1; transform: none; } }
-@keyframes state-set { from { opacity: 0; transform: scale(var(--state-scale-from)); } to { opacity: 1; transform: none; } }
+@keyframes state-set { from { transform: scale(var(--state-scale-from)); } to { transform: none; } }
+@keyframes glyph-in { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: none; } }
 .arrive { animation: arrive var(--dur-arrive) var(--ease) both; }
 .date-old { position: relative; display: inline-block; margin-right: var(--space-xs); color: var(--ink-3); }
 .date-old::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--rule); background: currentColor; transform-origin: left center; animation: strike var(--dur-strike) var(--ease) both; }
 .date-new { display: inline-block; animation: slide-in var(--dur-slide) var(--ease) both; }
 .state-set { animation: state-set var(--dur-state) var(--ease) both; }
+.st-glyph { transform-box: fill-box; transform-origin: center; }
+.state-set .st-glyph { animation: glyph-in var(--dur-state) var(--ease) both; }
+/* The done tick draws itself when a status changes to Done. It is a stroke, not a transform, and short. */
+.st-tick { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.state-set .st-tick { animation: tick-draw var(--dur-tick) var(--ease) both; }
+@keyframes tick-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* ---------- a checkbox on a task row: a box in CSS, and a tick that draws when it is checked ---------- */
+.trow-check { position: relative; }
+.trow-check input { appearance: none; -webkit-appearance: none; position: relative; margin: 0; width: var(--check-size); height: var(--check-size); cursor: pointer;
+  border: var(--ring-width) solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface);
+  transition: background-color var(--dur-tick) var(--ease), border-color var(--dur-tick) var(--ease); }
+.trow-check input::after { content: ""; position: absolute; inset: -11px; }
+.trow-check input:hover { border-color: var(--ink-3); }
+.trow-check input:checked { background: var(--check-fill); border-color: var(--check-fill); }
+.trow-check input:disabled { cursor: default; }
+.check-tick { position: absolute; left: 50%; top: 50%; width: var(--check-size); height: var(--check-size); transform: translate(-50%, -50%); pointer-events: none; }
+.check-tick path { fill: none; stroke: var(--check-tick); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--dur-tick) var(--ease); }
+.trow-check input:checked ~ .check-tick path { stroke-dashoffset: 0; }
+
+/* ---------- lists that rise in on first load, and panels that cross-fade when a tab changes ---------- */
+@keyframes stagger-in { from { opacity: 0; transform: translateY(var(--stagger-rise)); } to { opacity: 1; transform: none; } }
+@keyframes page-enter { from { opacity: 0; transform: translateY(var(--page-shift)); } to { opacity: 1; transform: none; } }
+.stagger > * { animation: stagger-in var(--dur-stagger) var(--ease) backwards; }
+.stagger > :nth-child(2) { animation-delay: calc(var(--stagger-step) * 1); }
+.stagger > :nth-child(3) { animation-delay: calc(var(--stagger-step) * 2); }
+.stagger > :nth-child(4) { animation-delay: calc(var(--stagger-step) * 3); }
+.stagger > :nth-child(5) { animation-delay: calc(var(--stagger-step) * 4); }
+.stagger > :nth-child(6) { animation-delay: calc(var(--stagger-step) * 5); }
+.stagger > :nth-child(7) { animation-delay: calc(var(--stagger-step) * 6); }
+.stagger > :nth-child(8) { animation-delay: calc(var(--stagger-step) * 7); }
+.stagger > :nth-child(n+9) { animation-delay: calc(var(--stagger-step) * 8); }
+.tab-panel { animation: page-enter var(--dur-tab) var(--ease) backwards; }
+
+/* ---------- dithered pictures: empty states, sign-in, people header. Decoration, never under text ---------- */
+.dither { display: block; color: var(--dither-ink); pointer-events: none; }
+.dither-empty { width: 144px; height: 48px; margin: 0 auto var(--space-md); }
+.dither-signin { width: 100%; height: 72px; margin-bottom: var(--space-lg); border-radius: var(--radius-card); }
+.pp-banner { position: relative; }
+.dither-banner { width: 100%; height: 56px; margin-bottom: var(--space-md); border-radius: var(--radius-card); }
 
 /* ---------- skins: dates and numbers read the skin's date face, and stay tabular ---------- */
 .trow-due, .due, td.by, .ms-date, .pcard-date, .prow-date, .stat-n, .cd-num, .tw-day, .habit-kept .big, .wk, .n { font-family: var(--font-date); }
@@ -1026,18 +1075,11 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 /* ---------- page and panel motion: opacity and transform only ---------- */
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fade-out { to { opacity: 0; } }
-@keyframes panel-in { from { opacity: 0; transform: translateX(var(--panel-shift)); } to { opacity: 1; transform: none; } }
-@keyframes panel-out { to { opacity: 0; transform: translateX(var(--panel-shift)); } }
-@keyframes modal-in { from { opacity: 0; transform: translateY(var(--rise)); } to { opacity: 1; transform: none; } }
-@keyframes modal-out { to { opacity: 0; transform: translateY(var(--rise)); } }
 @keyframes toast-in { from { opacity: 0; transform: translateY(var(--rise)); } to { opacity: 1; transform: none; } }
-.page > * { animation: page-in var(--dur-enter) var(--ease) backwards; }
+.page > * { animation: page-enter var(--dur-enter) var(--ease) backwards; }
 .overlay { animation: page-in var(--dur-panel) var(--ease) backwards; }
 .overlay.is-closing { animation: fade-out var(--dur-panel) var(--ease) forwards; pointer-events: none; }
-.modal { animation: modal-in var(--dur-panel) var(--ease) backwards; }
-.overlay.is-closing .modal { animation: modal-out var(--dur-panel) var(--ease) forwards; }
-.drawer { animation: panel-in var(--dur-panel) var(--ease) backwards; }
-.overlay.is-closing .drawer { animation: panel-out var(--dur-panel) var(--ease) forwards; }
+/* .modal and .drawer are sprung in and out by motion (drawerMotion and modalMotion in components/motion.ts). */
 
 /* ---------- confirmation toast ---------- */
 .toasts { position: fixed; left: 50%; bottom: calc(var(--toast-offset) + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; align-items: center; gap: var(--space-xs);
@@ -1126,13 +1168,13 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
   .task-link { display: inline-block; padding: var(--space-xs) 0; }
   .st-pick, .status-sel, .status-picker button { min-height: var(--button-height); }
   .chip button { min-width: var(--button-height); min-height: var(--button-height); margin: calc(var(--space-xs) * -1) calc(var(--space-xs) * -1) calc(var(--space-xs) * -1) 0; }
-  .trow-check input, .check-cell input, .ms input, .acts input, .ask-card > input, .done-box {
+  .check-cell input, .ms input, .acts input, .ask-card > input, .done-box {
     appearance: none; -webkit-appearance: none; position: relative; width: var(--button-height); height: var(--button-height); margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
-  .trow-check input::before, .check-cell input::before, .ms input::before, .acts input::before, .ask-card > input::before, .done-box::before {
+  .check-cell input::before, .ms input::before, .acts input::before, .ask-card > input::before, .done-box::before {
     content: ""; position: absolute; inset: var(--space-xs); border: var(--ring-width) solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface); }
-  .trow-check input:checked::before, .check-cell input:checked::before, .ms input:checked::before, .acts input:checked::before, .ask-card > input:checked::before, .done-box:checked::before {
+  .check-cell input:checked::before, .ms input:checked::before, .acts input:checked::before, .ask-card > input:checked::before, .done-box:checked::before {
     background: var(--primary); border-color: var(--primary); }
-  .trow-check input:checked::after, .check-cell input:checked::after, .ms input:checked::after, .acts input:checked::after, .ask-card > input:checked::after, .done-box:checked::after {
+  .check-cell input:checked::after, .ms input:checked::after, .acts input:checked::after, .ask-card > input:checked::after, .done-box:checked::after {
     content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 10px; border: solid var(--on-primary); border-width: 0 var(--ring-width) var(--ring-width) 0; transform: translate(-50%, -62%) rotate(45deg); }
   .crumb { min-height: var(--button-height); align-items: center; margin-bottom: 0; }
   .split { height: auto; }
@@ -1142,7 +1184,7 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arrive, .date-old::after, .date-new, .state-set, .page > *, .overlay, .modal, .drawer, .toast { animation: none; }
+  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast { animation: none; }
   .btn:active, .pill:active, .mini-btn:active, button.stat:active, .nav .nav-new:active, .st-pick:active, .status-picker button:active,
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
   * { transition-duration: 0ms !important; }

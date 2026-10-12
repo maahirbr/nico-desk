@@ -11,6 +11,7 @@ import { Avatar, PersonLink } from './chips';
 import { useOpenTask } from './taskUrl';
 import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
+import { Stagger } from './motion-ui';
 
 type Person = { id: string; name: string; role: string };
 
@@ -98,12 +99,12 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
               <PersonLink id={p.id} className="person-cell"><Avatar name={p.name} />{p.name}</PersonLink><span className="dim role">{p.role}</span>
               <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} late</span>}</span>
             </h2>
-            {overdueN.length > 0 && <><h3 className="next-h late-text">Late</h3><div className="tlist">{overdueN.map((t) => row(t))}</div></>}
-            {week.length > 0 && <><h3 className="next-h">{weekStart === thisWeek ? 'This week' : 'That week'}</h3><div className="tlist">{week.map((t) => row(t))}</div></>}
+            {overdueN.length > 0 && <><h3 className="next-h late-text">Late</h3><Stagger id="team" className="tlist">{overdueN.map((t) => row(t))}</Stagger></>}
+            {week.length > 0 && <><h3 className="next-h">{weekStart === thisWeek ? 'This week' : 'That week'}</h3><Stagger id="team" className="tlist">{week.map((t) => row(t))}</Stagger></>}
             {soon.length > 0 && (
               <>
                 <h3 className="next-h">Coming up</h3>
-                <div className="tlist">{soonShown.map((t) => row(t))}</div>
+                <Stagger id="team" className="tlist">{soonShown.map((t) => row(t))}</Stagger>
                 {soon.length > SOON && (
                   <button className="mini-btn next-more" onClick={() => setMore({ ...more, [p.id]: !more[p.id] })}>
                     {more[p.id] ? 'Show fewer' : `Show ${soon.length - SOON} more`}
@@ -119,7 +120,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         return (
           <section key={k} className="group">
             <h2><span className={`st st-status tone-${STATUS[k].tone}`}>{STATUS[k].word}</span> <span className="n">{items.length}</span></h2>
-            <div className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</div>
+            <Stagger id="team" className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</Stagger>
           </section>
         );
       })}

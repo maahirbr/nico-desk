@@ -15,6 +15,8 @@ import { arrivals, focusOnDesktop } from './motion';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { Select } from './Select';
 import { Modal } from './task-ui';
+import { SlideInd } from './motion-ui';
+import { DitherArt } from './DitherArt';
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
 
@@ -154,10 +156,10 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     (pillar === 'All' || l.pillar === pillar) && (!tile || TILES.find((t) => t.key === tile)!.match(l)) && (!who || involves(l, who)) && (!q || matches(l, q)));
   const emptyReason = q ? `No lines match “${q}”.` : who ? `No lines for ${isPartner(who) ? who : names[who]} with these filters.` : tile ? 'No lines match that tile right now.' : '';
   const emptyNode = emptyReason
-    ? <div className="empty-block"><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
+    ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
     : pillar !== 'All'
-      ? <div className="empty-block"><p>No lines in this pillar yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all pillars</button></div>
-      : <div className="empty-block"><p>No lines in this plan yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a line</button>}</div>;
+      ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this pillar yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all pillars</button></div>
+      : <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this plan yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a line</button>}</div>;
 
   const byNext = (a: PlanLine, b: PlanLine) => {
     const x = a.status === 'Done' ? '~' : nextCheckpoint(a)?.date ?? '9999';
@@ -319,11 +321,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
       </div>
 
       <nav className="tabs" aria-label="Plan sections">
-        {TABS.map(([k, label]) => <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{label}</button>)}
+        {TABS.map(([k, label]) => <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-plan" className="tab-ind" />}{label}</button>)}
       </nav>
 
       {(error || note) && <p className={error ? 'err banner' : 'ok banner'} role={error ? 'alert' : 'status'}>{error ?? note}</p>}
 
+      <div key={tab} className="tab-panel">
       {tab === 'lines' && (
         <>
           <div className="toolbar2">
@@ -462,6 +465,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           )}
         </div>
       )}
+      </div>
 
       {addOpen && (
         <Modal title="Add a line" onClose={() => setAddOpen(false)} wide>

@@ -9,6 +9,7 @@ import { DateField } from './DateField';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { Select } from './Select';
+import { SlideInd } from './motion-ui';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
 
@@ -75,7 +76,7 @@ export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: bo
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
-    <Link key={href} href={href} aria-current={here(href) ? 'page' : undefined}><Icon d={ICON[href]} />{label}</Link>
+    <Link key={href} href={href} aria-current={here(href) ? 'page' : undefined}>{here(href) && <SlideInd group="nav" className="nav-ind" />}<Icon d={ICON[href]} />{label}</Link>
   );
   return (
     <nav className="nav" aria-label="Views">

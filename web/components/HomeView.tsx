@@ -11,6 +11,8 @@ import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
+import { Stagger } from './motion-ui';
+import { DitherArt } from './DitherArt';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
@@ -74,6 +76,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {groups.length === 0 && (
         <div className="empty-state">
+          <DitherArt field="hill" className="dither-empty" />
           <p>You’re clear. Nothing open on your side.</p>
           {!readOnly && <button className="btn" onClick={() => setAdding(true)}>Add a task</button>}
         </div>
@@ -82,9 +85,9 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       {groups.map((g) => (
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}>{g.label} <span className="n">{g.items.length}</span></h2>
-          <div className="tlist">
+          <Stagger id="home" className="tlist">
             {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign={isLead} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
-          </div>
+          </Stagger>
         </section>
       ))}
 

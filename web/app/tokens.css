@@ -134,7 +134,8 @@
   --shadow-1: 0 1px 2px rgb(17 19 23 / 0.05), 0 6px 20px rgb(17 19 23 / 0.06);
   --scrim: rgb(17 19 23 / 0.4);
 
-  /* Motion: transform and opacity only. Three gestures (arrive, move a date, set a state). */
+  /* Motion: transform and opacity only, with two small exceptions: a status chip eases its colour,
+     and a tick draws its stroke. Nothing loops. Nothing runs past 300ms except the first-load stagger. */
   --ease: ease-out;
   --dur-arrive: 180ms;
   --dur-strike: 160ms;
@@ -148,6 +149,18 @@
   --slide: 6px;
   --state-scale-from: 0.96;
   --press-scale: 0.98;
+  --page-shift: 4px;
+  --dur-page: 160ms;
+  --dur-tab: 160ms;
+  --dur-tick: 160ms;
+  --dur-stagger: 200ms;
+  --stagger-step: 30ms;
+  --stagger-rise: 6px;
+  /* A checked box: the fill and the tick drawn on it. Skin W fills green. */
+  --check-fill: var(--primary);
+  --check-tick: var(--on-primary);
+  /* Dithered pictures (empty states, sign-in, people header): the accent, thinned into the page. Decoration only. */
+  --dither-ink: color-mix(in srgb, var(--primary) 30%, var(--surface));
   /* How long the confirmation stays. A wait, not a movement, so reduced motion keeps it. */
   --dwell-confirm: 4s;
 }
@@ -503,6 +516,11 @@
     --dur-enter: 0ms;
     --dur-panel: 0ms;
     --dur-toast: 0ms;
+    --dur-page: 0ms;
+    --dur-tab: 0ms;
+    --dur-tick: 0ms;
+    --dur-stagger: 0ms;
+    --stagger-step: 0ms;
   }
 }
 
@@ -585,7 +603,8 @@
 :root[data-skin="w"] .mark-sub { font: 400 11.5px/1.3 var(--font-sans); }
 :root[data-skin="w"] .nav { gap: 2px; }
 :root[data-skin="w"] .nav a { font-weight: 500; min-height: 0; }
-:root[data-skin="w"] .nav a[aria-current="page"] { color: #ffffff; box-shadow: inset 3px 0 0 #b5532c; }
+:root[data-skin="w"] .nav a[aria-current="page"] { color: #ffffff; }
+:root[data-skin="w"] .nav-ind { box-shadow: inset 3px 0 0 #b5532c; }
 :root[data-skin="w"] .nav .nav-new { margin-top: 10px; font-weight: 500; padding-top: 9px; padding-bottom: 9px; box-shadow: none; }
 :root[data-skin="w"] .who { gap: 10px; padding: 8px; }
 :root[data-skin="w"] .who-name { font: 600 13.5px/1.3 var(--font-sans); }
@@ -631,7 +650,7 @@
 :root[data-skin="w"] .trow.no-check { padding-left: 14px; }
 :root[data-skin="w"] .trow-main { gap: 2px; }
 :root[data-skin="w"] .trow-sub { color: var(--ink-2); }
-:root[data-skin="w"] .trow-check input { accent-color: var(--w-green); }
+:root[data-skin="w"] { --check-fill: var(--w-green); }
 :root[data-skin="w"] .trow-due { font-size: 13px; color: var(--ink-2); }
 :root[data-skin="w"] .trow-due.late { color: var(--late); font-weight: 600; }
 :root[data-skin="w"] .trow-due .moved { margin-left: 2px; color: var(--w-amber); font: 600 11.5px var(--font-sans); }
@@ -684,7 +703,7 @@
 @media (max-width: 860px) {
   :root[data-skin="w"] .side { --side-pad: 16px; padding: 12px var(--side-pad) 0; gap: 10px; }
   :root[data-skin="w"] .mark-sub { display: none; }
-  :root[data-skin="w"] .nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 #b5532c; }
+  :root[data-skin="w"] .nav-ind { box-shadow: inset 0 -2px 0 #b5532c; }
   :root[data-skin="w"] .page { padding: 22px 16px 48px; }
 }
 

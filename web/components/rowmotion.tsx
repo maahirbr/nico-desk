@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { arrivals, usePreviousWhileChanging } from './motion';
 import { Select } from './Select';
+import { StatusMenu } from './task-ui';
 
 // The three gestures for the board tables, which render their own rows. Same classes and timings as
 // TaskRow: arrive, move a date, set a state. All movement is CSS (globals.css, Motion).
@@ -28,4 +29,10 @@ export function MovedDate({ value, text, fmt }: { value: string; text: string; f
 export function StateSelect({ value, className = '', ...rest }: React.ComponentProps<typeof Select> & { value: string }) {
   const from = usePreviousWhileChanging(value, 140);
   return <Select {...rest} value={value} className={`${className}${from !== undefined ? ' state-set' : ''}`.trim()} />;
+}
+
+// The status menu on a board table row: the same set as TaskRow, so the chip eases its colour and the glyph pops in.
+export function BoardStatusMenu(props: Omit<React.ComponentProps<typeof StatusMenu>, 'set'>) {
+  const from = usePreviousWhileChanging(props.current, 140);
+  return <StatusMenu {...props} set={from !== undefined} />;
 }

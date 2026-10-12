@@ -6,6 +6,7 @@ import { countdown, membersExceptLead } from '@/lib/planUtil';
 import { fmtDate, today } from '@/lib/time';
 import { Avatar } from '@/components/chips';
 import { NewProjectButton } from '@/components/ProjectForm';
+import { Stagger } from '@/components/motion-ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,9 +64,9 @@ export default async function Projects() {
         <div><h1>Projects</h1><p className="summary">{live.length} projects · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
         {(isLead || isAdmin) && !readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
-      <div className="pcards">
+      <Stagger id="projects" className="pcards">
         {live.map(card)}
-      </div>
+      </Stagger>
       {archived.length > 0 && (
         <details className="archived-group">
           <summary>Archived <span className="count-badge">{archived.length}</span></summary>
