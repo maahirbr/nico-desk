@@ -52,7 +52,8 @@ export function Select({ value, defaultValue, onChange, name, disabled, classNam
   return (
     <>
       <button ref={btn} type="button" id={id} title={title} disabled={disabled} className={`sel-btn ${className}`.trim()} aria-label={ariaLabel ? `${ariaLabel}: ${shown?.label ?? ''}` : undefined}
-        aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined}
+        // combobox, not plain button: a wrapping <label> would otherwise replace the shown value as the name
+        role="combobox" aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}>
         <span className="sel-label">{shown?.label}</span>
