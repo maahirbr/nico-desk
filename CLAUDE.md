@@ -311,6 +311,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   copies the site address, a line to sign in with the Google work account, and the email added (`web/lib/invite.ts`). This
   is the plan's stand-in for an invite email until a mail sender exists. It sends nothing and is hidden under View as.
   Rollback: `git revert -m 1` the merge.
+- 2026-10-12 · Sonnet 5.5 · QA fixes from the browser pass (branch `ws10-qa-fixes`). The project header no longer scrolls
+  sideways on a phone: its buttons wrap under the title. The skin W "By pillar / By date" toggle shows a dark label on the
+  selected button, 15:1. Plan board status chips in skin W are wide enough for their label, and the due note wraps. On a phone
+  the plan line puts owner and partner on their own rows, and skins m and i keep the chevron off the label. Skin W day colours
+  for green, amber, late and the project kind word are darker so every text pair reaches 4.5:1. Only disabled buttons stay under.
+  Ledger links, count buttons and row openers get a 24px hit area on a phone with no change to the look. The phone nav and tab
+  rows fade at the edge that still has more to scroll, driven by scroll position where the browser supports it. The Mac ledger
+  count-up flash could not be reproduced in dev or in a production build, in any skin, so that code is unchanged.
+  Rollback: `git revert -m 1` the merge.
 
 ## VERIFY
 
