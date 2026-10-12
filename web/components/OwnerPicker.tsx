@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState } from 'react';
+import { Select } from './Select';
 
 // Each project's people by id, loaded once in the layout. A task in a project can only go to its people;
 // "+ Add someone to this project" brings someone new in, with their role, as the task is assigned. Only the
@@ -29,7 +30,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   const [before, setBefore] = useState(value);
 
   if (!members) {
-    return <select value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>;
+    return <Select value={value} disabled={disabled} onChange={(v) => onChange(v)}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>;
   }
   const inProject = people.filter((p) => members.includes(p.id) || p.id === value && !adding);
   const others = mayAdd ? people.filter((p) => !members.includes(p.id)) : [];
@@ -37,10 +38,10 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   if (adding) {
     return (
       <div className="owner-add">
-        <select value={pick} aria-label="Person to add to the project" onChange={(e) => { setPick(e.target.value); onChange(e.target.value, role); }}>
+        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => { setPick(v); onChange(v, role); }}>
           <option value="" disabled>Choose a person</option>
           {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </Select>
         <input value={role} maxLength={60} placeholder="Their role, e.g. Packaging" aria-label="Their role on this project"
           onChange={(e) => { setRole(e.target.value); if (pick) onChange(pick, e.target.value); }} />
         <button type="button" className="act" onClick={() => { setAdding(false); setPick(''); setRole(''); onChange(before); }}>Cancel</button>
@@ -48,14 +49,14 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
     );
   }
   return (
-    <select value={value} disabled={disabled} onChange={(e) => {
-      if (e.target.value === ADD) { setBefore(value); setAdding(true); onChange('', ''); return; }
-      onChange(e.target.value);
+    <Select value={value} disabled={disabled} onChange={(v) => {
+      if (v === ADD) { setBefore(value); setAdding(true); onChange('', ''); return; }
+      onChange(v);
     }}>
       {!inProject.some((p) => p.id === value) && <option value="" disabled>Choose a person</option>}
       {inProject.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       {others.length > 0 && <option value={ADD}>+ Add someone to this project</option>}
-    </select>
+    </Select>
   );
 }
 

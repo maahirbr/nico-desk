@@ -8,6 +8,7 @@ import { addDays, fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
 import { Avatar } from './chips';
+import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 
 type Person = { id: string; name: string; role: string };
@@ -70,9 +71,9 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           <Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link>
           <Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link>
         </span>
-        <select value={project} aria-label="Project" onChange={(e) => setProject(e.target.value)}>
+        <Select value={project} aria-label="Project" onChange={setProject}>
           <option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </Select>
         <input className="find-person" type="search" value={q} placeholder="Find a person" aria-label="Find a person by name or role"
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
       </div>
@@ -116,7 +117,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         if (!items.length) return null;
         return (
           <section key={k} className="group">
-            <h2><span className={`st tone-${STATUS[k].tone}`}>{STATUS[k].word}</span> <span className="n">{items.length}</span></h2>
+            <h2><span className={`st st-status tone-${STATUS[k].tone}`}>{STATUS[k].word}</span> <span className="n">{items.length}</span></h2>
             <div className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</div>
           </section>
         );

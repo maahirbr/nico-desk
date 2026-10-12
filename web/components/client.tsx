@@ -5,8 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
+import { DateField } from './DateField';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
+import { Select } from './Select';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
 
@@ -149,14 +151,14 @@ export function NewTaskForm({ people, projects, meId, today }: { people: Opt[]; 
       <label className="f"><span>Task</span><input required minLength={3} maxLength={200} value={f.title} onChange={set('title')} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
-          <select value={f.ownerId} onChange={set('ownerId')}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+          <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v })}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
         </label>
-        <label className="f"><span>Due date (locked once set)</span><input type="date" required min={today} value={f.dueOn} onChange={set('dueOn')} /></label>
+        <label className="f"><span>Due date (locked once set)</span><DateField required min={today} value={f.dueOn} onChange={set('dueOn')} /></label>
         <label className="f"><span>Project</span>
-          <select value={f.projectId} onChange={set('projectId')}>
+          <Select value={f.projectId} onChange={(v) => setF({ ...f, projectId: v })}>
             <option value="">None</option>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          </Select>
         </label>
       </div>
       <label className="f"><span>One-line note ({140 - f.note.length} left)</span><input maxLength={140} value={f.note} onChange={set('note')} /></label>
@@ -213,9 +215,9 @@ function HealthForm({ t }: { t: Task; today: string }) {
     }}>
       <h3>Status</h3>
       <label className="f"><span>Now</span>
-        <select value={health} onChange={(e) => setHealth(e.target.value as Health)}>
+        <Select value={health} onChange={(v) => setHealth(v as Health)}>
           {HEALTH_WORDS.map(([h, w]) => <option key={h} value={h}>{w}</option>)}
-        </select>
+        </Select>
       </label>
       {back && <label className="f"><span>Why did work stop?</span><textarea required maxLength={280} value={reason} onChange={(e) => setReason(e.target.value)} /></label>}
       <div><button className="btn" disabled={busy || health === now}>Set status</button></div>
@@ -232,7 +234,7 @@ function RenegotiateForm({ t, today }: { t: Task; today: string }) {
     <form className="panel stack" onSubmit={(e) => { e.preventDefault(); run(`/tasks/${t.id}/renegotiate`, 'POST', { version: t.version, newDueOn, reason }); }}>
       <h3>Renegotiate the date</h3>
       <p className="hint">The first date stays on record. Doing this before the date passes counts as open.</p>
-      <label className="f"><span>New date</span><input type="date" required min={today} value={newDueOn} onChange={(e) => setDue(e.target.value)} /></label>
+      <label className="f"><span>New date</span><DateField required min={today} value={newDueOn} onChange={(e) => setDue(e.target.value)} /></label>
       <label className="f"><span>Reason</span><textarea required maxLength={280} value={reason} onChange={(e) => setReason(e.target.value)} /></label>
       <div><button className="btn" disabled={busy}>Log new date</button></div>
       <Err e={error} />
@@ -264,7 +266,7 @@ function BlockForm({ t, people }: { t: Task; people: Opt[] }) {
       <h3>Mark blocked</h3>
       <label className="f"><span>Block reason</span><textarea required maxLength={280} value={ask} onChange={(e) => setAsk(e.target.value)} /></label>
       <label className="f"><span>Waiting on someone in the team? (optional)</span>
-        <select value={onId} onChange={(e) => setOn(e.target.value)}><option value="">No one, or someone outside</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+        <Select value={onId} onChange={setOn}><option value="">No one, or someone outside</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
       </label>
       <p className="hint">A named person sees it in the app. Nothing is emailed.</p>
       <div><button className="btn" disabled={busy}>Mark blocked</button></div>
@@ -293,9 +295,9 @@ function PriorityForm({ t }: { t: Task }) {
     <form className="panel stack" onSubmit={(e) => { e.preventDefault(); run(`/tasks/${t.id}/priority`, 'POST', { version: t.version, value }); }}>
       <h3>Priority (leads only)</h3>
       <label className="f"><span>Priority</span>
-        <select value={value} onChange={(e) => setValue(e.target.value as typeof value)}>
+        <Select value={value} onChange={(v) => setValue(v as typeof value)}>
           <option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option>
-        </select>
+        </Select>
       </label>
       <div><button className="btn" disabled={busy || value === t.priority?.value}>Set priority</button></div>
       <Err e={error} />
@@ -332,9 +334,9 @@ function EditForm({ t, people, projects, canReassign }: { t: Task; people: Opt[]
       <label className="f"><span>One-line note</span><input maxLength={140} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Project</span>
-          <select value={f.projectId} onChange={(e) => { const p = e.target.value; setF({ ...f, projectId: p, ownerRole: undefined, ownerId: !canReassign || !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
+          <Select value={f.projectId} onChange={(p) => { setF({ ...f, projectId: p, ownerRole: undefined, ownerId: !canReassign || !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
             <option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          </Select>
         </label>
         {canReassign && (
           <label className="f"><span>Owner</span>

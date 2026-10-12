@@ -36,7 +36,7 @@ export default async function Projects() {
             <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
               <div className="pcard-top">
                 <h2 className="pcard-name">{p.name}</h2>
-                <span className={`st tone-${st.tone}`}>{st.word}</span>
+                <span className={`st st-status tone-${st.tone}`}>{st.word}</span>
               </div>
               <div className="kind-tag">
                 <span className="kind-word">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>

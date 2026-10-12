@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { DateField } from './DateField';
 import { focusOnDesktop } from './motion';
+import { Select } from './Select';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
 
@@ -90,9 +92,9 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
         <legend>Dates</legend>
         <div className="row">
           <label className="f" style={{ flex: '0 1 160px' }}><span>The date is a</span>
-            <select value={f.targetLabel} onChange={(e) => set('targetLabel', e.target.value)}>{LABELS.map((l) => <option key={l}>{l}</option>)}</select>
+            <Select value={f.targetLabel} onChange={(v) => set('targetLabel', v)}>{LABELS.map((l) => <option key={l}>{l}</option>)}</Select>
           </label>
-          <label className="f"><span>Date</span><input type="date" value={f.launchOn} onChange={(e) => set('launchOn', e.target.value)} /></label>
+          <label className="f"><span>Date</span><DateField value={f.launchOn} onChange={(e) => set('launchOn', e.target.value)} /></label>
           <label className="f"><span>Phase (optional)</span><input maxLength={60} value={f.phase} placeholder="e.g. Sampling" onChange={(e) => set('phase', e.target.value)} /></label>
         </div>
       </fieldset>
@@ -100,16 +102,16 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       <fieldset>
         <legend>People</legend>
         <label className="f"><span>Project lead</span>
-          <select value={f.ownerId} onChange={(e) => setF({ ...f, ownerId: e.target.value, members: f.members.filter((m) => m.personId !== e.target.value) })}>
+          <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v, members: f.members.filter((m) => m.personId !== v) })}>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          </Select>
         </label>
         {f.members.map((m, i) => (
           <div key={i} className="member-row">
-            <select value={m.personId} aria-label="Person" onChange={(e) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: e.target.value } : x)))}>
+            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v } : x)))}>
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (p.id !== f.ownerId && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            </Select>
             <input value={m.role} maxLength={60} placeholder="Their role, e.g. Packaging POC" aria-label="Role on this project"
               onChange={(e) => set('members', f.members.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))} />
             <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>

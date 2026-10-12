@@ -18,6 +18,14 @@ button { -webkit-tap-highlight-color: transparent; }
 .tone-late { --tone-bg: var(--late-soft); --tone-fg: var(--late); }
 .tone-ok { --tone-bg: var(--pill); --tone-fg: var(--ink-2); }
 
+/* A task's status reads its own tokens (tokens.css, Status colours), not the shared tones above, so a skin can recolour
+   statuses without touching late, at risk or the ledger. :root lifts these over every skin's tone rules. Dropped is struck. */
+:root :is(.st-status, .st-pick, .st-opt, .status-sel, .status-picker button).tone-idle { --tone-bg: var(--status-todo-bg); --tone-fg: var(--status-todo-fg); --sb: var(--status-todo-bg); --sf: var(--status-todo-fg); }
+:root :is(.st-status, .st-pick, .st-opt, .status-sel, .status-picker button).tone-active { --tone-bg: var(--status-doing-bg); --tone-fg: var(--status-doing-fg); --sb: var(--status-doing-bg); --sf: var(--status-doing-fg); }
+:root :is(.st-status, .st-pick, .st-opt, .status-sel, .status-picker button).tone-blocked { --tone-bg: var(--status-blocked-bg); --tone-fg: var(--status-blocked-fg); --sb: var(--status-blocked-bg); --sf: var(--status-blocked-fg); }
+:root :is(.st-status, .st-pick, .st-opt, .status-sel, .status-picker button).tone-done { --tone-bg: var(--status-done-bg); --tone-fg: var(--status-done-fg); --sb: var(--status-done-bg); --sf: var(--status-done-fg); }
+:root :is(.st-status, .st-pick, .st-opt, .status-sel, .status-picker button).tone-quiet { --tone-bg: var(--status-dropped-bg); --tone-fg: var(--status-dropped-fg); --sb: var(--status-dropped-bg); --sf: var(--status-dropped-fg); text-decoration: line-through; }
+
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .dim { color: var(--ink-3); }
 .small { font: var(--type-small); }
@@ -172,23 +180,37 @@ tr.closed .title a { color: var(--ink-3); }
 /* ---------- forms ---------- */
 label.f { display: flex; flex-direction: column; gap: var(--space-xxs); min-width: 0; }
 label.f > span { font: var(--type-state); color: var(--ink-2); }
-input, select, textarea {
+input, select, textarea, .sel-btn {
   background: var(--surface); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-control); padding: var(--space-xs) var(--field-pad-x);
   min-width: 0; min-height: var(--field-height); transition: border-color var(--dur-state) var(--ease);
 }
 input[type="checkbox"], input[type="radio"] { padding: 0; min-height: 0; accent-color: var(--primary); }
-input:focus, select:focus, textarea:focus { border-color: var(--ring-color); }
+input:focus, select:focus, textarea:focus, .sel-btn:focus, .sel-btn[aria-expanded="true"] { border-color: var(--ring-color); }
 :focus-visible { outline: var(--ring-width) solid var(--ring-color); outline-offset: var(--ring-offset); }
-input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, .sel-btn:focus-visible { outline-offset: 0; }
 .chips-input:focus-within { border-color: var(--ring-color); }
 .chips-input input:focus-visible { outline: none; }
-select { padding-right: calc(var(--field-pad-x) * 2); appearance: none; -webkit-appearance: none; cursor: pointer;
+select, .sel-btn { padding-right: calc(var(--field-pad-x) * 2); appearance: none; -webkit-appearance: none; cursor: pointer;
   background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
   background-position: calc(100% - var(--space-md) - var(--chevron)) 50%, calc(100% - var(--space-md)) 50%;
   background-size: var(--chevron) var(--chevron); background-repeat: no-repeat; }
 select option { background: var(--surface); color: var(--ink); }
 textarea { resize: vertical; min-height: 4.5em; width: 100%; }
-@media (max-width: 767px) { input, select, textarea { font: var(--type-input); } }
+@media (max-width: 767px) { input, select, textarea, .sel-btn { font: var(--type-input); } }
+/* Select (components/Select.tsx): the button sizes to its longest option; the pop-up is .pop below */
+.sel-btn { display: inline-grid; grid-template-columns: minmax(0, 1fr); align-items: center; text-align: left; }
+.sel-btn > * { grid-area: 1 / 1; }
+.sel-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel-sizer { visibility: hidden; height: 0; overflow: hidden; pointer-events: none; }
+.sel-sizer > span { display: block; white-space: nowrap; }
+.sel-btn:disabled { cursor: default; opacity: .6; }
+/* DateField (components/DateField.tsx): the native input with shortcut buttons beside or under it */
+.datefield { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); min-width: 0; }
+.datefield > input { flex: 1 1 9em; }
+.row:has(.datefield) { align-items: start; }
+.date-quick { display: flex; flex-wrap: wrap; gap: var(--space-xxs); }
+.date-quick > span { display: inline-flex; }
+.date-quick .mini-btn[aria-pressed="true"] { background: var(--sunk); color: var(--ink); border-color: var(--ink-2); }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); font: var(--type-button); cursor: pointer;
   background: var(--primary); color: var(--on-primary); border: var(--rule) solid transparent; min-height: var(--button-height); padding: 0 var(--button-pad-x);
@@ -653,6 +675,24 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
   box-shadow: var(--shadow-1); padding: var(--space-xxs); display: flex; flex-direction: column; }
 .menu > * { font: var(--type-meta); text-align: left; background: none; border: 0; padding: var(--space-sm); border-radius: var(--radius-control); cursor: pointer; color: var(--ink); text-decoration: none; transition: background var(--dur-state) var(--ease); }
 .menu > *:hover { background: var(--sunk); }
+/* Pop-ups for Select and the status menu: fixed to the viewport, placed by components/popover.tsx.
+   On a phone a Select is a bottom sheet over a scrim. Above the drawer (50) and below toasts (60). */
+.pop { position: fixed; z-index: 55; max-width: calc(100vw - 2 * var(--space-sm)); max-height: 320px; overflow-y: auto; display: flex; flex-direction: column;
+  background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--shadow-1); padding: var(--space-xxs); }
+.pop-scrim { position: fixed; inset: 0; z-index: 54; background: var(--scrim); }
+.pop.pop-sheet { left: 0; right: 0; bottom: 0; max-width: none; max-height: 70vh; border-width: var(--rule) 0 0; border-radius: var(--radius-card) var(--radius-card) 0 0;
+  padding: var(--space-sm) var(--space-sm) calc(var(--space-sm) + env(safe-area-inset-bottom)); }
+.sel-opt { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); font: var(--type-meta); color: var(--ink); white-space: nowrap;
+  padding: var(--space-sm); border-radius: var(--radius-control); cursor: pointer; transition: background var(--dur-state) var(--ease); }
+.sel-opt:hover, .sel-opt:focus { background: var(--sunk); }
+.sel-opt:focus-visible { outline-offset: calc(var(--ring-width) * -1); }
+.sel-opt[aria-selected="true"] { font-weight: 600; }
+.sel-opt[aria-disabled="true"] { color: var(--ink-3); cursor: default; }
+.sel-opt[aria-disabled="true"]:hover { background: none; }
+.sel-tick { flex: none; visibility: hidden; }
+.sel-opt[aria-selected="true"] .sel-tick { visibility: visible; }
+.sel-group { font: var(--type-small); color: var(--ink-2); padding: var(--space-xs) var(--space-sm) var(--space-xxs); }
+.pop-sheet .sel-opt { min-height: var(--button-height); }
 .progress-line { display: flex; align-items: center; gap: var(--space-sm); font: var(--type-meta); color: var(--ink-3); margin: 0 0 var(--space-md); }
 .progress-line b { color: var(--ink); font-weight: 600; }
 .pbar { flex: 0 0 160px; height: var(--bar-thin); border-radius: var(--radius-pill); background: var(--pill); overflow: hidden; display: inline-block; }
@@ -718,7 +758,7 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .drawer-facts { display: grid; grid-template-columns: 100px 1fr; gap: var(--space-sm) var(--space-md); margin: var(--space-xxs) 0 0; align-items: center; }
 .drawer-facts dt { font: var(--type-meta); color: var(--ink-3); }
 .drawer-facts dd { margin: 0; font: var(--type-meta); }
-.drawer-facts dd select, .drawer-facts dd input { width: 100%; }
+.drawer-facts dd select, .drawer-facts dd input, .drawer-facts dd .sel-btn { width: 100%; }
 .drawer-foot { display: flex; gap: var(--space-md); flex-wrap: wrap; padding-top: var(--space-sm); border-top: var(--rule) solid var(--hairline); }
 .act.danger { color: var(--late); }
 .small-toggle { font: var(--type-meta); margin: 0 0 var(--space-xs); color: var(--ink-3); }
@@ -924,7 +964,6 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .st-icon { flex: none; }
 .st:has(.st-icon), .status-picker button { display: inline-flex; align-items: center; gap: var(--space-xxs); }
 /* The status menu: each status with its icon in its tone colour, then the actions under a rule */
-.st-menu { position: fixed; z-index: 40; }
 .st-menu > .st-opt, .st-menu > .st-act { display: flex; align-items: center; gap: var(--space-xs); white-space: nowrap; }
 .st-opt .st-icon { color: var(--sf, var(--tone-fg, var(--ink-3))); }
 .st-opt[aria-checked="true"] { background: var(--sunk); font-weight: 600; }
@@ -1105,7 +1144,7 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 @media (max-width: 860px)  { .pm-flyout.va-menu { position: static; max-height: 50vh; } }
 
 .owner-add { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
-.owner-add > select, .owner-add > input { flex: 1 1 150px; min-width: 0; }
+.owner-add > select, .owner-add > input, .owner-add > .sel-btn { flex: 1 1 150px; min-width: 0; }
 
 /* Updates for you: grouped by project, one line per task */
 .upd-group + .upd-group { margin-top: var(--space-sm); }

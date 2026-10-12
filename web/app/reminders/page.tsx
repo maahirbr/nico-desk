@@ -5,6 +5,7 @@ import { lookups, one, type SP } from '@/lib/page';
 import { teamProjects } from '@/lib/plan';
 import { reminderDrafts } from '@/lib/reminders';
 import { ReminderCards } from '@/components/Reminders';
+import { Select } from '@/components/Select';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,10 +45,10 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
         )}
         <input type="hidden" name="mode" value={mode} />
         <label className="f" style={{ flex: '0 1 240px' }}><span>Project</span>
-          <select name="project" defaultValue={projectId ?? ''}>
+          <Select name="project" aria-label="Project" defaultValue={projectId ?? ''}>
             <option value="">All projects</option>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          </Select>
         </label>
         <button className="btn ghost">Apply</button>
       </form>

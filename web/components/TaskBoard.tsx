@@ -7,11 +7,13 @@ import type { Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Person } from './chips';
+import { DateField } from './DateField';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { MotionRow, MovedDate } from './rowmotion';
+import { Select } from './Select';
 import { canMoveTo } from './statusRules';
 import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, StatusMenu, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
@@ -292,10 +294,10 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
             </label>
             {p.kind === 'blocked' && (
               <label className="f" style={{ flex: '0 1 220px' }}><span>Waiting on (optional)</span>
-                <select value={person} onChange={(e) => setPerson(e.target.value)}>
+                <Select value={person} onChange={setPerson}>
                   <option value="">No one, or someone outside</option>
                   {people.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-                </select>
+                </Select>
               </label>
             )}
             <span className="row" style={{ flex: 'none' }}>
@@ -335,12 +337,12 @@ function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, o
           </label>
           {workstreams.length > 0 && (
             <label className="f"><span>Sub-project</span>
-              <select value={f.workstream} onChange={(e) => setF({ ...f, workstream: e.target.value })}>
+              <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
-              </select>
+              </Select>
             </label>
           )}
-          <label className="f"><span>Due date</span><input type="date" min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value || t.dueOn })} /></label>
+          <label className="f"><span>Due date</span><DateField min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value || t.dueOn })} /></label>
           <label className="f"><span>Note (one line)</span><input value={f.note} maxLength={140} placeholder="Blocker, dependency, who's been chased" onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
           {moved && (
             <label className="f wide"><span>Why the date moved (kept on record; the first date, {fmtDate(t.firstDueOn)}, stays)</span>
@@ -384,12 +386,12 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
         </label>
         {workstreams.length > 0 && (
           <label className="f"><span>Sub-project</span>
-            <select value={f.workstream} onChange={(e) => setF({ ...f, workstream: e.target.value })}>
+            <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
               <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
-            </select>
+            </Select>
           </label>
         )}
-        <label className="f"><span>Due date (kept as the first date)</span><input type="date" required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
+        <label className="f"><span>Due date (kept as the first date)</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}

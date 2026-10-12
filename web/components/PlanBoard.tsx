@@ -9,9 +9,11 @@ import {
 } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Avatar } from './chips';
+import { DateField } from './DateField';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
+import { Select } from './Select';
 import { Modal } from './task-ui';
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
@@ -209,8 +211,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           </td>
           <td>
             <StateSelect className={`status-sel tone-${ST_TONE[l.status]}`} value={l.status} disabled={busy} aria-label={`Status of line ${l.num}`}
-              onChange={(e) => {
-                const s = e.target.value;
+              onChange={(s) => {
                 // Blocked, back to not started and reopening ask why; the rest is one click.
                 if (!needsWhy(l.status, s)) { op({ op: 'status', lineId: l.id, status: s }); return; }
                 setAsking({ lineId: l.id, to: s });
@@ -327,17 +328,17 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
         <>
           <div className="toolbar2">
             <input type="search" className="search" placeholder="Search lines" aria-label="Search lines" value={q} onChange={(e) => setQ(e.target.value)} />
-            <select value={who ?? ''} aria-label="Person" onChange={(e) => setWho(e.target.value || null)}>
+            <Select value={who ?? ''} aria-label="Person" onChange={(v) => setWho(v || null)}>
               <option value="">Everyone</option>
               <optgroup label="Our team">{ours.filter((id) => lines.some((l) => l.ownerId === id)).map((id) => <option key={id} value={id}>{names[id]}</option>)}</optgroup>
               <optgroup label={partner}>{project.partnerPeople.map((n) => <option key={n} value={n}>{n}</option>)}</optgroup>
-            </select>
-            <select value={pillar} aria-label="Pillar" onChange={(e) => setPillar(e.target.value)}>
+            </Select>
+            <Select value={pillar} aria-label="Pillar" onChange={setPillar}>
               <option value="All">All pillars</option>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-            </select>
-            <select value={tile ?? ''} aria-label="Show" onChange={(e) => setTile(e.target.value || null)}>
+            </Select>
+            <Select value={tile ?? ''} aria-label="Show" onChange={(v) => setTile(v || null)}>
               <option value="">All lines</option>{TILES.map((t) => <option key={t.key} value={t.key}>{t.label}{t.sub ? ` (${t.sub})` : ''}</option>)}
-            </select>
+            </Select>
             <span className="seg" role="group" aria-label="Order lines">
               <button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By pillar</button>
               <button aria-pressed={view === 'date'} onClick={() => setView('date')}>By date</button>
@@ -552,24 +553,24 @@ function EditLine({ l, project, people, busy, onCancel, onSave }: {
           <label className="f wide"><span>Done looks like</span><textarea value={f.doneDef} maxLength={600} rows={2} onChange={set('doneDef')} /></label>
           <label className="f wide"><span>Note (one line: blocker or dependency)</span><input value={f.note} maxLength={160} onChange={set('note')} /></label>
           <label className="f"><span>Our owner</span>
-            <select value={f.ownerId} onChange={set('ownerId')}><option value="">Pending</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+            <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v })}><option value="">Pending</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
           </label>
           <label className="f"><span>With</span><input value={f.ownerWith} placeholder="Others involved" onChange={set('ownerWith')} /></label>
           <label className="f"><span>{project.partnerName ?? 'Partner'} owner</span>
-            <select value={f.partner} onChange={set('partner')}><option value="">Pending</option>{project.partnerPeople.map((n) => <option key={n}>{n}</option>)}</select>
+            <Select value={f.partner} onChange={(v) => setF({ ...f, partner: v })}><option value="">Pending</option>{project.partnerPeople.map((n) => <option key={n}>{n}</option>)}</Select>
           </label>
           <label className="f"><span>Mode</span>
-            <select value={f.mode} onChange={set('mode')}><option value="coaching">Coaching</option><option value="hands-on">Hands-on</option></select>
+            <Select value={f.mode} onChange={(v) => setF({ ...f, mode: v as typeof f.mode })}><option value="coaching">Coaching</option><option value="hands-on">Hands-on</option></Select>
           </label>
           <label className="f wide"><span>What they do</span><textarea value={f.partnerRole} rows={2} maxLength={400} onChange={set('partnerRole')} /></label>
-          <label className="f"><span>Due date</span><input type="date" value={f.dueOn} onChange={set('dueOn')} /></label>
+          <label className="f"><span>Due date</span><DateField value={f.dueOn} onChange={set('dueOn')} /></label>
           <label className="f"><span>Or a no-date label</span><input value={f.byLabel} placeholder="e.g. Through OND" maxLength={80} onChange={set('byLabel')} /></label>
           <div className="f wide">
             <span className="flabel">Checkpoints</span>
             {cps.map((c, i) => (
               <div key={c.key} className="ms-ed">
                 <input value={c.label} placeholder="Checkpoint" aria-label="Checkpoint" onChange={(e) => setCps(cps.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                <input type="date" value={c.dueOn} aria-label="Checkpoint date" onChange={(e) => setCps(cps.map((x, j) => (j === i ? { ...x, dueOn: e.target.value } : x)))} />
+                <DateField value={c.dueOn} aria-label="Checkpoint date" onChange={(e) => setCps(cps.map((x, j) => (j === i ? { ...x, dueOn: e.target.value } : x)))} />
                 <button type="button" className="row-btn del" aria-label="Remove checkpoint" onClick={() => setCps(cps.filter((_, j) => j !== i))}>✕</button>
               </div>
             ))}
@@ -605,10 +606,10 @@ function AddLine({ project, people, pillar, busy, op }: { project: Project; peop
       if (await op({ op: 'addLine', ...f, ownerId: f.ownerId || null, dueOn: f.dueOn || null })) setF(blank);
     }}>
       <div className="row">
-        <label className="f"><span>Pillar</span><select value={f.pillar} onChange={set('pillar')}>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</select></label>
-        <label className="f"><span>Our owner</span><select value={f.ownerId} onChange={set('ownerId')}><option value="">Pending</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-        <label className="f"><span>{project.partnerName ?? 'Partner'} owner</span><select value={f.partner} onChange={set('partner')}><option value="">Pending</option>{project.partnerPeople.map((n) => <option key={n}>{n}</option>)}</select></label>
-        <label className="f" style={{ flex: '0 1 170px' }}><span>Due date</span><input type="date" value={f.dueOn} onChange={set('dueOn')} /></label>
+        <label className="f"><span>Pillar</span><Select value={f.pillar} onChange={(v) => setF({ ...f, pillar: v })}>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</Select></label>
+        <label className="f"><span>Our owner</span><Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v })}><option value="">Pending</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></label>
+        <label className="f"><span>{project.partnerName ?? 'Partner'} owner</span><Select value={f.partner} onChange={(v) => setF({ ...f, partner: v })}><option value="">Pending</option>{project.partnerPeople.map((n) => <option key={n}>{n}</option>)}</Select></label>
+        <label className="f" style={{ flex: '0 1 170px' }}><span>Due date</span><DateField value={f.dueOn} onChange={set('dueOn')} /></label>
       </div>
       <label className="f"><span>What</span><input required value={f.what} maxLength={200} placeholder="Short title, e.g. “Context files”" onChange={set('what')} /></label>
       <label className="f"><span>Done looks like</span><input value={f.doneDef} maxLength={600} placeholder="One or two short sentences" onChange={set('doneDef')} /></label>
