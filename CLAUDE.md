@@ -352,7 +352,7 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   do nothing under View as, and a refused call puts the lines back. `update_seen` has RLS on, in the reseed and in `upgrade()`.
   The note field has `enterKeyHint="done"`, and Escape or Cancel closes the form. The dot for new changes now reads the same
   account marks. The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds the `update_seen` table; keeps all data).
-  Rollback: `git revert -m 1 <merge sha>`. The table can stay.
+  Rollback: `git revert -m 1 1bb9df7`. The table can stay.
 
 ## VERIFY
 
