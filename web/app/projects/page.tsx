@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { projectCounts, projectMembers, teamProjects } from '@/lib/plan';
-import { countdown } from '@/lib/planUtil';
+import { countdown, membersExceptLead } from '@/lib/planUtil';
 import { fmtDate, today } from '@/lib/time';
 import { Avatar } from '@/components/chips';
 import { NewProjectButton } from '@/components/ProjectForm';
@@ -30,7 +30,7 @@ export default async function Projects() {
           const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
           const total = c.open + c.done;
           const cd = p.launchOn ? countdown(t, p.launchOn) : null;
-          const team = [p.ownerId, ...(members[p.id] ?? []).map((m) => m.personId)];
+          const team = [p.ownerId, ...membersExceptLead(members[p.id] ?? [], p.ownerId).map((m) => m.personId)];
           const st = STATUS[p.status];
           return (
             <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
