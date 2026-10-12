@@ -139,7 +139,7 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
   for (const [taskId, list] of byTask) {
     const t = task.get(taskId);
     if (!t) continue;
-    // Oldest first within the line: "Raul assigned it to you, due 19 Oct, then moved it to 22 Oct (was 19 Oct)".
+    // Oldest first within the line: "Meera assigned it to you, due 19 Oct, then moved it to 22 Oct (was 19 Oct)".
     const steps = [...list].sort((a, b) => (a.at < b.at ? -1 : 1));
     const parts: string[] = [];
     let lastWho = '';
