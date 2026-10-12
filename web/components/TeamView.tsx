@@ -6,8 +6,6 @@ import type { Task } from '@/lib/derive';
 import { oneOf } from '@/lib/remember';
 import { personCounts } from '@/lib/planUtil';
 import { addDays, fmtDate } from '@/lib/time';
-import type { UpdateGroup, UpdateItem } from '@/lib/updates';
-import { UpdatesCard } from './UpdatesCard';
 import { Avatar, PersonLink } from './chips';
 import { useOpenTask } from './taskUrl';
 import { useRemembered, useRememberedParam } from './remember';
@@ -17,10 +15,10 @@ import { Stagger } from './motion-ui';
 
 type Person = { id: string; name: string; role: string };
 
-export function TeamView({ tasks, later, weekStart, thisWeek, today, view, people, names, projectNames, projects, workstreamsByProject, meId, isLead, opts, updates }: {
+export function TeamView({ tasks, later, weekStart, thisWeek, today, view, people, names, projectNames, projects, workstreamsByProject, meId, isLead, opts }: {
   tasks: Task[]; later: Task[]; weekStart: string; thisWeek: string; today: string; view: 'person' | 'status'; people: Person[];
   names: Record<string, string>; projectNames: Record<string, string>; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
-  meId: string; isLead: boolean; opts: Opt[]; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string } | null;
+  meId: string; isLead: boolean; opts: Opt[];
 }) {
   useRememberedParam('team-tab', 'view', view, ['person', 'status']);
   const [kept, keep] = useRemembered('team', { project: '' }, (raw) => ({ project: oneOf(raw.project, projects.map((p) => p.id), '') }));
@@ -66,7 +64,6 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         </div>
       </header>
 
-      {updates && <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => { setOpenId(id); setStartStatus(undefined); }} />}
 
       <div className="toolbar2">
         <span className="weeknav">
@@ -132,7 +129,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
 
       {openId && (
         <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={opts} today={today} projectNames={projectNames}
-          workstreams={workstreamsByProject[opened?.projectId ?? (updates?.items ?? []).find((i) => i.taskId === openId)?.projectId ?? ''] ?? []} onClose={() => setOpenId(null)} />
+          workstreams={workstreamsByProject[opened?.projectId ?? ''] ?? []} onClose={() => setOpenId(null)} />
       )}
     </div>
   );

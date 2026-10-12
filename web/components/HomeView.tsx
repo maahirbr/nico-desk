@@ -13,6 +13,7 @@ import { useOpenTask } from './taskUrl';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
+import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
@@ -70,18 +71,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       <MovedAwayCard items={movedAway} />
 
-      {waiting.length > 0 && (
-        <section className="callout">
-          <h2>Waiting on you</h2>
-          {waiting.map((t) => (
-            <div key={t.id} className="callout-row">
-              <PersonLink id={t.ownerId}><b>{names[t.ownerId]?.split(' ')[0]}</b></PersonLink>
-              {' '}
-              <button className="callout-link" onClick={() => open(t.id)}>needs: {t.blocked?.ask}<span className="dim"> · for “{t.title}”</span></button>
-            </div>
-          ))}
-        </section>
-      )}
+      <WaitingCard tasks={waiting} names={names} projectNames={projectNames} now={updates.now} onOpen={(id) => open(id)} />
 
       {groups.length === 0 && (
         <div className="empty-state">

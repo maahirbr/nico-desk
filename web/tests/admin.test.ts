@@ -82,12 +82,26 @@ describe('admin acts as a lead on another person’s task', () => {
     expect(u.version).toBe(b.version + 1); // one change, not two
   });
 
-  it('lets the person a task waits on clear the block, but not set it in progress', async () => {
+  it('lets the person a task waits on clear the block with a note, but not set it in progress', async () => {
     const t = await task();
     const m = await otherMember(t.ownerId);
     const b = await s.blockTask(db, t.ownerId, t.id, { version: t.version, onId: m, ask: 'Need your sign-off' });
-    expect(await code(s.unblockTask(db, m, t.id, { version: b.version, resume: true }))).toBe('403 not_allowed');
-    expect(await code(s.unblockTask(db, m, t.id, { version: b.version }))).toBe('ok');
+    expect(await code(s.unblockTask(db, m, t.id, { version: b.version, resume: true, note: 'Signed off' }))).toBe('403 not_allowed');
+    expect(await code(s.unblockTask(db, m, t.id, { version: b.version }))).toMatch(/reason_required/);
+    expect(await code(s.unblockTask(db, m, t.id, { version: b.version, note: '   ' }))).toMatch(/reason_required/);
+    expect(await code(s.unblockTask(db, m, t.id, { version: b.version, note: 'Signed off by email' }))).toBe('ok');
+  });
+
+  it('lets the owner clear a block without a note, and still resume', async () => {
+    const t = await task();
+    const m = await otherMember(t.ownerId);
+    const b = await s.blockTask(db, t.ownerId, t.id, { version: t.version, onId: m, ask: 'Need your sign-off' });
+    const free = await s.unblockTask(db, t.ownerId, t.id, { version: b.version });
+    expect(free.blocked).toBeFalsy();
+    const b2 = await s.blockTask(db, t.ownerId, t.id, { version: free.version, onId: m, ask: 'Need it again' });
+    const r = await s.unblockTask(db, t.ownerId, t.id, { version: b2.version, resume: true });
+    expect(r.blocked).toBeFalsy();
+    expect(r.health).toBe('on_track');
   });
 });
 

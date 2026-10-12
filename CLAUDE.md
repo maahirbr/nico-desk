@@ -336,6 +336,23 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   in the form and in `web/lib/projectBody.ts`. The plan board falls back to all lines when the sub-project controls are hidden.
   The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds `projects.lead_id`; keeps all data).
   Rollback: `git revert -m 1 c13ecb3`. The extra column can stay.
+- 2026-10-13 · Opus 5.5 · Updates and blocks, at the PM's call, on branch `mvp-local-desk-look`. "Updates for you" shows
+  on Home only, with names in bold. A block on you leaves Updates and stays under "Waiting on you" until it is cleared;
+  its Done button clears the block with a few words on what you did (required for the person waited on, still optional
+  for the owner or a lead), and the owner and project lead see "X cleared the block" in Updates. "Seen" moved from a
+  browser cookie to the account (`update_seen`): Mark all seen, a project's own Mark seen, and opening a task each clear
+  lines on every device; the old cookie still counts so nothing comes back on the switch. The hosted database needs
+  `npm run db:upgrade` once more (adds the `update_seen` table with RLS on; keeps all data). Rollback: `git revert` the
+  commit; the table can stay.
+- 2026-10-13 · Sonnet 5.5 · The PM's two commits `be45382` and `a06f720` (branch `mvp-local-desk-look`) merged onto the mvp base
+  on branch `ws12-pm-waiting`, at the repo owner's call. They add "Waiting on you" with a Done button, a seen mark kept on the
+  account (`update_seen`), and Updates on Home only. The merge keeps everything from workstreams 1 to 11. Six fixes went in with it.
+  Waiting on you hides Done under View as. Unblock keeps its resume rules, and the person waited on must now give a note
+  (`reason_required`) unless they are the owner or a lead. Sentence case: "Clear block". Mark seen and the task-open seen call
+  do nothing under View as, and a refused call puts the lines back. `update_seen` has RLS on, in the reseed and in `upgrade()`.
+  The note field has `enterKeyHint="done"`, and Escape or Cancel closes the form. The dot for new changes now reads the same
+  account marks. The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds the `update_seen` table; keeps all data).
+  Rollback: `git revert -m 1 <merge sha>`. The table can stay.
 
 ## VERIFY
 
@@ -346,7 +363,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `246 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `248 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

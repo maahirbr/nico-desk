@@ -124,6 +124,14 @@ $$ BEGIN RAISE EXCEPTION 'events is append-only'; END $$;
 CREATE TRIGGER events_no_change BEFORE UPDATE OR DELETE ON events
   FOR EACH ROW EXECUTE FUNCTION events_append_only();
 
+-- What someone has seen in "Updates for you": scope '*' is "mark all seen", else one task id.
+CREATE TABLE update_seen (
+  person_id  text NOT NULL REFERENCES people(id),
+  scope      text NOT NULL,
+  seen_at    timestamptz NOT NULL,
+  PRIMARY KEY (person_id, scope)
+);
+
 CREATE TABLE notices (
   id          text PRIMARY KEY,
   person_id   text NOT NULL REFERENCES people(id),

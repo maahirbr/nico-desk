@@ -84,6 +84,8 @@ export async function upgrade(db: Db) {
   await db.exec(TASK_LINKS_UPGRADE);
   // 12 Oct: archive a project, and tell the previous owner when a task is reassigned. Same statements as scripts/upgrade-project-archive.ts.
   await db.exec(PROJECT_ARCHIVE_UPGRADE);
+  // 13 Oct: "seen" for Updates lives on the person's account, not in a browser cookie.
+  await db.exec(UPDATE_SEEN_UPGRADE);
   // 13 Oct: a project can have a lead who is not its owner.
   await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id text REFERENCES people(id);`);
 }
@@ -115,6 +117,15 @@ export const TASK_LINKS_UPGRADE = `
   CREATE INDEX IF NOT EXISTS task_links_task ON task_links (task_id, created_at);
   -- RLS here too, so npm run db:upgrade cannot leave the new table open to the public anon key.
   ALTER TABLE task_links ENABLE ROW LEVEL SECURITY;`;
+// Idempotent: a database made before 13 Oct gets the table. RLS on with no policies, like every other table.
+export const UPDATE_SEEN_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS update_seen (
+    person_id  text NOT NULL REFERENCES people(id),
+    scope      text NOT NULL,
+    seen_at    timestamptz NOT NULL,
+    PRIMARY KEY (person_id, scope)
+  );
+  ALTER TABLE update_seen ENABLE ROW LEVEL SECURITY;`;
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };
 
