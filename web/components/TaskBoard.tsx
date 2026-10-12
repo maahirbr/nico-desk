@@ -24,7 +24,7 @@ import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusK
 import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
-import { oneOf } from '@/lib/remember';
+import { endedSortOf, oneOf } from '@/lib/remember';
 import { useRemembered } from './remember';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
@@ -66,17 +66,18 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [busy, setBusy] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   // The filters come back the next time this project is opened in this browser (components/remember.ts).
-  const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All' }, (raw) => ({
+  const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All', closedSort: 'recent' as EndedSort }, (raw) => ({
+    closedSort: endedSortOf(raw.closedSort),
     tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, people.map((p) => p.id), null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
   }));
-  const { tile, who, ws } = kept;
+  const { tile, who, ws, closedSort } = kept;
   const setTile = (v: string | null) => keep('tile', v);
   const setWho = (v: string | null) => keep('who', v);
   const setWs = (v: string) => keep('ws', v);
+  const setClosedSort = (v: EndedSort) => keep('closedSort', v);
   const [importOpen, setImportOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
-  const [closedSort, setClosedSort] = useState<EndedSort>('recent');
   const [note, setNote] = useState<string | null>(null);
   const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();

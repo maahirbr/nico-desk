@@ -20,3 +20,9 @@ export function oneOf<T extends string | null>(raw: unknown, allowed: readonly s
 export function viewKey(meId: string, page: string): string {
   return `nd_view_${meId.replace(/[^A-Za-z0-9_-]/g, '')}_${page.replace(/[^A-Za-z0-9_:-]/g, '')}`;
 }
+
+// The finished-list sort words (lib/derive.ts EndedSort). A kept sort that is not one of these goes back to newest first.
+export const ENDED_SORTS = ['recent', 'oldest', 'due'] as const;
+export function endedSortOf(raw: unknown): (typeof ENDED_SORTS)[number] {
+  return oneOf(raw, ENDED_SORTS, 'recent') as (typeof ENDED_SORTS)[number];
+}
