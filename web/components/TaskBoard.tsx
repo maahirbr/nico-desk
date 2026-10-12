@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
-import type { Task } from '@/lib/derive';
+import { latestEndedFirst, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Person } from './chips';
@@ -81,7 +81,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn);
   const openRows = visible.filter((t) => t.statusCategory === 'open').sort(byDue);
-  const closedRows = visible.filter((t) => t.statusCategory !== 'open').sort((a, b) => b.dueOn.localeCompare(a.dueOn));
+  const closedRows = visible.filter((t) => t.statusCategory !== 'open').sort(latestEndedFirst);
   const involved = people.filter((p) => tasks.some((t) => t.ownerId === p.id));
   const filtered = !!(tile || who || ws !== 'All');
 

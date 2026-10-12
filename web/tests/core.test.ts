@@ -178,6 +178,16 @@ describe('roles and mirrors', () => {
     expect([o.statusCategory, o.closedAt]).toEqual(['open', null]);
   });
 
+  it('lists finished tasks newest first, dropped ones by when they were dropped', async () => {
+    const { latestEndedFirst } = await import('../lib/derive');
+    const open = (await s.teamTasks(db, TEAM_ID, AS_OF)).filter((x) => x.statusCategory === 'open' && x.origin === 'app').slice(0, 2);
+    const first = await s.closeTask(db, open[0].ownerId, open[0].id, { version: open[0].version, as: 'done' });
+    await new Promise((r) => setTimeout(r, 5));
+    const second = await s.closeTask(db, open[1].ownerId, open[1].id, { version: open[1].version, as: 'dropped', reason: 'Not needed' });
+    expect(second.endedAt).not.toBeNull();
+    expect([first, second].sort(latestEndedFirst).map((t) => t.id)).toEqual([second.id, first.id]);
+  });
+
   it('lets an admin reopen, since an admin can do what a lead can', async () => {
     const t = await openAppTask();
     const d = await s.closeTask(db, t.ownerId, t.id, { version: t.version, as: 'done' });

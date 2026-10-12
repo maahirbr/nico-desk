@@ -79,8 +79,12 @@ export type Task = {
   createdBy: string | null;
   createdAt: string;
   closedAt: string | null;
+  endedAt: string | null; // when it was done or dropped (a drop sets no closed_at, so its status event)
   version: number;
 };
+
+// Completed lists: the most recently finished first.
+export const latestEndedFirst = (a: Task, b: Task) => (b.endedAt ?? '').localeCompare(a.endedAt ?? '');
 
 export function renegotiations(events: EventRow[]): Renegotiation[] {
   return events
@@ -145,6 +149,9 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     createdBy: row.created_by,
     createdAt: row.created_at,
     closedAt: row.closed_at,
+    endedAt: row.status_category === 'open' ? null : row.closed_at
+      ? new Date(row.closed_at).toISOString()
+      : events.filter((e) => e.field === 'status_category').map((e) => new Date(e.at).toISOString()).sort().pop() ?? null,
     version: row.version,
   };
 }
