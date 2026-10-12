@@ -80,6 +80,10 @@ Shared pieces first, so later work uses them and agents do not collide.
 
 ## 6. Leftovers from the flow test
 
+- **Blocked in every status dropdown** (repo owner, 12 Oct). Today the dropdown offers Blocked only to the task's owner,
+  because `blockTask` in `lib/service.ts` is owner-only. A lead or admin can also mark a task blocked, with the same
+  block reason and optional person it waits on. The service rule, the dropdown filter (`canBlock`) and the tests change
+  together. Lands in workstream 1 with the custom Select, so the status picker is built once.
 - Close or archive a project.
 - Tell the previous owner when a task is reassigned away.
 - Home: the empty gutter where the checkbox hides while viewing as someone else.
