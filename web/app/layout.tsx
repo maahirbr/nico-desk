@@ -6,11 +6,13 @@ import { currentMe } from '@/lib/auth';
 import { Nav, SwitchToOwner } from '@/components/client';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { Shortcuts } from '@/components/Shortcuts';
+import { ProjectPeopleProvider } from '@/components/OwnerPicker';
 import { ProfileMenu } from '@/components/ProfileMenu';
 import { SKIN_COOKIE, skinOf } from '@/components/skins';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
-import { rosterFile } from '@/lib/db';
+import { db, rosterFile } from '@/lib/db';
+import { projectPeopleMap } from '@/lib/plan';
 import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
 import './globals.css';
@@ -30,6 +32,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const me = await currentMe();
   const skin = skinOf((await cookies()).get(SKIN_COOKIE)?.value);
   const ownerId = localOwnerId(rosterFile());
+  const projectPeople = me ? await projectPeopleMap(await db(), me.team.id) : {};
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body>
@@ -51,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ProfileMenu name={me.person.displayName} email={me.person.email} isAdmin={me.person.appRoles.includes('admin')} initial={skin}
                 role={me.person.appRoles.filter((r) => r !== 'member').join(' · ') || 'member'} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /></div><div className="page">{children}</div></main>
+            <main className="main"><div className="topbar"><TopSearch /></div><div className="page"><ProjectPeopleProvider value={projectPeople}>{children}</ProjectPeopleProvider></div></main>
           </div>
         ) : (
           <main className="page-solo">{children}</main>

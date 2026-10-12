@@ -72,7 +72,7 @@ CREATE TABLE tasks (
   priority_set_by  text REFERENCES people(id),
   priority_set_at  timestamptz,
   blocked_on_id    text REFERENCES people(id),
-  blocked_ask      text CHECK (char_length(blocked_ask) BETWEEN 10 AND 280),
+  blocked_ask      text CHECK (char_length(blocked_ask) BETWEEN 1 AND 280),
   blocked_at       timestamptz,
   origin           text NOT NULL CHECK (origin IN ('app','sheet','granola')),
   origin_ref       text,

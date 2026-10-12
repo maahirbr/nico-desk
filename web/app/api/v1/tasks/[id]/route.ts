@@ -16,6 +16,7 @@ const Body = z.object({
   title: z.string().trim().min(3).max(200).optional(),
   description: z.string().max(600).nullable().optional(),
   note: z.string().max(140).nullable().optional(),
+  ownerRole: z.string().max(60).optional(),
   projectId: z.string().nullable().optional(),
   workstream: z.string().trim().max(60).nullable().optional(),
   ownerId: z.string().optional(),

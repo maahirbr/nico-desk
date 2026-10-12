@@ -109,7 +109,7 @@ describe('locked dates (FR-3, FR-14, FR-15)', () => {
 
   it('needs a reason to renegotiate, and keeps the first date', async () => {
     const t = await openAppTask();
-    expect(await code(s.renegotiate(db, t.ownerId, t.id, { version: t.version, newDueOn: '2026-10-30', reason: 'short' }))).toBe('400 reason_required');
+    expect(await code(s.renegotiate(db, t.ownerId, t.id, { version: t.version, newDueOn: '2026-10-30', reason: ' ' }))).toBe('400 reason_required');
     const r = await s.renegotiate(db, t.ownerId, t.id, { version: t.version, newDueOn: '2026-10-30', reason: 'Waiting on supplier quotes.' });
     expect(r.dueOn).toBe('2026-10-30');
     expect(r.firstDueOn).toBe(t.firstDueOn);
@@ -176,6 +176,13 @@ describe('roles and mirrors', () => {
     expect(await code(s.reopenTask(db, t.ownerId, t.id, { version: d.version, reason: 'Found a mistake in it.' }))).toBe('403 not_allowed');
     const o = await s.reopenTask(db, LEAD, t.id, { version: d.version, reason: 'Found a mistake in it.' });
     expect([o.statusCategory, o.closedAt]).toEqual(['open', null]);
+  });
+
+  it('lets an admin reopen, since an admin can do what a lead can', async () => {
+    const t = await openAppTask();
+    const d = await s.closeTask(db, t.ownerId, t.id, { version: t.version, as: 'done' });
+    const o = await s.reopenTask(db, ADMIN, t.id, { version: d.version, reason: 'Closed by mistake.' });
+    expect(o.statusCategory).toBe('open');
   });
 });
 

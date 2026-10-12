@@ -1050,3 +1050,5 @@ details.breakdown > .defs { margin-top: 0; }
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
   * { transition-duration: 0ms !important; }
 }
+.owner-add { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.owner-add > select, .owner-add > input { flex: 1 1 150px; min-width: 0; }

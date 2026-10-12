@@ -543,19 +543,32 @@
   --card-pad: 20px;
   --callout-bg: color-mix(in srgb, var(--primary) 7%, var(--surface));
   --callout-line: color-mix(in srgb, var(--primary) 25%, transparent);
+  /* Status fills, picked statuses only: not started grey, in progress yellow, blocked red, done green, dropped dark grey */
+  --st-idle-bg: #ece9e3; --st-idle-fg: #57514a;
+  --st-active-bg: #fbefc9; --st-active-fg: #7a5a00;
+  --st-blocked-bg: #fbe1dc; --st-blocked-fg: #a8321f;
+  --st-done-bg: #dcf1e3; --st-done-fg: #22663f;
+  --st-quiet-bg: #5f5951; --st-quiet-fg: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root[data-skin="w"]:not([data-theme="light"]) {
     --ink-2: #a39b8e; --ink-3: #a39b8e; --sunk: #211f1b;
     --w-amber: #e5a845; --w-green: #5cc58e; --w-purple: #b495f0; --w-black: #cfc8bb; --w-muted: #a39b8e;
+    --st-idle-bg: #34302b; --st-idle-fg: #cfc8bb; --st-active-bg: #3d3317; --st-active-fg: #f0c75e;
+    --st-blocked-bg: #3f201b; --st-blocked-fg: #ff9a8a; --st-done-bg: #1c3527; --st-done-fg: #7fd6a3;
+    --st-quiet-bg: #57514a; --st-quiet-fg: #f2ede4;
   }
 }
 :root[data-skin="w"][data-theme="dark"] {
   --ink-2: #a39b8e; --ink-3: #a39b8e; --sunk: #211f1b;
   --w-amber: #e5a845; --w-green: #5cc58e; --w-purple: #b495f0; --w-black: #cfc8bb; --w-muted: #a39b8e;
+  --st-idle-bg: #34302b; --st-idle-fg: #cfc8bb; --st-active-bg: #3d3317; --st-active-fg: #f0c75e;
+  --st-blocked-bg: #3f201b; --st-blocked-fg: #ff9a8a; --st-done-bg: #1c3527; --st-done-fg: #7fd6a3;
+  --st-quiet-bg: #57514a; --st-quiet-fg: #f2ede4;
 }
 
-/* State colours: not started near-black, in progress amber, blocked red, done purple, dropped grey; flags green, amber, red */
+/* State colours: not started near-black, in progress amber, blocked red, done purple, dropped grey; flags green, amber, red.
+   Picked statuses are filled pills with their own palette (--st-*), set further down. */
 :root[data-skin="w"] .tone-idle { --tone-fg: var(--w-black); }
 :root[data-skin="w"] .tone-active, :root[data-skin="w"] .tone-risk { --tone-fg: var(--w-amber); }
 :root[data-skin="w"] .tone-blocked, :root[data-skin="w"] .tone-late { --tone-fg: var(--late); }
@@ -624,7 +637,7 @@
 :root[data-skin="w"] .mv-word { display: none; }
 :root[data-skin="w"] .mv-mark { display: inline; }
 :root[data-skin="w"] .trow-status { gap: 4px; }
-:root[data-skin="w"] .st-pick { font: 500 12px/1 var(--font-sans); color: var(--tone-fg, var(--ink-2)); background-color: var(--surface);
+:root[data-skin="w"] :is(.st-pick, .status-sel) { font: 500 12px/1 var(--font-sans); color: var(--tone-fg, var(--ink-2)); background-color: var(--surface);
   border: 1px solid var(--line-strong); padding: 5px 24px 5px 10px; max-width: 120px; box-shadow: none;
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: right 11px center, right 7px center; background-size: 4px 4px; }
@@ -634,6 +647,17 @@
 :root[data-skin="w"] .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
 :root[data-skin="w"] .flag, :root[data-skin="w"] .flag-again { display: inline-block; font: 600 10.5px/1 var(--font-sans); letter-spacing: .03em; text-transform: uppercase;
   color: var(--tone-fg, var(--ink-2)); border: 1px solid color-mix(in srgb, var(--tone-fg, var(--ink-2)) 45%, transparent); border-radius: 4px; padding: 3px 5px; }
+
+/* Picked statuses as filled pills. Only the status controls and chips; the ledger keeps its own colours. */
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-idle { --sf: var(--st-idle-fg); --sb: var(--st-idle-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-active { --sf: var(--st-active-fg); --sb: var(--st-active-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-blocked { --sf: var(--st-blocked-fg); --sb: var(--st-blocked-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st).tone-done { --sf: var(--st-done-fg); --sb: var(--st-done-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel, .st-status).tone-quiet { --sf: var(--st-quiet-fg); --sb: var(--st-quiet-bg); }
+:root[data-skin="w"] :is(.st-pick, .status-sel)[class*="tone-"] { color: var(--sf); background-color: var(--sb); border: 1px solid color-mix(in srgb, var(--sf) 22%, transparent); }
+:root[data-skin="w"] :is(.st-pick, .status-sel)[class*="tone-"]:hover { border-color: color-mix(in srgb, var(--sf) 55%, transparent); }
+:root[data-skin="w"] .st[class*="tone-"] { color: var(--sf, var(--tone-fg, var(--ink-2))); background: var(--sb, color-mix(in srgb, var(--tone-fg, var(--ink-2)) 11%, transparent)); }
+:root[data-skin="w"] :is(.st-pick, .status-sel) option { color: var(--ink); background: var(--surface); text-decoration: none; }
 
 /* Project cards: kind tag and status on top, the name, the tags in normal case, a green progress bar */
 :root[data-skin="w"] .pcard { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto auto auto 1fr auto;

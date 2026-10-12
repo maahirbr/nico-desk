@@ -85,7 +85,7 @@ describe('plan board', () => {
   });
 
   it('removes a line only with a reason, and restores it', async () => {
-    expect(await code(planOp(db, ME, PLAN, { op: 'removeLine', lineId: 'ln_03', reason: 'no' }, AS_OF))).toBe('400 reason_required');
+    expect(await code(planOp(db, ME, PLAN, { op: 'removeLine', lineId: 'ln_03', reason: ' ' }, AS_OF))).toBe('400 reason_required');
     await planOp(db, ME, PLAN, { op: 'removeLine', lineId: 'ln_03', reason: 'Folded into line 1' }, AS_OF);
     let s = await planState(db, PLAN);
     expect(s.removed.map((l) => l.id)).toContain('ln_03');
@@ -203,6 +203,35 @@ describe('starting a project', () => {
   });
 });
 
+describe('a project task goes to one of its people', () => {
+  const base = { name: 'Gift wrap drive', kind: 'tasks' as const, ownerId: ME, goal: '', workstreams: [], members: [{ personId: 'per_bo', role: 'Packaging POC' }] };
+  const task = { teamId: TEAM_ID, title: 'Cut the hamper ribbon', dueOn: '2026-10-20' };
+
+  it('brings a new owner onto the project with their role, or as Member', async () => {
+    const { createProject, projectMembers, projectPeopleMap } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const p = await createProject(db, ME, TEAM_ID, base);
+    expect(await code(s.createTask(db, ME, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: ' ' }))).toBe('400 invalid_body');
+    const t = await s.createTask(db, ME, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' });
+    expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_cy', role: 'Gift wrap' });
+    const e = await s.editTask(db, ME, t.id, { version: t.version, ownerId: 'per_dee' }); // no role given, as from an import
+    expect(e.ownerId).toBe('per_dee');
+    expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_dee', role: 'Member' });
+    expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy', 'per_dee']);
+  });
+
+  it('keeps someone on the project while they own open tasks in it', async () => {
+    const { createProject, updateProject, projectMembers } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const p = await createProject(db, ME, TEAM_ID, base);
+    const t = await s.createTask(db, ME, { ...task, ownerId: 'per_bo', projectId: p.id });
+    expect(await code(updateProject(db, ME, p.id, { ...base, members: [] }))).toBe('400 invalid_body');
+    await s.closeTask(db, 'per_bo', t.id, { version: t.version, as: 'done' });
+    await updateProject(db, ME, p.id, { ...base, members: [] });
+    expect(await projectMembers(db, p.id)).toEqual([]);
+  });
+});
+
 describe('search', () => {
   it('finds projects, tasks, plan lines and people, title matches first', async () => {
     const { search } = await import('../lib/search');
@@ -219,9 +248,9 @@ describe('blocked and dropped say why; starting and finishing are one click', ()
   it('blocks only with a reason (a person is optional), drops only with a reason', async () => {
     const s = await import('../lib/service');
     const t = (await s.teamTasks(db, TEAM_ID, AS_OF)).find((x) => x.statusCategory === 'open' && x.origin === 'app' && x.ownerId === 'per_bo')!;
-    expect(await code(s.blockTask(db, 'per_bo', t.id, { version: t.version, ask: 'please' }))).toBe('400 reason_required');
-    const solo = await s.blockTask(db, 'per_bo', t.id, { version: t.version, ask: 'Printer is shut until Monday.' });
-    expect(solo.blocked).toMatchObject({ onId: null, ask: 'Printer is shut until Monday.' });
+    expect(await code(s.blockTask(db, 'per_bo', t.id, { version: t.version, ask: '   ' }))).toBe('400 reason_required');
+    const solo = await s.blockTask(db, 'per_bo', t.id, { version: t.version, ask: 'No data' }); // a short reason is enough
+    expect(solo.blocked).toMatchObject({ onId: null, ask: 'No data' });
     const free = await s.unblockTask(db, 'per_bo', t.id, { version: solo.version }); // clearing a block needs no note
     const b = await s.blockTask(db, 'per_bo', t.id, { version: free.version, onId: ME, ask: 'Need the final price list please.' });
     expect(b.blocked?.onId).toBe(ME);
@@ -233,7 +262,7 @@ describe('blocked and dropped say why; starting and finishing are one click', ()
   });
 
   it('plan lines: blocked, back to not started and reopening need a reason; starting and done do not', async () => {
-    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'Blocked', reason: 'short' }, AS_OF))).toBe('400 reason_required');
+    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'Blocked', reason: ' ' }, AS_OF))).toBe('400 reason_required');
     const from = (await line('ln_08')).status;
     if (from !== 'In progress') await planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'In progress' }, AS_OF);
     expect((await line('ln_08')).status).toBe('In progress');

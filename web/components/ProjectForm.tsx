@@ -50,7 +50,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
   const [err, setErr] = useState<string | null>(null);
   const set = <K extends keyof ProjectValues>(k: K, v: ProjectValues[K]) => setF({ ...f, [k]: v });
   const free = people.filter((p) => p.id !== f.ownerId && !f.members.some((m) => m.personId === p.id));
-  const ready = f.name.trim().length >= 2 && f.goal.trim().length >= 10 && (f.kind === 'tasks' || f.workstreams.length > 0);
+  const ready = f.name.trim().length >= 2 && (f.kind === 'tasks' || f.workstreams.length > 0);
 
   return (
     <form className="pform" onSubmit={async (e) => {
@@ -80,7 +80,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
             </button>
           </div>
         )}
-        <label className="f"><span>What done looks like</span>
+        <label className="f"><span>What done looks like (optional)</span>
           <textarea rows={2} maxLength={600} value={f.goal} placeholder="One or two sentences anyone on the team would agree with" onChange={(e) => set('goal', e.target.value)} />
         </label>
         <label className="f"><span>Category line (optional)</span><input maxLength={120} value={f.eyebrow} placeholder="e.g. Gifting · Hampers · Corporate orders" onChange={(e) => set('eyebrow', e.target.value)} /></label>

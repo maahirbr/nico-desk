@@ -9,6 +9,7 @@ import { fmtDate, fmtStamp } from '@/lib/time';
 import { Avatar, type Tone } from './chips';
 import { logLine } from './logText';
 import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
+import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { notify } from './toast';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
@@ -72,7 +73,7 @@ export function StatusLabel({ t, today }: { t: Task; today?: string }) {
   const s = STATUS[statusKey(t)];
   return (
     <span className="st-wrap">
-      <span className={`st tone-${s.tone}`}>{s.word}</span>
+      <span className={`st st-status tone-${s.tone}`}>{s.word}</span>
       {today && <FlagChip t={t} today={today} />}
     </span>
   );
@@ -173,7 +174,7 @@ export function TaskRow({ t, today, sub, owner, canTick, onOpen, onStatus }: {
             }}>
             {PICK.map((s) => <option key={s} value={s}>{STATUS[s].word}</option>)}
           </select>
-        ) : <span className={`st tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}>{STATUS[key].word}</span>}
+        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}>{STATUS[key].word}</span>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
     </div>
@@ -212,7 +213,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [form, setForm] = useState({ date: '', text: '', person: '' });
-  const [edit, setEdit] = useState({ title: '', description: '', note: '', ownerId: '', workstream: '' });
+  const [edit, setEdit] = useState({ title: '', description: '', note: '', ownerId: '', ownerRole: undefined as string | undefined, workstream: '' });
+  const [pickKey, setPickKey] = useState(0); // starts the owner picker afresh on discard
   const [showLog, setShowLog] = useState(false);
   const [target, setTarget] = useState<StatusKey>('todo');
   const [closing, close] = useClosing(onClose);
@@ -220,7 +222,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   async function load() {
     const [task, lines] = await Promise.all([api(`/tasks/${id}`, 'GET'), api(`/tasks/${id}/log?limit=100`, 'GET')]);
     setT(task); setLog(lines);
-    setEdit({ title: task.title, description: task.description ?? '', note: task.note ?? '', ownerId: task.ownerId, workstream: task.workstream ?? '' });
+    setEdit({ title: task.title, description: task.description ?? '', note: task.note ?? '', ownerId: task.ownerId, ownerRole: undefined, workstream: task.workstream ?? '' });
+    setPickKey((k) => k + 1);
   }
   useEffect(() => { load().catch((e) => setErr(e.message)); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -265,11 +268,11 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (edit.title.trim() !== t.title) body.title = edit.title.trim();
     if (edit.description !== (t.description ?? '')) body.description = edit.description || null;
     if (edit.note !== (t.note ?? '')) body.note = edit.note || null;
-    if (edit.ownerId !== t.ownerId) body.ownerId = edit.ownerId;
+    if (edit.ownerId !== t.ownerId) Object.assign(body, ownerFields(edit.ownerId, edit.ownerRole));
     if (edit.workstream !== (t.workstream ?? '')) body.workstream = edit.workstream || null;
   }
   const dirty = Object.keys(body).length > 0;
-  const okText = form.text.trim().length >= 10;
+  const okText = form.text.trim().length > 0;
 
   return (
     <div className={`overlay drawer-overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
@@ -309,7 +312,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop?`, blocked: 'Why is it blocked? A block reason is needed.', date: 'Move the date. The first date stays on record. Moving it before the date passes counts as moved in time.', drop: 'Drop this task. A reason is needed, and it stays on record.', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><input type="date" min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
                 <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'}</span>
-                  <textarea rows={2} maxLength={280} value={form.text} placeholder="At least 10 characters" onChange={(e) => setForm({ ...form, text: e.target.value })} />
+                  <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
                 </label>
                 {mode === 'blocked' && (
                   <label className="f"><span>Waiting on someone in the team? (optional)</span>
@@ -344,7 +347,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             <dl className="drawer-facts">
               <dt>Owner</dt>
               <dd>{can && open ? (
-                <select value={edit.ownerId} onChange={(e) => setEdit({ ...edit, ownerId: e.target.value })}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+                <OwnerPicker key={pickKey} projectId={t.projectId} value={edit.ownerId} people={people} onChange={(ownerId, ownerRole) => setEdit({ ...edit, ownerId, ownerRole })} />
               ) : <span className="person-cell"><Avatar name={names[t.ownerId] ?? t.ownerId} />{names[t.ownerId] ?? t.ownerId}</span>}</dd>
 
               <dt>Due</dt>
@@ -373,8 +376,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {dirty && (
               <div className="row">
-                <button className="btn" disabled={busy || edit.title.trim().length < 3} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved')}>Save changes</button>
-                <button className="btn ghost" onClick={() => setEdit({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, workstream: t.workstream ?? '' })}>Discard</button>
+                <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved')}>Save changes</button>
+                <button className="btn ghost" onClick={() => { setEdit({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined, workstream: t.workstream ?? '' }); setPickKey((k) => k + 1); }}>Discard</button>
               </div>
             )}
 
@@ -411,7 +414,10 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
   wsByProject?: Record<string, string[]>; defaultWs?: string; onDone: () => void;
 }) {
   const router = useRouter();
-  const [f, setF] = useState({ title: '', description: '', ownerId: meId, dueOn: '', note: '', workstream: defaultWs, projectId: projectId ?? '' });
+  const map = useProjectPeople();
+  const startProject = projectId ?? '';
+  const [f, setF] = useState({ title: '', description: '', ownerId: !startProject || (map[startProject] ?? []).includes(meId) ? meId : '', ownerRole: undefined as string | undefined,
+    dueOn: '', note: '', workstream: defaultWs, projectId: startProject });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const workstreams = wsByProject ? wsByProject[f.projectId] ?? [] : fixedWs;
@@ -419,7 +425,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     <form className="stack" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr(null);
       try {
-        const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ownerId: f.ownerId, dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
+        const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
         if (made?.id) arrivals.add(made.id);
         notify('Task added');
         router.refresh(); onDone();
@@ -429,7 +435,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
-          <select value={f.ownerId} onChange={(e) => setF({ ...f, ownerId: e.target.value })}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+          <OwnerPicker key={f.projectId} projectId={f.projectId || null} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
         <label className="f"><span>Due</span><input type="date" required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
@@ -437,7 +443,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         <div className="row">
           {projects && (
             <label className="f"><span>Project</span>
-              <select value={f.projectId} onChange={(e) => setF({ ...f, projectId: e.target.value, workstream: '' })}>
+              <select value={f.projectId} onChange={(e) => { const p = e.target.value; setF({ ...f, projectId: p, workstream: '', ownerRole: undefined, ownerId: !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
                 <option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
@@ -454,7 +460,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       <label className="f"><span>Note (optional)</span><input maxLength={140} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
       <p className="hint" style={{ margin: 0 }}>The due date is kept as the first date. Moving it later needs a reason.</p>
       {err && <p className="err" role="alert">{err}</p>}
-      <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy}>Add task</button></div>
+      <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button></div>
     </form>
   );
 }

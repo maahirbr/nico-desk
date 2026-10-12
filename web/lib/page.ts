@@ -15,7 +15,7 @@ export async function lookups(me: Me) {
     names: Object.fromEntries(people.map((p) => [p.id, p.displayName])) as Record<string, string>,
     projectNames: Object.fromEntries(projects.map((p) => [p.id, p.name])) as Record<string, string>,
     activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
-    isLead: me.person.appRoles.includes('lead'),
+    isLead: me.person.appRoles.includes('lead') || me.person.appRoles.includes('admin'), // an admin can do anything a lead can
     isAdmin: me.person.appRoles.includes('admin'),
   };
 }
