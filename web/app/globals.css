@@ -56,16 +56,19 @@ button { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 860px) {
   .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; align-content: start; }
-  .side { position: sticky; top: 0; z-index: 5; height: auto; padding: var(--space-sm) var(--page-pad) 0; gap: var(--space-xs); display: grid;
+  .side { position: sticky; top: 0; z-index: 5; height: auto; --side-pad: var(--page-pad); padding: var(--space-sm) var(--side-pad) 0; gap: var(--space-xs); display: grid;
     grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "mark who" "nav nav"; align-content: start; border-right: 0; border-bottom: var(--rule) solid var(--hairline); }
   .mark { grid-area: mark; padding: 0; }
   .mark-sub { display: none; }
   .who { grid-area: who; border: 0; padding: 0; }
   .who-text { display: none; }
-  .nav { grid-area: nav; flex-direction: row; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin: 0 calc(var(--page-pad) * -1); padding: 0 var(--page-pad) var(--space-xs); }
+  /* The nav bleeds to the screen edges by the same --side-pad the bar is padded with, so its first link
+     starts at the gutter. A skin that changes the bar padding must change --side-pad, not padding alone. */
+  .nav { grid-area: nav; min-width: 0; flex-direction: row; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+    scrollbar-width: none; margin: 0 calc(var(--side-pad) * -1); padding: 0 var(--side-pad) var(--space-xs); scroll-padding-inline: var(--side-pad); }
   .nav::-webkit-scrollbar { display: none; }
   .nav { gap: 0; }
-  .nav a { padding: var(--nav-pad-y) var(--space-xs); }
+  .nav a { padding: var(--nav-pad-y) var(--space-xs); flex: none; white-space: nowrap; }
   .nav a svg { display: none; }
   .nav .nav-new { margin: 0 0 0 var(--space-xs); padding: 0 var(--space-sm); }
 }
