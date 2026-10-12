@@ -296,6 +296,13 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   looked. Project board, plan board and team page keep their last filter and tab per browser (`web/lib/remember.ts`). Every
   task, person and project page has Copy link. In the merge, the project header puts the archive refusal under its buttons,
   since beside them it squeezed the title. No schema change. Rollback: `git revert -m 1 a2dc79e`.
+- 2026-10-12 · Sonnet 5.5 · Mac (`m`) and Ink (`i`) skins rebuilt (workstream 8), merged by Opus 5.5 at the repo owner's
+  call, after the first pass read as a colour swap. A skin can now change material, depth, chrome, radius, spacing, type and
+  motion. Mac is glass: a floating blurred sidebar and toolbar, glass pop-ups, a sliding segmented control and large radii,
+  solid again under reduced transparency. Ink is a Notion and Craft page: a centred column, big quiet titles, block rows with
+  a hover grip (a cue only, no drag), callouts and soft cards. Both fix the view-as banner contrast. Every rule is scoped to
+  those two skins, so W, A, B and C render the same. Every text pair passes AA in day and night, on Mac over the worst glass
+  backdrop. Only `web/app/tokens.css` changed. Rollback: `git revert -m 1` the merge.
 
 ## VERIFY
 

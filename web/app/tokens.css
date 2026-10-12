@@ -720,11 +720,14 @@
 :root[data-skin="w"] .habit-facts { font-size: 13.5px; gap: 6px 10px; }
 :root[data-skin="w"] .habit-facts dt { color: var(--ink-2); }
 
-/* ---------- M, Mac: reads as a native macOS app ----------
-   System font stack (nothing to download), a translucent source-list sidebar, white grouped cards on a light grey
-   window, hairline separators, a segmented control for pickers, Apple system blue, green, orange and red, each darkened
-   until its text passes 4.5:1. Cookie value "m". Night is macOS dark. The blur is added only where the browser
-   supports it; without it the sidebar and the top bar are the solid colour. */
+/* ---------- M, Mac: liquid, minimal macOS ----------
+   Trait list. Glass belongs to the functional layer (sidebar, toolbar, pop-ups, side panel), never to content cards.
+   The sidebar floats over a soft wallpaper tint and blurs it. The page is an opaque rounded sheet. Radii are large.
+   Type is the system font with tight headings. Lists are grouped and inset. Pickers are segmented controls with a
+   thumb that slides. Menus highlight in the accent colour. Cookie value "m". Night is macOS dark.
+   Glass rules: each glass fill is a solid fallback first, then a translucent fill with blur inside @supports, and back
+   to solid under prefers-reduced-transparency. Every text pair is checked against the worst thing that can sit behind
+   the glass (see the report in the commit message), not only against the base colour. */
 :root[data-skin="m"] {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
@@ -732,7 +735,7 @@
   --type-date-xl: 600 28px/1.05 var(--font-sans);
   --type-date-lg: 600 21px/1.05 var(--font-sans);
   --type-date-phone: 600 34px/1.05 var(--font-sans);
-  --type-page-title: 700 26px/1.2 var(--font-sans);
+  --type-page-title: 700 28px/1.14 var(--font-sans);
   --type-ask-title: 600 17px/1.3 var(--font-sans);
   --type-line: 500 14px/1.4 var(--font-sans);
   --type-body: 400 14px/1.45 var(--font-sans);
@@ -741,18 +744,18 @@
   --type-button: 500 13px/1.2 var(--font-sans);
   --type-heading: 600 15px/1.3 var(--font-sans);
   --type-small: 400 12px/1.4 var(--font-sans);
-  --track-title: -0.015em;
-  --radius-control: 8px;
-  --radius-card: 12px;
-  --radius-pill: 6px;
+  --track-title: -0.022em;
+  --radius-control: 10px;
+  --radius-card: 18px;
+  --radius-pill: 7px;
   --row-pad: 11px;
-  --side-width: 240px;
+  --side-width: 250px;
   --nav-pad-y: 6px;
   --pill-pad-y: 2px;
   --pill-pad-x: 8px;
-  --card-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.08);
-  --shadow-1: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 8px 28px rgb(0 0 0 / 0.16);
-  --scrim: rgb(0 0 0 / 0.3);
+  --card-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.05), 0 6px 20px rgb(0 0 0 / 0.04);
+  --shadow-1: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 10px 40px rgb(0 0 0 / 0.18);
+  --scrim: rgb(0 0 0 / 0.22);
   --primary: #0062cc;
   --on-primary: #ffffff;
   --primary-soft: #e3eefc;
@@ -776,23 +779,32 @@
   --m-teal-soft: #ddf1f3;
   --seg-track: #e3e3e8;
   --seg-on: #ffffff;
-  --side-sunk: #e4e4ea;
+  --side-sunk: rgb(0 0 0 / 0.07);
   --bar: #ececf0;
-  --bar-glass: rgb(236 236 240 / 0.82);
   --avatar-bg: var(--pill);
   --callout-bg: var(--primary-soft);
+  /* wallpaper: a soft tint the sidebar blurs. Darkest stop for the contrast check is #b8cdf0 (after saturation). */
+  --wall: radial-gradient(1100px 760px at 6% 0%, #cfe0f7 0%, transparent 62%), radial-gradient(900px 700px at 100% 100%, #e6d9f2 0%, transparent 60%), #eeeef3;
+  /* glass fills: side over wallpaper; bar, pop and sheet over page content */
+  --side-glass: rgb(246 246 250 / 0.74);
+  --bar-glass: rgb(246 246 250 / 0.88);
+  --glass: rgb(255 255 255 / 0.88);
+  --glass-strong: rgb(255 255 255 / 0.93);
+  --glass-edge: rgb(255 255 255 / 0.75);
+  --glass-ring: rgb(0 0 0 / 0.1);
+  --glass-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 12px 40px rgb(0 0 0 / 0.16);
 }
 @media (prefers-color-scheme: dark) {
   :root[data-skin="m"]:not([data-theme="light"]) {
-    --card-shadow: none;
-    --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 12px 32px rgb(0 0 0 / 0.5);
-    --scrim: rgb(0 0 0 / 0.55);
+    --card-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.07);
+    --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 12px 40px rgb(0 0 0 / 0.55);
+    --scrim: rgb(0 0 0 / 0.5);
     --primary: #64a8ff;
     --on-primary: #0a1626;
     --primary-soft: #1e3350;
     --ink: #f5f5f7;
     --ink-2: #b4b4ba;
-    --ink-3: #a1a1a7;
+    --ink-3: #acacb2;
     --canvas: #1e1e1e;
     --surface: #2a2a2a;
     --sunk: #343434;
@@ -810,21 +822,28 @@
     --m-teal-soft: #1b3a3e;
     --seg-track: #3a3a3c;
     --seg-on: #636366;
-    --side-sunk: #363636;
+    --side-sunk: rgb(255 255 255 / 0.12);
     --bar: #282828;
-    --bar-glass: rgb(40 40 40 / 0.8);
+    --wall: radial-gradient(1000px 720px at 5% 0%, #2a3a5a 0%, transparent 60%), radial-gradient(900px 700px at 100% 100%, #35264a 0%, transparent 60%), #141416;
+    --side-glass: rgb(40 40 44 / 0.7);
+    --bar-glass: rgb(36 36 38 / 0.9);
+    --glass: rgb(36 36 38 / 0.9);
+    --glass-strong: rgb(34 34 36 / 0.94);
+    --glass-edge: rgb(255 255 255 / 0.16);
+    --glass-ring: rgb(0 0 0 / 0.5);
+    --glass-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 14px 44px rgb(0 0 0 / 0.55);
   }
 }
 :root[data-skin="m"][data-theme="dark"] {
-  --card-shadow: none;
-  --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 12px 32px rgb(0 0 0 / 0.5);
-  --scrim: rgb(0 0 0 / 0.55);
+  --card-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.07);
+  --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 12px 40px rgb(0 0 0 / 0.55);
+  --scrim: rgb(0 0 0 / 0.5);
   --primary: #64a8ff;
   --on-primary: #0a1626;
   --primary-soft: #1e3350;
   --ink: #f5f5f7;
   --ink-2: #b4b4ba;
-  --ink-3: #a1a1a7;
+  --ink-3: #acacb2;
   --canvas: #1e1e1e;
   --surface: #2a2a2a;
   --sunk: #343434;
@@ -842,92 +861,182 @@
   --m-teal-soft: #1b3a3e;
   --seg-track: #3a3a3c;
   --seg-on: #636366;
-  --side-sunk: #363636;
+  --side-sunk: rgb(255 255 255 / 0.12);
   --bar: #282828;
-  --bar-glass: rgb(40 40 40 / 0.8);
+  --wall: radial-gradient(1000px 720px at 5% 0%, #2a3a5a 0%, transparent 60%), radial-gradient(900px 700px at 100% 100%, #35264a 0%, transparent 60%), #141416;
+  --side-glass: rgb(40 40 44 / 0.7);
+  --bar-glass: rgb(36 36 38 / 0.9);
+  --glass: rgb(36 36 38 / 0.9);
+  --glass-strong: rgb(34 34 36 / 0.94);
+  --glass-edge: rgb(255 255 255 / 0.16);
+  --glass-ring: rgb(0 0 0 / 0.5);
+  --glass-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 14px 44px rgb(0 0 0 / 0.55);
 }
 
-/* Glass only where the browser can blur. The blurred sidebar and top bar let a scrolling page show faintly through. */
-@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  :root[data-skin="m"] .side, :root[data-skin="m"] .topbar {
-    background: var(--bar-glass);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
-  }
+/* Type: tight, as in SF. Headings pull in, body stays open. */
+:root[data-skin="m"] body { -webkit-font-smoothing: antialiased; letter-spacing: -0.006em; }
+:root[data-skin="m"] :is(h1, h2, h3, .mark-name, .pcard-name, .stat-n) { letter-spacing: var(--track-title); }
+:root[data-skin="m"] .mark-name { font: 600 15px/1.3 var(--font-sans); }
+
+/* The window: wallpaper behind, the sidebar a floating glass panel, the page an opaque rounded sheet */
+:root[data-skin="m"] .shell { background: var(--wall); background-attachment: fixed; }
+:root[data-skin="m"] .main { background: var(--canvas); }
+:root[data-skin="m"] .side { background: var(--side-glass); border: 0; --sunk: var(--side-sunk); }
+:root[data-skin="m"] .topbar { background: var(--bar-glass); border-bottom: 0; --ink-3: var(--ink-2); }
+@media (min-width: 861px) {
+  :root[data-skin="m"] .side { margin: 10px 0 10px 10px; top: 10px; height: calc(100vh - 20px); border-radius: 22px;
+    box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring); }
+  :root[data-skin="m"] body[data-viewing] .side { top: calc(var(--banner-h) + 10px); height: calc(100vh - var(--banner-h) - 20px); }
+  :root[data-skin="m"] .main { margin: 10px 10px 10px 10px; border-radius: 22px; min-height: calc(100vh - 20px); }
+  :root[data-skin="m"] .topbar { margin: 8px 10px 0; top: 10px; border-radius: 16px;
+    box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 4px 16px rgb(0 0 0 / 0.06); }
+  :root[data-skin="m"] body[data-viewing] .topbar { top: calc(var(--banner-h) + 10px); }
 }
 
-/* Source list: the selected row is a darker grey rounded rectangle, icons take the accent */
-:root[data-skin="m"] .side { --sunk: var(--side-sunk); }
+/* Source list: icons take the accent, the selected row is a soft tint, two levels at most */
 :root[data-skin="m"] .nav { gap: 2px; }
-:root[data-skin="m"] .nav a { border-radius: 6px; }
+:root[data-skin="m"] .nav a { border-radius: 9px; }
 :root[data-skin="m"] .nav a[aria-current="page"] { font-weight: 600; }
 :root[data-skin="m"] .nav a:not(.nav-new) svg { color: var(--primary); }
-:root[data-skin="m"] .mark-name { font: 600 15px/1.3 var(--font-sans); }
+:root[data-skin="m"] .nav .nav-new { border-radius: 10px; }
+:root[data-skin="m"] .profile-wrap { border-top-color: var(--glass-ring); }
+
+/* Glass where the browser can blur. Without it the sidebar and bar are the solid base colour. */
+:root[data-skin="m"] .side { background: var(--bar); }
+:root[data-skin="m"] .topbar { background: var(--bar); }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  :root[data-skin="m"] .side { background: var(--side-glass); -webkit-backdrop-filter: saturate(180%) blur(28px); backdrop-filter: saturate(180%) blur(28px); }
+  :root[data-skin="m"] .topbar { background: var(--bar-glass); -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px); }
+}
+
+/* Pop-ups and the side panel: glass with a hairline inner light edge. Solid first, glass inside @supports. */
+:root[data-skin="m"] :is(.pop, .menu, .ts-drop, .modal, .drawer) { background: var(--surface); border: 0; box-shadow: var(--glass-shadow); }
+:root[data-skin="m"] :is(.pop, .menu, .ts-drop) { border-radius: 14px; padding: 5px; }
+:root[data-skin="m"] .ts-drop { padding: 0; }
+:root[data-skin="m"] .modal { border-radius: 22px; }
+:root[data-skin="m"] .drawer { margin: 10px; height: calc(100vh - 20px); width: min(var(--drawer-width), calc(100vw - 20px)); border-radius: 22px; }
+:root[data-skin="m"] .pop.pop-sheet { border-width: 0; border-radius: 22px 22px 0 0; }
+@media (max-width: 600px) { :root[data-skin="m"] .drawer { margin: 0; height: 100vh; width: 100vw; border-radius: 0; } }
+@media (min-width: 861px) { :root[data-skin="m"] .pm-flyout { background: var(--surface); border: 0; box-shadow: var(--glass-shadow); border-radius: 14px; } }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  :root[data-skin="m"] :is(.pop, .menu, .ts-drop) { background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px); }
+  :root[data-skin="m"] :is(.modal, .drawer) { background: var(--glass-strong); -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px); }
+}
+@media (min-width: 861px) and (prefers-reduced-transparency: no-preference) {
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    :root[data-skin="m"] .pm-flyout { background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px); }
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-skin="m"] :is(.side, .topbar, .pop, .menu, .ts-drop, .modal, .drawer, .pm-flyout) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-skin="m"] :is(.pop, .menu, .ts-drop, .modal, .drawer, .pm-flyout) { background: var(--surface); }
+  :root[data-skin="m"] .side { background: var(--bar); }
+  :root[data-skin="m"] .topbar { background: var(--bar); }
+}
+
+/* Menus highlight in the accent colour, as native menus do */
+:root[data-skin="m"] :is(.sel-opt, .menu > *, .st-opt, .st-act) { border-radius: 8px; }
+:root[data-skin="m"] :is(.sel-opt:not([aria-disabled="true"]):hover, .sel-opt:not([aria-disabled="true"]):focus-visible, .menu > button:hover, .menu > a:hover, .st-opt:hover, .st-act:hover) { background: var(--primary); color: var(--on-primary); }
+:root[data-skin="m"] :is(.st-opt:hover, .st-act:hover) .st-icon, :root[data-skin="m"] :is(.sel-opt:hover, .sel-opt:focus-visible) .sel-tick { color: currentColor; }
+:root[data-skin="m"] .menu > .st-menu-sep:hover { background: var(--hairline); }
+:root[data-skin="m"] .st-opt[aria-checked="true"]:not(:hover) { background: var(--primary-soft); }
+:root[data-skin="m"] .sel-group { padding-left: 10px; }
+
+/* Cards: opaque, large radius, a hairline ring and a soft lift. Not glass. */
+:root[data-skin="m"] :is(.card, .stat, .pcard, .tlist) { border: 0; box-shadow: var(--card-shadow); }
+:root[data-skin="m"] .pcard:hover { background: var(--surface); box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06), 0 10px 28px rgb(0 0 0 / 0.08); }
+:root[data-skin="m"] .callout { border-radius: 16px; box-shadow: none; }
+:root[data-skin="m"] .tabs, :root[data-skin="m"] .proj-tabs { border-bottom-color: var(--hairline); }
 
 /* Colour tones: Apple system colours. Done is green, ahead is teal, blocked and at risk are orange, late is red. */
 :root[data-skin="m"] .tone-done { --tone-bg: var(--m-green-soft); --tone-fg: var(--m-green); }
 :root[data-skin="m"] .tone-ok { --tone-bg: var(--m-teal-soft); --tone-fg: var(--m-teal); }
 
-/* Pickers: a segmented control, a grey track with a raised segment */
-:root[data-skin="m"] .seg { padding: 2px; gap: 2px; background: var(--seg-track); border: 0; border-radius: 9px; overflow: visible; }
-:root[data-skin="m"] .seg button, :root[data-skin="m"] .seg-link { background: transparent; border-radius: 7px; min-height: calc(var(--button-height) - 4px); color: var(--ink-2); }
+/* Pickers: a segmented control. Equal segments, one thumb that slides to the chosen one. */
+:root[data-skin="m"] .seg { --n: 2; --i: 0; position: relative; isolation: isolate; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 2px; background: var(--seg-track); border: 0; border-radius: 11px; overflow: visible; }
+:root[data-skin="m"] .seg:has(> :nth-child(3)) { --n: 3; }
+:root[data-skin="m"] .seg:has(> :nth-child(4)) { --n: 4; }
+:root[data-skin="m"] .seg:has(> :nth-child(5)) { --n: 5; }
+:root[data-skin="m"] .seg:has(> :nth-child(6)) { --n: 6; }
+:root[data-skin="m"] .seg:has(> :nth-child(2):is([aria-pressed="true"], .on)) { --i: 1; }
+:root[data-skin="m"] .seg:has(> :nth-child(3):is([aria-pressed="true"], .on)) { --i: 2; }
+:root[data-skin="m"] .seg:has(> :nth-child(4):is([aria-pressed="true"], .on)) { --i: 3; }
+:root[data-skin="m"] .seg:has(> :nth-child(5):is([aria-pressed="true"], .on)) { --i: 4; }
+:root[data-skin="m"] .seg:has(> :nth-child(6):is([aria-pressed="true"], .on)) { --i: 5; }
+:root[data-skin="m"] .seg::before { content: ""; position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n));
+  border-radius: 9px; background: var(--seg-on); box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.16);
+  transform: translateX(calc(var(--i) * 100%)); transition: transform 220ms cubic-bezier(0.3, 0.9, 0.3, 1); opacity: 0; }
+:root[data-skin="m"] .seg:has(> :is([aria-pressed="true"], .on))::before { opacity: 1; }
+:root[data-skin="m"] .seg button, :root[data-skin="m"] .seg-link { background: transparent; border-radius: 9px; justify-content: center; text-align: center; min-height: calc(var(--button-height) - 4px); color: var(--ink-2); }
 :root[data-skin="m"] .seg button:hover:not([aria-pressed="true"]) { background: transparent; color: var(--ink); }
-:root[data-skin="m"] .seg button[aria-pressed="true"], :root[data-skin="m"] .seg-link.on { background: var(--seg-on); color: var(--ink);
-  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.16); }
+:root[data-skin="m"] .seg button[aria-pressed="true"], :root[data-skin="m"] .seg-link.on { background: transparent; color: var(--ink); font-weight: 600; }
 :root[data-skin="m"] .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+@media (prefers-reduced-motion: reduce) { :root[data-skin="m"] .seg::before { transition: none; } }
 
 /* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
 :root[data-skin="m"] :is(input, select, textarea, .sel-btn):not(.drawer-title, .drawer-desc, :focus, [aria-expanded="true"]) { border-color: var(--ui-line); }
 :root[data-skin="m"] .btn.ghost { background: var(--surface); }
+:root[data-skin="m"] .datefield .mini-btn { border-radius: 8px; }
 
 /* Grouped inset lists, as in System Settings: rows separated by a line that starts inside the card edge */
+:root[data-skin="m"] .tlist { border-radius: 18px; overflow: hidden; }
 :root[data-skin="m"] .tlist .trow { border-top: 0; background-image: linear-gradient(var(--hairline), var(--hairline));
   background-size: calc(100% - 44px) 1px; background-position: right top; background-repeat: no-repeat; }
 :root[data-skin="m"] .tlist .trow:first-child { background-image: none; }
 :root[data-skin="m"] .tlist .trow:hover { background-color: var(--sunk); }
 
-/* ---------- I, Ink: content first, in the manner of Notion ----------
-   An off-white page, near-black ink, no shadows, 4 to 6px corners, grey hover rows, and status as muted colour tags
-   with coloured text on a soft tint. Text is Inter (loaded for W); titles stay in the same sans, heavier. Cookie value "i".
-   Night is Notion dark: tags become darker tints with light text. */
+/* Corners that flow into the edge, where the browser can draw them */
+@supports (corner-shape: squircle) {
+  :root[data-skin="m"] :is(.card, .stat, .pcard, .tlist, .callout, .side, .main, .topbar, .pop, .menu, .ts-drop, .modal, .drawer, .seg, .seg::before) { corner-shape: squircle; }
+}
+
+/* ---------- I, Ink: content first, in the manner of Craft and Notion ----------
+   Trait list. A paper-white page. One centred reading column with generous line height. A large, quiet page title.
+   Tasks are blocks: soft hover rows with a grip handle in the margin. Callouts and toggles are plain blocks.
+   The sidebar is soft grey and borderless. The top bar has almost no chrome. Cards, where they appear, are round
+   with a soft shadow. A project has a neutral page icon (no emoji: the data has none). Cookie value "i". Night is
+   Notion dark: tags become darker tints with light text. */
 :root[data-skin="i"] {
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-date: var(--font-sans);
   --type-date-xl: 600 28px/1.1 var(--font-sans);
   --type-date-lg: 600 21px/1.1 var(--font-sans);
   --type-date-phone: 600 34px/1.1 var(--font-sans);
-  --type-page-title: 700 30px/1.2 var(--font-sans);
-  --type-ask-title: 600 18px/1.3 var(--font-sans);
-  --type-line: 500 14.5px/1.5 var(--font-sans);
-  --type-body: 400 14.5px/1.55 var(--font-sans);
-  --type-meta: 400 13.5px/1.5 var(--font-sans);
+  --type-page-title: 600 40px/1.15 var(--font-sans);
+  --type-ask-title: 600 18px/1.35 var(--font-sans);
+  --type-line: 500 15px/1.55 var(--font-sans);
+  --type-body: 400 15px/1.7 var(--font-sans);
+  --type-meta: 400 14px/1.6 var(--font-sans);
   --type-state: 500 12.5px/1.4 var(--font-sans);
   --type-button: 500 13.5px/1.2 var(--font-sans);
-  --type-heading: 600 15.5px/1.3 var(--font-sans);
-  --type-small: 400 12.5px/1.5 var(--font-sans);
-  --track-title: -0.02em;
-  --radius-control: 4px;
-  --radius-card: 6px;
-  --radius-pill: 3px;
+  --type-heading: 600 16px/1.35 var(--font-sans);
+  --type-small: 400 12.5px/1.55 var(--font-sans);
+  --track-title: -0.025em;
+  --radius-control: 6px;
+  --radius-card: 16px;
+  --radius-pill: 4px;
   --pill-pad-y: 1px;
   --pill-pad-x: 6px;
-  --row-pad: 9px;
-  --page-max: 1000px;
-  --side-width: 240px;
-  --card-shadow: none;
-  --shadow-1: none;
-  --scrim: rgb(15 15 15 / 0.45);
+  --row-pad: 8px;
+  --page-max: 880px;
+  --side-width: 244px;
+  --drawer-width: 560px;
+  --space-section: 96px;
+  --card-shadow: 0 0 0 1px rgb(55 53 47 / 0.05), 0 2px 8px rgb(55 53 47 / 0.05), 0 14px 36px rgb(55 53 47 / 0.07);
+  --shadow-1: 0 0 0 1px rgb(15 15 15 / 0.05), 0 3px 8px rgb(15 15 15 / 0.1), 0 12px 32px rgb(15 15 15 / 0.14);
+  --scrim: rgb(15 15 15 / 0.4);
   --primary: #1b63ae;
   --on-primary: #ffffff;
   --primary-soft: #e4eff8;
   --ink: #37352f;
   --ink-2: #65635d;
   --ink-3: #6a6863;
-  --canvas: #fbfbfa;
+  --canvas: #ffffff;
   --surface: #ffffff;
-  --sunk: #f1f1ef;
+  --sunk: #f4f4f2;
   --pill: #ebebe8;
-  --hairline: #e9e9e7;
+  --hairline: #ebebe9;
   --line-strong: #d3d2ce;
   --ui-line: #8c8a84;
   --late: #b8291f;
@@ -942,13 +1051,15 @@
   --i-green-fg: #1b6b3a;
   --i-purple-bg: #e8deee;
   --i-purple-fg: #6b3c8f;
-  --side-sunk: #eeeeeb;
+  --side-sunk: #ecece9;
   --bar: #f7f7f5;
   --avatar-bg: var(--pill);
   --callout-bg: var(--sunk);
 }
 @media (prefers-color-scheme: dark) {
   :root[data-skin="i"]:not([data-theme="light"]) {
+    --card-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 2px 8px rgb(0 0 0 / 0.3), 0 14px 36px rgb(0 0 0 / 0.35);
+    --shadow-1: 0 0 0 1px rgb(255 255 255 / 0.08), 0 3px 8px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
     --scrim: rgb(0 0 0 / 0.6);
     --primary: #6bb0e8;
     --on-primary: #0e1a26;
@@ -958,9 +1069,9 @@
     --ink-3: #9b9a97;
     --canvas: #191919;
     --surface: #222222;
-    --sunk: #2c2c2c;
+    --sunk: #2a2a2a;
     --pill: #333333;
-    --hairline: #313131;
+    --hairline: #303030;
     --line-strong: #4a4a48;
     --ui-line: #7c7b78;
     --late: #f29b94;
@@ -980,6 +1091,8 @@
   }
 }
 :root[data-skin="i"][data-theme="dark"] {
+  --card-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 2px 8px rgb(0 0 0 / 0.3), 0 14px 36px rgb(0 0 0 / 0.35);
+  --shadow-1: 0 0 0 1px rgb(255 255 255 / 0.08), 0 3px 8px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
   --scrim: rgb(0 0 0 / 0.6);
   --primary: #6bb0e8;
   --on-primary: #0e1a26;
@@ -989,9 +1102,9 @@
   --ink-3: #9b9a97;
   --canvas: #191919;
   --surface: #222222;
-  --sunk: #2c2c2c;
+  --sunk: #2a2a2a;
   --pill: #333333;
-  --hairline: #313131;
+  --hairline: #303030;
   --line-strong: #4a4a48;
   --ui-line: #7c7b78;
   --late: #f29b94;
@@ -1010,12 +1123,27 @@
   --bar: #202020;
 }
 
-/* Quiet chrome: a light grey sidebar, the top bar the same colour as the page */
-:root[data-skin="i"] .side { --sunk: var(--side-sunk); }
+/* The page: one centred column, a big quiet title, room above it */
+:root[data-skin="i"] .page { padding-top: 56px; }
+:root[data-skin="i"] h1 { margin-bottom: var(--space-sm); font-weight: 600; }
+:root[data-skin="i"] .page-head { margin-bottom: var(--space-xl); }
+:root[data-skin="i"] .group { margin-top: 48px; }
+:root[data-skin="i"] .group > h2 { font: 500 13px/1.4 var(--font-sans); color: var(--ink-2); }
+@media (max-width: 860px) {
+  :root[data-skin="i"] { --type-page-title: 600 30px/1.2 var(--font-sans); --space-section: 56px; }
+  :root[data-skin="i"] .page { padding-top: 24px; }
+}
+
+/* Chrome that almost disappears: a soft grey sidebar with no edge, a top bar the colour of the page */
+:root[data-skin="i"] .side { --sunk: var(--side-sunk); border-right: 0; }
 :root[data-skin="i"] .topbar { background: var(--canvas); border-bottom-color: transparent; }
-:root[data-skin="i"] .nav a { border-radius: 4px; }
 :root[data-skin="i"] .mark-name { font: 600 15px/1.3 var(--font-sans); }
-:root[data-skin="i"] h1 { margin-bottom: var(--space-xs); }
+:root[data-skin="i"] .nav a { border-radius: 6px; }
+:root[data-skin="i"] .nav a svg { color: var(--ink-3); }
+@media (min-width: 861px) { :root[data-skin="i"] .nav a { min-height: 32px; } }
+:root[data-skin="i"] .nav .nav-new { margin-top: var(--space-xs); background: transparent; color: var(--ink-2); justify-content: flex-start; font: inherit; }
+:root[data-skin="i"] .nav .nav-new:hover, :root[data-skin="i"] .nav .nav-new[aria-current="page"] { background: var(--sunk); color: var(--ink); }
+:root[data-skin="i"] .profile-wrap { border-top-color: transparent; }
 
 /* Tags: soft tint, coloured text. Each pair passes 4.5:1 on its tint and on the page. */
 :root[data-skin="i"] .tone-idle { --tone-bg: var(--i-grey-bg); --tone-fg: var(--i-grey-fg); }
@@ -1023,15 +1151,83 @@
 :root[data-skin="i"] .tone-done { --tone-bg: var(--i-green-bg); --tone-fg: var(--i-green-fg); }
 :root[data-skin="i"] .tone-ok { --tone-bg: var(--i-purple-bg); --tone-fg: var(--i-purple-fg); }
 
-/* Pickers: a hairline box, the chosen one a grey fill and not an inverted block */
-:root[data-skin="i"] .seg { border-color: var(--line-strong); border-radius: 4px; }
-:root[data-skin="i"] .seg button, :root[data-skin="i"] .seg-link { background: transparent; }
-:root[data-skin="i"] .seg button[aria-pressed="true"], :root[data-skin="i"] .seg-link.on,
+/* Task rows are blocks: no box, a soft hover, and a grip handle in the margin that shows on hover */
+:root[data-skin="i"] .tlist { background: transparent; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
+:root[data-skin="i"] .trow { position: relative; border-top: 0; border-radius: 8px; }
+:root[data-skin="i"] .trow:hover { background: var(--sunk); }
+:root[data-skin="i"] .trow-main:hover .trow-title { color: var(--ink); }
+:root[data-skin="i"] .trow::before { content: ""; position: absolute; left: -22px; top: 50%; width: 10px; height: 16px; margin-top: -8px; color: var(--ink-3);
+  background: radial-gradient(circle, currentColor 1.1px, transparent 1.5px) 0 0 / 5px 5px; opacity: 0; pointer-events: none; transition: opacity var(--dur-state) var(--ease); }
+:root[data-skin="i"] .trow:hover::before, :root[data-skin="i"] .trow:focus-within::before { opacity: 0.8; }
+@media (max-width: 860px) { :root[data-skin="i"] .trow::before { display: none; } }
+
+/* The project board is a table. It reads as blocks too: no box, soft rows, the same grip handle. */
+:root[data-skin="i"] .card.table-card { background: transparent; box-shadow: none; border-radius: 0; }
+:root[data-skin="i"] table.board tbody tr:hover > td { background: var(--sunk); }
+:root[data-skin="i"] table.board tbody tr:hover > td:first-child { border-radius: 8px 0 0 8px; }
+:root[data-skin="i"] table.board tbody tr:hover > td:last-child { border-radius: 0 8px 8px 0; }
+:root[data-skin="i"] table.board td.check-cell { position: relative; }
+:root[data-skin="i"] table.board td.check-cell::before { content: ""; position: absolute; left: -22px; top: 14px; width: 10px; height: 16px; color: var(--ink-3);
+  background: radial-gradient(circle, currentColor 1.1px, transparent 1.5px) 0 0 / 5px 5px; opacity: 0; pointer-events: none; transition: opacity var(--dur-state) var(--ease); }
+:root[data-skin="i"] table.board tr:hover td.check-cell::before { opacity: 0.8; }
+@media (min-width: 861px) { :root[data-skin="i"] .card.table-card { overflow: visible; } }
+@media (max-width: 860px) { :root[data-skin="i"] table.board td.check-cell::before { display: none; } }
+
+/* Toggles and callouts are plain blocks. A callout carries a neutral icon on the left. */
+:root[data-skin="i"] .log-toggle { margin-left: -8px; padding: 4px 8px; border-radius: 6px; font: 500 14px/1.4 var(--font-sans); color: var(--ink-2); }
+:root[data-skin="i"] .log-toggle:hover { background: var(--sunk); color: var(--ink); }
+:root[data-skin="i"] details.breakdown > summary { font: 500 14px/1.4 var(--font-sans); color: var(--ink-2); }
+:root[data-skin="i"] .callout { position: relative; background: var(--sunk); box-shadow: none; border-radius: 10px; padding: var(--space-md) var(--space-md) var(--space-md) 52px; }
+:root[data-skin="i"] .callout::before { content: ""; position: absolute; left: 18px; top: 19px; width: 20px; height: 20px; background: var(--ink-3);
+  -webkit-mask: var(--i-icon-info) center / contain no-repeat; mask: var(--i-icon-info) center / contain no-repeat; }
+:root[data-skin="i"] {
+  --i-icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 8h.01'/%3E%3C/svg%3E");
+  --i-icon-page: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3.5h8l4 4V20.5H6z'/%3E%3Cpath d='M14 3.5v4h4M9 12.5h6M9 16h6'/%3E%3C/svg%3E");
+}
+
+/* Cards: round, with Craft's soft shadow */
+:root[data-skin="i"] :is(.card, .stat, .pcard) { border: 0; box-shadow: var(--card-shadow); border-radius: 16px; }
+:root[data-skin="i"] .pcard:hover { background: var(--surface); box-shadow: 0 0 0 1px rgb(55 53 47 / 0.08), 0 4px 12px rgb(55 53 47 / 0.08), 0 18px 40px rgb(55 53 47 / 0.1); }
+:root[data-skin="i"] .tlist > .trow:only-child, :root[data-skin="i"] .card .tlist { box-shadow: none; }
+:root[data-skin="i"] .pcard-goal { color: var(--ink-2); }
+
+/* A project's neutral page icon. The data has no emoji, so this is a plain mask in the quiet ink. */
+:root[data-skin="i"] .pcard-name::before { content: ""; display: block; width: 22px; height: 22px; margin-bottom: 8px; background: var(--ink-3);
+  -webkit-mask: var(--i-icon-page) center / contain no-repeat; mask: var(--i-icon-page) center / contain no-repeat; }
+:root[data-skin="i"] .phead h1::before { content: ""; display: block; width: 44px; height: 44px; margin-bottom: 14px; background: var(--ink-3);
+  -webkit-mask: var(--i-icon-page) center / contain no-repeat; mask: var(--i-icon-page) center / contain no-repeat; }
+:root[data-skin="i"] .phead-goal { font: var(--type-body); }
+
+/* Pickers: plain view tabs, the chosen one on a soft grey block */
+:root[data-skin="i"] .seg { border: 0; border-radius: 0; gap: 2px; overflow: visible; }
+:root[data-skin="i"] .seg button, :root[data-skin="i"] .seg-link { background: transparent; border-radius: 6px; color: var(--ink-2); }
+:root[data-skin="i"] .seg button:hover:not([aria-pressed="true"]) { background: var(--sunk); color: var(--ink); }
+:root[data-skin="i"] .seg button[aria-pressed="true"], :root[data-skin="i"] .seg-link.on { background: var(--pill); color: var(--ink); font-weight: 600; }
 :root[data-skin="i"] .pill[aria-pressed="true"] { background: var(--pill); color: var(--ink); border-color: var(--line-strong); }
 :root[data-skin="i"] .btn.ghost { background: var(--surface); }
+:root[data-skin="i"] .tabs, :root[data-skin="i"] .proj-tabs { border-bottom-color: var(--hairline); }
+
+/* Pop-ups: Notion's floating block. Hover rows are soft grey, never a coloured fill. */
+:root[data-skin="i"] :is(.pop, .menu, .ts-drop) { border: 0; border-radius: 10px; box-shadow: var(--shadow-1); padding: 6px; }
+:root[data-skin="i"] .ts-drop { padding: 0; }
+:root[data-skin="i"] .pop:not(.pop-sheet) { max-height: min(400px, 70vh); }
+:root[data-skin="i"] :is(.menu, .pop) :is(.st-opt, .st-act, .menu > button) { line-height: 1.35; }
+:root[data-skin="i"] :is(.sel-opt, .menu > *, .st-opt, .st-act) { border-radius: 6px; }
+:root[data-skin="i"] .modal { border: 0; border-radius: 14px; box-shadow: var(--shadow-1); }
+:root[data-skin="i"] .drawer { border-left: 0; padding: var(--space-lg) var(--space-xl) var(--space-xxl); gap: var(--space-md); }
+:root[data-skin="i"] .drawer-title { font: 600 26px/1.25 var(--font-sans); letter-spacing: var(--track-title); }
+:root[data-skin="i"] .pop.pop-sheet { border-width: 0; border-radius: 16px 16px 0 0; }
+@media (max-width: 600px) { :root[data-skin="i"] .drawer { padding: var(--space-md); } :root[data-skin="i"] .drawer-title { font-size: 22px; } }
 
 /* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
 :root[data-skin="i"] :is(input, select, textarea, .sel-btn):not(.drawer-title, .drawer-desc, :focus, [aria-expanded="true"]) { border-color: var(--ui-line); }
+
+/* ---------- View as banner, Mac and Ink ----------
+   The grey banner and its hairline Back button blended into the chrome in these two skins. It is now amber, which
+   neither skin uses for anything else, with a solid 2px edge and a Back button edged in the same amber. */
+:root[data-skin="m"] .view-banner, :root[data-skin="i"] .view-banner { background: var(--off-soft); color: var(--ink); border-bottom: 2px solid var(--off); }
+:root[data-skin="m"] .vb-back, :root[data-skin="i"] .vb-back { background: var(--surface); color: var(--ink); border: 1px solid var(--off); }
+:root[data-skin="m"] .vb-back:hover, :root[data-skin="i"] .vb-back:hover { background: var(--sunk); }
 
 /* The status picker keeps room for its chevron when the pill padding is tight. */
 :root[data-skin="m"] .st-pick, :root[data-skin="i"] .st-pick { padding-right: 26px; }
