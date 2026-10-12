@@ -434,6 +434,8 @@ tr.line-row.is-open td { background: var(--sunk); border-bottom-color: transpare
 .mode { display: table; margin-top: var(--space-xxs); font: var(--type-small); color: var(--ink-3); }
 .mode.coach { color: var(--off); }
 td.by { font: var(--type-small); font-feature-settings: var(--features-date); }
+/* the pushed-date note wraps inside a narrow Due column instead of running into the status chip */
+table.plan td.by .pushed { white-space: normal; }
 .by-main { font-weight: 500; }
 .by-main.overdue { color: var(--late); }
 .ms-count { color: var(--ink-3); font: var(--type-small); }
@@ -562,7 +564,7 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
   table.plan tr { display: block; }
   table.plan td { display: block; border: 0; padding: 0; }
   table.plan tr.line-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr) auto;
-    grid-template-areas: "check what what act" ". owner partner partner" ". due status status";
+    grid-template-areas: "check what what act" ". owner owner owner" ". partner partner partner" ". due status status";
     gap: var(--space-sm); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-md); margin-bottom: var(--space-sm); }
   table.plan tr.line-row > td.check-cell { grid-area: check; }
   table.plan tr.line-row > td.num { display: none; }
@@ -573,6 +575,7 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
   table.plan tr.line-row > td:nth-child(7) { grid-area: status; justify-self: start; }
   table.plan tr.line-row > td.act-cell { grid-area: act; width: auto; }
   table.plan tr.line-row > td[data-label]::before { content: attr(data-label); display: block; font: var(--type-small); color: var(--ink-3); margin-bottom: var(--space-xxs); }
+  table.plan tr.line-row .tbn { margin-left: 0; }
   table.plan tr.line-row.is-open { border-radius: var(--radius-card) var(--radius-card) 0 0; margin-bottom: 0; }
   table.plan tr.detail-row, table.plan tr.prompt-row, table.plan tr.editing-row { border: var(--rule) solid var(--hairline); border-top: 0; border-radius: 0 0 var(--radius-card) var(--radius-card); margin: 0 0 var(--space-sm); overflow: hidden; }
   table.plan tr.detail-row td, table.plan tr.prompt-row td, table.plan tr.editing-row td { padding: var(--space-sm) var(--space-md); }
@@ -715,13 +718,20 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 /* project header */
 .crumb { margin-bottom: var(--space-sm); }
 .phead { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); margin-bottom: var(--space-lg); }
+.phead-main { flex: 1 1 0; min-width: 0; }
 .phead h1 { margin: 0 0 var(--space-xxs); }
 .phead .eyebrow { margin-bottom: var(--space-xs); }
 .phead-meta { display: flex; flex-wrap: wrap; gap: var(--space-xxs) var(--space-lg); margin: 0; font: var(--type-meta); }
 .phead-meta b { font: var(--type-small); color: var(--ink-3); margin-right: var(--space-xxs); }
-.phead-actions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); flex: none; }
+.phead-actions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); flex: 0 1 auto; min-width: 0; max-width: 100%; }
 .phead-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-xs); }
 .phead-actions .err { max-width: 30ch; text-align: right; margin: 0; }
+@media (max-width: 720px) {
+  .phead { flex-direction: column; align-items: stretch; }
+  .phead-actions { align-items: flex-start; }
+  .phead-btns { justify-content: flex-start; }
+  .phead-actions .err { text-align: left; }
+}
 .task-head .mini-btn { margin-top: var(--space-xs); }
 .head-side { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
 .head-side .summary { margin: 0; }
@@ -1173,7 +1183,11 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
   .act, .linkbtn, .mini-btn, .row-btn, .tab, .proj-tab, .seg-link, .callout-row, .log-toggle, .small-toggle, .num-btn { min-height: var(--button-height); }
   .act, .linkbtn, .mini-btn, .row-btn, .tab, .proj-tab, .seg-link, .log-toggle, .small-toggle { display: inline-flex; align-items: center; justify-content: center; }
   .row-btn { min-width: var(--button-height); }
-  .num-btn { display: inline-flex; align-items: center; }
+  .num-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; }
+  /* Plain links and the row opener are shorter than 24px; the hit area grows, the look does not. */
+  .row-open { min-height: 24px; }
+  a.plink, .drill-name { position: relative; }
+  a.plink::after, .drill-name::after { content: ""; position: absolute; inset: -4px 0; }
   .task-link { display: inline-block; padding: var(--space-xs) 0; }
   .st-pick, .status-sel, .status-picker button { min-height: var(--button-height); }
   .chip button { min-width: var(--button-height); min-height: var(--button-height); margin: calc(var(--space-xs) * -1) calc(var(--space-xs) * -1) calc(var(--space-xs) * -1) 0; }
@@ -1299,3 +1313,26 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .pg-grid { margin-top: var(--space-md); }
 .pg-grid > .card { margin-top: 0; }
 .drawer-copy { margin-left: auto; margin-right: var(--space-xs); }
+
+/* ---------- phone: a quiet edge fade on the tab rows that scroll sideways, so a cut item reads as "more this way" ---------- */
+@property --fade-l { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --fade-r { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@keyframes fade-l-in { from { --fade-l: 0px; } to { --fade-l: 24px; } }
+@keyframes fade-r-out { from { --fade-r: 24px; } to { --fade-r: 0px; } }
+@media (max-width: 860px) {
+  .nav, .tabs, .proj-tabs {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  }
+  @supports not (animation-timeline: scroll()) {
+    .nav, .tabs, .proj-tabs { --fade-r: 24px; }
+  }
+  /* Where scroll-driven animation exists, each fade shows only on the side that still has more. A row that does not scroll gets none. Elsewhere the right fade stays. */
+  @supports (animation-timeline: scroll()) {
+    .nav, .tabs, .proj-tabs {
+      animation: fade-l-in linear both, fade-r-out linear both;
+      animation-timeline: scroll(self inline), scroll(self inline);
+      animation-range: 0px 24px, calc(100% - 24px) 100%;
+    }
+  }
+}
