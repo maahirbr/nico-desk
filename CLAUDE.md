@@ -253,6 +253,16 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   tap on a control explains it and the second tap acts. Rollback: `git revert -m 1` the merge of workstream 2; the
   `nd_help` cookie then does nothing.
 
+- 2026-10-12 · Sonnet 5.5 · People pages, task links and cross-links (workstream 3). Each person has `/people/[id]`
+  (`personView` in `web/lib/service.ts`), and a name anywhere links there through `PersonLink` (`web/components/chips.tsx`).
+  A task opens in the side panel from a `?task=` URL (`web/components/taskUrl.ts`), so a task can be shared by link. A task
+  holds up to 10 links (`task_links`, `web/lib/links.ts`): http and https only, no user name or password in the URL, opened
+  with noopener and noreferrer. Adding or removing a link needs the same right as editing the task, and logs an event.
+  The new table has RLS on with no policies, like every other table. The hosted database needs the table before any build
+  with this change is promoted: `cd web && npx tsx --env-file=.env.remote.local scripts/upgrade-task-links.ts` (adds the
+  table only, keeps all data). `npm run db:upgrade` also creates it. Rollback: `git revert -m 1 7595485`, then
+  `DROP TABLE task_links;` on the hosted database if it was created.
+
 ## VERIFY
 
 ```
@@ -262,7 +272,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `138 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `157 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
