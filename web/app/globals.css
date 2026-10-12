@@ -715,13 +715,20 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 /* project header */
 .crumb { margin-bottom: var(--space-sm); }
 .phead { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); margin-bottom: var(--space-lg); }
+.phead-main { flex: 1 1 0; min-width: 0; }
 .phead h1 { margin: 0 0 var(--space-xxs); }
 .phead .eyebrow { margin-bottom: var(--space-xs); }
 .phead-meta { display: flex; flex-wrap: wrap; gap: var(--space-xxs) var(--space-lg); margin: 0; font: var(--type-meta); }
 .phead-meta b { font: var(--type-small); color: var(--ink-3); margin-right: var(--space-xxs); }
-.phead-actions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); flex: none; }
+.phead-actions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); flex: 0 1 auto; min-width: 0; max-width: 100%; }
 .phead-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-xs); }
 .phead-actions .err { max-width: 30ch; text-align: right; margin: 0; }
+@media (max-width: 720px) {
+  .phead { flex-direction: column; align-items: stretch; }
+  .phead-actions { align-items: flex-start; }
+  .phead-btns { justify-content: flex-start; }
+  .phead-actions .err { text-align: left; }
+}
 .task-head .mini-btn { margin-top: var(--space-xs); }
 .head-side { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
 .head-side .summary { margin: 0; }
