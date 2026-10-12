@@ -49,7 +49,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           workstreams={p.workstreams}
           proposals={await pendingProposals(d, p.id)}
           log={groupLog(await projectLog(d, p.id, 60), names, { [p.id]: p.name }).map((e) => ({
-            id: e.key, at: fmtStamp(e.at), who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
+            id: e.key, at: fmtStamp(e.at), whoId: e.actor_id, who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
             text: e.text, task: e.taskTitle, taskId: e.entity_id, reason: null,
           }))}
         />

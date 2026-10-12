@@ -7,7 +7,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
-import { Avatar, type Tone } from './chips';
+import { Avatar, PersonLink, type Tone } from './chips';
+import { LinkChip, TaskLinkChips } from './TaskLinks';
+import { LINKS_PER_TASK } from '@/lib/links';
 import { groupLog } from './logText';
 import { canMoveTo } from './statusRules';
 import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
@@ -163,6 +165,13 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
   const [arrive] = useState(() => arrivals.delete(t.id));
   const oldDate = usePreviousWhileChanging(t.dueOn, 360);
   const stateFrom = usePreviousWhileChanging(key, 140);
+  const main = (
+    <button className="trow-main" onClick={onOpen}>
+      <span className="trow-title">{t.title}</span>
+      {desc && <span className="trow-desc">{desc}</span>}
+      {(sub || err) && <span className={`trow-sub${err ? ' err' : ''}`}>{err ?? sub}</span>}
+    </button>
+  );
   return (
     <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}`}>
       <span className="trow-check">
@@ -175,12 +184,8 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
             }} />
         )}
       </span>
-      <button className="trow-main" onClick={onOpen}>
-        <span className="trow-title">{t.title}</span>
-        {desc && <span className="trow-desc">{desc}</span>}
-        {(sub || err) && <span className={`trow-sub${err ? ' err' : ''}`}>{err ?? sub}</span>}
-      </button>
-      {owner !== undefined && <span className="trow-owner"><Avatar name={owner} />{owner.split(' ')[0]}</span>}
+      {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
+      {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar name={owner} />{owner.split(' ')[0]}</PersonLink>}
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
@@ -278,6 +283,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [showLog, setShowLog] = useState(false);
   const [target, setTarget] = useState<StatusKey>('todo');
   const [unNote, setUnNote] = useState('');
+  const [linkForm, setLinkForm] = useState({ url: '', label: '' });
   const [closing, close] = useClosing(onClose);
 
   async function load() {
@@ -327,6 +333,21 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (f) { setTarget(startStatus); setMode(f); }
   }, [t]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function addLink() {
+    if (!t) return;
+    setBusy(true); setErr(null);
+    try {
+      await api(`/tasks/${t.id}/links`, 'POST', { url: linkForm.url.trim(), label: linkForm.label.trim() || null });
+      notify('Link added'); setLinkForm({ url: '', label: '' }); await load(); router.refresh();
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
+  async function removeLink(linkId: string) {
+    if (!t) return;
+    setBusy(true); setErr(null);
+    try { await api(`/tasks/${t.id}/links/${linkId}`, 'DELETE'); notify('Link removed'); await load(); router.refresh(); }
+    catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
+
   const body: Record<string, unknown> = {};
   if (t) {
     if (edit.title.trim() !== t.title) body.title = edit.title.trim();
@@ -342,7 +363,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     <div className={`overlay drawer-overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
       <aside className="drawer" role="dialog" aria-modal="true" aria-label="Task">
         <div className="drawer-top">
-          <span className="small dim">{t ? [t.projectId ? projectNames[t.projectId] : 'No project', t.workstream].filter(Boolean).join(' · ') : ''}</span>
+          <span className="small dim">
+            {t && (t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId] ?? 'Project'}</Link> : 'No project')}
+            {t?.workstream && <> · {t.workstream}</>}
+          </span>
+          {t && <button className="mini-btn drawer-copy" type="button" onClick={async () => {
+            try { await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?task=${t.id}`); notify('Link to this task copied'); }
+            catch { notify('Could not copy. Copy the address from the bar.'); }
+          }}>Copy link</button>}
           <button className="x" aria-label="Close" onClick={close}>×</button>
         </div>
         {!t ? <p className="empty">{err ?? 'Loading…'}</p> : (
@@ -416,7 +444,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {t.blocked && (
               <div className="ask">
-                <span className="ask-label">{t.blocked.onId ? `Waiting on ${names[t.blocked.onId] ?? 'someone'}` : 'Blocked'}</span>
+                <span className="ask-label">{t.blocked.onId ? <>Waiting on <PersonLink id={t.blocked.onId}>{names[t.blocked.onId] ?? 'someone'}</PersonLink></> : 'Blocked'}</span>
                 <div>{t.blocked.ask}</div>
                 {can && open && (
                   <div className="ask-unblock">
@@ -434,7 +462,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               <dt>Owner</dt>
               <dd>{can && open && mode !== 'reassign' ? (
                 <OwnerPicker key={pickKey} projectId={t.projectId} value={edit.ownerId} people={people} onChange={(ownerId, ownerRole) => setEdit({ ...edit, ownerId, ownerRole })} />
-              ) : <span className="person-cell"><Avatar name={names[t.ownerId] ?? t.ownerId} />{names[t.ownerId] ?? t.ownerId}</span>}</dd>
+              ) : <PersonLink id={t.ownerId} className="person-cell"><Avatar name={names[t.ownerId] ?? t.ownerId} />{names[t.ownerId] ?? t.ownerId}</PersonLink>}</dd>
 
               <dt>Due</dt>
               <dd>
@@ -460,6 +488,26 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 : t.note || <span className="dim">None</span>}</dd>
             </dl>
 
+            {(t.links.length > 0 || canEdit) && (
+              <div className="drawer-links">
+                <h3>Links</h3>
+                {t.links.length > 0 && (
+                  <div className="lchips">
+                    {t.links.map((l) => <LinkChip key={l.id} l={l} onRemove={canEdit ? () => removeLink(l.id) : undefined} />)}
+                  </div>
+                )}
+                {canEdit && t.links.length < LINKS_PER_TASK && (
+                  <form className="link-add" noValidate onSubmit={(e) => { e.preventDefault(); addLink(); }}>
+                    <input type="url" inputMode="url" enterKeyHint="done" autoComplete="off" maxLength={2000} value={linkForm.url} aria-label="Link address"
+                      placeholder="Paste a link: Doc, Sheet, Figma…" onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
+                    <input maxLength={80} enterKeyHint="done" autoComplete="off" value={linkForm.label} aria-label="Link name (optional)" placeholder="Name (optional)"
+                      onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} />
+                    <button className="btn" disabled={busy || !linkForm.url.trim()}>Add link</button>
+                  </form>
+                )}
+              </div>
+            )}
+
             {dirty && mode !== 'reassign' && (
               <div className="row">
                 <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved')}>Save changes</button>
@@ -481,7 +529,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 {entries.map((e) => (
                   <li key={e.key}>
                     <span className="when">{fmtStamp(e.at)}</span>
-                    <span><b>{e.actorName ?? 'System'}</b> {e.text}</span>
+                    <span><PersonLink id={e.actor_id}><b>{e.actorName ?? 'System'}</b></PersonLink> {e.text}</span>
                   </li>
                 ))}
               </ol>

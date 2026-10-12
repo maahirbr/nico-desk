@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Health, Outcome, Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 
@@ -55,6 +56,12 @@ export function Avatar({ name, lg = false, you = false }: { name: string; lg?: b
   return <span className={`av${lg ? ' lg' : ''}${you ? ' you' : ''}`} style={{ '--h': h } as React.CSSProperties} aria-hidden>{initials}</span>;
 }
 
-export function Person({ name }: { name: string }) {
-  return <span className="person-cell"><Avatar name={name} />{name}</span>;
+// A person's name or mark that opens their page (/people/[id]). Without an id it is plain text.
+export function PersonLink({ id, className, children }: { id?: string | null; className?: string; children: React.ReactNode }) {
+  if (!id) return <span className={className}>{children}</span>;
+  return <Link href={`/people/${id}`} className={`plink${className ? ` ${className}` : ''}`}>{children}</Link>;
+}
+
+export function Person({ name, id }: { name: string; id?: string }) {
+  return <PersonLink id={id} className="person-cell"><Avatar name={name} />{name}</PersonLink>;
 }

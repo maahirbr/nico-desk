@@ -42,7 +42,7 @@ export async function search(db: Tx, teamId: string, q: string, today = todayIst
   }
   for (const p of people.filter((x) => x.active)) {
     if (has(`${p.displayName} ${p.role} ${p.department}`.toLowerCase()))
-      hits.push({ kind: 'person', id: p.id, title: p.displayName, sub: `${p.role} · ${p.department}`, href: `/team`, r: rank(p.displayName) });
+      hits.push({ kind: 'person', id: p.id, title: p.displayName, sub: `${p.role} · ${p.department}`, href: `/people/${p.id}`, r: rank(p.displayName) });
   }
   const order = { project: 0, person: 1, task: 2, line: 3 };
   return hits.sort((a, b) => a.r - b.r || order[a.kind] - order[b.kind]).slice(0, 60).map(({ r: _r, ...h }) => h as SearchHit);

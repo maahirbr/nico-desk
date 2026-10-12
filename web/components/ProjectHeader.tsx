@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
 import { fmtDate } from '@/lib/time';
-import { Avatar } from './chips';
+import { Avatar, PersonLink } from './chips';
 import { ProjectForm } from './ProjectForm';
 import { Modal, type Opt } from './task-ui';
 
@@ -29,9 +29,9 @@ export function ProjectHeader({ project: p, members, names, people, meId, canEdi
         </p>
         {p.intro && <p className="phead-goal">{p.intro}</p>}
         <div className="phead-team">
-          <span className="tm"><Avatar name={names[p.ownerId] ?? '?'} /><span><b>{names[p.ownerId]}</b><span className="dim">Project lead</span></span></span>
+          <PersonLink id={p.ownerId} className="tm"><Avatar name={names[p.ownerId] ?? '?'} /><span><b>{names[p.ownerId]}</b><span className="dim">Project lead</span></span></PersonLink>
           {membersExceptLead(members, p.ownerId).map((m) => (
-            <span key={m.personId} className="tm"><Avatar name={names[m.personId] ?? '?'} /><span><b>{names[m.personId]}</b><span className="dim">{m.role}</span></span></span>
+            <PersonLink key={m.personId} id={m.personId} className="tm"><Avatar name={names[m.personId] ?? '?'} /><span><b>{names[m.personId]}</b><span className="dim">{m.role}</span></span></PersonLink>
           ))}
         </div>
       </div>

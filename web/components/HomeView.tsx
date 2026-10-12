@@ -4,6 +4,8 @@ import { useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
+import { PersonLink } from './chips';
+import { useOpenTask } from './taskUrl';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
@@ -16,7 +18,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
   const readOnly = useReadOnly();
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
   const [adding, setAdding] = useState(false);
   const [showDone, setShowDone] = useState(false);
@@ -56,10 +58,10 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section className="callout">
           <h2>Waiting on you</h2>
           {waiting.map((t) => (
-            <button key={t.id} className="callout-row" onClick={() => open(t.id)}>
-              <b>{names[t.ownerId]?.split(' ')[0]}</b> needs: {t.blocked?.ask}
-              <span className="dim"> · for “{t.title}”</span>
-            </button>
+            <div key={t.id} className="callout-row">
+              <PersonLink id={t.ownerId}><b>{names[t.ownerId]?.split(' ')[0]}</b></PersonLink>
+              <button className="callout-link" onClick={() => open(t.id)}> needs: {t.blocked?.ask}<span className="dim"> · for “{t.title}”</span></button>
+            </div>
           ))}
         </section>
       )}

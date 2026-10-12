@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ReminderDraft } from '@/lib/reminders';
-import { Avatar } from './chips';
+import { Avatar, PersonLink } from './chips';
 import { useReadOnly } from './readonly';
 
 // Each draft opens in the lead's own Gmail (or mail app) with the text filled in. The lead
@@ -34,7 +34,7 @@ function Card({ d }: { d: ReminderDraft }) {
   return (
     <section className="card remind-card" id={`remind-${d.personId}`}>
       <div className="remind-head">
-        <span className="person-cell"><Avatar name={d.name} lg /><span><b>{d.name}</b>
+        <span className="person-cell"><Avatar name={d.name} lg /><span><PersonLink id={d.personId}><b>{d.name}</b></PersonLink>
           <span className="small dim"> · {d.items.length} {d.items.length === 1 ? 'item' : 'items'}{over ? `, ${over} overdue` : ''}{last ? ` · ${ago(last)}` : ''}</span></span></span>
       </div>
       <label className="f"><span>To</span><input type="email" value={to} readOnly={readOnly} placeholder="No email on file. Add one, or copy the text instead" onChange={(e) => setTo(e.target.value)} /></label>

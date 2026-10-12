@@ -8,7 +8,7 @@ import {
   type PlanAction, type PlanLine, type Proposal,
 } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
-import { Avatar } from './chips';
+import { Avatar, PersonLink } from './chips';
 import { DateField } from './DateField';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
@@ -194,7 +194,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             </button>
           </td>
           <td className="owner-td" data-label="Owner">
-            {l.ownerId ? <span className="person-cell"><Avatar name={ownerName(l)} />{ownerName(l)}</span> : <span className="tbn">Pending</span>}
+            {l.ownerId ? <PersonLink id={l.ownerId} className="person-cell"><Avatar name={ownerName(l)} />{ownerName(l)}</PersonLink> :<span className="tbn">Pending</span>}
             {l.ownerWith && <div className="who-with">with {l.ownerWith}</div>}
           </td>
           <td className="owner-td" data-label={partner}>

@@ -776,3 +776,64 @@ export async function updatesView(
   });
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }
+
+// ---------- a person's page ----------
+
+export type PersonProject = { id: string; name: string; role: string };
+export type OnTimeRecord = { from: string; to: string; ahead: number; onTime: number; late: number; openPastDue: number; renegotiated: number };
+export type PersonView = {
+  person: Person;
+  projects: PersonProject[];
+  open: Task[]; // their open tasks
+  waitingOnThem: Task[]; // other people's open tasks blocked on this person
+  waitingOnOthers: Task[]; // their open tasks blocked on someone else
+  recent: (LogLine & { taskTitle: string })[]; // events on their tasks, or made by them, newest first
+  record: OnTimeRecord | null; // null unless the viewer is a lead, an admin, or this person (the ledger's own rule)
+};
+
+// What one teammate is doing, drawn only from what a teammate can already read: team tasks and their logs, and
+// project membership. The on-time record follows the ledger's rule: leads and admins see everyone, a member sees only their own.
+export async function personView(db: Db, teamId: string, meId: string, personId: string, today = todayIst(), weeks = 4): Promise<PersonView> {
+  const person = await getPerson(db, teamId, personId);
+  if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
+  const viewerRoles = await rolesIn(db, teamId, meId);
+  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles);
+  const tasks = await teamTasks(db, teamId, today);
+  const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
+  const open = tasks.filter((t) => t.statusCategory === 'open');
+  const [proj, rec] = await Promise.all([
+    db.query<{ id: string; name: string; role: string }>(
+      `SELECT pr.id, pr.name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
+       LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
+       WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) ORDER BY pr.name`,
+      [teamId, personId],
+    ),
+    db.query<LogLine & { taskTitle: string }>(
+      `SELECT e.*, a.display_name AS "actorName", t.title AS "taskTitle" FROM events e
+       JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
+       LEFT JOIN people a ON a.id = e.actor_id
+       WHERE t.team_id = $1 AND (t.owner_id = $2 OR e.actor_id = $2) ORDER BY e.at DESC, e.id DESC LIMIT 60`,
+      [teamId, personId],
+    ),
+  ]);
+  let record: OnTimeRecord | null = null;
+  if (mayRecord) {
+    const to = mondayOf(today);
+    const from = addDays(to, -7 * (weeks - 1));
+    const sum: OnTimeRecord = { from, to, ahead: 0, onTime: 0, late: 0, openPastDue: 0, renegotiated: 0 };
+    for (const r of await ledger(db, teamId, from, to, personId, today)) {
+      sum.ahead += r.closedAhead; sum.onTime += r.closedOnTime; sum.late += r.closedLate;
+      sum.openPastDue += r.openPastDue; sum.renegotiated += r.renegotiatedOpen + r.renegotiatedLate;
+    }
+    record = sum;
+  }
+  return {
+    person,
+    projects: proj.rows,
+    open: open.filter((t) => t.ownerId === personId).sort(byDue),
+    waitingOnThem: open.filter((t) => t.blocked?.onId === personId && t.ownerId !== personId).sort(byDue),
+    waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
+    recent: rec.rows,
+    record,
+  };
+}

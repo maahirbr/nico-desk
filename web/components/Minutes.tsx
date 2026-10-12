@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { PlanLine, Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
+import { PersonLink } from './chips';
 import { DateField } from './DateField';
 import { Select } from './Select';
 
@@ -204,7 +205,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
         <div>
           <div className="pc-task">{p.task}</div>
           <div className="small dim">
-            <b className="pc-owner">{p.ownerName || 'No owner named'}</b>{p.ownerWith && ` · with ${p.ownerWith}`}
+            <b className="pc-owner">{mode === 'tasks' && ownerId ? <PersonLink id={ownerId}>{people.find((x) => x.id === ownerId)?.name ?? p.ownerName}</PersonLink> : p.ownerName || 'No owner named'}</b>{p.ownerWith && ` · with ${p.ownerWith}`}
             <span className={p.dueOn && p.dueOn < today ? 'late' : ''}>{p.dueOn ? ` · due ${fmtDate(p.dueOn)}` : ' · no date'}</span>
           </div>
         </div>

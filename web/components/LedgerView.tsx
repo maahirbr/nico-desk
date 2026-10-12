@@ -6,7 +6,7 @@ import type { Task } from '@/lib/derive';
 import { attentionList } from '@/lib/attention';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
-import { Avatar, Person } from './chips';
+import { Avatar, Person, PersonLink } from './chips';
 
 // The on-time ledger. Judged against the date first given (INTENT.md principle 1). Every number
 // opens the tasks behind it, with each date move and its reason. The cards show delivery habits per
@@ -122,7 +122,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           return (
             <section key={p.id} className="card habit">
               <div className="habit-head">
-                <Avatar name={p.name} lg /><span><b>{p.name}</b><span className="dim small">{p.role}</span></span>
+                <Avatar name={p.name} lg /><span><PersonLink id={p.id}><b>{p.name}</b></PersonLink><span className="dim small">{p.role}</span></span>
               </div>
 
               <div className="habit-kept">
@@ -172,7 +172,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
                   <Link href={`/tasks/${a.taskId}`} className="drill-name">{a.title}</Link>
                   <span className={`attn-late${a.daysLate > 0 ? ' late-text' : ' dim'}`}>{a.daysLate > 0 ? `${a.daysLate} day${a.daysLate === 1 ? '' : 's'} late` : `Due ${fmtDate(a.dueOn)}`}</span>
                 </div>
-                <div className="small dim">{[a.ownerName, a.projectId ? projectNames[a.projectId] : ''].filter(Boolean).join(' · ')}</div>
+                <div className="small dim"><PersonLink id={a.ownerId}>{a.ownerName}</PersonLink>{a.projectId && <> · <Link className="rlink" href={`/projects/${a.projectId}`}>{projectNames[a.projectId]}</Link></>}</div>
                 <div className="attn-why"><span className="attn-k">Why</span><span className={a.whySource === 'none' ? 'late-text' : ''}>{a.whySource === 'move' ? `“${a.why}”` : a.why}</span></div>
                 <div className="attn-step"><span className="attn-k">Next</span>
                   <span>{a.step.text}{seeAll && a.remindPersonId &&<Link href={`/reminders#remind-${a.remindPersonId}`} className="attn-link">Draft a reminder</Link>}</span>
@@ -201,7 +201,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
                 {[...lateDone].sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)).slice(0, FIN_SHOWN).map((t) => (
                   <li key={t.id}>
                     <Link href={`/tasks/${t.id}`} className="drill-name">{t.title}</Link>
-                    <span className="small dim"> · {names[t.ownerId]} · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? 'flagged early' : 'missed'}</span>
+                    <span className="small dim"> · <PersonLink id={t.ownerId}>{names[t.ownerId]}</PersonLink> · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? 'flagged early' : 'missed'}</span>
                   </li>
                 ))}
               </ul>
@@ -253,7 +253,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
                     const own = wk.filter((t) => t.ownerId === r.personId);
                     return (
                       <tr key={r.personId}>
-                        <td><Person name={names[r.personId]} /></td>
+                        <td><Person name={names[r.personId]} id={r.personId} /></td>
                         {COLS.map(([k, l, m]) => (
                           <td key={k} className="num"><N n={r[k] as number} title={`${names[r.personId]}, week of ${fmtDate(w)}: ${l.toLowerCase()}`} list={own.filter(MATCH[m])} warn={m === 'silent' || m === 'pastdue'} /></td>
                         ))}
@@ -302,7 +302,11 @@ function DrillPanel({ drill, names, projectNames, today, onClose }: {
             return (
               <li key={t.id} className="drill-item">
                 <Link href={`/tasks/${t.id}`} className="drill-name">{t.title}</Link>
-                <div className="small dim">{[names[t.ownerId], t.projectId ? projectNames[t.projectId] : '', t.workstream].filter(Boolean).join(' · ')}</div>
+                <div className="small dim">
+                  <PersonLink id={t.ownerId}>{names[t.ownerId]}</PersonLink>
+                  {t.projectId && <> · <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId]}</Link></>}
+                  {t.workstream && <> · {t.workstream}</>}
+                </div>
                 {t.description && <div className="small drill-desc">{t.description}</div>}
                 <ol className="trail-list">
                   <li><span className="dot first" />First given <b>{fmtDate(t.firstDueOn)}</b></li>
