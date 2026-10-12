@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { Task } from '@/lib/derive';
+import { personCounts } from '@/lib/planUtil';
 import { addDays, fmtDate } from '@/lib/time';
 import { Avatar } from './chips';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
@@ -83,12 +84,13 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         const overdueN = o.filter((t) => t.dueOn < today);
         const week = o.filter((t) => t.dueOn >= today);
         const soon = ahead.filter((t) => t.ownerId === p.id);
+        const counts = personCounts(o, soon, today);
         const soonShown = more[p.id] ? soon : soon.slice(0, SOON);
         return (
           <section key={p.id} className="group">
             <h2 className="person-h">
               <Avatar name={p.name} />{p.name}<span className="dim role">{p.role}</span>
-              <span className="n">{o.length + soon.length} ahead{overdueN.length > 0 && <span className="late-text"> · {overdueN.length} late</span>}</span>
+              <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} late</span>}</span>
             </h2>
             {overdueN.length > 0 && <><h3 className="next-h late-text">Late</h3><div className="tlist">{overdueN.map((t) => row(t))}</div></>}
             {week.length > 0 && <><h3 className="next-h">{weekStart === thisWeek ? 'This week' : 'That week'}</h3><div className="tlist">{week.map((t) => row(t))}</div></>}

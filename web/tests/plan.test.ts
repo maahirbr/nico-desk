@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { getProject, planOp, planState, projectCounts, teamProjects } from '../lib/plan';
-import { countdown, lineLate, nextStepsOf, plainParse, stampRel, totalPushes } from '../lib/planUtil';
+import { countdown, lineLate, membersExceptLead, personCounts, nextStepsOf, plainParse, stampRel, totalPushes } from '../lib/planUtil';
 import { TEAM_ID } from '../lib/seed';
 
 // Project pages and the plan board, on the synthetic fixtures (fixtures/plan.json).
@@ -254,5 +254,18 @@ describe('ledger drill-down', () => {
     expect(tasks.filter((t) => t.outcome === 'late').length).toBe(sum('closedLate'));
     expect(tasks.filter((t) => t.overdue).length).toBe(sum('openPastDue'));
     expect(tasks.filter((t) => t.slippedSilently).length).toBe(sum('silentSlips'));
+  });
+});
+
+describe('header counts and member list', () => {
+  it('counts open tasks and late tasks, never "ahead"', () => {
+    // One task, not started, due weeks ago: one open, one late.
+    expect(personCounts([{ dueOn: '2026-09-01' }], [], AS_OF)).toEqual({ open: 1, late: 1 });
+    expect(personCounts([{ dueOn: '2026-10-12' }, { dueOn: '2026-10-01' }], [{}, {}], AS_OF)).toEqual({ open: 4, late: 1 });
+  });
+  it('shows the project lead once, as Project lead', () => {
+    const members = [{ personId: 'per_ada', role: 'Lead' }, { personId: 'per_bo', role: 'Design' }];
+    expect(membersExceptLead(members, 'per_ada')).toEqual([{ personId: 'per_bo', role: 'Design' }]);
+    expect(membersExceptLead(members, 'per_zed')).toEqual(members);
   });
 });

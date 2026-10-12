@@ -157,3 +157,12 @@ export function plainParse(steps: string, meetingDate: string, lines: { num: num
 
 // Plan lines follow the task rule: a reason for blocked, back to not started, or reopening done.
 export const needsWhy = (from: string, to: string) => to === 'Blocked' || (to === 'Not started' && from !== 'Not started') || from === 'Done';
+
+// Header counts for one person on /team: every open task (this week and coming up), and how many of those are past due.
+// "Ahead" is a flag for tasks closed before their first date, so it is never a count of open work.
+export function personCounts(open: { dueOn: string }[], comingUp: unknown[], today: string) {
+  return { open: open.length + comingUp.length, late: open.filter((t) => t.dueOn < today).length };
+}
+
+// The project lead is shown once, as "Project lead", so their project_members row is left out of the member list.
+export const membersExceptLead = <M extends { personId: string }>(members: M[], ownerId: string): M[] => members.filter((m) => m.personId !== ownerId);
