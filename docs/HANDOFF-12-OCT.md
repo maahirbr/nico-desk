@@ -17,7 +17,8 @@ does about it; changes that reach the people involved. Function first, then poli
 |---|---|
 | App baseline | The PM's app (`local-desk`), restyled and extended on `maahir/mvp`. This is the branch to work on. |
 | Visual system | `DESIGN.md` (repo root). It outranks everything visual. Tokens in `web/app/tokens.css`. |
-| Skins | Four skins in `tokens.css` (`[data-skin]`), picked from the menu by the avatar, kept in the `nd_skin` cookie. Warm (`w`) is the default. |
+| Skins | Six skins in `tokens.css` (`[data-skin]`), picked from the account menu, kept in the `nd_skin` cookie. Warm (`w`) is the default. |
+| Brand | `web/public/brand/`: `nicobar-wordmark.svg` (the NICOBAR wordmark, `fill="currentColor"`) and `nicobar-mark-white.png` (the stacked fish and waves mark, white on transparent). Both from the public nicobar.com site. |
 | Rules | `web/lib/service.ts` holds every rule. Pages and `web/app/api/v1/` both call it. |
 | Map of the repo | `CLAUDE.md`: ARCHITECTURE, CONSTRAINTS, DECISIONS, VERIFY. Read CONSTRAINTS before any commit: the repo is public. |
 | Requirements | `SPEC.md`, `INTENT.md`, `docs/LOCAL-DESK-SPEC.md`, `docs/USE-CASES-8-OCT.md` |
@@ -27,14 +28,18 @@ does about it; changes that reach the people involved. Function first, then poli
 - Restyled to `DESIGN.md`: Geist, quiet flags, three motion gestures, the mobile keyboard rule.
 - Skins: three moods from `docs/design/moods.html`, plus Warm, which matches the PM's build.
 - Hosting: Vercel project `nico-desk` serves https://nico-desk.vercel.app from Supabase (Mumbai).
-  Open demo is on (`NICO_OPEN_DEMO=1`): a visitor is the first lead, and anyone with the URL can
-  read the pilot data.
+  The open demo is off: the first screen is Google sign-in, and only active roster people get in.
 - Real pilot data on the live site: five real projects, loaded from the git-ignored `web/pilot/`. You will not have those
   files after a pull. Ask the repo owner for them privately. Never commit them.
-- Roster in the main nav for admins.
+- Roster under More, in the account menu (the PM's layout).
 - Ledger: each category defined on the page; late split into "flagged early" and "missed".
-- Google sign-in (`web/lib/google.ts`), direct to Google, roster and domain checked. Built, not
-  live: it waits on the OAuth keys and `NICO_SESSION_SECRET` in Vercel.
+- Google sign-in (`web/lib/google.ts`), direct to Google, roster and domain checked. Live since
+  12 Oct. Single outside addresses come only from the env var `NICO_ALLOWED_EMAILS`.
+- Admins can do everything a lead can. Admins can "View as" anyone, read only.
+- Everyone lands on Home (`/me`) after sign-in. A daily 09:00 IST cron writes due and overdue notices.
+- The PM's rule changes (merged `266425e`): any written reason will do, a task goes only to its
+  project's people, "+ Add someone to this project" in the owner picker, grouped updates. The live
+  database has had `npm run db:upgrade`.
 - 12 Oct fixes: the `/team` person header says "open", not "ahead"; a project lead shows once on
   the project page and the projects list.
 - 12 Oct: "Updates for you" on the home page (major changes reach the people involved), and a
@@ -90,7 +95,28 @@ the same thing.
 - Ledger, cause first: merged (`7ba7beb`). `/ledger` opens on a summary line, then "Needs attention"
   (each late task with why and the next step, from `web/lib/attention.ts`), then what finished.
   The old table sits in a collapsed "Full breakdown".
-- Flow test (add, edit, close, drop, slip, persistence): in progress.
+- Flow test (add, edit, close, drop, slip, persistence): done on 12 Oct. Its leftovers are in
+  `docs/PLAN-UI-PASS.md` section 6.
+
+## 6a. Tonight, 12 Oct, in this order
+
+The repo owner's answers (Q&A, 12 Oct) are in `docs/PLAN-UI-PASS.md` section 6. Fixes first, then the UI plan.
+
+1. **Who adds someone to a project** (security fix). Today `joinProject` in `web/lib/service.ts`
+   runs for anyone who creates or edits a task, so any member can add any teammate to any project.
+   Only the project owner, a lead or an admin may bring someone new in (the same rule as
+   `updateProject` in `web/lib/plan.ts`). For anyone else the owner picker lists only the project's
+   people and hides "+ Add someone to this project". Membership is display-only today, so the
+   impact is low.
+2. **The status dropdown** (`web/components/task-ui.tsx`). Blocked for the owner, a lead or an
+   admin (today `blockTask` is owner-only, and `canBlock` is `t.ownerId === meId`). Unblock in one
+   step. "Move date…". "Reassign…" for leads and admins. A status icon and colour on each option.
+3. **The logo on the sign-in page** (`web/app/signin/page.tsx`). Use `nicobar-wordmark.svg`
+   inline or as a mask, so it takes the skin's ink colour in day and night.
+4. VERIFY, a browser check at desktop and 375px, day and night, then ask before push and deploy.
+5. The UI plan, workstreams 1 to 8 of `docs/PLAN-UI-PASS.md`.
+
+Waiting on the repo owner: the real emails for six roster people, and the name of one Merch record.
 
 ## 7. Rollout (repo owner's call, 12 Oct)
 

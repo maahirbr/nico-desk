@@ -205,6 +205,10 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   tasks in it. The hosted database needs `npm run db:upgrade` once (relaxes the block-reason check, adds open-task
   owners to their projects; keeps all data). Status pickers in skin W fill by status: grey, yellow, red, green, dark
   grey. Rollback: `git revert` the commit and leave the database as is (the relaxed check accepts the old data).
+- 2026-10-12 · Opus 5.5 · The company's logo goes in `web/public/brand/`, at the repo owner's call, for the sign-in page:
+  the header wordmark as an SVG (fill set to `currentColor`, so each skin can tint it) and the stacked mark as a white PNG.
+  Both come from the public nicobar.com site, so they add nothing internal to this public repo. They go if the company
+  objects. Rollback: delete `web/public/brand/` and its uses.
 
 ## VERIFY
 
