@@ -40,6 +40,16 @@ export function quickDates(from: string) {
   };
 }
 
+// The chips a date field shows: one per shortcut word, a repeated date dropped (on a Thursday Friday is
+// tomorrow, so only Tomorrow shows), and a chip off when its date falls outside min and max.
+const QUICK_WORDS = [['today', 'Today'], ['tomorrow', 'Tomorrow'], ['friday', 'Friday'], ['nextMonday', 'Next Monday']] as const;
+export function quickChips(from: string, min = '', max = '') {
+  const days = quickDates(from);
+  const seen = new Set<string>();
+  return QUICK_WORDS.filter(([k]) => !seen.has(days[k]) && seen.add(days[k]))
+    .map(([key, word]) => ({ key, word, date: days[key], off: (!!min && days[key] < min) || (!!max && days[key] > max) }));
+}
+
 export function isDate(s: unknown): s is string {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { quickDates } from '../lib/time';
+import { quickChips, quickDates } from '../lib/time';
 
 // 2026-10-05 is a Monday, so 09 is the Friday and 11 the Sunday.
 describe('quickDates', () => {
@@ -32,5 +32,20 @@ describe('quickDates', () => {
 
   it('crosses a month and a year end', () => {
     expect(quickDates('2026-12-31')).toEqual({ today: '2026-12-31', tomorrow: '2027-01-01', friday: '2027-01-01', nextMonday: '2027-01-04' });
+  });
+});
+
+// The chips count from the app's pinned today (the viewer's), so the same day gives the same chips in every browser.
+describe('quickChips', () => {
+  it('counts from the day it is given, not the clock', () => {
+    const c = quickChips('2026-10-09');
+    expect(c.map((x) => [x.word, x.date])).toEqual([['Today', '2026-10-09'], ['Tomorrow', '2026-10-10'], ['Friday', '2026-10-16'], ['Next Monday', '2026-10-12']]);
+  });
+  it('drops a repeated date: on a Thursday, Friday is Tomorrow', () => {
+    expect(quickChips('2026-10-08').map((x) => x.word)).toEqual(['Today', 'Tomorrow', 'Next Monday']);
+  });
+  it('turns a chip off outside min and max', () => {
+    const c = quickChips('2026-10-09', '2026-10-10', '2026-10-12');
+    expect(c.map((x) => [x.word, x.off])).toEqual([['Today', true], ['Tomorrow', false], ['Friday', true], ['Next Monday', false]]);
   });
 });

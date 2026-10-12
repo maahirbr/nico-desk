@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
+import { endedSortOf } from '@/lib/remember';
 import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { PersonLink } from './chips';
+import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
@@ -27,8 +29,12 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const [adding, setAdding] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const [showDropped, setShowDropped] = useState(false);
-  const [doneSort, setDoneSort] = useState<EndedSort>('recent');
-  const [droppedSort, setDroppedSort] = useState<EndedSort>('recent');
+  // The two finished-list sorts come back the next time Home is opened in this browser (components/remember.ts).
+  const [kept, keep] = useRemembered('home', { doneSort: 'recent' as EndedSort, droppedSort: 'recent' as EndedSort },
+    (raw) => ({ doneSort: endedSortOf(raw.doneSort), droppedSort: endedSortOf(raw.droppedSort) }));
+  const { doneSort, droppedSort } = kept;
+  const setDoneSort = (v: EndedSort) => keep('doneSort', v);
+  const setDroppedSort = (v: EndedSort) => keep('droppedSort', v);
   const isNew = new Set(newIds);
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : '', t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const groups = [
@@ -68,7 +74,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
           {waiting.map((t) => (
             <div key={t.id} className="callout-row">
               <PersonLink id={t.ownerId}><b>{names[t.ownerId]?.split(' ')[0]}</b></PersonLink>
-              <button className="callout-link" onClick={() => open(t.id)}> needs: {t.blocked?.ask}<span className="dim"> · for “{t.title}”</span></button>
+              {' '}
+              <button className="callout-link" onClick={() => open(t.id)}>needs: {t.blocked?.ask}<span className="dim"> · for “{t.title}”</span></button>
             </div>
           ))}
         </section>

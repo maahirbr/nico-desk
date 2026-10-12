@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { attentionList } from '@/lib/attention';
+import { endedSortOf } from '@/lib/remember';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, Person, PersonLink } from './chips';
@@ -12,6 +13,7 @@ import { SortPick } from './SortPick';
 import { motion } from 'motion/react';
 import { drawerMotion } from './motion';
 import { CountUp } from './motion-ui';
+import { useRemembered } from './remember';
 
 // The on-time ledger. Judged against the date first given (INTENT.md principle 1). Every number
 // opens the tasks behind it, with each date move and its reason. The cards show delivery habits per
@@ -62,6 +64,8 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   people: { id: string; name: string; role: string }[]; names: Record<string, string>; projectNames: Record<string, string>; seeAll: boolean;
 }) {
   const [drill, setDrill] = useState<Drill>(null);
+  // The drill list's sort comes back the next time the ledger is opened in this browser (components/remember.ts).
+  const [kept, keep] = useRemembered('ledger', { drillSort: 'recent' as EndedSort }, (raw) => ({ drillSort: endedSortOf(raw.drillSort) }));
   const weekList = Array.from({ length: weeks }, (_, i) => {
     const d = new Date(`${from}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i); return d.toISOString().slice(0, 10);
   }).reverse();
@@ -280,16 +284,16 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 
       </details>
 
-      {drill && <DrillPanel drill={drill} names={names} projectNames={projectNames} today={today} onClose={() => setDrill(null)} />}
+      {drill && <DrillPanel drill={drill} names={names} projectNames={projectNames} today={today} by={kept.drillSort} setBy={(v) => keep('drillSort', v)} onClose={() => setDrill(null)} />}
     </>
   );
 }
 
 // The tasks behind a number: first date, each move with its reason, and how it ended.
-function DrillPanel({ drill, names, projectNames, today, onClose }: {
-  drill: NonNullable<Drill>; names: Record<string, string>; projectNames: Record<string, string>; today: string; onClose: () => void;
+function DrillPanel({ drill, names, projectNames, today, by, setBy, onClose }: {
+  drill: NonNullable<Drill>; names: Record<string, string>; projectNames: Record<string, string>; today: string;
+  by: EndedSort; setBy: (v: EndedSort) => void; onClose: () => void;
 }) {
-  const [by, setBy] = useState<EndedSort>('recent');
   // The ledger judges on-time against the first date, so its date sort uses that one.
   const tasks = sortEnded(drill.tasks, by, 'firstDueOn');
   const anyEnded = drill.tasks.some((t) => t.endedAt);

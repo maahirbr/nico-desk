@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { oneOf, parseStored, viewKey } from '../lib/remember';
+import { endedSortOf, oneOf, parseStored, viewKey } from '../lib/remember';
 
 // "Remember my view": what was kept is checked before the page uses it.
 
@@ -35,5 +35,17 @@ describe('viewKey', () => {
   });
   it('strips characters that do not belong in a key', () => {
     expect(viewKey('a b/c', 'x y')).toBe('nd_view_abc_xy');
+  });
+});
+
+describe('endedSortOf', () => {
+  it('keeps a sort the lists still offer', () => {
+    expect(endedSortOf('oldest')).toBe('oldest');
+    expect(endedSortOf('due')).toBe('due');
+  });
+  it('goes back to newest first for anything else', () => {
+    expect(endedSortOf('alphabetical')).toBe('recent');
+    expect(endedSortOf(undefined)).toBe('recent');
+    expect(endedSortOf(2)).toBe('recent');
   });
 });

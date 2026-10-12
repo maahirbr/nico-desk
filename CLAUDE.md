@@ -303,6 +303,14 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   a hover grip (a cue only, no drag), callouts and soft cards. Both fix the view-as banner contrast. Every rule is scoped to
   those two skins, so W, A, B and C render the same. Every text pair passes AA in day and night, on Mac over the worst glass
   backdrop. Only `web/app/tokens.css` changed. Rollback: `git revert -m 1` the merge.
+- 2026-10-12 · Sonnet 5.5 · Five small fixes (branch `ws9-fixes`), merged by Opus 5.5. A date field's input name is now
+  only its label text, since the quick-date chips sat inside the `<label>` and joined the name (`DateField`). The chips count
+  from the viewer's pinned today (`quickChips` in `web/lib/time.ts`), not the browser clock. Finished-list sorts are kept per
+  browser on Home, each project board and the ledger drill, through `useRemembered` (`endedSortOf` in `web/lib/remember.ts`).
+  On Home a name no longer runs into "needs:". The roster has "Copy invite" after adding a person and on each active row: it
+  copies the site address, a line to sign in with the Google work account, and the email added (`web/lib/invite.ts`). This
+  is the plan's stand-in for an invite email until a mail sender exists. It sends nothing and is hidden under View as.
+  Rollback: `git revert -m 1` the merge.
 
 ## VERIFY
 
@@ -313,7 +321,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `234 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `241 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

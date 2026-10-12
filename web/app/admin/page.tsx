@@ -22,7 +22,7 @@ export default async function Admin() {
               <td data-label="Title">{p.role}</td>
               <td data-label="Email" className="mono small">{p.email}</td>
               <td data-label="Access" className="small" style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</td>
-              <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} />}</td>
+              <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} email={p.email} />}</td>
             </tr>
           ))}
         </tbody>
