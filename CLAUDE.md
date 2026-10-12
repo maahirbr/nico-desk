@@ -170,6 +170,13 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   tasks in it. The hosted database needs `npm run db:upgrade` once (relaxes the block-reason check, adds open-task
   owners to their projects; keeps all data). Status pickers in skin W fill by status: grey, yellow, red, green, dark
   grey. Rollback: `git revert` the commit and leave the database as is (the relaxed check accepts the old data).
+- 2026-10-13 · Opus 5.5 · A project has an owner and a lead, at the PM's call, on branch `mvp-local-desk-look`. The
+  owner is accountable for the outcome; the lead runs it day to day; one person can be both (the default). Both can
+  edit the project. The two kinds are now called Internal and Partner / Collaboration; a partner project's
+  sub-projects (pillars) are optional, and one with none keeps its lines in a single hidden group. Home lists the
+  projects you are on. The target date is a Deadline, Launch, Event, Quarter End or a typed label. The hosted
+  database needs `npm run db:upgrade` once more (adds `projects.lead_id`; keeps all data). Rollback: `git revert` the
+  commit; the extra column can stay.
 
 ## VERIFY
 
@@ -180,7 +187,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `93 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `94 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

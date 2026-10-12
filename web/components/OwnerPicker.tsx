@@ -38,7 +38,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
           <option value="" disabled>Choose a person</option>
           {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <input value={role} maxLength={60} placeholder="Their role, e.g. Packaging" aria-label="Their role on this project"
+        <input value={role} maxLength={60} placeholder="Their role in this project, e.g. Sourcing, Design, etc." aria-label="Their role on this project"
           onChange={(e) => { setRole(e.target.value); if (pick) onChange(pick, e.target.value); }} />
         <button type="button" className="act" onClick={() => { setAdding(false); setPick(''); setRole(''); onChange(before); }}>Cancel</button>
       </div>

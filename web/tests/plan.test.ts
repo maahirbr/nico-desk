@@ -192,14 +192,30 @@ describe('starting a project', () => {
     expect(await code(createProject(db, 'per_bo', TEAM_ID, { ...base, name: 'Other' }))).toBe('403 not_allowed');
   });
 
-  it('needs pillars for a partner plan, and keeps pillar keys on rename', async () => {
+  it('gives a partner project one unnamed group when it has no sub-projects, and keeps keys on rename', async () => {
     const { createProject, updateProject } = await import('../lib/plan');
-    expect(await code(createProject(db, ME, TEAM_ID, { ...base, name: 'Studio', kind: 'plan', workstreams: [] }))).toBe('400 invalid_body');
+    const bare = await createProject(db, ME, TEAM_ID, { ...base, name: 'Collab', kind: 'plan', workstreams: [] });
+    expect(bare.pillars).toEqual([{ key: 'general', label: 'General' }]);
+    expect(bare.targetLabel).toBe('Launch');
+    expect((await createProject(db, ME, TEAM_ID, { ...base, name: 'No label', targetLabel: '' })).targetLabel).toBe('Deadline');
     const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Studio', kind: 'plan', workstreams: ['Foundations'], partnerName: 'Loom', partnerPeople: ['Tanvi'] });
     const key = p.pillars[0].key;
     const u = await updateProject(db, ME, p.id, { ...base, name: 'Studio', kind: 'plan', workstreams: ['Groundwork'], partnerName: 'Loom', partnerPeople: ['Tanvi'] });
     expect(u.pillars).toEqual([{ key, label: 'Groundwork' }]);
     expect(await code(updateProject(db, ME, p.id, { ...base, name: 'Studio', kind: 'tasks' }))).toBe('400 invalid_body');
+  });
+  it('keeps a separate lead, who can edit it and sees it on Home with the members', async () => {
+    const { createProject, updateProject, myProjects, projectPeopleMap } = await import('../lib/plan');
+    const same = await createProject(db, ME, TEAM_ID, { ...base, leadId: ME });
+    expect(same.leadId).toBe(ME);
+    const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Gift boxes', leadId: 'per_cy' });
+    expect(p).toMatchObject({ ownerId: ME, leadId: 'per_cy' });
+    expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy']);
+    expect((await myProjects(db, TEAM_ID, 'per_cy')).find((x) => x.id === p.id)?.role).toBe('Lead');
+    expect((await myProjects(db, TEAM_ID, 'per_bo')).find((x) => x.id === p.id)?.role).toBe('Packaging POC');
+    expect((await myProjects(db, TEAM_ID, 'per_dee')).some((x) => x.id === p.id)).toBe(false);
+    const u = await updateProject(db, 'per_cy', p.id, { ...base, name: 'Gift boxes', leadId: null });
+    expect(u.leadId).toBe(ME);
   });
 });
 

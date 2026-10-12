@@ -30,7 +30,7 @@ export default async function Projects() {
           const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
           const total = c.open + c.done;
           const cd = p.launchOn ? countdown(t, p.launchOn) : null;
-          const team = [p.ownerId, ...membersExceptLead(members[p.id] ?? [], p.ownerId).map((m) => m.personId)];
+          const team = [...new Set([p.ownerId, p.leadId, ...(members[p.id] ?? []).map((m) => m.personId)])];
           const st = STATUS[p.status];
           return (
             <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
@@ -39,7 +39,7 @@ export default async function Projects() {
                 <span className={`st tone-${st.tone}`}>{st.word}</span>
               </div>
               <div className="kind-tag">
-                <span className="kind-word">{p.kind === 'plan' ? `Plan · ${p.partnerName ?? 'partner'}` : 'Task board'}</span>
+                <span className="kind-word">{p.kind === 'plan' ? `Partner · ${p.partnerName ?? 'partner'}` : 'Internal'}</span>
                 {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
               </div>
               {p.intro && <p className="pcard-goal">{p.intro}</p>}

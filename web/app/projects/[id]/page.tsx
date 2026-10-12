@@ -33,7 +33,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} names={names} people={opts} meId={me.person.id}
-        canEdit={p.ownerId === me.person.id || isLead || isAdmin} today={today()} />
+        canEdit={p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin} today={today()} />
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={await planState(d, p.id)} people={active} names={names} meId={me.person.id} today={today()} />
       ) : (

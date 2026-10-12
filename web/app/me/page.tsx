@@ -3,7 +3,7 @@ import { latestEndedFirst } from '@/lib/derive';
 import { homeUpdates, lookups } from '@/lib/page';
 import { listNotices, myTasks, teamTasks } from '@/lib/service';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
-import { teamProjects } from '@/lib/plan';
+import { myProjects, teamProjects } from '@/lib/plan';
 import { HomeView } from '@/components/HomeView';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +18,9 @@ export default async function Home() {
   const { d, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
-  const [mine, notices, all, projects] = await Promise.all([
+  const [mine, notices, all, projects, onProjects] = await Promise.all([
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), teamTasks(d, me.team.id), teamProjects(d, me.team.id),
+    myProjects(d, me.team.id, me.person.id),
   ]);
   const weekStart = mondayOf(t);
   const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart).sort(latestEndedFirst);
@@ -45,6 +46,7 @@ export default async function Home() {
       people={activeOpts}
       projects={projects.filter((p) => p.kind === 'tasks').map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
+      myProjects={onProjects}
     />
   );
 }

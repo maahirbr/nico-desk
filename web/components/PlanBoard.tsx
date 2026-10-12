@@ -151,7 +151,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const emptyNode = emptyReason
     ? <div className="empty-block"><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
     : pillar !== 'All'
-      ? <div className="empty-block"><p>No lines in this pillar yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all pillars</button></div>
+      ? <div className="empty-block"><p>No lines in this sub-project yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all sub-projects</button></div>
       : <div className="empty-block"><p>No lines in this plan yet.</p><button className="btn" onClick={() => setAddOpen(true)}>Add a line</button></div>;
 
   const byNext = (a: PlanLine, b: PlanLine) => {
@@ -294,7 +294,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   if (view === 'date') board = table([...visible].sort(byNext), emptyNode);
   else {
     const groups = project.pillars.map((p) => ({ p, ls: visible.filter((l) => l.pillar === p.key).sort((a, b) => a.num - b.num) })).filter((g) => g.ls.length);
-    board = groups.length ? groups.map((g) => <Fragment key={g.p.key}><h3 className="pillar">{g.p.label}</h3>{table(g.ls, '')}</Fragment>) : table([], emptyNode);
+    board = groups.length ? groups.map((g) => <Fragment key={g.p.key}>{project.pillars.length > 1 && <h3 className="pillar">{g.p.label}</h3>}{table(g.ls, '')}</Fragment>) : table([], emptyNode);
   }
 
   const other = actionsFor(null).filter((a) =>
@@ -329,16 +329,16 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
               <optgroup label="Our team">{ours.filter((id) => lines.some((l) => l.ownerId === id)).map((id) => <option key={id} value={id}>{names[id]}</option>)}</optgroup>
               <optgroup label={partner}>{project.partnerPeople.map((n) => <option key={n} value={n}>{n}</option>)}</optgroup>
             </select>
-            <select value={pillar} aria-label="Pillar" onChange={(e) => setPillar(e.target.value)}>
-              <option value="All">All pillars</option>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-            </select>
+            {project.pillars.length > 1 && <select value={pillar} aria-label="Sub-project" onChange={(e) => setPillar(e.target.value)}>
+              <option value="All">All sub-projects</option>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>}
             <select value={tile ?? ''} aria-label="Show" onChange={(e) => setTile(e.target.value || null)}>
               <option value="">All lines</option>{TILES.map((t) => <option key={t.key} value={t.key}>{t.label}{t.sub ? ` (${t.sub})` : ''}</option>)}
             </select>
-            <span className="seg" role="group" aria-label="Order lines">
-              <button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By pillar</button>
+            {project.pillars.length > 1 && <span className="seg" role="group" aria-label="Order lines">
+              <button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By sub-project</button>
               <button aria-pressed={view === 'date'} onClick={() => setView('date')}>By date</button>
-            </span>
+            </span>}
             {filtered && <button className="act" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear</button>}
             <span className="toolbar-end">
               <button className="btn" onClick={() => setAddOpen(true)}>+ Add line</button>
@@ -601,7 +601,7 @@ function AddLine({ project, people, pillar, busy, op }: { project: Project; peop
       if (await op({ op: 'addLine', ...f, ownerId: f.ownerId || null, dueOn: f.dueOn || null })) setF(blank);
     }}>
       <div className="row">
-        <label className="f"><span>Pillar</span><select value={f.pillar} onChange={set('pillar')}>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</select></label>
+        {project.pillars.length > 1 && <label className="f"><span>Sub-project</span><select value={f.pillar} onChange={set('pillar')}>{project.pillars.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</select></label>}
         <label className="f"><span>Our owner</span><select value={f.ownerId} onChange={set('ownerId')}><option value="">Pending</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
         <label className="f"><span>{project.partnerName ?? 'Partner'} owner</span><select value={f.partner} onChange={set('partner')}><option value="">Pending</option>{project.partnerPeople.map((n) => <option key={n}>{n}</option>)}</select></label>
         <label className="f" style={{ flex: '0 1 170px' }}><span>Due date</span><input type="date" value={f.dueOn} onChange={set('dueOn')} /></label>

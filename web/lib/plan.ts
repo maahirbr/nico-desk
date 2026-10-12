@@ -17,6 +17,7 @@ export type Cadence = { day?: string; time?: string; what?: string; detail?: str
 
 export type Project = {
   id: string; teamId: string; name: string; department: string; ownerId: string;
+  leadId: string; // the owner when no separate lead is set
   status: 'on_track' | 'at_risk' | 'off_track'; statusNote: string | null;
   kind: 'tasks' | 'plan'; eyebrow: string | null; phase: string | null; intro: string | null; launchOn: string | null;
   pills: Pill[]; pillars: { key: string; label: string }[]; partnerName: string | null; partnerPeople: string[]; cadence: Cadence[];
@@ -24,14 +25,14 @@ export type Project = {
 };
 
 type ProjectRow = {
-  id: string; team_id: string; name: string; department: string; owner_id: string; status: Project['status']; status_note: string | null;
+  id: string; team_id: string; name: string; department: string; owner_id: string; lead_id: string | null; status: Project['status']; status_note: string | null;
   kind: Project['kind']; eyebrow: string | null; phase: string | null; intro: string | null; launch_on: string | null;
   pills: Pill[]; pillars: Project['pillars']; partner_name: string | null; partner_people: string[]; cadence: Cadence[];
   workstreams: string[]; target_label: string | null; created_by: string | null;
 };
 
 const toProject = (r: ProjectRow): Project => ({
-  id: r.id, teamId: r.team_id, name: r.name, department: r.department, ownerId: r.owner_id, status: r.status, statusNote: r.status_note,
+  id: r.id, teamId: r.team_id, name: r.name, department: r.department, ownerId: r.owner_id, leadId: r.lead_id ?? r.owner_id, status: r.status, statusNote: r.status_note,
   kind: r.kind, eyebrow: r.eyebrow, phase: r.phase, intro: r.intro, launchOn: r.launch_on, pills: r.pills ?? [],
   pillars: r.pillars ?? [], partnerName: r.partner_name, partnerPeople: r.partner_people ?? [], cadence: r.cadence ?? [],
   workstreams: r.workstreams ?? [], targetLabel: r.target_label, createdBy: r.created_by,
@@ -302,7 +303,7 @@ export async function planOp(db: Db, meId: string, projectId: string, o: PlanOp,
         return {};
       }
       case 'addLine': {
-        if (!project.pillars.some((p) => p.key === o.pillar)) throw bad('invalid_body', 'Pick a pillar.', 'pillar');
+        if (!project.pillars.some((p) => p.key === o.pillar)) throw bad('invalid_body', 'Pick a sub-project.', 'pillar');
         if (o.what.trim().length < 2) throw bad('invalid_body', 'Say what the line is.', 'what');
         const { rows } = await tx.query<{ n: number }>(`SELECT coalesce(max(num), 0)::int + 1 AS n FROM plan_lines WHERE project_id = $1`, [projectId]);
         const num = rows[0].n;
@@ -570,24 +571,39 @@ export async function projectMembers(db: Tx, projectId: string): Promise<Member[
   return rows.map((r) => ({ personId: r.person_id, role: r.project_role }));
 }
 
-// Each project's people by id: its members and its lead. Owner pickers on project tasks offer only these.
+// The projects someone is on, as owner, lead or member, with their part in each. Home lists these.
+export async function myProjects(db: Tx, teamId: string, personId: string): Promise<{ id: string; name: string; role: string }[]> {
+  const { rows } = await db.query<{ id: string; name: string; owner_id: string; lead_id: string | null; project_role: string | null }>(
+    `SELECT pr.id, pr.name, pr.owner_id, pr.lead_id, m.project_role FROM projects pr
+     LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
+     WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR pr.lead_id = $2 OR m.person_id IS NOT NULL) ORDER BY pr.name`, [teamId, personId]);
+  return rows.map((r) => {
+    const owner = r.owner_id === personId, lead = (r.lead_id ?? r.owner_id) === personId;
+    return { id: r.id, name: r.name, role: owner && lead ? 'Owner and lead' : owner ? 'Owner' : lead ? 'Lead' : r.project_role ?? 'Member' };
+  });
+}
+
+// Each project's people by id: its members, owner and lead. Owner pickers on project tasks offer only these.
 export async function projectPeopleMap(db: Tx, teamId: string): Promise<Record<string, string[]>> {
   const { rows } = await db.query<{ project_id: string; person_id: string }>(
     `SELECT m.project_id, m.person_id FROM project_members m JOIN projects pr ON pr.id = m.project_id WHERE pr.team_id = $1
-     UNION SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]);
+     UNION SELECT id, owner_id FROM projects WHERE team_id = $1
+     UNION SELECT id, lead_id FROM projects WHERE team_id = $1 AND lead_id IS NOT NULL`, [teamId]);
   const out: Record<string, string[]> = {};
   for (const r of rows) (out[r.project_id] ??= []).push(r.person_id);
   return out;
 }
 
 export type ProjectInput = {
-  name: string; kind: 'tasks' | 'plan'; ownerId: string; goal: string; eyebrow?: string; phase?: string;
+  name: string; kind: 'tasks' | 'plan'; ownerId: string; leadId?: string | null; goal: string; eyebrow?: string; phase?: string;
   launchOn?: string | null; targetLabel?: string; workstreams: string[]; members: Member[];
   partnerName?: string; partnerPeople?: string[];
 };
 
 const LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const longDate = (d: string) => `${Number(d.slice(8, 10))} ${LONG[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`;
+// A partner project with no sub-projects keeps its lines in one unnamed group.
+const GENERAL = { key: 'general', label: 'General' };
 const slug = (s: string, i: number) => (s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'part') + `_${i + 1}`;
 
 function clean(input: ProjectInput) {
@@ -596,15 +612,16 @@ function clean(input: ProjectInput) {
   const goal = input.goal.trim();
   const ws = [...new Set(input.workstreams.map((w) => w.trim()).filter(Boolean))].slice(0, 20);
   if (ws.some((w) => w.length > 60)) throw bad('invalid_body', 'Keep each sub-project name under 60 characters.', 'workstreams');
-  if (input.kind === 'plan' && ws.length === 0) throw bad('invalid_body', 'A partner plan needs at least one pillar.', 'workstreams');
-  const members = input.members.filter((m) => m.personId && m.personId !== input.ownerId);
+  // No lead, or the owner as lead, means the owner leads it.
+  const leadId = input.leadId && input.leadId !== input.ownerId ? input.leadId : null;
+  const members = input.members.filter((m) => m.personId && m.personId !== input.ownerId && m.personId !== leadId);
   for (const m of members) if (m.role.trim().length < 2) throw bad('invalid_body', 'Give each person on the project a role.', 'members');
-  const label = (input.targetLabel ?? '').trim() || (input.kind === 'plan' ? 'End date' : 'Launch');
+  const label = (input.targetLabel ?? '').trim() || 'Deadline';
   const pills = [
     ...(input.launchOn ? [{ label, value: longDate(input.launchOn) }] : []),
     ...(input.phase?.trim() ? [{ label: 'Phase', value: input.phase.trim() }] : []),
   ];
-  return { name, goal: goal || null, ws, members, label, pills };
+  return { name, goal: goal || null, ws, members, label, pills, leadId };
 }
 
 async function checkPeople(tx: Tx, teamId: string, ids: string[]) {
@@ -625,23 +642,23 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
   const c = clean(input);
   const id = newId('prj');
   await db.transaction(async (tx) => {
-    await checkPeople(tx, teamId, [input.ownerId, ...c.members.map((m) => m.personId)]);
+    await checkPeople(tx, teamId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)]);
     const { rows } = await tx.query(`SELECT 1 FROM projects WHERE team_id = $1 AND lower(name) = lower($2)`, [teamId, c.name]);
     if (rows.length) throw bad('invalid_body', 'A project with that name already exists.', 'name');
     const { rows: dept } = await tx.query<{ department: string }>(`SELECT department FROM people WHERE id = $1`, [input.ownerId]);
     await tx.query(
       `INSERT INTO projects (id, team_id, name, department, owner_id, status, status_at, kind, eyebrow, phase, intro, launch_on, pills,
-         pillars, partner_name, partner_people, workstreams, target_label, created_by)
-       VALUES ($1,$2,$3,$4,$5,'on_track',now(),$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb,$15::jsonb,$16,$17)`,
+         pillars, partner_name, partner_people, workstreams, target_label, created_by, lead_id)
+       VALUES ($1,$2,$3,$4,$5,'on_track',now(),$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb,$15::jsonb,$16,$17,$18)`,
       [id, teamId, c.name, dept[0]?.department ?? 'Team', input.ownerId, input.kind, input.eyebrow?.trim() || null, input.phase?.trim() || null, c.goal,
-        input.launchOn || null, JSON.stringify(c.pills), JSON.stringify(input.kind === 'plan' ? c.ws.map((w, i) => ({ key: slug(w, i), label: w })) : []),
+        input.launchOn || null, JSON.stringify(c.pills), JSON.stringify(input.kind === 'plan' ? (c.ws.length ? c.ws.map((w, i) => ({ key: slug(w, i), label: w })) : [GENERAL]) : []),
         input.kind === 'plan' ? input.partnerName?.trim() || 'Partner' : null,
         JSON.stringify(input.kind === 'plan' ? (input.partnerPeople ?? []).map((x) => x.trim()).filter(Boolean) : []),
-        JSON.stringify(input.kind === 'tasks' ? c.ws : []), c.label, meId],
+        JSON.stringify(input.kind === 'tasks' ? c.ws : []), c.label, meId, c.leadId],
     );
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);
     await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, after, actor_id, origin, at) VALUES ($1,'project',$2,'_created',$3::jsonb,$4,'app',now())`,
-      [newId('evt'), id, JSON.stringify({ name: c.name, kind: input.kind, owner_id: input.ownerId, launch_on: input.launchOn || null }), meId]);
+      [newId('evt'), id, JSON.stringify({ name: c.name, kind: input.kind, owner_id: input.ownerId, lead_id: c.leadId, launch_on: input.launchOn || null }), meId]);
   });
   return getProject(db, id);
 }
@@ -649,30 +666,31 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
 export async function updateProject(db: Db, meId: string, id: string, input: ProjectInput): Promise<Project> {
   const p = await getProject(db, id);
   const roles = await rolesOf(db, p.teamId, meId);
-  if (p.ownerId !== meId && !roles.has('lead') && !roles.has('admin')) throw forbidden('Only the project owner or a lead can change the project.');
+  if (p.ownerId !== meId && p.leadId !== meId && !roles.has('lead') && !roles.has('admin')) throw forbidden('Only the project owner, its lead or a team lead can change the project.');
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
   const c = clean(input);
   await db.transaction(async (tx) => {
-    await checkPeople(tx, p.teamId, [input.ownerId, ...c.members.map((m) => m.personId)]);
+    await checkPeople(tx, p.teamId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)]);
     const { rows } = await tx.query(`SELECT 1 FROM projects WHERE team_id = $1 AND lower(name) = lower($2) AND id <> $3`, [p.teamId, c.name, id]);
     if (rows.length) throw bad('invalid_body', 'A project with that name already exists.', 'name');
     // Plan pillars keep their keys, so lines stay in their pillar when one is renamed.
-    const pillars = p.kind === 'plan' ? c.ws.map((w, i) => p.pillars[i] ? { key: p.pillars[i].key, label: w } : { key: slug(w, i), label: w }) : [];
+    const named = c.ws.map((w, i) => p.pillars[i] ? { key: p.pillars[i].key, label: w } : { key: slug(w, i), label: w });
+    const pillars = p.kind === 'plan' ? (named.length ? named : [GENERAL]) : [];
     if (p.kind === 'plan') {
       const keep = new Set(pillars.map((x) => x.key));
       const { rows: used } = await tx.query<{ pillar: string }>(`SELECT DISTINCT pillar FROM plan_lines WHERE project_id = $1 AND NOT removed`, [id]);
-      if (used.some((u) => !keep.has(u.pillar))) throw bad('invalid_body', 'A pillar that still has lines cannot be removed. Move its lines first.', 'workstreams');
+      if (used.some((u) => !keep.has(u.pillar))) throw bad('invalid_body', 'A sub-project that still has lines cannot be removed. Move its lines first.', 'workstreams');
     }
     await tx.query(
       `UPDATE projects SET name=$2, owner_id=$3, eyebrow=$4, phase=$5, intro=$6, launch_on=$7, pills=$8::jsonb, pillars=$9::jsonb,
-         partner_name=$10, partner_people=$11::jsonb, workstreams=$12::jsonb, target_label=$13 WHERE id=$1`,
+         partner_name=$10, partner_people=$11::jsonb, workstreams=$12::jsonb, target_label=$13, lead_id=$14 WHERE id=$1`,
       [id, c.name, input.ownerId, input.eyebrow?.trim() || null, input.phase?.trim() || null, c.goal, input.launchOn || null, JSON.stringify(c.pills),
         JSON.stringify(pillars), p.kind === 'plan' ? input.partnerName?.trim() || p.partnerName : null,
         JSON.stringify(p.kind === 'plan' ? (input.partnerPeople ?? []).map((x) => x.trim()).filter(Boolean) : []),
-        JSON.stringify(p.kind === 'tasks' ? c.ws : []), c.label],
+        JSON.stringify(p.kind === 'tasks' ? c.ws : []), c.label, c.leadId],
     );
     // Someone who still owns open tasks here stays on the project until those tasks move to someone else.
-    const keep = [input.ownerId, ...c.members.map((m) => m.personId)];
+    const keep = [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)];
     const { rows: stuck } = await tx.query<{ display_name: string; n: number }>(
       `SELECT p.display_name, count(*)::int AS n FROM tasks t JOIN people p ON p.id = t.owner_id
        WHERE t.project_id = $1 AND t.status_category = 'open' AND NOT (t.owner_id = ANY($2::text[])) GROUP BY p.display_name ORDER BY p.display_name`, [id, keep]);

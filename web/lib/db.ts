@@ -80,6 +80,8 @@ export async function upgrade(db: Db) {
   await db.exec(`INSERT INTO project_members (project_id, person_id, project_role)
     SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND status_category = 'open'
     ON CONFLICT (project_id, person_id) DO NOTHING;`);
+  // 13 Oct: a project can have a lead who is not its owner.
+  await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id text REFERENCES people(id);`);
 }
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };

@@ -33,7 +33,8 @@ CREATE TABLE projects (
   team_id     text NOT NULL REFERENCES teams(id),
   name        text NOT NULL,
   department  text NOT NULL,
-  owner_id    text NOT NULL REFERENCES people(id),
+  owner_id    text NOT NULL REFERENCES people(id),  -- project owner: accountable for the outcome
+  lead_id     text REFERENCES people(id),           -- project lead: runs it day to day; null when the owner leads it
   status      text NOT NULL CHECK (status IN ('on_track','at_risk','off_track')),
   status_note text,
   status_at   timestamptz NOT NULL,

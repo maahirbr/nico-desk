@@ -698,10 +698,10 @@ export async function updatesView(
          AND e.field IN ('_created','owner_id','due_on','blocked_ask','blocked_on_id','status_category','title')`,
       [teamId, since],
     ),
-    db.query<{ id: string; owner_id: string }>(`SELECT id, owner_id FROM projects WHERE team_id = $1`, [teamId]),
+    db.query<{ id: string; owner_id: string; lead_id: string | null }>(`SELECT id, owner_id, lead_id FROM projects WHERE team_id = $1`, [teamId]),
   ]);
   const items = buildUpdates({
-    events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, p.owner_id])), names, viewerId: meId, now, seenAt,
+    events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, [p.owner_id, ...(p.lead_id ? [p.lead_id] : [])]])), names, viewerId: meId, now, seenAt,
   });
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }
