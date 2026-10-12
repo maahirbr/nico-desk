@@ -566,3 +566,39 @@ npm run build       # succeeds
 The current version was also checked by hand in Chrome, at desktop and phone width, with no errors:
 - Home, Team (search and status dropdown), all 9 project boards, the Ledger and search
 - the block, drop and status forms
+
+## Since 9 Oct: what changed on maahir/mvp
+
+Your app is the baseline for the MVP. These are the changes made on top of it since 9 Oct 2026, on
+the MVP branch. The sections above still describe your app. Where this list differs, this list
+is newer. `docs/HANDOFF-12-OCT.md` has the fuller brief, and the DECISIONS in `CLAUDE.md` give the why.
+
+- **Hosting and Supabase.** The app runs on Vercel at https://nico-desk.vercel.app. It reads from a
+  Supabase database in Mumbai through the transaction pooler, so edits last. This replaces "Hosting
+  for the team" in section 14. With no `DATABASE_URL`, the app still falls back to PGlite, as before.
+- **Google sign-in.** People sign in with Google, direct to Google, with no Supabase Auth. Only active
+  roster people on the allowed company domain get in. The repo owner can also list single addresses
+  outside that domain in `NICO_ALLOWED_EMAILS` (env only). Each of those people still needs an active
+  roster entry. The session is the same signed cookie as before. This replaces "Google sign-in" in section 14.
+- **Admin roles.** An admin can do everything a lead can: edit, move, close and reopen other people's
+  tasks. Blocking a task stays with its owner. The status buttons now show only the moves the service allows.
+- **Skins.** The look is now a choice from the avatar menu, kept in a cookie. Warm (W) is the default
+  and matches your build screen for screen. A, B and C are the three mood sketches. Mac uses the system
+  font and Ink is a Notion-like look. All six pass AA contrast in day and night.
+- **Updates for you.** Home shows major changes that touch you from the last 7 days. An owner sees
+  changes others make to their task. The person a task is blocked on sees the block. A project lead
+  sees date moves, blocks, drops and reassignments. "Mark all seen" is a per-device choice. Leads also
+  see it on Team. It is worked out from the task history, with no schema change.
+- **Ledger, cause first.** The Ledger opens on a summary line. Then "Needs attention" lists each late
+  task with why it is late and the next step. Then what finished. Your tiles and delivery-habits cards
+  stay. The old table sits in a collapsed "Full breakdown". Each category is defined on the page, and
+  late is split into flagged early and missed.
+- **Reminders and the daily notice job.** Reminders still open drafts in the lead's own Gmail, and the
+  app never sends. A daily job at 09:00 IST writes in-app notices for tasks due tomorrow, due today and
+  overdue. It sends nothing. It needs `CRON_SECRET` and refuses to run without it.
+- **View as.** An admin can view the site as another person to check their screens. It is read-only.
+  The server refuses every write while viewing, and write controls are hidden or disabled.
+- **Your account menu.** Your account menu work (branch `mvp-local-desk-look`) is merged. The sidebar shows
+  the company name under the logo and has one account menu at the foot. Roster stays under More.
+- **Everyone lands on Home.** After sign-in, every role lands on Home (`/me`). This replaces the lead and
+  admin landing on Team. Team is one click away in the nav.
