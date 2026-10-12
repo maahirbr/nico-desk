@@ -231,6 +231,11 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   call. It is a CSS mask of `web/public/brand/nicobar-wordmark.svg` filled with `--ink`, so every skin tints it in day and
   night with no copy per skin, and forced-colours mode paints it in the system text colour. Rollback: `git revert` this
   commit.
+- 2026-10-12 · Sonnet 5.5 · The Reminders page now says plainly, under its title: "Opens a draft in your Gmail, from your
+  address. You press Send." It replaces the older line "It opens in your own Gmail; you press Send", so the page says it
+  once. The cron check found `web/vercel.json` already runs `/api/v1/jobs/reminders` daily at 03:30 UTC (09:00 IST), and
+  the route refuses while `CRON_SECRET` is unset, so neither changed. The optional Monday digest is not built.
+  Rollback: git revert this commit.
 
 ## VERIFY
 
