@@ -630,7 +630,8 @@
 :root[data-skin="w"] .head-new { display: inline-flex; }
 :root[data-skin="w"] .btn { min-height: 0; padding: 8px 15px; }
 :root[data-skin="w"] .topsearch input { border-radius: var(--radius-pill); min-height: 0; padding-top: 9px; padding-bottom: 9px; font-size: 14px; }
-:root[data-skin="w"] .seg button { font: 500 12.5px/1.2 var(--font-sans); min-height: 0; padding: 6px 13px; background: var(--surface); }
+:root[data-skin="w"] .seg button { font: 500 12.5px/1.2 var(--font-sans); min-height: 0; padding: 6px 13px; }
+:root[data-skin="w"] .seg button:not([aria-pressed="true"]) { background: var(--surface); }
 :root[data-skin="w"] .callout { border: 1px solid var(--callout-line); box-shadow: none; padding: 14px 16px; }
 
 /* Groups and Team: labels in normal case, bolder; the person header in full ink */
