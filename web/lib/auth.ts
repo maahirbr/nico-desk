@@ -14,7 +14,10 @@ import { findPersonByEmail, getPerson, teamsOf, type Person } from './service';
 export const COOKIE = 'nd_session';
 const MAX_AGE_S = 60 * 60 * 12;
 
-export type Me = { person: Person; team: { id: string; name: string; teamType: string } };
+// person is who the pages and rules treat as the signed-in user. When an admin is "viewing as" someone,
+// person is that someone and viewingAs is true; realPerson is always the signed-in session person. Audit and
+// the read-only guard (lib/http.ts) use realPerson. Nothing is written while viewingAs.
+export type Me = { person: Person; realPerson: Person; viewingAs: boolean; team: { id: string; name: string; teamType: string } };
 
 let cached: string | null = null;
 function secret(): string {
@@ -47,6 +50,29 @@ function verify(token: string | undefined): string | null {
   if (sig.length !== want.length || !crypto.timingSafeEqual(sig, want)) return null;
   const [personId, exp] = payload.split('.');
   return Number(exp) > Date.now() / 1000 ? personId : null;
+}
+
+// "View as": an admin reviews the site as another person. The cookie names the real session person, the
+// person viewed and an expiry, and is signed with its own label so a session token cannot stand in for it.
+// It counts only while the session person is an admin (resolveMe); anyone else's copy is ignored.
+export const VIEW_COOKIE = 'nd_view';
+
+export function signView(realId: string, targetId: string): string {
+  const payload = `${realId}.${targetId}.${Math.floor(Date.now() / 1000) + MAX_AGE_S}`;
+  return `${payload}.${mac(`view:${payload}`)}`;
+}
+
+// The viewed person's id, or null when the token is missing, forged, expired or issued to another session person.
+export function verifyView(token: string | undefined, realId: string): string | null {
+  if (!token) return null;
+  const i = token.lastIndexOf('.');
+  if (i < 0) return null;
+  const payload = token.slice(0, i);
+  const sig = Buffer.from(token.slice(i + 1));
+  const want = Buffer.from(mac(`view:${payload}`));
+  if (sig.length !== want.length || !crypto.timingSafeEqual(sig, want)) return null;
+  const [real, target, exp] = payload.split('.');
+  return real === realId && target && Number(exp) > Date.now() / 1000 ? target : null;
 }
 
 export const cookieOptions = { maxAge: MAX_AGE_S };
@@ -84,15 +110,39 @@ export async function checkSignIn(email: string): Promise<{ ok: true; personId: 
   return { ok: true, personId: p.id };
 }
 
+type Database = Awaited<ReturnType<typeof db>>;
+
+// The signed-in person, plus the person being viewed when an admin has chosen "View as" (viewToken).
+// The pure core of currentMe, so tests can call it without request cookies.
+export async function resolveMe(d: Database, sessionId: string | null, viewToken?: string): Promise<Me | null> {
+  if (!sessionId) return null;
+  const [team] = await teamsOf(d, sessionId);
+  if (!team) return null;
+  const ok = (p: Person | null): p is Person => !!p?.active && p.email.split('@')[1] === allowedDomain();
+  const real = await getPerson(d, team.id, sessionId);
+  if (!ok(real)) return null;
+  if (real.appRoles.includes('admin')) {
+    const target = verifyView(viewToken, real.id);
+    if (target && target !== real.id) {
+      const viewed = await getPerson(d, team.id, target);
+      if (ok(viewed)) return { person: viewed, realPerson: real, viewingAs: true, team };
+    }
+  }
+  return { person: real, realPerson: real, viewingAs: false, team };
+}
+
 export async function currentMe(): Promise<Me | null> {
   const d = await db();
+  const jar = await cookies();
+  const id = verify(jar.get(COOKIE)?.value) ?? (openDemo() ? await demoPerson(d) : null);
+  return resolveMe(d, id, jar.get(VIEW_COOKIE)?.value);
+}
+
+// The signed-in person with any "View as" ignored. Only the View as endpoint itself uses this.
+export async function currentRealMe(): Promise<Me | null> {
+  const d = await db();
   const id = verify((await cookies()).get(COOKIE)?.value) ?? (openDemo() ? await demoPerson(d) : null);
-  if (!id) return null;
-  const [team] = await teamsOf(d, id);
-  if (!team) return null;
-  const person = await getPerson(d, team.id, id);
-  if (!person?.active || person.email.split('@')[1] !== allowedDomain()) return null;
-  return { person, team };
+  return resolveMe(d, id);
 }
 
 async function demoPerson(d: Awaited<ReturnType<typeof db>>): Promise<string | null> {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { checkSignIn, cookie, cookieOptions, devSignInEnabled, isHttps, signSession } from '@/lib/auth';
+import { VIEW_COOKIE, checkSignIn, cookie, cookieOptions, devSignInEnabled, isHttps, signSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/errors';
 import { errorResponse, rateLimit, readBody, sameOrigin } from '@/lib/http';
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     if (!check.ok) throw new ApiError(403, 'not_allowed', check.why);
     const res = Response.json({ ok: true });
     res.headers.append('Set-Cookie', cookie(signSession(check.personId), cookieOptions.maxAge, isHttps(req)));
+    res.headers.append('Set-Cookie', cookie('', 0, isHttps(req), VIEW_COOKIE));
     return res;
   } catch (e) {
     return errorResponse(e);
@@ -28,6 +29,7 @@ export async function DELETE(req: Request) {
     sameOrigin(req);
     const res = new Response(null, { status: 204 });
     res.headers.append('Set-Cookie', cookie('', 0, isHttps(req)));
+    res.headers.append('Set-Cookie', cookie('', 0, isHttps(req), VIEW_COOKIE));
     return res;
   } catch (e) {
     return errorResponse(e);

@@ -23,10 +23,10 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
     throw e;
   }
   if (t.teamId !== me.team.id) notFound();
-  if (t.ownerId === me.person.id) await markAssignedSeen(d, me.person.id, t.id);
+  if (t.ownerId === me.person.id && !me.viewingAs) await markAssignedSeen(d, me.person.id, t.id);
   const log = await taskLog(d, t.id, undefined, 200);
   const isOwner = t.ownerId === me.person.id;
-  const mirror = t.readOnly;
+  const mirror = t.readOnly || me.viewingAs; // viewing as someone: show the task, offer no action
   const may = {
     edit: !mirror && (isOwner || isLead || t.createdBy === me.person.id),
     reassign: !mirror && (isOwner || isLead),
