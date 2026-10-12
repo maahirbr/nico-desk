@@ -30,7 +30,7 @@ function Card({ d }: { d: ReminderDraft }) {
   const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   const over = d.items.filter((i) => i.days < 0).length;
   return (
-    <section className="card remind-card">
+    <section className="card remind-card" id={`remind-${d.personId}`}>
       <div className="remind-head">
         <span className="person-cell"><Avatar name={d.name} lg /><span><b>{d.name}</b>
           <span className="small dim"> · {d.items.length} {d.items.length === 1 ? 'item' : 'items'}{over ? `, ${over} overdue` : ''}{last ? ` · ${ago(last)}` : ''}</span></span></span>

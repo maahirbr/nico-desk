@@ -858,6 +858,32 @@ tr.grp th { border-bottom: 0; padding-bottom: 0; color: var(--ink-3); }
 .trail-list .why { color: var(--ink-3); margin-top: var(--space-xxs); }
 .ok-text { color: var(--ink-2); }
 
+/* ledger, first view: summary line, needs attention, finished, then the full breakdown */
+.ledger-summary { font: var(--type-line); margin: 0 0 var(--space-sm); }
+.ledger-summary b { font-family: var(--font-date); font-variant-numeric: tabular-nums; color: var(--ink); }
+.attn-list { list-style: none; margin: 0; padding: 0; }
+.attn-item { padding: var(--space-md) var(--card-pad); border-top: var(--rule) solid var(--hairline); display: flex; flex-direction: column; gap: var(--space-xxs); }
+.attn-item:first-child { border-top: 0; }
+.attn-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); flex-wrap: wrap; }
+.attn-late { font: var(--type-state); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.attn-why, .attn-step { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-xs); align-items: baseline; font: var(--type-meta); overflow-wrap: anywhere; }
+.attn-link { font: var(--type-button); color: var(--primary); text-decoration: none; margin-left: var(--space-sm); white-space: nowrap; }
+.attn-link:hover { text-decoration: underline; }
+.attn-step { font-weight: 500; }
+.attn-k { color: var(--ink-3); font: var(--type-small); }
+.attn-more { width: 100%; text-align: left; font: var(--type-button); color: var(--primary); background: var(--sunk); border: 0; border-top: var(--rule) solid var(--hairline); padding: var(--space-sm) var(--card-pad); cursor: pointer; border-radius: 0 0 var(--radius-card) var(--radius-card); }
+.attn-more:hover { text-decoration: underline; }
+.finished .summary { font: var(--type-meta); }
+.fin-list { list-style: none; margin: var(--space-sm) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); font: var(--type-meta); }
+details.breakdown { margin-top: var(--space-xl); }
+details.breakdown > summary { cursor: pointer; font: var(--type-heading); letter-spacing: var(--track-title); display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; padding: var(--space-sm) 0; border-top: var(--rule) solid var(--hairline); }
+details.breakdown > summary { list-style: none; }
+details.breakdown > summary::-webkit-details-marker { display: none; }
+details.breakdown > summary::before { content: '›'; color: var(--ink-3); display: inline-block; transition: transform var(--dur-state) var(--ease); }
+details.breakdown[open] > summary::before { transform: rotate(90deg); }
+details.breakdown[open] > summary { margin-bottom: var(--space-md); }
+details.breakdown > .defs { margin-top: 0; }
+
 /* Team, by person: what is next */
 .find-person { width: 180px; }
 .next-h { font: var(--type-state); color: var(--ink-3); margin: var(--space-sm) 0 var(--space-xs); }

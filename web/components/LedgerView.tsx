@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Task } from '@/lib/derive';
+import { attentionList } from '@/lib/attention';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, Person } from './chips';
@@ -46,6 +47,9 @@ function keptOf(ts: Task[]) {
   return { pct: pct(closed.filter(MATCH.kept).length, closed.length), closed: closed.length };
 }
 
+const ATTN_SHOWN = 8;
+const FIN_SHOWN = 5;
+
 type Drill = { title: string; tasks: Task[] } | null;
 
 export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow, waitingOn, people, names, projectNames, seeAll }: {
@@ -61,13 +65,78 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   const N = ({ n, title, list, warn }: { n: number | string; title: string; list: Task[]; warn?: boolean }) =>
     list.length ? <button className={`num-btn${warn ? ' warn' : ''}`} onClick={() => show(title, list)} title="See the tasks">{n}</button> : <span className="num-zero">{n}</span>;
   const kAll = keptOf(tasks);
-  const period = `last ${weeks} weeks`;
+  const period = weeks === 1 ? 'this week' : `last ${weeks} weeks`;
+  const pastDue = tasks.filter(MATCH.pastdue);
+  const silent = tasks.filter(MATCH.silent);
+  const lateDone = tasks.filter(MATCH.late);
+  const keptDone = tasks.filter(MATCH.kept);
+  const closed = tasks.filter((t) => t.outcome);
+  // Blocked tasks come from the open list, so a block shows even when its first date is outside the window.
+  const attention = attentionList([...tasks, ...openNow.filter((t) => t.blocked)], names, today);
+  const byId = new Map([...tasks, ...openNow].map((t) => [t.id, t]));
 
   return (
     <>
       <h1>On-time ledger</h1>
-      <p className="lede">Kept dates, per person per week. On time means closed by the date first given. Click any number to see the tasks behind it.</p>
+      <p className="lede">Kept dates, judged against the date first given. What got late, why, and what to do about it come first. The full breakdown by person and week is below.</p>
 
+      <p className="summary ledger-summary">
+        <b>{kAll.pct === null ? 'n/a' : `${kAll.pct}%`}</b> kept on the first date, {period}
+        {' · '}<N n={`${pastDue.length} open past due`} title={`Open, past due, ${period}`} list={pastDue} warn={pastDue.length > 0} />
+        {' · '}<N n={`${silent.length} slipped silently`} title={`Slipped silently, ${period}`} list={silent} warn={silent.length > 0} />
+        {' · '}<N n={`${lateDone.length} finished late`} title={`Closed late, ${period}`} list={lateDone} />
+      </p>
+
+      <h2>Needs attention <span className="count-badge">{attention.length}</span></h2>
+      {attention.length === 0 ? <div className="card"><p className="empty card-pad">Nothing is late, slipped or blocked in this view.</p></div> : (
+        <div className="card attn">
+          <ol className="attn-list">
+            {attention.slice(0, ATTN_SHOWN).map((a) => (
+              <li key={a.taskId} className="attn-item">
+                <div className="attn-top">
+                  <Link href={`/tasks/${a.taskId}`} className="drill-name">{a.title}</Link>
+                  <span className={`attn-late${a.daysLate > 0 ? ' late-text' : ' dim'}`}>{a.daysLate > 0 ? `${a.daysLate} day${a.daysLate === 1 ? '' : 's'} late` : `Due ${fmtDate(a.dueOn)}`}</span>
+                </div>
+                <div className="small dim">{[a.ownerName, a.projectId ? projectNames[a.projectId] : ''].filter(Boolean).join(' · ')}</div>
+                <div className="attn-why"><span className="attn-k">Why</span><span className={a.whySource === 'none' ? 'late-text' : ''}>{a.whySource === 'move' ? `“${a.why}”` : a.why}</span></div>
+                <div className="attn-step"><span className="attn-k">Next</span>
+                  <span>{a.step.text}{seeAll && a.remindPersonId &&<Link href={`/reminders#remind-${a.remindPersonId}`} className="attn-link">Draft a reminder</Link>}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
+          {attention.length > ATTN_SHOWN && (
+            <button className="attn-more" onClick={() => show('Needs attention', attention.slice(ATTN_SHOWN).map((a) => byId.get(a.taskId)!))}>
+              Show {attention.length - ATTN_SHOWN} more
+            </button>
+          )}
+        </div>
+      )}
+
+      <h2>{weeks === 1 ? 'Finished this week' : 'Finished'} <span className="count-badge">{period}</span></h2>
+      <div className="card card-pad finished">
+        {closed.length === 0 ? <p className="empty">Nothing finished in this view.</p> : (
+          <>
+            <p className="summary">
+              <N n={`${keptDone.length} on time or ahead`} title={`Closed on time or ahead, ${period}`} list={keptDone} /> ({tasks.filter(MATCH.ahead).length} ahead, {tasks.filter(MATCH.ontime).length} on time)
+              {' · '}<N n={`${lateDone.length} late`} title={`Closed late, ${period}`} list={lateDone} warn={lateDone.length > 0} /> ({tasks.filter(MATCH.flagged).length} flagged early, {tasks.filter(MATCH.missed).length} missed)
+            </p>
+            {lateDone.length > 0 && (
+              <ul className="fin-list">
+                {[...lateDone].sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)).slice(0, FIN_SHOWN).map((t) => (
+                  <li key={t.id}>
+                    <Link href={`/tasks/${t.id}`} className="drill-name">{t.title}</Link>
+                    <span className="small dim"> · {names[t.ownerId]} · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? 'flagged early' : 'missed'}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+
+      <details className="breakdown">
+        <summary>Full breakdown <span className="count-badge">definitions, by person, by week</span></summary>
       <div className="card defs">
         <div>
           <h3>Finished</h3>
@@ -211,6 +280,8 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           </section>
         );
       })}
+
+      </details>
 
       {drill && <DrillPanel drill={drill} names={names} projectNames={projectNames} today={today} onClose={() => setDrill(null)} />}
     </>
