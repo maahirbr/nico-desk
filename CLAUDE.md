@@ -171,6 +171,13 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   status buttons now offer only moves the service allows. The update log reads one sentence per action. The phone nav starts
   at the gutter in every skin. On the live site the repo owner, the PM, the pilot sponsor, the sponsor and the product teammate
   are admins; the open demo is off, so the first screen is Google sign-in. Rollback: `git revert` the two fix commits.
+- 2026-10-12 · Sonnet 5.5 · "View as" for admins, so they can check each person's screens before the pilot team sees them. A
+  signed `nd_view` cookie (`web/lib/auth.ts`) counts only when the real session person is an active admin. `currentMe` returns the
+  effective person plus `realPerson`. Every non-GET `/api/v1` call is refused with 403 `viewing_as` in `route()`
+  (`web/lib/http.ts`), before the rate limit, so nothing is written as the person viewed. Pages and components hide or disable
+  write controls through `ReadOnlyProvider`; page-level writes (assigned-seen, notice-read, seen cookie, reminder log) are
+  skipped. The service layer itself still takes an actor id, so any new write path outside `route()` must call
+  `assertNotViewing`. Rollback: `git revert` the commit.
 
 ## VERIFY
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
+import { useReadOnly } from './readonly';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
 
@@ -64,6 +65,7 @@ const Icon = ({ d }: { d: React.ReactNode }) => (
 
 export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: boolean }) {
   const path = usePathname();
+  const readOnly = useReadOnly();
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
   const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
   const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ...(isAdmin ? [['/admin', 'Roster']] : [])];
@@ -79,7 +81,7 @@ export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: bo
         <Icon d={ICON.more} />More<span className="chev-r" aria-hidden>{moreOpen ? '▾' : '▸'}</span>
       </button>
       <div className={`nav-sub${moreOpen ? ' open' : ''}`}>{more.map(link)}</div>
-      <Link className="nav-new" href="/tasks/new" aria-current={path === '/tasks/new' ? 'page' : undefined}>+ New task</Link>
+      {!readOnly && <Link className="nav-new" href="/tasks/new" aria-current={path === '/tasks/new' ? 'page' : undefined}>+ New task</Link>}
     </nav>
   );
 }

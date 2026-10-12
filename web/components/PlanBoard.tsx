@@ -14,6 +14,7 @@ import { arrivals, focusOnDesktop } from './motion';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { Modal } from './task-ui';
 import { notify } from './toast';
+import { useReadOnly } from './readonly';
 
 // A partner plan: lines of work, each with an owner on our side, a partner person, a mode,
 // checkpoints and a status. Rows open for detail. Every change is one call to
@@ -68,7 +69,9 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const [editing, setEditing] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [asking, setAsking] = useState<{ lineId: string; to: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [working, setBusy] = useState(false);
+  const readOnly = useReadOnly(); // admin viewing as someone else: controls that change the plan go away or stay disabled
+  const busy = working || readOnly;
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -152,7 +155,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     ? <div className="empty-block"><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
     : pillar !== 'All'
       ? <div className="empty-block"><p>No lines in this pillar yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all pillars</button></div>
-      : <div className="empty-block"><p>No lines in this plan yet.</p><button className="btn" onClick={() => setAddOpen(true)}>Add a line</button></div>;
+      : <div className="empty-block"><p>No lines in this plan yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a line</button>}</div>;
 
   const byNext = (a: PlanLine, b: PlanLine) => {
     const x = a.status === 'Done' ? '~' : nextCheckpoint(a)?.date ?? '9999';
@@ -216,10 +219,10 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             </StateSelect>
           </td>
           <td className="act-cell">
-            <span className="row-actions">
+            {!readOnly && <span className="row-actions">
               <button className="row-btn" title="Edit line" aria-label={`Edit line ${l.num}`} onClick={() => { setEditing(l.id); setRemoving(null); }}>✎</button>
               <button className="row-btn del" title="Remove line" aria-label={`Remove line ${l.num}`} onClick={() => { setRemoving(l.id); setEditing(null); }}>✕</button>
-            </span>
+            </span>}
           </td>
         </MotionRow>
         {asking?.lineId === l.id && (
@@ -341,12 +344,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             </span>
             {filtered && <button className="act" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear</button>}
             <span className="toolbar-end">
-              <button className="btn" onClick={() => setAddOpen(true)}>+ Add line</button>
+              {!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>+ Add line</button>}
               <span className="menu-wrap">
                 <button className="btn ghost icon-btn" aria-label="More" aria-expanded={menu} onClick={() => setMenu(!menu)}>⋯</button>
                 {menu && (
                   <div className="menu" role="menu" onMouseLeave={() => setMenu(false)}>
-                    <button role="menuitem" onClick={() => { setImportOpen(true); setMenu(false); }}>Import meeting minutes</button>
+                    {!readOnly && <button role="menuitem" onClick={() => { setImportOpen(true); setMenu(false); }}>Import meeting minutes</button>}
                     <button role="menuitem" onClick={() => { setTab('log'); setMenu(false); }}>Update log</button>
                   </div>
                 )}
@@ -354,12 +357,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             </span>
           </div>
 
-          {state.proposals.length > 0 && !reviewing && (
+          {!readOnly && state.proposals.length > 0 && !reviewing && (
             <button className="notice-bar" onClick={() => setReviewing(true)}>
               <b>{state.proposals.length} proposed {state.proposals.length === 1 ? 'action' : 'actions'}</b> from meeting minutes are waiting for review <span className="act">Review</span>
             </button>
           )}
-          {reviewing && state.proposals.length > 0 && <Inbox mode="plan" proposals={state.proposals} lines={lines} busy={busy} today={today} op={op} />}
+          {!readOnly && reviewing && state.proposals.length > 0 && <Inbox mode="plan" proposals={state.proposals} lines={lines} busy={busy} today={today} op={op} />}
 
           {board}
 
@@ -378,7 +381,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                         <div className="removed-task">{l.num}. {l.what}</div>
                         <div className="removed-meta">{l.removedBy ? names[l.removedBy] ?? 'Someone' : 'Someone'} removed this{l.removedAt ? ` on ${fmtDate(l.removedAt.slice(0, 10))}` : ''}: <em>{l.removeReason}</em></div>
                       </div>
-                      <button className="btn ghost" disabled={busy} onClick={() => op({ op: 'restoreLine', lineId: l.id })}>Restore</button>
+                      {!readOnly && <button className="btn ghost" disabled={busy} onClick={() => op({ op: 'restoreLine', lineId: l.id })}>Restore</button>}
                     </div>
                   ))}
                 </div>
@@ -478,6 +481,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
 type Op = (b: Record<string, unknown>) => Promise<boolean>;
 
 function ActionList({ list, busy, today, op }: { list: PlanAction[]; busy: boolean; today: string; op: Op }) {
+  const readOnly = useReadOnly();
   const [armed, setArmed] = useState<string | null>(null);
   return (
     <ul className="acts">
@@ -492,10 +496,10 @@ function ActionList({ list, busy, today, op }: { list: PlanAction[]; busy: boole
               {a.source.title && <span className="act-src"> · {a.source.title}{a.source.date ? `, ${fmtDate(a.source.date)}` : ''}</span>}
             </div>
           </div>
-          <button className={`row-btn del${armed === a.id ? ' armed' : ''}`} disabled={busy} aria-label="Remove action"
+          {!readOnly && <button className={`row-btn del${armed === a.id ? ' armed' : ''}`} disabled={busy} aria-label="Remove action"
             onClick={() => { if (armed === a.id) { op({ op: 'removeAction', actionId: a.id }); setArmed(null); } else { setArmed(a.id); setTimeout(() => setArmed(null), 4000); } }}>
             {armed === a.id ? 'Remove?' : '✕'}
-          </button>
+          </button>}
         </li>
       ))}
     </ul>

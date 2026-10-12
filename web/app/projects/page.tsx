@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Projects() {
   const me = await requireMe();
-  const { d, names, activeOpts, isLead, isAdmin } = await lookups(me);
+  const { d, names, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
   const [projects, counts] = await Promise.all([teamProjects(d, me.team.id), projectCounts(d, me.team.id)]);
   const t = today();
   const sorted = [...projects].sort((a, b) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999'));
@@ -23,7 +23,7 @@ export default async function Projects() {
     <div className="calm">
       <header className="page-head">
         <div><h1>Projects</h1><p className="summary">{projects.length} projects · soonest date first</p></div>
-        {(isLead || isAdmin) && <NewProjectButton people={activeOpts} meId={me.person.id} />}
+        {(isLead || isAdmin) && !readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
       <div className="pcards">
         {sorted.map((p) => {

@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const me = await requireMe();
   const { id } = await params;
-  const { d, names, people, projectNames, isLead, isAdmin } = await lookups(me);
+  const { d, names, people, projectNames, isLead, isAdmin, readOnly } = await lookups(me);
   let p: Project;
   try {
     p = await getProject(d, id);
@@ -33,7 +33,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} names={names} people={opts} meId={me.person.id}
-        canEdit={p.ownerId === me.person.id || isLead || isAdmin} today={today()} />
+        canEdit={!readOnly && (p.ownerId === me.person.id || isLead || isAdmin)} today={today()} />
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={await planState(d, p.id)} people={active} names={names} meId={me.person.id} today={today()} />
       ) : (

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ago, seenCookieName, type UpdateItem } from '@/lib/updates';
+import { useReadOnly } from './readonly';
 
 // "Updates for you": changes other people made to your tasks, tasks blocked on you, or your project's
 // tasks. Renders nothing when there is nothing new. "Mark all seen" keeps a cut-off in a cookie, so it
@@ -13,6 +14,7 @@ const SHOWN = 8;
 export function UpdatesCard({ items, meId, now, onOpen }: { items: UpdateItem[]; meId: string; now: string; onOpen: (taskId: string) => void }) {
   const router = useRouter();
   const [all, setAll] = useState(false);
+  const readOnly = useReadOnly(); // the seen mark is a cookie write for that person: not while viewing as them
   if (items.length === 0) return null;
   const list = all ? items : items.slice(0, SHOWN);
   const markSeen = () => {
@@ -24,7 +26,7 @@ export function UpdatesCard({ items, meId, now, onOpen }: { items: UpdateItem[];
     <section className="callout updates" aria-label="Updates for you">
       <div className="callout-head">
         <h2>Updates for you <span className="count-badge">{items.length}</span></h2>
-        <button className="mini-btn" onClick={markSeen}>Mark all seen</button>
+        {!readOnly && <button className="mini-btn" onClick={markSeen}>Mark all seen</button>}
       </div>
       {list.map((i) => (
         <button key={i.id} className="callout-row" onClick={() => onOpen(i.taskId)}>

@@ -11,6 +11,7 @@ import { groupLog } from './logText';
 import { canMoveTo } from './statusRules';
 import { arrivals, focusOnDesktop, useClosing, usePreviousWhileChanging } from './motion';
 import { notify } from './toast';
+import { useReadOnly } from './readonly';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -128,6 +129,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, onOpe
 }) {
   const desc = t.description;
   const router = useRouter();
+  if (useReadOnly()) { canTick = false; onStatus = undefined; } // viewing as someone else: look, do not change
   const [ticked, setTicked] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const due = dueText(t, today);
@@ -240,8 +242,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
   const names = Object.fromEntries(people.map((p) => [p.id, p.name]));
   const entries = groupLog(log, names, projectNames);
-  const can = !!t && !t.readOnly && (t.ownerId === meId || isLead);
-  const canEdit = !!t && !t.readOnly && (can || t.createdBy === meId);
+  const readOnly = useReadOnly();
+  const can = !readOnly && !!t && !t.readOnly && (t.ownerId === meId || isLead);
+  const canEdit = !readOnly && !!t && !t.readOnly && (can || t.createdBy === meId);
   const open = t?.statusCategory === 'open';
   const key = t ? statusKey(t) : 'todo';
 
@@ -382,7 +385,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             <div className="drawer-foot">
               {open && can && <button className="act danger" onClick={() => setMode('drop')}>Drop task…</button>}
-              {!open && isLead && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
+              {!open && isLead && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
               <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
             </div>
 

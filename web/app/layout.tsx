@@ -12,7 +12,10 @@ import { SkinMenu } from '@/components/SkinMenu';
 import { SKIN_COOKIE, skinOf } from '@/components/skins';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
-import { rosterFile } from '@/lib/db';
+import { ReadOnlyProvider } from '@/components/readonly';
+import { ViewAsMenu, ViewBanner } from '@/components/ViewAs';
+import { db, rosterFile } from '@/lib/db';
+import { listPeople } from '@/lib/service';
 import { localOwnerId } from '@/lib/seed';
 import './tokens.css';
 import './globals.css';
@@ -32,13 +35,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const me = await currentMe();
   const skin = skinOf((await cookies()).get(SKIN_COOKIE)?.value);
   const ownerId = localOwnerId(rosterFile());
+  // "View as" is for admins only, judged on the real session person, never on the person being viewed.
+  const realAdmin = !!me && me.realPerson.appRoles.includes('admin');
+  const roleWord = (roles: string[]) => roles.filter((r) => r !== 'member').join(' · ') || 'member';
+  const viewPeople = realAdmin && me
+    ? (await listPeople(await db(), me.team.id)).filter((p) => p.active && p.id !== me.realPerson.id)
+        .map((p) => ({ id: p.id, name: p.displayName, roles: roleWord(p.appRoles) }))
+    : [];
   return (
     <html lang="en" data-skin={skin} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
-      <body>
+      <body data-viewing={me?.viewingAs ? '1' : undefined}>
+        {me?.viewingAs && <ViewBanner name={me.person.displayName} role={roleWord(me.person.appRoles)} />}
         <KeyboardDismiss />
         <Toaster />
         {me && <Shortcuts />}
         {me ? (
+          <ReadOnlyProvider readOnly={me.viewingAs}>
           <div className="shell">
             <aside className="side">
               <Link className="mark" href="/me">
@@ -49,19 +61,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </span>
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} />
-              {ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
+              {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
               <div className="who">
                 <Avatar name={me.person.displayName} you />
                 <span className="who-text">
                   <div className="who-name">{me.person.displayName}</div>
-                  <div className="who-role">{me.person.appRoles.filter((r) => r !== 'member').join(' · ') || 'member'}</div>
+                  <div className="who-role">{roleWord(me.person.appRoles)}</div>
                 </span>
+                {realAdmin && <ViewAsMenu people={viewPeople} viewingId={me.viewingAs ? me.person.id : null} />}
                 <SkinMenu initial={skin} />
                 <SignOut />
               </div>
             </aside>
             <main className="main"><div className="topbar"><TopSearch /></div><div className="page">{children}</div></main>
           </div>
+          </ReadOnlyProvider>
         ) : (
           <main className="page-solo">{children}</main>
         )}

@@ -7,6 +7,6 @@ export const dynamic = 'force-dynamic';
 
 export default async function ConnectionsPage() {
   const me = await requireMe();
-  const canManage = isLeadOrAdmin(me.person.appRoles);
+  const canManage = isLeadOrAdmin(me.person.appRoles) && !me.viewingAs;
   return <Connections status={connectionStatus()} canManage={canManage} />;
 }

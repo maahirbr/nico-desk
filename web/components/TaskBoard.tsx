@@ -9,6 +9,7 @@ import { fmtDate } from '@/lib/time';
 import { Person } from './chips';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
+import { useReadOnly } from './readonly';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { canMoveTo } from './statusRules';
 import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, statusKey, TaskDrawer, type StatusKey } from './task-ui';
@@ -67,7 +68,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     finally { setBusy(false); }
   }
 
-  const may = (t: Task) => !t.readOnly && (t.ownerId === meId || isLead);
+  const readOnly = useReadOnly(); // admin viewing as someone else: every write control stays away
+  const may = (t: Task) => !readOnly && !t.readOnly && (t.ownerId === meId || isLead);
   const open = tasks.filter((t) => t.statusCategory === 'open');
   const tiles = [
     { key: 'open', label: 'Open', n: open.length, match: (t: Task) => t.statusCategory === 'open' },
@@ -189,15 +191,15 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         <h2>Tasks{ws !== 'All' && <span className="count-badge">{ws === '__none' ? 'No sub-project' : ws}</span>}</h2>
         <span className="board-tools">
           {isLead && <a className="btn ghost" href={`/reminders?project=${projectId}`}>Reminders</a>}
-          <button className="btn ghost" aria-expanded={importOpen} onClick={() => setImportOpen(!importOpen)}>{importOpen ? 'Close import' : 'Import minutes'}</button>
-          <button className="btn" aria-expanded={addOpen} onClick={() => setAddOpen(!addOpen)}>{addOpen ? 'Close' : '+ Add task'}</button>
+          {!readOnly && <button className="btn ghost" aria-expanded={importOpen} onClick={() => setImportOpen(!importOpen)}>{importOpen ? 'Close import' : 'Import minutes'}</button>}
+          {!readOnly && <button className="btn" aria-expanded={addOpen} onClick={() => setAddOpen(!addOpen)}>{addOpen ? 'Close' : '+ Add task'}</button>}
         </span>
       </div>
 
       {importOpen && <ImportPanel what="tasks" busy={busy} today={today} onRead={async (b) => { if (await planOp({ op: 'importMinutes', ...b })) setImportOpen(false); }} />}
       {addOpen && <AddTask projectId={projectId} people={people} meId={meId} today={today} workstreams={wsList} defaultWs={ws !== 'All' && ws !== '__none' ? ws : ''} onDone={() => setAddOpen(false)} />}
       {(error || note) && <p className={error ? 'err banner' : 'ok banner'} role={error ? 'alert' : 'status'}>{error ?? note}</p>}
-      {proposals.length > 0 && <Inbox mode="tasks" proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
+      {!readOnly && proposals.length > 0 && <Inbox mode="tasks" proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
 
       <div className="pills">
         <button className="pill" aria-pressed={!who} onClick={() => setWho(null)}>Everyone ({open.length})</button>
@@ -225,7 +227,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         <div style={{ minWidth: 0 }}>
           {table(openRows, filtered
             ? <div className="empty-block"><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
-            : <div className="empty-block"><p>No tasks in this project yet.</p><button className="btn" onClick={() => setAddOpen(true)}>Add a task</button></div>)}
+            : <div className="empty-block"><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
           {closedRows.length > 0 && tile !== 'done' && (
             <>
               <button className="log-toggle small-toggle" style={{ marginTop: 22 }} aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>

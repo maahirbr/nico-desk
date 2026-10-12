@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Admin() {
   const me = await requireMe();
-  const { people, isAdmin } = await lookups(me);
+  const { people, isAdmin, readOnly } = await lookups(me);
   if (!isAdmin) return (<><h1>Roster</h1><p className="lede">Only the team admin can change the roster.</p></>);
   return (
     <>
@@ -22,13 +22,15 @@ export default async function Admin() {
               <td data-label="Title">{p.role}</td>
               <td data-label="Email" className="mono small">{p.email}</td>
               <td data-label="Access" className="small" style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</td>
-              <td><PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} /></td>
+              <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} />}</td>
             </tr>
           ))}
         </tbody>
       </table></div>
-      <h2>Add a person</h2>
-      <AddPersonForm teamId={me.team.id} />
+      {!readOnly && (<>
+        <h2>Add a person</h2>
+        <AddPersonForm teamId={me.team.id} />
+      </>)}
     </>
   );
 }

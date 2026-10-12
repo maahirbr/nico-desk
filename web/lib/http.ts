@@ -51,6 +51,15 @@ export async function readBody<T extends z.ZodType>(req: Request, schema: T): Pr
   return schema.parse(raw);
 }
 
+// An admin who is "viewing as" someone sees the site read-only. Every write is refused, so nothing is ever
+// recorded for the viewed person, and the admin's own powers cannot be used from inside the view.
+export function assertNotViewing(me: Me): void {
+  if (me.viewingAs) {
+    throw new ApiError(403, 'viewing_as',
+      `You are viewing as ${me.person.displayName}. This view is read-only. Go back to your own view to make changes.`);
+  }
+}
+
 type Args<P> = { req: Request; params: P; me: Me; db: Db };
 
 export function route<P = Record<string, never>>(fn: (a: Args<P>) => Promise<unknown>) {
@@ -60,7 +69,8 @@ export function route<P = Record<string, never>>(fn: (a: Args<P>) => Promise<unk
       if (!me) throw new ApiError(401, 'not_signed_in', 'Sign in first.');
       if (req.method !== 'GET') {
         sameOrigin(req);
-        rateLimit(`w:${me.person.id}`, 60);
+        assertNotViewing(me);
+        rateLimit(`w:${me.realPerson.id}`, 60);
       }
       const out = await fn({ req, params: await ctx.params, me, db: await db() });
       if (out instanceof Response) return out;

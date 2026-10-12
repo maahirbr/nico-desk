@@ -5,6 +5,7 @@ import type { Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 import type { UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
+import { useReadOnly } from './readonly';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type StatusKey } from './task-ui';
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
@@ -14,6 +15,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   assignedNotice: Record<string, string>; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
 }) {
+  const readOnly = useReadOnly();
   const [openId, setOpenId] = useState<string | null>(null);
   const [startStatus, setStartStatus] = useState<StatusKey | undefined>();
   const [adding, setAdding] = useState(false);
@@ -30,7 +32,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const overdue = mine.filter((t) => t.dueOn < today).length;
   const open = (id: string, s?: StatusKey) => {
     setOpenId(id); setStartStatus(s);
-    if (assignedNotice[id]) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
+    if (assignedNotice[id] && !readOnly) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
   };
   const opened = [...mine, ...waiting, ...done, ...dropped].find((t) => t.id === openId);
 
@@ -45,7 +47,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             <span className="dim"> · {fmtDate(today)}</span>
           </p>
         </div>
-        <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>
+        {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
 
       <UpdatesCard items={updates.items} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
@@ -65,7 +67,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       {groups.length === 0 && (
         <div className="empty-state">
           <p>You’re clear. Nothing open on your side.</p>
-          <button className="btn" onClick={() => setAdding(true)}>Add a task</button>
+          {!readOnly && <button className="btn" onClick={() => setAdding(true)}>Add a task</button>}
         </div>
       )}
 

@@ -18,6 +18,7 @@ export async function lookups(me: Me) {
     activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),
+    readOnly: me.viewingAs, // an admin viewing as someone else: no write control shows (lib/http.ts refuses the writes)
   };
 }
 

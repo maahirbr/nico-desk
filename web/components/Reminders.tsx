@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ReminderDraft } from '@/lib/reminders';
 import { Avatar } from './chips';
+import { useReadOnly } from './readonly';
 
 // Each draft opens in the lead's own Gmail (or mail app) with the text filled in. The lead
 // reads it and presses Send there; this page only records that a reminder went out.
@@ -25,6 +26,7 @@ function Card({ d }: { d: ReminderDraft }) {
   const [to, setTo] = useState(d.to ?? '');
   const [last, setLast] = useState(d.lastAt);
   const [said, setSaid] = useState('');
+  const readOnly = useReadOnly(); // an admin viewing as the lead sees the drafts but cannot open or log them
   const mark = (channel: string) => { record(d.personId, channel, subject, d.items.length); setLast(new Date().toISOString()); };
   const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -35,10 +37,10 @@ function Card({ d }: { d: ReminderDraft }) {
         <span className="person-cell"><Avatar name={d.name} lg /><span><b>{d.name}</b>
           <span className="small dim"> · {d.items.length} {d.items.length === 1 ? 'item' : 'items'}{over ? `, ${over} overdue` : ''}{last ? ` · ${ago(last)}` : ''}</span></span></span>
       </div>
-      <label className="f"><span>To</span><input type="email" value={to} placeholder="No email on file. Add one, or copy the text instead" onChange={(e) => setTo(e.target.value)} /></label>
-      <label className="f"><span>Subject</span><input value={subject} maxLength={200} onChange={(e) => setSubject(e.target.value)} /></label>
-      <label className="f"><span>Email</span><textarea rows={Math.min(16, 6 + d.items.length * 2)} value={body} onChange={(e) => setBody(e.target.value)} /></label>
-      <div className="row remind-actions">
+      <label className="f"><span>To</span><input type="email" value={to} readOnly={readOnly} placeholder="No email on file. Add one, or copy the text instead" onChange={(e) => setTo(e.target.value)} /></label>
+      <label className="f"><span>Subject</span><input value={subject} readOnly={readOnly} maxLength={200} onChange={(e) => setSubject(e.target.value)} /></label>
+      <label className="f"><span>Email</span><textarea readOnly={readOnly} rows={Math.min(16, 6 + d.items.length * 2)} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+      {!readOnly && <div className="row remind-actions">
         <a className={`btn${to ? '' : ' disabled'}`} href={to ? gmail : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!to}
           onClick={(e) => { if (!to) { e.preventDefault(); return; } mark('gmail'); setSaid('Opened in Gmail. Check it and press Send there.'); }}>Open in Gmail</a>
         <a className={`btn ghost${to ? '' : ' disabled'}`} href={to ? mailto : undefined} aria-disabled={!to}
@@ -48,7 +50,7 @@ function Card({ d }: { d: ReminderDraft }) {
           catch { setSaid('Could not copy. Select the text and copy it.'); }
         }}>Copy</button>
         {said && <span className="small dim">{said}</span>}
-      </div>
+      </div>}
     </section>
   );
 }

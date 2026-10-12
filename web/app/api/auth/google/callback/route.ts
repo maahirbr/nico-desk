@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { COOKIE, checkSignIn, cookie, cookieOptions, isHttps, signSession } from '@/lib/auth';
+import { COOKIE, VIEW_COOKIE, checkSignIn, cookie, cookieOptions, isHttps, signSession } from '@/lib/auth';
 import { exchangeCode, googleSignInEnabled } from '@/lib/google';
 import { errorResponse, rateLimit } from '@/lib/http';
 
@@ -43,6 +43,7 @@ export async function GET(req: Request) {
     const secure = isHttps(req);
     res.headers.append('Set-Cookie', cookie(signSession(check.personId), cookieOptions.maxAge, secure, COOKIE));
     res.headers.append('Set-Cookie', cookie('', 0, secure, STATE_COOKIE));
+    res.headers.append('Set-Cookie', cookie('', 0, secure, VIEW_COOKIE));
     return res;
   } catch (e) {
     return errorResponse(e);
