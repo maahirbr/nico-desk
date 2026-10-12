@@ -80,10 +80,17 @@ Shared pieces first, so later work uses them and agents do not collide.
 
 ## 6. Leftovers from the flow test
 
-- **Blocked in every status dropdown** (repo owner, 12 Oct). Today the dropdown offers Blocked only to the task's owner,
-  because `blockTask` in `lib/service.ts` is owner-only. A lead or admin can also mark a task blocked, with the same
-  block reason and optional person it waits on. The service rule, the dropdown filter (`canBlock`) and the tests change
-  together. Lands in workstream 1 with the custom Select, so the status picker is built once.
+- **The status dropdown** (repo owner, 12 Oct). Runs first tonight, before workstream 1, and the custom Select reuses it.
+  - Blocked for the owner, a lead or an admin. Today `blockTask` in `lib/service.ts` is owner-only. The service rule,
+    the `canBlock` filter and the tests change together.
+  - Unblock in one step: on a blocked task, "Unblock" clears the block and sets In progress, with an optional note.
+  - "Move date…" opens the date move (new date and reason) from the dropdown.
+  - "Reassign…" opens the owner picker from the dropdown, for leads and admins.
+  - Each option shows its status icon and colour. In help mode each one gets a one-line meaning.
+- **Who adds someone to a project** (security finding, 12 Oct). Today any member can add any teammate to any
+  project's people list by assigning them a task (`joinProject` in `lib/service.ts`). Only the project owner, a lead or
+  an admin may bring someone new in, the same rule as `updateProject`. For anyone else the owner picker lists only the
+  project's people and hides "+ Add someone to this project".
 - Close or archive a project.
 - Tell the previous owner when a task is reassigned away.
 - Home: the empty gutter where the checkbox hides while viewing as someone else.
