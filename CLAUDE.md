@@ -244,6 +244,14 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   follows the keyboard rule. Shortcut dates come from `quickDates` in `web/lib/time.ts`. Motion presets live in
   `web/components/motion.ts`, stop under reduced motion and stay under 300ms; the `motion` package is new. Rollback: `git
   revert -m 1` the merge of workstream 1.
+- 2026-10-12 · Sonnet 5.5 · Help mode. A `?` button in the top bar and the `?` key turn it on and off. The state is the
+  `nd_help` cookie, which `layout.tsx` reads, so the page has no flash. When on, explained terms get a dotted underline and a
+  short plain-words tooltip on hover, keyboard focus or tap. When off, they are plain text with no tab stop. The shortcut
+  sheet moved inside help mode, as a button in the help bar, and the account menu still opens it. All the words live in
+  `web/components/help.ts`, and one wrapper, `<Help term>` in `web/components/HelpMode.tsx`, applies them. It is a small
+  custom tooltip, not the Popover, since the Popover moves focus and has menu roles. On a phone, with help on, the first
+  tap on a control explains it and the second tap acts. Rollback: `git revert -m 1` the merge of workstream 2; the
+  `nd_help` cookie then does nothing.
 
 ## VERIFY
 
@@ -254,7 +262,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `134 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `138 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
