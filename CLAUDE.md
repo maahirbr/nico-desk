@@ -188,6 +188,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   This replaces "a lead or admin lands on `/team`" from 2026-10-09. `/team` stays one click away in the nav.
   Rollback: `git revert` this commit.
 
+- 2026-10-12 · Opus 5.5 · The PM's account menu (branch `mvp-local-desk-look`) merged: one button at the bottom left opens
+  name and email, View as someone else (admins), Appearance, Keyboard shortcuts and Sign out. Its View as now calls the
+  real view-as API instead of the dev roster picker, so it works on the live site. Rollback: `git revert -m 1 68b6498`.
+- 2026-10-12 · Opus 5.5 · Single addresses outside the company domain can sign in, at the repo owner's call, for one
+  pilot member on a partner domain. The list lives only in the env var `NICO_ALLOWED_EMAILS` (comma-separated), so no
+  address sits in this public repo. Each one must still be an active roster person. Google's `hd` hint still names the
+  company domain, so that person may need "Use another account". Rollback: unset `NICO_ALLOWED_EMAILS` on Vercel and
+  redeploy.
+
 ## VERIFY
 
 ```
@@ -197,7 +206,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `120 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `121 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { allowedDomain, currentMe, devSignInEnabled, openDemo } from '@/lib/auth';
+import { allowedDomain, currentMe, devSignInEnabled, emailAllowed, openDemo } from '@/lib/auth';
 import { db, rosterFile } from '@/lib/db';
 import { googleSignInEnabled } from '@/lib/google';
 import { localOwnerId, TEAM_ID } from '@/lib/seed';
@@ -39,7 +39,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   }
 
   const people = dev
-    ? (await listPeople(await db(), TEAM_ID)).filter((p) => p.active && p.email.endsWith(`@${allowedDomain()}`))
+    ? (await listPeople(await db(), TEAM_ID)).filter((p) => p.active && emailAllowed(p.email))
     : [];
   const ownerId = localOwnerId(rosterFile());
   const owner = people.find((p) => p.id === ownerId);

@@ -73,3 +73,24 @@ describe('authUrl and googleSignInEnabled', () => {
     }
   });
 });
+
+describe('emailAllowed', () => {
+  const saved = { domain: process.env.NICO_ALLOWED_DOMAIN, extra: process.env.NICO_ALLOWED_EMAILS };
+  afterEach(() => {
+    for (const [k, v] of [['NICO_ALLOWED_DOMAIN', saved.domain], ['NICO_ALLOWED_EMAILS', saved.extra]] as const) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
+  it('lets in the domain and listed addresses only', async () => {
+    const { emailAllowed } = await import('../lib/auth');
+    process.env.NICO_ALLOWED_DOMAIN = 'example.test';
+    delete process.env.NICO_ALLOWED_EMAILS;
+    expect(emailAllowed('Ada@Example.test')).toBe(true);
+    expect(emailAllowed('guest@partner.test')).toBe(false);
+    process.env.NICO_ALLOWED_EMAILS = ' Guest@Partner.test , other@x.test';
+    expect(emailAllowed('guest@partner.test')).toBe(true);
+    expect(emailAllowed('someone@partner.test')).toBe(false);
+    process.env.NICO_ALLOWED_EMAILS = ',';
+    expect(emailAllowed('')).toBe(false);
+  });
+});

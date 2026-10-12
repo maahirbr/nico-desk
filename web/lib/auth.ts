@@ -90,6 +90,14 @@ export function allowedDomain(): string {
   return (process.env.NICO_ALLOWED_DOMAIN || 'example.test').toLowerCase();
 }
 
+// The company domain, plus single addresses let in from outside it (NICO_ALLOWED_EMAILS, comma-separated, env only
+// so no address sits in the repo). Each one must still be an active person on the roster.
+export function emailAllowed(email: string): boolean {
+  const e = email.trim().toLowerCase();
+  if (e.split('@')[1] === allowedDomain()) return true;
+  return (process.env.NICO_ALLOWED_EMAILS ?? '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).includes(e);
+}
+
 export function devSignInEnabled(): boolean {
   return process.env.NICO_DEV_SIGNIN === '1';
 }
@@ -103,7 +111,7 @@ export function openDemo(): boolean {
 
 // Returns the person id if they may sign in, else a reason.
 export async function checkSignIn(email: string): Promise<{ ok: true; personId: string } | { ok: false; why: string }> {
-  if (email.split('@')[1]?.toLowerCase() !== allowedDomain()) return { ok: false, why: 'That email is not on the company domain.' };
+  if (!emailAllowed(email)) return { ok: false, why: 'That email is not on the company domain.' };
   const p = await findPersonByEmail(await db(), email);
   if (!p) return { ok: false, why: 'That email is not on the roster.' };
   if (!p.active) return { ok: false, why: 'That person is inactive.' };
@@ -118,7 +126,7 @@ export async function resolveMe(d: Database, sessionId: string | null, viewToken
   if (!sessionId) return null;
   const [team] = await teamsOf(d, sessionId);
   if (!team) return null;
-  const ok = (p: Person | null): p is Person => !!p?.active && p.email.split('@')[1] === allowedDomain();
+  const ok = (p: Person | null): p is Person => !!p?.active && emailAllowed(p.email);
   const real = await getPerson(d, team.id, sessionId);
   if (!ok(real)) return null;
   if (real.appRoles.includes('admin')) {
