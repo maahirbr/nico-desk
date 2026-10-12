@@ -1086,6 +1086,7 @@ details.breakdown > .defs { margin-top: 0; }
 .upd-title { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
 .upd-row:hover { color: inherit; }
 .upd-meta { font: var(--type-small); color: var(--ink-3); overflow-wrap: anywhere; }
+.upd-meta b { font-weight: 600; color: var(--ink-2); }
 .upd-due { flex: none; font: 600 11.5px/1 var(--font-sans, inherit); padding: 4px 8px; border-radius: 999px; white-space: nowrap; margin-top: 2px; }
 .upd-due.due-late { color: var(--late); background: color-mix(in srgb, var(--late) 12%, transparent); }
 .upd-due.due-soon { color: var(--st-active-fg, var(--ink-2)); background: var(--st-active-bg, var(--sunk)); }

@@ -1,5 +1,5 @@
 import { requireMe } from '@/lib/auth';
-import { homeUpdates, lookups, one, type SP } from '@/lib/page';
+import { lookups, one, type SP } from '@/lib/page';
 import { teamProjects } from '@/lib/plan';
 import { teamTasks } from '@/lib/service';
 import { addDays, isDate, istDate, mondayOf, today } from '@/lib/time';
@@ -16,8 +16,8 @@ export default async function Team({ searchParams }: { searchParams: SP }) {
   const t = today();
   const weekStart = w && isDate(w) ? mondayOf(w) : mondayOf(t);
   const weekEnd = addDays(weekStart, 6);
-  const { d, names, people, projectNames, activeOpts, isLead, isAdmin } = await lookups(me);
-  const updates = isLead || isAdmin ? await homeUpdates(me, d, names, projectNames) : null;
+  // Updates for you live on Home only: they are about your own tasks, and this page is the team's.
+  const { d, names, people, projectNames, activeOpts, isLead } = await lookups(me);
   const [all, projects] = await Promise.all([teamTasks(d, me.team.id), teamProjects(d, me.team.id)]);
   // In view: open work due by the end of the week (so overdue too), and anything closed during it.
   const tasks = all.filter((x) =>
@@ -31,7 +31,7 @@ export default async function Team({ searchParams }: { searchParams: SP }) {
       people={people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName, role: p.role }))}
       names={names} projectNames={projectNames} projects={projects.map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
-      meId={me.person.id} isLead={isLead} opts={activeOpts} updates={updates}
+      meId={me.person.id} isLead={isLead} opts={activeOpts}
     />
   );
 }

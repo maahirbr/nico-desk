@@ -125,7 +125,7 @@ function distance(a: string, b: string): number {
 
 // ---------- grouped view: by project, one line per task ----------
 
-export type UpdateRow = { taskId: string; title: string; ownerName: string | null; summary: string; at: string; closed: 'done' | 'dropped' | null; due: { label: string; tone: 'late' | 'soon' | 'later' } | null };
+export type UpdateRow = { taskId: string; title: string; ownerName: string | null; summary: string; parts: { who: string; text: string }[]; at: string; closed: 'done' | 'dropped' | null; due: { label: string; tone: 'late' | 'soon' | 'later' } | null };
 export type UpdateGroup = { projectId: string | null; name: string; rows: UpdateRow[] };
 
 const addDays = (d: string, n: number) => new Date(new Date(`${d}T00:00:00Z`).getTime() + n * DAY).toISOString().slice(0, 10);
@@ -141,12 +141,12 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
     if (!t) continue;
     // Oldest first within the line: "Meera assigned it to you, due 19 Oct, then moved it to 22 Oct (was 19 Oct)".
     const steps = [...list].sort((a, b) => (a.at < b.at ? -1 : 1));
-    const parts: string[] = [];
-    let lastWho = '';
+    // One part per run of the same person, so the page can set each name in bold.
+    const parts: { who: string; text: string }[] = [];
     for (const s of steps) {
-      if (s.who === lastWho) parts[parts.length - 1] += `, then ${s.clause}`;
-      else parts.push(`${s.who} ${s.clause}`);
-      lastWho = s.who;
+      const last = parts[parts.length - 1];
+      if (last?.who === s.who) last.text += `, then ${s.clause}`;
+      else parts.push({ who: s.who, text: s.clause });
     }
     const closed = t.statusCategory === 'done' ? 'done' : t.statusCategory === 'dropped' ? 'dropped' : null;
     let due: UpdateRow['due'] = null;
@@ -157,7 +157,7 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
       else due = { label: `Due ${fmtDate(t.dueOn)}`, tone: 'later' };
     }
     rows.push({ taskId, projectId: t.projectId, title: t.title, ownerName: t.ownerId === viewerId ? null : names[t.ownerId] ?? null,
-      summary: parts.join('; '), at: steps[steps.length - 1].at, closed, due });
+      summary: parts.map((p) => `${p.who} ${p.text}`).join('; '), parts, at: steps[steps.length - 1].at, closed, due });
   }
 
   // Open tasks before closed ones, newest first; projects ordered by their newest line, no project last.

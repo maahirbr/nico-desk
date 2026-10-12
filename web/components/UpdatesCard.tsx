@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { ago, seenCookieName, type UpdateGroup, type UpdateItem } from '@/lib/updates';
 
 // "Updates for you": changes other people made to your tasks, tasks blocked on you, or your project's
@@ -38,7 +38,10 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
               <span className="upd-mark" aria-hidden>{r.closed ? '✓' : '●'}</span>
               <span className="upd-body">
                 <span className="upd-title">{r.title}</span>
-                <span className="upd-meta">{r.ownerName ? `${r.ownerName}’s task · ` : ''}{r.summary} · {ago(r.at, now)}</span>
+                <span className="upd-meta">
+                  {r.ownerName && <><b>{r.ownerName}</b>’s task · </>}
+                  {r.parts.map((p, i) => <Fragment key={i}>{i > 0 && '; '}<b>{p.who}</b> {p.text}</Fragment>)} · {ago(r.at, now)}
+                </span>
               </span>
               {r.due && <span className={`upd-due due-${r.due.tone}`}>{r.due.label}</span>}
             </button>
