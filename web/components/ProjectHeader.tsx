@@ -6,6 +6,7 @@ import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
 import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
+import { CopyLink } from './CopyLink';
 import { Help } from './HelpMode';
 import { ProjectForm } from './ProjectForm';
 import { api, Modal, type Opt } from './task-ui';
@@ -51,13 +52,14 @@ export function ProjectHeader({ project: p, members, names, people, meId, canEdi
           ))}
         </div>
       </div>
-      {canEdit && (
-        <div className="phead-actions">
-          {!p.archivedAt && <button className="btn ghost" onClick={() => setEditing(true)}>Settings</button>}
-          <button className="btn ghost" disabled={busy} onClick={() => move(p.archivedAt ? 'restore' : 'archive')}>{p.archivedAt ? 'Restore project' : 'Archive project'}</button>
-          {err && <p className="err small" role="alert">{err}</p>}
+      <div className="phead-actions">
+        <div className="phead-btns">
+          <CopyLink path={`/projects/${p.id}`} what="project" />
+          {canEdit && !p.archivedAt && <button className="btn ghost" onClick={() => setEditing(true)}>Settings</button>}
+          {canEdit && <button className="btn ghost" disabled={busy} onClick={() => move(p.archivedAt ? 'restore' : 'archive')}>{p.archivedAt ? 'Restore project' : 'Archive project'}</button>}
         </div>
-      )}
+        {err && <p className="err small" role="alert">{err}</p>}
+      </div>
       {editing && (
         <Modal title="Project settings" onClose={() => setEditing(false)} wide>
           <ProjectForm people={people} meId={meId} projectId={p.id} onDone={() => setEditing(false)} initial={{

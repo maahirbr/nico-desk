@@ -10,6 +10,7 @@ import { TaskActions } from '@/components/client';
 import { TaskLinkChips } from '@/components/TaskLinks';
 import { groupLog } from '@/components/logText';
 import { Help } from '@/components/HelpMode';
+import { CopyLink } from '@/components/CopyLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
       <div className="task-head">
         <h1>{t.title}</h1>
         <StatusChips t={t} names={names} />
+        <CopyLink path={`/tasks/${t.id}`} what="task" />
       </div>
       {t.blocked && (
         <div className="ask">

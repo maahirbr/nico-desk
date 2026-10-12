@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { DitherArt } from './DitherArt';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
@@ -22,6 +22,13 @@ import { SortPick } from './SortPick';
 import { canMoveTo } from './statusRules';
 import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
+import { editFields, statusFields, type UndoField } from '@/lib/undo';
+import { useUndo } from './undo';
+import { oneOf } from '@/lib/remember';
+import { useRemembered } from './remember';
+import type { QuickParse } from '@/lib/quickadd';
+import { QuickAddField } from './QuickAdd';
+import { FreshDot } from './viewer';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
 // table where each task shows what it is about, its owner, date and status. Status changes in the
@@ -39,6 +46,8 @@ async function call(path: string, method: string, body?: unknown) {
   return data;
 }
 
+const TILE_KEYS = ['open', 'doing', 'at_risk', 'overdue', 'done'] as const; // the keys of `tiles` in TaskBoard
+
 type Prompt =
   | { kind: 'status'; t: Task }
   | { kind: 'blocked'; t: Task }
@@ -51,14 +60,19 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   meId: string; isLead: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
 }) {
   const router = useRouter();
-  const [tile, setTile] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
-  const [who, setWho] = useState<string | null>(null);
-  const [ws, setWs] = useState<string>('All');
+  // The filters come back the next time this project is opened in this browser (components/remember.ts).
+  const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All' }, (raw) => ({
+    tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, people.map((p) => p.id), null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
+  }));
+  const { tile, who, ws } = kept;
+  const setTile = (v: string | null) => keep('tile', v);
+  const setWho = (v: string | null) => keep('who', v);
+  const setWs = (v: string) => keep('ws', v);
   const [importOpen, setImportOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
@@ -97,9 +111,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const involved = people.filter((p) => tasks.some((t) => t.ownerId === p.id));
   const filtered = !!(tile || who || ws !== 'All');
 
-  async function run(fn: () => Promise<unknown>, done?: string) {
+  // undoSpec: the task before and the fields the change touched, so its toast can offer Undo (lib/undo.ts).
+  const undo = useUndo();
+  async function run(fn: () => Promise<unknown>, done?: string, undoSpec?: { before: Task; fields: UndoField[] }) {
     setBusy(true); setError(null);
-    try { await fn(); if (done) notify(done); setPrompt(null); setEditing(null); router.refresh(); }
+    try { await fn(); if (done) { if (undoSpec) undo.announce(done, undoSpec.before, undoSpec.fields); else notify(done); } setPrompt(null); setEditing(null); router.refresh(); }
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -112,7 +128,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     if (f === 'blocked') return setPrompt({ kind: 'blocked', t });
     if (f === 'drop') return setPrompt({ kind: 'remove', t });
     if (f === 'status') return setPrompt({ kind: 'status', t });
-    await run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`);
+    await run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`, { before: t, fields: statusFields(t, s) });
   }
 
   const row = (t: Task) => {
@@ -121,7 +137,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         let v = t.version;
         if (due) v = (await call(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, ...due })).version;
         if (Object.keys(body).length) await call(`/tasks/${t.id}`, 'PATCH', { version: v, ...body });
-      }, due ? `Date moved to ${fmtDate(due.newDueOn)}` : 'Changes saved')} />;
+      }, due ? `Date moved to ${fmtDate(due.newDueOn)}` : 'Changes saved', { before: t, fields: [...(due ? ['due' as const] : []), ...editFields(body)] })} />;
     const s = statusKey(t);
     const st = STATUS[s];
     const can = may(t);
@@ -134,7 +150,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
               onChange={(e) => (e.target.checked ? changeStatus(t, 'done') : setPrompt({ kind: 'reopen', t }))} />
           </td>
           <td className="title">
-            <button className="task-link" onClick={() => { setOpenId(t.id); setStartStatus(undefined); }}>{t.title}</button>
+            <button className="task-link" onClick={() => { setOpenId(t.id); setStartStatus(undefined); }}>{t.title}</button><FreshDot id={t.id} />
             {ws === 'All' && t.workstream && <span className="ws-tag">{t.workstream}</span>}
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
@@ -173,7 +189,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             if (p.kind === 'blocked') return call(`/tasks/${t.id}/block`, 'POST', { version: t.version, onId: v.person || null, ask: v.text });
             if (p.kind === 'remove') return call(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'dropped', reason: v.text });
             return call(`/tasks/${t.id}/reopen`, 'POST', { version: t.version, reason: v.text });
-          }, { status: 'Status set to Not started', blocked: 'Marked blocked', remove: 'Task dropped', reopen: 'Task reopened' }[p.kind])} />}
+          }, { status: 'Status set to Not started', blocked: 'Marked blocked', remove: 'Task dropped', reopen: 'Task reopened' }[p.kind],
+            { before: t, fields: { status: statusFields(t, 'todo'), blocked: ['blocked'], remove: statusFields(t, 'dropped'), reopen: ['category'] }[p.kind] as UndoField[] })} />}
       </Fragment>
     );
   };
@@ -378,6 +395,21 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Quick add (components/QuickAdd.tsx) fills the date and owner here; the project is this one.
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  const members = useProjectPeople()[projectId] ?? [];
+  function applyQuick(p: QuickParse): string[] {
+    const notes: string[] = [];
+    const next = { ...f, title: p.title || f.title };
+    if (p.dueOn && p.dueOn >= today) next.dueOn = p.dueOn;
+    if (p.owner?.status === 'matched') {
+      const o = p.owner.item;
+      if (members.includes(o.id)) { next.ownerId = o.id; next.ownerRole = undefined; }
+      else notes.push(`${o.name} is not on this project, so pick the owner below.`);
+    }
+    setF(next);
+    return notes;
+  }
   return (
     <form className="card add-form" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError(null);
@@ -388,7 +420,8 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
         setF(blank); router.refresh(); onDone();
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     }}>
-      <label className="f"><span>Task</span><input ref={focusOnDesktop} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
+      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Task } from '@/lib/derive';
 import type { OnTimeRecord, PersonProject } from '@/lib/service';
 import { Avatar, PersonLink } from './chips';
+import { CopyLink } from './CopyLink';
 import { useOpenTask } from './taskUrl';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
 import { Stagger } from './motion-ui';
@@ -41,10 +42,13 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
             <p className="person-meta">{[role, department, active ? '' : 'Not active'].filter(Boolean).join(' · ')}</p>
           </div>
         </div>
+        <div className="head-side">
         <p className="summary">
           {open.length ? <>{open.length} open{late > 0 && <> · <span className="late-text">{late} late</span></>}</> : 'Nothing open'}
           {waitingOnThem.length > 0 && <> · {waitingOnThem.length} waiting on {first}</>}
         </p>
+          <CopyLink path={`/people/${personId}`} what="person" />
+        </div>
       </header>
 
       {record && (

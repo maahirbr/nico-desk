@@ -720,7 +720,11 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .phead-meta { display: flex; flex-wrap: wrap; gap: var(--space-xxs) var(--space-lg); margin: 0; font: var(--type-meta); }
 .phead-meta b { font: var(--type-small); color: var(--ink-3); margin-right: var(--space-xxs); }
 .phead-actions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); flex: none; }
+.phead-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-xs); }
 .phead-actions .err { max-width: 30ch; text-align: right; margin: 0; }
+.task-head .mini-btn { margin-top: var(--space-xs); }
+.head-side { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.head-side .summary { margin: 0; }
 .phead-goal { color: var(--ink-2); margin: var(--space-xs) 0 0; max-width: 70ch; }
 .phead-team { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); margin-top: var(--space-md); }
 .tm { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-small); line-height: 1.25; }
@@ -1085,6 +1089,11 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .toasts { position: fixed; left: 50%; bottom: calc(var(--toast-offset) + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; align-items: center; gap: var(--space-xs);
   width: min(var(--toast-width), calc(100vw - var(--space-lg))); pointer-events: none; }
 .toast { background: var(--toast-bg); color: var(--toast-ink); font: var(--type-meta); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); max-width: 100%; animation: toast-in var(--dur-toast) var(--ease) backwards; }
+.toast.has-undo { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); pointer-events: auto; }
+.toast-undo { flex: none; font: var(--type-button); color: inherit; background: none; border: 0; min-height: var(--button-height); padding: 0 var(--space-sm); margin: calc(var(--space-sm) * -1) calc(var(--space-sm) * -1) calc(var(--space-sm) * -1) 0; border-radius: var(--radius-control); text-decoration: underline; cursor: pointer; }
+.toast-undo:focus-visible { outline-color: var(--toast-ink); }
+/* "Since you last looked": a small dot after a task title until the person opens the task. */
+.fresh-dot { display: inline-block; flex: none; width: 8px; height: 8px; margin-left: var(--space-xs); border-radius: 50%; background: var(--primary); vertical-align: middle; }
 .toast.is-leaving { animation: fade-out var(--dur-toast) var(--ease) forwards; }
 
 /* ---------- loading skeletons: the shape of the page, one flat fill, nothing moves ---------- */

@@ -1,7 +1,7 @@
 import { db } from './db';
 import { isLeadOrAdmin } from './roles';
 import { cookies } from 'next/headers';
-import { listPeople, listProjects, updatesView } from './service';
+import { listNotices, listPeople, listProjects, updatesFor, updatesView } from './service';
 import { seenCookieName } from './updates';
 import type { Me } from './auth';
 
@@ -31,4 +31,20 @@ export async function homeUpdates(me: Me, d: Awaited<ReturnType<typeof db>>, nam
   const now = new Date();
   const { items, groups } = await updatesView(d, me.person.id, me.team.id, names, projectNames, seen, now);
   return { items, groups, now: now.toISOString() };
+}
+
+// "Since you last looked": the tasks with something new for this person, newest change per task. It reuses
+// what already tracks "seen": the updates feed (cut off by this device's mark-all-seen cookie) and the unread
+// "assigned" notices. A small rename stays out, as it does in the Updates card.
+export async function freshFor(me: Me, d: Awaited<ReturnType<typeof db>>): Promise<Record<string, { at: string; notice?: string }>> {
+  const seen = (await cookies()).get(seenCookieName(me.person.id))?.value;
+  const [items, notices] = await Promise.all([updatesFor(d, me.person.id, me.team.id, {}, seen), listNotices(d, me.person.id, true)]);
+  const out: Record<string, { at: string; notice?: string }> = {};
+  const latest = (id: string, at: string, notice?: string) => {
+    const cur = out[id];
+    out[id] = { at: cur && cur.at > at ? cur.at : at, ...((notice ?? cur?.notice) ? { notice: notice ?? cur?.notice } : {}) };
+  };
+  for (const i of items) if (!i.fold) latest(i.taskId, i.at);
+  for (const n of notices) if (n.kind === 'assigned') latest(n.taskId, new Date(n.createdAt).toISOString(), n.id);
+  return out;
 }

@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { Task } from '@/lib/derive';
+import { oneOf } from '@/lib/remember';
 import { personCounts } from '@/lib/planUtil';
 import { addDays, fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { UpdatesCard } from './UpdatesCard';
 import { Avatar, PersonLink } from './chips';
 import { useOpenTask } from './taskUrl';
+import { useRemembered, useRememberedParam } from './remember';
 import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
@@ -20,7 +22,10 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   names: Record<string, string>; projectNames: Record<string, string>; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   meId: string; isLead: boolean; opts: Opt[]; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string } | null;
 }) {
-  const [project, setProject] = useState('');
+  useRememberedParam('team-tab', 'view', view, ['person', 'status']);
+  const [kept, keep] = useRemembered('team', { project: '' }, (raw) => ({ project: oneOf(raw.project, projects.map((p) => p.id), '') }));
+  const project = kept.project;
+  const setProject = (v: string) => keep('project', v);
   const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
   const [q, setQ] = useState('');
