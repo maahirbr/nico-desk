@@ -1644,3 +1644,68 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
   .tmap .tmap-canvas, .tmap .tmap-canvas.is-hidden, .tmap-ctl .seg:last-child { display: none; }
   .tmap .tmap-list, .tmap .tmap-list.is-hidden { display: block; }
 }
+
+/* Chat (components/ChatView.tsx, ChatRoom.tsx, ProjectChat.tsx): rooms on the left, the open room on the right.
+   A phone (860px and under) shows one at a time: the list, or the room with a back button. Motion is opacity and the
+   existing .arrive only. DESIGN.md: plain rows, 12px card, no bubbles, no pills. */
+.chat-page { --chat-chrome: 13rem; --chat-rooms-w: 15rem; }
+.chat-split { display: grid; grid-template-columns: var(--chat-rooms-w) minmax(0, 1fr); height: max(24rem, calc(100dvh - var(--chat-chrome))); padding: 0; overflow: hidden; }
+.chat-rooms { border-right: var(--rule) solid var(--hairline); overflow-y: auto; min-height: 0; }
+.chat-rooms ul { list-style: none; margin: 0; padding: var(--space-xs); display: grid; gap: var(--space-xxs); }
+.chat-room-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: var(--space-xxs) var(--space-xs); width: 100%; min-height: var(--touch-min); text-align: left;
+  font: var(--type-meta); color: var(--ink); background: none; border: 0; border-radius: var(--radius-control); padding: var(--space-xs) var(--space-sm); cursor: pointer; }
+.chat-room-item:hover { background: var(--sunk); }
+.chat-room-item.on { background: var(--sunk); font-weight: 500; }
+.chat-room-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-room-meta { grid-column: 1; }
+.chat-unread, .nav-count { font: var(--type-small); font-weight: 600; color: var(--primary); font-variant-numeric: tabular-nums; }
+.chat-unread { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+.nav .nav-count { margin-left: auto; }
+.chat-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.chat-pane-head { display: flex; align-items: baseline; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-bottom: var(--rule) solid var(--hairline); }
+.chat-pane-head h2 { margin: 0; }
+.chat-back { display: none; }
+.chat-room { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.chat-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-sm) var(--space-md); }
+.chat-list { list-style: none; margin: 0; padding: 0; }
+.chat-msg { padding: var(--space-xxs) 0; min-width: 0; }
+.chat-msg.chat-first { margin-top: var(--space-sm); }
+.chat-msg .cm-body { margin-top: var(--space-xxs); }
+.chat-made { margin: var(--space-xxs) 0 0; }
+.chat-acts { min-height: var(--space-lg); }
+.chat-day, .chat-new { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-md) 0 var(--space-xs); font: var(--type-small); color: var(--ink-3); }
+.chat-day::before, .chat-day::after, .chat-new::before, .chat-new::after { content: ""; flex: 1; border-top: var(--rule) solid var(--hairline); }
+.chat-new { color: var(--primary); }
+.chat-new::before, .chat-new::after { border-top-color: var(--primary); }
+.chat-older { display: block; margin: 0 auto var(--space-sm); }
+.chat-empty { margin: var(--space-lg) 0; text-align: center; }
+.chat-compose { border-top: var(--rule) solid var(--hairline); padding: var(--space-sm) var(--space-md); }
+.chat-note { margin: 0; padding: var(--space-sm) var(--space-md); border-top: var(--rule) solid var(--hairline); }
+@media (hover: hover) {
+  .chat-acts { opacity: 0; transition: opacity var(--dur-state) var(--ease); }
+  .chat-msg:hover .chat-acts, .chat-msg:focus-within .chat-acts { opacity: 1; }
+}
+/* On a project page the room sits inside its card, shut until opened. */
+.project-chat { margin-top: var(--space-md); }
+.project-chat-head { display: flex; align-items: baseline; gap: var(--space-sm); width: 100%; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; text-align: left; }
+.project-chat-head h2 { margin: 0; }
+.project-chat-head .dim { margin-left: auto; }
+.project-chat .chat-room.chat-embedded { height: 26rem; flex: none; margin-top: var(--space-sm); border-top: var(--rule) solid var(--hairline); }
+.project-chat .chat-scroll, .project-chat .chat-compose, .project-chat .chat-note { padding-left: 0; padding-right: 0; }
+/* "Make a task" from a message: the message it came from, above the form (components/NewTaskPage.tsx). */
+.chat-quote { margin: 0 0 var(--space-md); padding: var(--space-sm) var(--space-md); background: var(--sunk); border-radius: var(--radius-control); }
+.chat-quote p { margin: var(--space-xxs) 0 0; font: var(--type-meta); white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-quote-room { font: var(--type-small); color: var(--ink-3); }
+@media (max-width: 860px) {
+  .chat-page { --chat-chrome: 15rem; }
+  .chat-split { grid-template-columns: minmax(0, 1fr); }
+  .chat-rooms { border-right: 0; }
+  .chat-pane { display: none; }
+  .chat-page.chat-open .chat-rooms { display: none; }
+  .chat-page.chat-open .chat-pane { display: flex; }
+  .chat-back { display: inline-block; min-height: var(--touch-min); }
+  .chat-pane-head { flex-wrap: wrap; padding: var(--space-xs) var(--space-sm); }
+  .chat-pane-head .dim { flex-basis: 100%; }
+  .chat-scroll, .chat-compose, .chat-note { padding-left: var(--space-sm); padding-right: var(--space-sm); }
+  .project-chat .chat-room.chat-embedded { height: 70dvh; }
+}

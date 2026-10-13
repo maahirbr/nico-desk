@@ -12,6 +12,8 @@ import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { CommentThread } from '@/components/CommentThread';
+import { ProjectChat } from '@/components/ProjectChat';
+import { listRooms } from '@/lib/teamchat';
 import { ConnectsTo } from '@/components/ConnectsTo';
 import { threadsFor } from '@/lib/threads';
 import { PlanBoard } from '@/components/PlanBoard';
@@ -39,6 +41,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const opts = active.map((x) => ({ id: x.id, name: x.name }));
   const [members, viewers] = await Promise.all([projectMembers(d, p.id), projectViewers(d, p.id)]);
   const now = today();
+  const chatUnread = (await listRooms(d, me)).find((r) => r.id === p.id)?.unread ?? 0;
   // The status bar and the weekly chart read the same work the board below shows: tasks on a task board, lines on a plan board.
   const plan = p.kind === 'plan' ? await planState(d, p.id) : null;
   const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
@@ -81,6 +84,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         />
       )}
       <div className="card card-pad cn-card"><ConnectsTo lines={await threadsFor(d, me, 'project', p.id)} focus={`project:${p.id}`} /></div>
+      <ProjectChat projectId={p.id} people={opts} unread={chatUnread} />
       <CommentThread subjectKind="project" subjectId={p.id} subjectTitle={p.name} people={opts} drawer={p.kind !== 'plan'} />
       </ReadOnlyProvider>
     </>

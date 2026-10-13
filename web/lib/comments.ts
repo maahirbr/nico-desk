@@ -53,7 +53,7 @@ type Row = { id: string; subject_kind: SubjectKind; subject_id: string; author_i
 const COMMENT_SQL = `SELECT c.*, p.display_name AS author_name FROM comments c JOIN people p ON p.id = c.author_id`;
 
 // The label each reference shows for this reader, or null when they may not see it.
-async function labels(tx: Tx, me: Me, sight: Sight, refs: Ref[]): Promise<Map<string, string | null>> {
+export async function labels(tx: Tx, me: Me, sight: Sight, refs: Ref[]): Promise<Map<string, string | null>> {
   const out = new Map<string, string | null>();
   const key = (r: Ref) => `${r.kind}:${r.id}`;
   const ids = (k: RefKind) => [...new Set(refs.filter((r) => r.kind === k).map((r) => r.id))];
@@ -75,7 +75,7 @@ async function labels(tx: Tx, me: Me, sight: Sight, refs: Ref[]): Promise<Map<st
   return out;
 }
 
-function partsOf(body: string, names: Map<string, string | null>): Part[] {
+export function partsOf(body: string, names: Map<string, string | null>): Part[] {
   const parts: Part[] = [];
   let at = 0;
   for (const m of body.matchAll(TOKEN)) {
@@ -213,7 +213,8 @@ export async function deleteComment(db: Db, me: Me, id: string): Promise<void> {
 
 // ---------- mentions on Home ----------
 
-export type Mention = { noticeId: string; commentId: string; byName: string; subjectKind: SubjectKind; subjectId: string; subjectTitle: string; snippet: string; createdAt: string };
+export type Mention = { noticeId: string; commentId: string; byName: string; subjectKind: SubjectKind; subjectId: string; subjectTitle: string; snippet: string; createdAt: string;
+  href?: string; viaChat?: boolean }; // a mention in chat links to its room
 
 // Unread "mentioned" notices whose comment still stands and whose task or project this person still sees.
 export async function listMentions(db: Db, me: Me): Promise<Mention[]> {

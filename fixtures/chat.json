@@ -1,0 +1,42 @@
+[
+  {
+    "id": "msg_001",
+    "room_kind": "team",
+    "room_id": "team_pilot",
+    "author_id": "per_ada",
+    "body": "Weekly check-in is at 11 on Monday. Please bring your open tasks.",
+    "created_at": "2026-10-08T05:40:00Z"
+  },
+  {
+    "id": "msg_002",
+    "room_kind": "team",
+    "room_id": "team_pilot",
+    "author_id": "per_eli",
+    "body": "Shop floor needs the festive signage list by Wednesday. [[person:per_ada]] can you confirm the sizes?",
+    "created_at": "2026-10-08T06:15:00Z"
+  },
+  {
+    "id": "msg_003",
+    "room_kind": "team",
+    "room_id": "team_pilot",
+    "author_id": "per_ada",
+    "body": "Yes, I will send the sizes tomorrow.",
+    "created_at": "2026-10-08T06:22:00Z"
+  },
+  {
+    "id": "msg_004",
+    "room_kind": "project",
+    "room_id": "prj_landing",
+    "author_id": "per_bo",
+    "body": "The form error messages are still open. [[task:tsk_025]] needs the final wording first.",
+    "created_at": "2026-10-08T07:05:00Z"
+  },
+  {
+    "id": "msg_005",
+    "room_kind": "project",
+    "room_id": "prj_landing",
+    "author_id": "per_ada",
+    "body": "I will sign off the wording today. Can someone run the link check on staging after that?",
+    "created_at": "2026-10-08T07:30:00Z"
+  }
+]

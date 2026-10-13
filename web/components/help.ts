@@ -120,6 +120,10 @@ export const HELP = {
   comment_box: 'Write a note for everyone who can see this. Type @ to mention a person. Type # to link a task or a project.',
   comment_mention: 'A mention adds a notice for that person. People who cannot see this item are not told.',
   comment_urgent: 'Opens a draft in your Gmail for each person you mentioned. You press Send. The app sends nothing.',
+  // Chat
+  chat_room: 'A room. The team room is for everyone. Each project has a room for the people who can see that project. There are no direct messages.',
+  chat_mention: 'A mention adds a notice for that person in the app. Nothing is emailed or pushed. People who cannot see this room are not told.',
+  chat_make_task: 'Opens the new task form with this message filled in. You check it and add it. The task links back to the message.',
   // Connections
   conn_from_env: 'From the server environment. This key is set where the app is hosted, not in this page. Change it in the hosting settings.',
   conn_meet: 'Google Meet. Read only. The app lists your meetings and reads their notes and transcripts. It cannot change anything, send mail or open your other files. Disconnect ends the link.',
