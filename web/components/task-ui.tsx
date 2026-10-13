@@ -685,12 +685,12 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       {!readOnly && <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="act" onClick={() => setPasting(true)}>Paste a chat</button></div>}
       <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} onBlur={guessProject} /></label>
-      <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
+      <label className="f"><span>Details (Optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
           <OwnerPicker key={f.projectId} projectId={f.projectId || null} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
-        <label className="f"><span>Due</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
+        <label className="f"><span>Due Date</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
       {guess && !f.projectId && projects && (
         <p className="suggest-line" role="status"><Help term="jev_project_guess">Suggested project</Help>: {projects.find((p) => p.id === guess)?.name}.
@@ -712,7 +712,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
             </label>
           )}
           {workstreams.length > 0 && (
-            <label className="f"><span>Sub-project</span>
+            <label className="f"><span>Sub-Project</span>
               <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
               </Select>
@@ -720,7 +720,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
           )}
         </div>
       )}
-      <label className="f"><span>Note (optional)</span><input maxLength={140} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
+      <label className="f"><span>Note (Optional)</span><input maxLength={140} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
       <p className="hint" style={{ margin: 0 }}>The due date is kept as the first date. Moving it later needs a reason.</p>
       {err && <p className="err" role="alert">{err}</p>}
       <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button></div>

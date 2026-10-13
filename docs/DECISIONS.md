@@ -559,3 +559,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   "+ New project" shows for everyone except under View as. Editing, archiving and adding people stay with the project's
   owner, its lead, a team lead or an admin. Adding tasks was already open to every member (inside a project, only to its
   people). Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · New task form labels, at the PM's call.** The New Task page and a project board's add form
+  use Title Case for labels (New Task, Due Date, Sub-Project, Note (Optional)), following the form-label rule in
+  `DESIGN.md`. "What it's about (optional)" becomes "Details (Optional)" with the hint "Anything the owner should know".
+  "Due date (kept as the first date)" on the board form is now "Due Date". Rollback: `git revert` this commit.
