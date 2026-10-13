@@ -1247,7 +1247,7 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast { animation: none; }
+  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot { animation: none; }
   .btn:active, .pill:active, .mini-btn:active, button.stat:active, .nav .nav-new:active, .st-pick:active, .status-picker button:active,
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
   * { transition-duration: 0ms !important; }
@@ -1394,3 +1394,56 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .wait-title { overflow-wrap: anywhere; }
 .wait-title .callout-link:hover { color: var(--primary); }
 .wait-done { display: flex; flex-direction: column; gap: var(--space-xs); padding: 0 0 var(--space-sm); }
+
+/* ---------- Home at a glance: four small charts, drawn from tokens so every skin colours them ---------- */
+/* Done is the Done status colour, open is the quiet ink, late is the late colour. A count is written beside every bar. */
+.glance { margin: 0 0 var(--space-md); }
+.glance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-sm); }
+.glance-grid .glance-card { margin-top: 0; padding: var(--space-sm) var(--space-md) var(--space-md); min-width: 0; }
+.glance-card.wide { grid-column: 1 / -1; }
+.glance-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-xs); }
+.glance-head h3 { margin: 0; font: var(--type-heading); color: var(--ink); }
+.glance-head .rlink { font: var(--type-meta); white-space: nowrap; }
+.glance-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.glance-empty { font: var(--type-meta); padding: var(--space-xs) 0 0; }
+.glance-track { display: block; height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.glance-split { display: flex; gap: 2px; margin-top: var(--space-xs); }
+.glance-split > span { height: 100%; flex-basis: 0; min-width: 4px; transform-origin: left center; }
+.glance-fill { display: flex; gap: 2px; height: 100%; transform-origin: left center; }
+.glance-fill > span { height: 100%; flex-basis: 0; min-width: 4px; }
+.gs-done { background: var(--status-done-fg); }
+.gs-open { background: var(--ink-3); }
+.gs-late { background: var(--late); }
+.glance-legend { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); list-style: none; margin: var(--space-sm) 0 0; padding: 0; font: var(--type-meta); color: var(--ink-2); }
+.glance-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.glance-legend i { width: 8px; height: 8px; border-radius: 2px; }
+.glance-legend b { color: var(--ink); font-weight: 600; }
+.glance-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gl-grid { stroke: var(--hairline); stroke-width: 1; }
+.gl-line { fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.gl-dot { fill: var(--primary); stroke: var(--surface); stroke-width: 1.5; }
+.glance-weeks { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; list-style: none; margin: var(--space-xs) 0 0; padding: 0; text-align: center; font: var(--type-meta); }
+.glance-weeks li { display: flex; flex-direction: column; min-width: 0; }
+.glance-weeks b { color: var(--ink); font-weight: 600; }
+.glance-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.glance-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: 4px; font: var(--type-meta); }
+.glance-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.glance-n { white-space: nowrap; color: var(--ink-2); }
+.glance-table { width: 100%; border-collapse: collapse; font: var(--type-meta); }
+.glance-table th, .glance-table td { padding: 4px 0; text-align: left; font-weight: 400; vertical-align: middle; }
+.glance-table th { width: 30%; padding-right: var(--space-sm); }
+.glance-table td:nth-child(3) { width: 1%; white-space: nowrap; padding-left: var(--space-sm); }
+.glance-table tr + tr > * { border-top: var(--rule) solid var(--hairline); }
+.glance-table tfoot td { padding-top: var(--space-xs); }
+@keyframes glance-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes glance-line { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes glance-dot { from { opacity: 0; } to { opacity: 1; } }
+/* Draws in once per tab. The line is a stroke, so it uses stroke-dashoffset, like the tick (named exception in DESIGN.md). */
+.glance-in .glance-split > span, .glance-in .glance-fill { animation: glance-bar var(--dur-slide) var(--ease) both; }
+.glance-in .gl-line { animation: glance-line var(--dur-slide) var(--ease) both; }
+.glance-in .gl-dot { animation: glance-dot var(--dur-slide) var(--ease) both; }
+@media (max-width: 860px) {
+  .glance-grid { grid-template-columns: minmax(0, 1fr); }
+  .glance-head .rlink { display: inline-flex; align-items: center; min-height: var(--button-height); }
+  .glance-name { max-width: 70%; }
+}

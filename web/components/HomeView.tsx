@@ -19,16 +19,18 @@ import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
+import { HomeGlance } from './HomeGlance';
+import type { Glance } from '@/lib/glance';
 
 const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', week: 'group_this_week', later: 'group_later' };
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, glance }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; movedAway: MovedAway[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
-  myProjects: { id: string; name: string; role: string }[];
+  myProjects: { id: string; name: string; role: string }[]; glance: Glance;
 }) {
   const readOnly = useReadOnly();
   const [openId, setOpenId] = useOpenTask();
@@ -70,6 +72,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         </div>
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
+
+      <HomeGlance glance={glance} />
 
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 
