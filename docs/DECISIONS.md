@@ -434,3 +434,16 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   project list, which masks more, not less. The team-wide week, by-status and ledger API views refuse a restricted
   person. The open questions took the proposed answers. Rollback: `git revert` the two visibility commits; the
   `restricted` column and the `project_viewers` table can stay, nothing else reads them.
+
+- **2026-10-13 · Sonnet 5.5 · Sounds, off by default (workstream 7), and the status nudge on the full update form.**
+  A "Sounds" switch sits in the account menu under Appearance and lives in the `nd_sound` cookie, off until a person
+  turns it on, so a shared office is never surprised. Three Web Audio tones (no files, each under 200ms, quiet): a soft
+  ping for a new notice, a light tick for Done, a low tone for a refused action. They live in `components/sound.ts`;
+  the four fetch wrappers call it once a response is in, so no form needed a change. Home asks for the person's own
+  notices every 60 seconds while the tab is visible, through the same sight-filtered `/api/v1/me/notices` call, so a
+  hidden project never pings. A new notice pings once and an "N new notices" count eases in (transform and opacity,
+  180ms, none under reduced motion). Nothing plays on page load. Reduced motion does not mute sounds, only the switch
+  does. The full "Add an update" form on `/tasks/[id]` now asks the same `suggest-status` route as the drawer and shows
+  the same `StatusNudge`; the click goes through the normal status calls (`moveWithWords` in `task-ui.tsx`, which the
+  drawer forms now share). Under View as nothing is written, because the update post is refused first. The guide
+  gained one line that a dictation app such as OpenWhispr works in any box. Rollback: git revert this commit.

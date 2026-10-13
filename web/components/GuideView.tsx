@@ -114,6 +114,7 @@ export function GuideView() {
       <section id="help" aria-labelledby="g-help">
         <h2 id="g-help">{title('help')}</h2>
         <p>Not sure what a word means? Press the ? button at the top right, or press the ? key. Help mode turns on. Words with a dotted line under them now show a short note.</p>
+        <p>You can dictate into any box with a dictation app such as OpenWhispr.</p>
         <p>These keys work anywhere in the app, unless you are typing in a field.</p>
         <dl className="keylist guide-keys">
           {SHORTCUTS.map(([k, what]) => (<div key={k}><dt><kbd className="kbd-key">{k}</kbd></dt><dd>{what}</dd></div>))}

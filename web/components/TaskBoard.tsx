@@ -29,6 +29,7 @@ import { useRemembered } from './remember';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
 import { FreshDot } from './viewer';
+import { playFor } from './sound';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
 // table where each task shows what it is about, its owner, date and status. Status changes in the
@@ -41,6 +42,7 @@ async function call(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
     method, headers: body === undefined ? undefined : { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
   });
+  playFor(method, path, body, res.ok);
   const data = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error?.message ?? `Request failed (${res.status}).`);
   return data;

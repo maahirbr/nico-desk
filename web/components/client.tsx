@@ -10,7 +10,10 @@ import { DateField } from './DateField';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { Select } from './Select';
+import { playFor } from './sound';
 import { SlideInd } from './motion-ui';
+import { StatusNudge } from './StatusNudge';
+import { moveWithWords, type StatusKey } from './task-ui';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
 
@@ -22,6 +25,7 @@ async function api(path: string, method: string, body?: unknown): Promise<{ ok: 
     headers: body === undefined ? undefined : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+  playFor(method, path, body, res.ok);
   if (res.status === 204) return { ok: true, data: null };
   const data = await res.json().catch(() => null);
   if (!res.ok) return { ok: false, error: data?.error ?? { code: 'server_error', message: `Request failed (${res.status}).` } };
@@ -188,6 +192,27 @@ export function TaskActions({
 }) {
   const v = t.version;
   const open = t.statusCategory === 'open';
+  const router = useRouter();
+  // Jev's offer after an update, the same one the drawer shows after a note. It only offers: the click below goes
+  // through the normal status calls (moveWithWords), and an update posted under View as never reaches this far.
+  const [nudge, setNudge] = useState<{ status: StatusKey; word: string; text: string } | null>(null);
+  const [moving, setMoving] = useState(false);
+  const [moveErr, setMoveErr] = useState<string | null>(null);
+  const mayMove = (s: StatusKey) => (s === 'done' || s === 'dropped' ? may.close : s === 'blocked' ? may.block && !t.blocked : may.health);
+  async function suggest(text: string) {
+    setNudge(null); setMoveErr(null);
+    if (!open) return;
+    const r = await api(`/tasks/${t.id}/suggest-status`, 'POST', { text });
+    if (r.ok && r.data?.suggestion) setNudge({ status: r.data.suggestion.status, word: r.data.suggestion.word, text });
+  }
+  async function accept() {
+    if (!nudge) return;
+    const { status, text } = nudge;
+    setNudge(null); setMoving(true); setMoveErr(null);
+    try { await moveWithWords(t, status, text); router.refresh(); }
+    catch (e) { setMoveErr((e as Error).message); }
+    finally { setMoving(false); }
+  }
   return (
     <div className="actions">
       {open && may.health && <HealthForm t={t} today={today} />}
@@ -197,7 +222,9 @@ export function TaskActions({
       {open && may.block && !t.blocked && <BlockForm t={t} people={people.filter((p) => p.id !== t.ownerId)} />}
       {t.blocked && may.unblock && <UnblockForm t={t} needNote={!!may.unblockNote} />}
       {may.priority && <PriorityForm t={t} />}
-      {may.update && <ReasonForm title="Add an update" path={`/tasks/${t.id}/updates`} label="Update (no field changes)" button="Add to log" min={1} body={(text) => ({ text })} />}
+      {may.update && <ReasonForm title="Add an update" path={`/tasks/${t.id}/updates`} label="Update (no field changes)" button="Add to log" min={1} body={(text) => ({ text })} after={suggest} />}
+      {nudge && open && mayMove(nudge.status) && <StatusNudge word={nudge.word} busy={moving} onAccept={accept} onDismiss={() => setNudge(null)} />}
+      <Err e={moveErr} />
       {may.edit && <EditForm t={t} people={people} projects={projects} canReassign={may.reassign} />}
     </div>
   );
@@ -309,11 +336,11 @@ function PriorityForm({ t }: { t: Task }) {
   );
 }
 
-function ReasonForm({ title, path, label, button, body, min = 10 }: { title: string; path: string; label: string; button: string; body: (s: string) => unknown; min?: number }) {
+function ReasonForm({ title, path, label, button, body, min = 10, after }: { title: string; path: string; label: string; button: string; body: (s: string) => unknown; min?: number; after?: (text: string) => void }) {
   const { busy, error, run } = useSubmit();
   const [text, setText] = useState('');
   return (
-    <form className="panel stack" onSubmit={async (e) => { e.preventDefault(); if (await run(path, 'POST', body(text))) setText(''); }}>
+    <form className="panel stack" onSubmit={async (e) => { e.preventDefault(); if (await run(path, 'POST', body(text))) { setText(''); after?.(text); } }}>
       <h3>{title}</h3>
       <label className="f"><span>{label}</span><textarea required minLength={min} maxLength={280} value={text} onChange={(e) => setText(e.target.value)} /></label>
       <div><button className="btn" disabled={busy}>{button}</button></div>

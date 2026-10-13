@@ -19,6 +19,7 @@ import { Popover } from './popover';
 import { Select } from './Select';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { notify } from './toast';
+import { playFor } from './sound';
 import { useReadOnly } from './readonly';
 import { Help, useHelpOn } from './HelpMode';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
@@ -141,6 +142,14 @@ export async function quickMove(t: Task, s: StatusKey, reason?: string): Promise
   return null;
 }
 
+// Any status move, with the words it may need: the ask for blocked (and who it waits on), the reason for dropped,
+// the reason for going back to not started. The drawer forms and the status nudge on the full update form both use it.
+export async function moveWithWords(t: Task, s: StatusKey, text: string, onId: string | null = null): Promise<unknown> {
+  if (s === 'blocked') return api(`/tasks/${t.id}/block`, 'POST', { version: t.version, onId, ask: text });
+  if (s === 'dropped') return api(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'dropped', reason: text });
+  return quickMove(t, s, text);
+}
+
 // "Today", "Tomorrow", "3 days late", or the date.
 export function dueText(t: Task, today: string): { text: string; late: boolean } {
   if (t.statusCategory !== 'open') return { text: fmtDate(t.dueOn), late: false };
@@ -157,6 +166,7 @@ export async function api(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
     method, headers: body === undefined ? undefined : { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
   });
+  playFor(method, path, body, res.ok);
   const data = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error?.message ?? `Request failed (${res.status}).`);
   return data;
@@ -486,10 +496,10 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 <div className="row">
                   <button className="btn" disabled={busy || !okText || (mode === 'date' && !form.date)}
                     onClick={() => run(async (v) => {
-                      if (mode === 'status') return quickMove(t, 'todo', form.text);
-                      if (mode === 'blocked') return api(`/tasks/${t.id}/block`, 'POST', { version: v, onId: form.person || null, ask: form.text });
+                      if (mode === 'status') return moveWithWords(t, 'todo', form.text);
+                      if (mode === 'blocked') return moveWithWords(t, 'blocked', form.text, form.person || null);
                       if (mode === 'date') return api(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, newDueOn: form.date, reason: form.text });
-                      if (mode === 'drop') return api(`/tasks/${t.id}/close`, 'POST', { version: v, as: 'dropped', reason: form.text });
+                      if (mode === 'drop') return moveWithWords(t, 'dropped', form.text);
                       return api(`/tasks/${t.id}/reopen`, 'POST', { version: v, reason: form.text });
                     }, { status: 'Status set to Not started', blocked: 'Marked blocked', date: `Date moved to ${fmtDate(form.date)}`, drop: 'Task dropped', reopen: 'Task reopened' }[mode],
                       { status: statusFields(t, 'todo'), blocked: ['blocked'], date: ['due'], drop: statusFields(t, 'dropped'), reopen: ['category'] }[mode] as UndoField[])}>Save</button>
