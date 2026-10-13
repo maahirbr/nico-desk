@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { cloneElement, createContext, isValidElement, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { cloneElement, createContext, isValidElement, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { HELP_COOKIE, helpText, type HelpTerm } from './help';
 import { isTyping } from './keys';
@@ -82,6 +82,8 @@ type Props = { term: HelpTerm; note?: string; host?: boolean; children: React.Re
 // Wrap the words that need explaining. `note` adds a second line, for facts about this one item.
 // `host`: the child is already a button or link, so the tooltip hangs on that element itself (no extra
 // tab stop, and its own click still works). Without `host`, the words get a span; a tap on it shows the tip.
+const noop = () => () => {};
+
 export function Help(props: Props) {
   const { on } = useContext(HelpCtx);
   return on ? <Live {...props} /> : <>{props.children}</>;
@@ -165,7 +167,10 @@ function Live({ term, note, host, children }: Props) {
     </Tip>
   );
 
-  if (host && isValidElement<Record<string, unknown>>(children)) {
+  // A child sent from a server component is not yet an element during SSR, so the server draws the span below. The
+  // first client draw (hydration) must match it; after that the tip hangs on the child itself.
+  const hydrated = useSyncExternalStore(noop, () => true, () => false);
+  if (host && hydrated && isValidElement<Record<string, unknown>>(children)) {
     // Our handlers run after the child's own, so nothing the child did is lost.
     const own = children.props;
     const chain = Object.fromEntries(Object.entries(mine).map(([k, f]) => [k, (e: unknown) => { (own[k] as ((e: unknown) => void) | undefined)?.(e); (f as (e: unknown) => void)(e); }]));
