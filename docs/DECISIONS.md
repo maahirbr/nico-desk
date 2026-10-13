@@ -376,3 +376,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   under the on-time record's visibility rule. Home charts start collapsed under 768px until the person uses the toggle,
   decided in CSS, so there is no flash. Not checked: light mode, skins other than W, measured contrast. No schema
   change. Rollback: `git revert -m 1 821c4f8`.
+
+- **2026-10-13 · Sonnet 5.5 (built), Opus 5.5 (merged) · Jev search by meaning and a status nudge (workstream 10a).**
+  Jev (TypeSafe) re-ranks search by meaning and offers a status from a note. Off unless `NICO_JEV=1` and
+  `TYPESAFE_API_KEY` are set, and off against a hosted database unless `NICO_JEV_LIVE=1`. Every request is masked
+  first in `lib/redact.ts` (people, projects, emails, phones, links and amounts become labels, and the answer is mapped
+  back). The app has no unmasked path. Extra names go in the git-ignored `web/pilot/jev-terms.local.json`, which must be
+  filled before `NICO_JEV_LIVE` is set. The nudge only offers. A click applies it through the normal rules, and Blocked
+  still needs its reason. Threshold 0.65 from the synthetic eval (40 notes): 90% status accuracy masked and unmasked,
+  no wrong offer at any threshold from 0.5 to 0.95. Search hit at top 3: 12/15. Re-check the threshold on real notes.
+  Rollback: unset `NICO_JEV` (local search, no nudge), or `git revert -m 1 a42ffa7`.
