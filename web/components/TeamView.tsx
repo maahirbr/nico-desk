@@ -99,7 +99,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         return (
           <section key={p.id} className="group">
             <h2 className="person-h">
-              <PersonLink id={p.id} className="person-cell"><Avatar name={p.name} />{p.name}</PersonLink><span className="dim role">{p.role}</span>
+              <PersonLink id={p.id} className="person-cell"><Avatar id={p.id} name={p.name} />{p.name}</PersonLink><span className="dim role">{p.role}</span>
               <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} late</span>}</span>
             </h2>
             {overdueN.length > 0 && <><h3 className="next-h late-text"><Help term="late">Late</Help></h3><Stagger id="team" className="tlist">{overdueN.map((t) => row(t))}</Stagger></>}

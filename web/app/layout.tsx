@@ -21,7 +21,8 @@ import { ViewBanner } from '@/components/ViewAs';
 import { db, rosterFile } from '@/lib/db';
 import { freshFor } from '@/lib/page';
 import { projectPeopleMap, projectsMayAddTo } from '@/lib/plan';
-import { listPeople } from '@/lib/service';
+import { listPeople, teamPhotos } from '@/lib/service';
+import { PhotoProvider } from '@/components/Avatar';
 import { localOwnerId } from '@/lib/seed';
 import { today as todayIst } from '@/lib/time';
 import './tokens.css';
@@ -55,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const projectPeople = me ? await projectPeopleMap(await db(), me.team.id) : {};
   const mayAddTo = me ? await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles)) : [];
   const fresh = me ? await freshFor(me, await db()) : {};
+  const photos = me ? await teamPhotos(await db(), me.team.id) : {};
   return (
     <html lang="en" data-skin={skin} data-theme={themeAttr(theme)} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body data-viewing={me?.viewingAs ? '1' : undefined}>
@@ -65,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {me && <Shortcuts />}
         {me ? (
           <ReadOnlyProvider readOnly={me.viewingAs}>
+          <PhotoProvider photos={photos}>
           <ViewerProvider meId={me.person.id} isLead={isLeadOrAdmin(me.person.appRoles)} today={todayIst()} fresh={fresh}>
           <div className="shell">
             <aside className="side">
@@ -77,12 +80,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
-              <ProfileMenu name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
+              <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
             <main className="main"><div className="topbar"><TopSearch /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ViewerProvider>
+          </PhotoProvider>
           </ReadOnlyProvider>
         ) : (
           <main className="page-solo">{children}</main>

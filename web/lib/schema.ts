@@ -19,8 +19,19 @@ CREATE TABLE people (
   active        boolean NOT NULL DEFAULT true,
   contact_email text,                          -- where reminders go, if not the sign-in email
   alt_emails    text[] NOT NULL DEFAULT '{}',  -- other addresses that sign in as this person
-  never_remind  boolean NOT NULL DEFAULT false -- e.g. someone who signs off rather than delivers
+  never_remind  boolean NOT NULL DEFAULT false, -- e.g. someone who signs off rather than delivers
+  photo_url     text,                          -- the Google sign-in photo; an uploaded one (person_photos) wins
+  phone         text CHECK (phone ~ '^[0-9 +-]{7,20}$')  -- optional; shown only to people on the same team
 );
+
+-- An uploaded profile photo: a 256px square the browser made, stored here so no storage service is needed.
+CREATE TABLE person_photos (
+  person_id   text PRIMARY KEY REFERENCES people(id),
+  bytes       bytea NOT NULL,
+  mime        text NOT NULL CHECK (mime IN ('image/webp','image/jpeg','image/png')),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE team_members (
   team_id    text NOT NULL REFERENCES teams(id),

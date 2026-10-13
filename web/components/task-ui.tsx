@@ -205,7 +205,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
         {!closed && canTick && <CheckTick />}
       </span>}
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
-      {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar name={owner} />{owner.split(' ')[0]}</PersonLink>}
+      {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar id={t.ownerId} name={owner} />{owner.split(' ')[0]}</PersonLink>}
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
@@ -497,7 +497,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               <dt>Owner</dt>
               <dd>{can && open && mode !== 'reassign' ? (
                 <OwnerPicker key={pickKey} projectId={t.projectId} value={edit.ownerId} people={people} onChange={(ownerId, ownerRole) => setEdit({ ...edit, ownerId, ownerRole })} />
-              ) : <PersonLink id={t.ownerId} className="person-cell"><Avatar name={names[t.ownerId] ?? t.ownerId} />{names[t.ownerId] ?? t.ownerId}</PersonLink>}</dd>
+              ) : <PersonLink id={t.ownerId} className="person-cell"><Avatar id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} />{names[t.ownerId] ?? t.ownerId}</PersonLink>}</dd>
 
               <dt>Due</dt>
               <dd>

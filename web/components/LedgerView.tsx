@@ -140,7 +140,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           return (
             <section key={p.id} className="card habit">
               <div className="habit-head">
-                <Avatar name={p.name} lg /><span><PersonLink id={p.id}><b>{p.name}</b></PersonLink><span className="dim small">{p.role}</span></span>
+                <Avatar id={p.id} name={p.name} lg /><span><PersonLink id={p.id}><b>{p.name}</b></PersonLink><span className="dim small">{p.role}</span></span>
               </div>
 
               <div className="habit-kept">

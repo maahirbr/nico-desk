@@ -4,14 +4,16 @@
     "display_name": "Meera Iyer",
     "role": "Digital lead",
     "department": "Digital",
-    "email": "meera@example.test"
+    "email": "meera@example.test",
+    "phone": "+91 90000 00001"
   },
   {
     "id": "per_bo",
     "display_name": "Kabir Sethi",
     "role": "Web producer",
     "department": "Digital",
-    "email": "kabir@example.test"
+    "email": "kabir@example.test",
+    "phone": "+91 90000 00002"
   },
   {
     "id": "per_cy",

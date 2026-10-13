@@ -47,7 +47,7 @@ export default async function Projects() {
         </div>
         <div className="pcard-foot">
           <span className="avs" title={team.map((id) => names[id]).join(', ')}>
-            {team.slice(0, 5).map((id) => <Avatar key={id} name={names[id] ?? '?'} />)}
+            {team.slice(0, 5).map((id) => <Avatar key={id} id={id} name={names[id] ?? '?'} />)}
             {team.length > 5 && <span className="av more">+{team.length - 5}</span>}
           </span>
           {p.launchOn ? (

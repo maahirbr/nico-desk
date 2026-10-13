@@ -35,7 +35,7 @@ function Card({ d }: { d: ReminderDraft }) {
   return (
     <section className="card remind-card" id={`remind-${d.personId}`}>
       <div className="remind-head">
-        <span className="person-cell"><Avatar name={d.name} lg /><span><PersonLink id={d.personId}><b>{d.name}</b></PersonLink>
+        <span className="person-cell"><Avatar id={d.personId} name={d.name} lg /><span><PersonLink id={d.personId}><b>{d.name}</b></PersonLink>
           <span className="small dim"> · {d.items.length} {d.items.length === 1 ? 'item' : 'items'}{over ? `, ${over} overdue` : ''}{last ? ` · ${ago(last)}` : ''}</span></span></span>
       </div>
       <label className="f"><span>To</span><input type="email" value={to} readOnly={readOnly} placeholder="No email on file. Add one, or copy the text instead" onChange={(e) => setTo(e.target.value)} /></label>

@@ -50,7 +50,7 @@ describe('authUrl and googleSignInEnabled', () => {
     expect(u.searchParams.get('redirect_uri')).toBe('http://localhost:3100/api/auth/google/callback');
     expect(u.searchParams.get('state')).toBe('abc');
     expect(u.searchParams.get('hd')).toBe('example.test');
-    expect(u.searchParams.get('scope')).toBe('openid email');
+    expect(u.searchParams.get('scope')).toBe('openid email profile'); // profile adds the photo address
     expect(u.searchParams.get('response_type')).toBe('code');
   });
   it('is enabled only when both id and secret are set', () => {

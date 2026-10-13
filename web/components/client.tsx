@@ -120,7 +120,7 @@ export function SignInList({ people }: { people: { id: string; name: string; rol
                 router.refresh();
               }}
             >
-              <Avatar name={p.name} lg />
+              <Avatar id={p.id} name={p.name} lg />
               <span><div className="p-name">{p.name}</div><div className="p-role">{p.role}</div></span>
               {p.roles && <span className="p-tag">{p.roles}</span>}
             </button>

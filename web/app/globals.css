@@ -121,6 +121,9 @@ h3 { font: var(--type-body); font-weight: 600; margin: 0 0 var(--space-xxs); }
   font: var(--type-state); font-size: 0.8em; background: var(--avatar-bg); color: var(--ink-2); }
 .av.you { background: var(--primary-soft); color: var(--primary); box-shadow: var(--avatar-you-ring); }
 .av.lg { width: var(--mark-size-lg); height: var(--mark-size-lg); font-size: 1em; }
+/* A photo fills the disc, in every skin: the skin sets the size, the picture follows it. */
+.av.has-photo { overflow: hidden; padding: 0; }
+.av.has-photo img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
 .person-cell { display: inline-flex; align-items: center; gap: var(--space-xs); white-space: nowrap; }
 
 /* ---------- tables ---------- */
@@ -1341,6 +1344,12 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .pp-head { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
 .pp-head h1 { margin: 0; }
 .person-meta { color: var(--ink-3); font: var(--type-meta); }
+.person-contact { margin: var(--space-xxs) 0 0; font: var(--type-meta); color: var(--ink-2); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); overflow-wrap: anywhere; }
+.pp-head > div:not(.head-side) > .person-meta { margin: var(--space-xxs) 0 0; }
+/* Edit profile form */
+.ep-photo { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+:root[data-skin] .ep-av .av.lg, :root[data-skin] .ep-av.av.lg { width: 72px; height: 72px; font-size: 22px; }
+.ep-actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); min-width: 0; flex: 1 1 200px; }
 .pg-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
 @media (max-width: 860px) { .pg-grid { grid-template-columns: minmax(0, 1fr); } }
 .pg-list { list-style: none; margin: 0; padding: 0; }

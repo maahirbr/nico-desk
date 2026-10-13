@@ -18,7 +18,7 @@ export function authUrl(redirectUri: string, state: string): string {
     client_id: clientId(),
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'openid email',
+    scope: 'openid email profile', // profile adds the photo address (the picture claim)
     state,
     prompt: 'select_account',
     hd: allowedDomain(),
@@ -44,7 +44,19 @@ export function readIdToken(idToken: string, id: string): string | null {
   }
 }
 
-export async function exchangeCode(code: string, redirectUri: string): Promise<string | null> {
+// The profile photo address from a token readIdToken accepted. Only an https address counts; anything else is dropped.
+export function readPicture(idToken: string): string | null {
+  try {
+    const c = JSON.parse(Buffer.from(idToken.split('.')[1] ?? '', 'base64url').toString('utf8')) as Record<string, unknown>;
+    if (typeof c.picture !== 'string' || c.picture.length > 500) return null;
+    const u = new URL(c.picture);
+    return u.protocol === 'https:' ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function exchangeCode(code: string, redirectUri: string): Promise<{ email: string; picture: string | null } | null> {
   try {
     const res = await fetch(TOKEN_URL, {
       method: 'POST',
@@ -55,7 +67,9 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<s
     });
     if (!res.ok) return null;
     const json = (await res.json()) as { id_token?: unknown };
-    return typeof json.id_token === 'string' ? readIdToken(json.id_token, clientId()) : null;
+    if (typeof json.id_token !== 'string') return null;
+    const email = readIdToken(json.id_token, clientId());
+    return email ? { email, picture: readPicture(json.id_token) } : null;
   } catch {
     return null;
   }
