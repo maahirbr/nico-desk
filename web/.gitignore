@@ -8,3 +8,4 @@ projects.local.json
 .env*.local
 !.env.example
 .vercel/
+pilot/jev-terms.local.json
