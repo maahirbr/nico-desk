@@ -42,7 +42,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const [showDropped, setShowDropped] = useState(false);
   // The two finished-list sorts come back the next time Home is opened in this browser (components/remember.ts).
   const [kept, keep] = useRemembered('home', { doneSort: 'recent' as EndedSort, droppedSort: 'recent' as EndedSort },
-    (raw) => ({ doneSort: endedSortOf(raw.doneSort), droppedSort: endedSortOf(raw.droppedSort) }));
+    (raw) => ({ doneSort: endedSortOf(raw.doneSort), droppedSort: endedSortOf(raw.droppedSort) }), ['doneSort', 'droppedSort']);
   const { doneSort, droppedSort } = kept;
   const setDoneSort = (v: EndedSort) => keep('doneSort', v);
   const setDroppedSort = (v: EndedSort) => keep('droppedSort', v);

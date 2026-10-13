@@ -447,3 +447,16 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   the same `StatusNudge`; the click goes through the normal status calls (`moveWithWords` in `task-ui.tsx`, which the
   drawer forms now share). Under View as nothing is written, because the update post is refused first. The guide
   gained one line that a dictation app such as OpenWhispr works in any box. Rollback: git revert this commit.
+
+- **2026-10-13 · Sonnet 5.5 · Real links and filters in the URL (HANDOFF 8.4, items 1 and 3).** Every task, project and
+  person that opened from a click handler is now a real link, so middle click, Cmd or Ctrl click and "Open in new tab"
+  work. A plain click keeps today's behaviour (a task row still opens the side drawer in place). `TaskLink` points at
+  `/tasks/<id>` and `isPlainClick` (`lib/urlstate.ts`) is the only click it intercepts. The task rows, the board title,
+  the Updates and Waiting cards, the person page lists and the top search results use it. Filters, tabs, view toggles and
+  sorts on Home, Team, project boards, plan boards and the ledger now also live in the address (`?who=`, `?tile=`,
+  `?closedSort=`, `?project=`, `?q=`). The address wins over the kept view when present, a default is left out, and
+  other parts such as `?task=` and `?week=` are kept. It is written with `history.replaceState`, the way the task drawer
+  is, not `router.replace`: the page already holds the state, so a server re-render per click would add cost for no
+  change in what is shown. Suggested order stays a later choice in the sort menu and never the default. Nothing here
+  makes room for it: there is no score and no hook, and due date remains the order for open work. Rollback:
+  `git revert` this commit.

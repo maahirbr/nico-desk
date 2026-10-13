@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import type { SearchHit } from '@/lib/search';
 import { fmtDate } from '@/lib/time';
+import { isPlainClick } from '@/lib/urlstate';
 import { isTyping } from './keys';
 
 // The search bar at the top middle of every page. Results drop down as you type; Enter opens the
@@ -59,7 +61,10 @@ export function TopSearch() {
   }, [q]);
 
   const go = (href: string) => { setOpen(false); setQ(''); box.current?.blur(); router.push(href); };
-  const all = () => go(`/search?q=${encodeURIComponent(q.trim())}`);
+  const allHref = `/search?q=${encodeURIComponent(q.trim())}`;
+  const all = () => go(allHref);
+  // Real links: a plain click goes in place, a middle or Cmd click opens a new tab and leaves the box as it is.
+  const plain = (href: string) => (e: MouseEvent) => { if (isPlainClick(e)) { e.preventDefault(); go(href); } };
 
   return (
     <div className="topsearch" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false); }}>
@@ -76,13 +81,13 @@ export function TopSearch() {
       {open && q.trim() && (
         <div className="ts-drop" role="listbox">
           {hits.length === 0 ? <div className="ts-empty">Nothing matches “{q.trim()}”.</div> : hits.map((h, i) => (
-            <button key={`${h.kind}-${h.id}`} role="option" aria-selected={i === sel} className="ts-hit" onMouseEnter={() => setSel(i)} onClick={() => go(h.href)}>
+            <Link key={`${h.kind}-${h.id}`} href={h.href} prefetch={false} role="option" aria-selected={i === sel} className="ts-hit" onMouseEnter={() => setSel(i)} onClick={plain(h.href)}>
               <span className="ts-kind">{KIND[h.kind]}</span>
               <span className="ts-main"><b>{h.title}</b><span className="small dim">{h.sub}</span></span>
               {h.kind === 'task' && <span className={`small ${h.overdue ? 'late-text' : 'dim'}`}>{h.open ? fmtDate(h.dueOn) : 'Closed'}</span>}
-            </button>
+            </Link>
           ))}
-          <button className={`ts-all${sel === hits.length ? ' on' : ''}`} onClick={all}>See all results for “{q.trim()}”</button>
+          <Link href={allHref} prefetch={false} className={`ts-all${sel === hits.length ? ' on' : ''}`} onClick={plain(allHref)}>See all results for “{q.trim()}”</Link>
         </div>
       )}
     </div>

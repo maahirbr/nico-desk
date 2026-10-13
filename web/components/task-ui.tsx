@@ -26,6 +26,7 @@ import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
 import { TASK_CHANGED, useUndo } from './undo';
+import { TaskLink } from './TaskLink';
 import { FreshDot, useViewer } from './viewer';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
@@ -196,11 +197,11 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
   const oldDate = usePreviousWhileChanging(t.dueOn, 360);
   const stateFrom = usePreviousWhileChanging(key, 140);
   const main = (
-    <button className="trow-main" onClick={onOpen}>
+    <TaskLink id={t.id} className="trow-main" onOpen={onOpen}>
       <span className="trow-title">{t.title}<FreshDot id={t.id} /></span>
       {desc && <span className="trow-desc">{desc}</span>}
       {(sub || err) && <span className={`trow-sub${err ? ' err' : ''}`}>{err ?? sub}</span>}
-    </button>
+    </TaskLink>
   );
   return (
     <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}${readOnly ? ' no-check' : ''}`}>

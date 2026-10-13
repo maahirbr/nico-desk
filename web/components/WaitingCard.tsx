@@ -7,6 +7,7 @@ import { ago } from '@/lib/updates';
 import { PersonLink } from './chips';
 import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
+import { TaskLink } from './TaskLink';
 import { api } from './task-ui';
 import { notify } from './toast';
 
@@ -29,7 +30,7 @@ export function WaitingCard({ tasks, names, projectNames, now, onOpen }: {
               <span className="wait-title">
                 <PersonLink id={t.ownerId}><b>{names[t.ownerId]?.split(' ')[0]}</b></PersonLink>
                 {' · '}
-                <button className="callout-link" onClick={() => onOpen(t.id)}>{t.title}</button>
+                <TaskLink id={t.id} className="callout-link" onOpen={() => onOpen(t.id)}>{t.title}</TaskLink>
               </span>
               <span className="upd-meta">
                 “{t.blocked?.ask}”{t.blocked?.at && <> · {ago(t.blocked.at, now)}</>}{t.projectId && projectNames[t.projectId] && <> · {projectNames[t.projectId]}</>}

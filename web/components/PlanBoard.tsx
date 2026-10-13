@@ -1,7 +1,7 @@
 'use client';
 
 import { oneOf } from '@/lib/remember';
-import { useRemembered } from './remember';
+import { useRemembered, useUrlText } from './remember';
 import { useRouter } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { PlanState, Project } from '@/lib/plan';
@@ -78,7 +78,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     who: oneOf(raw.who, [...project.partnerPeople, ...state.lines.map((l) => l.ownerId ?? '').filter(Boolean)], null),
     view: oneOf(raw.view, ['pillar', 'date'], 'pillar') as 'pillar' | 'date',
     tab: oneOf(raw.tab, ['lines', 'soon', 'asks', 'rhythm', 'log'], 'lines') as 'lines' | 'soon' | 'asks' | 'rhythm' | 'log',
-  }));
+ }), ['pillar', 'tile', 'who', 'view', 'tab']);
   // With one sub-project the pillar picker and the order toggle are hidden, so a remembered pillar or order cannot apply.
   const multi = project.pillars.length > 1;
   const { tile, who, tab } = kept;
@@ -89,7 +89,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const setWho = (v: string | null) => keep('who', v);
   const setView = (v: 'pillar' | 'date') => keep('view', v);
   const setTab = (v: 'lines' | 'soon' | 'asks' | 'rhythm' | 'log') => keep('tab', v);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useUrlText('q');
   const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
