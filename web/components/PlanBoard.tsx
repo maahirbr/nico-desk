@@ -10,6 +10,7 @@ import {
   type PlanAction, type PlanLine, type Proposal,
 } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
+import { IMPORT_EVENT } from './MeetingSection';
 import { Avatar, PersonLink } from './chips';
 import { DateField } from './DateField';
 import { Help } from './HelpMode';
@@ -101,6 +102,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  // The Meeting section's "Write the minutes" opens the import dialog.
+  useEffect(() => {
+    const open = () => setImportOpen(true);
+    window.addEventListener(IMPORT_EVENT, open);
+    return () => window.removeEventListener(IMPORT_EVENT, open);
+  }, []);
   const [addOpen, setAddOpen] = useState(false);
   const [menu, setMenu] = useState(false);
   const [reviewing, setReviewing] = useState(false);

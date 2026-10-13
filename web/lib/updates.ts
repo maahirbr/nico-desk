@@ -33,9 +33,11 @@ export function buildUpdates(input: {
   viewerId: string;
   now: string | Date;
   seenAt?: string | null; // show only items after this moment
+  days?: number; // how far back to look; a week unless a caller asks for more (the meeting agenda)
 }): UpdateItem[] {
   const { events, tasks, leadOf, names, viewerId } = input;
   const now = new Date(input.now).getTime();
+  const window = (input.days ?? UPDATE_DAYS) * DAY;
   const seen = input.seenAt ? new Date(input.seenAt).getTime() : NaN;
   const task = new Map(tasks.map((t) => [t.id, t]));
   const first = (id: string | null | undefined) => (id ? (names[id] ?? 'Someone').split(' ')[0] : 'Someone');
@@ -48,7 +50,7 @@ export function buildUpdates(input: {
   for (const e of events) {
     const t = task.get(e.entity_id);
     const ms = new Date(e.at).getTime();
-    if (!t || e.actor_id === viewerId || ms > now || ms < now - UPDATE_DAYS * DAY) continue;
+    if (!t || e.actor_id === viewerId || ms > now || ms < now - window) continue;
     if (!Number.isNaN(seen) && ms <= seen) continue;
 
     const owner = t.ownerId === viewerId;

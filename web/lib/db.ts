@@ -98,6 +98,8 @@ export async function upgrade(db: Db) {
   await db.exec(COMMENTS_UPGRADE);
   // 13 Oct: pilot feedback from inside the app.
   await db.exec(FEEDBACK_UPGRADE);
+  // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
+  await db.exec(MEETINGS_UPGRADE);
 }
 
 // Idempotent: the feedback table (RLS on, no policies, like every other table). The same SQL as lib/schema.ts.
@@ -112,6 +114,13 @@ export const FEEDBACK_UPGRADE = `
   );
   CREATE INDEX IF NOT EXISTS feedback_created ON feedback (created_at DESC);
   ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;`;
+
+// Idempotent: four columns on projects for the meeting rhythm. No new table, so no new RLS step.
+export const MEETINGS_UPGRADE = `
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_every text CHECK (meet_every IN ('weekly','fortnightly','monthly','as_needed'));
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_day smallint CHECK (meet_day BETWEEN 1 AND 7);
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_next date;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_last date;`;
 
 // Idempotent: the two comment tables (RLS on, no policies) and a notices table that can hold a mention (no task, a comment).
 export const COMMENTS_UPGRADE = `

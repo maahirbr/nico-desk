@@ -189,6 +189,17 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   moving a date. Starting (Not started to In progress), clearing a block and marking done are one
   click, each with an optional note. Plan lines follow the same rule.
 
+- **Meeting rhythm and agenda** (13 Oct): a project can meet weekly, every two weeks, monthly or as needed, on a set
+  weekday if it likes. Four columns on `projects` hold it (`meet_every`, `meet_day`, `meet_next`, `meet_last`). The
+  project page shows the rhythm, the next date and an agenda that plain code builds from the board (`lib/meetings.ts`,
+  no model): late, blocked and at-risk tasks, tasks due before the next meeting, open asks and actions on a plan
+  board, what changed since the last meeting (the Updates reader), what finished, and new comments, all through
+  `lib/visibility.ts`. A past next date rolls forward by the frequency; as needed has no automatic date. Write the
+  minutes opens the existing import. Meeting held (project owner or lead, team lead, admin) sets the last meeting to
+  today and moves the next date on. The project list shows "Meets Thu, next 15 Oct". API: `GET` and `PUT`
+  `/api/v1/projects/:id/meeting`, `POST /api/v1/projects/:id/meeting/held`. For a hosted database run
+  `npx tsx --env-file=.env.remote.local scripts/upgrade-meetings.ts` (or `npm run db:upgrade`) before promoting.
+
 ## Hosting
 
 - `lib/db.ts` picks the database:

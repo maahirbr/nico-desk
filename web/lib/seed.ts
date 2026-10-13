@@ -187,6 +187,13 @@ async function seedPlan(tx: Tx, dir: string, people: Row[], skipPlan = false): P
   await seedPlanData(tx, skipPlan ? { project_meta: plan.project_meta } : plan, people);
 }
 
+// A meeting rhythm in a fixture (meet_every, meet_day, meet_next, meet_last). Left alone when the fixture names none.
+async function seedMeeting(tx: Tx, id: string, m: Row): Promise<void> {
+  if (!m.meet_every) return;
+  await tx.query(`UPDATE projects SET meet_every = $2, meet_day = $3, meet_next = $4, meet_last = $5 WHERE id = $1`,
+    [id, m.meet_every, m.meet_day ?? null, m.meet_next ?? null, m.meet_last ?? null]);
+}
+
 async function seedPlanData(tx: Tx, plan: Row, people: Row[]): Promise<void> {
   const name = Object.fromEntries(people.map((p) => [p.id, p.display_name as string]));
   // Free-text owner fields may name a roster id, so the overlay's names flow through.
@@ -197,6 +204,7 @@ async function seedPlanData(tx: Tx, plan: Row, people: Row[]): Promise<void> {
       `UPDATE projects SET eyebrow = $2, phase = $3, launch_on = $4, pills = $5::jsonb, intro = $6 WHERE id = $1`,
       [id, m.eyebrow ?? null, m.phase ?? null, m.launch_on ?? null, j(m.pills ?? []), m.intro ?? null],
     );
+    await seedMeeting(tx, id, m);
   }
 
   const p = plan.plan_project;
@@ -208,6 +216,7 @@ async function seedPlanData(tx: Tx, plan: Row, people: Row[]): Promise<void> {
     [p.id, TEAM_ID, p.name, p.department, p.owner_id, p.status, p.status_note, p.status_at, p.eyebrow, p.phase, p.intro,
       p.launch_on, j(p.pills), j(p.pillars), p.partner_name, j(p.partner_people), j(p.cadence)],
   );
+  await seedMeeting(tx, p.id, p);
   const at = p.status_at;
   const lines = [...(plan.lines ?? []), ...(plan.removed_lines ?? []).map((l: Row) => ({ ...l, removed: true }))];
   for (const l of lines) {

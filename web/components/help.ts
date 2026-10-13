@@ -137,6 +137,10 @@ export const HELP = {
   feedback_page: 'About this page. Saves the page address with your note, so the admins know where you were. It keeps no search text and no names.',
   feedback_read: 'Mark read. Tells the other admins you have seen this note. The writer is not told.',
   search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
+  // Meetings
+  meeting_rhythm: 'Meeting rhythm. How often this project meets, and the next date. As needed has no automatic date. The project owner, its lead, a team lead or an admin can change it.',
+  meeting_agenda: 'Agenda. The app builds it from the board. It lists what is late, blocked or at risk, what is due before the next meeting, open asks, and what changed since the last meeting.',
+  meeting_held: 'Meeting held. Records today as the last meeting and moves the next date on. You can do it once a day.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;
