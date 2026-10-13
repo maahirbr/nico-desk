@@ -37,15 +37,23 @@ export function KeyboardDismiss() {
       }
     };
     // Scrolling the page closes it. Capture, so scrolling inside a drawer or modal counts too.
-    const onScroll = () => blurActive();
+    // Typing scrolls too: a long note scrolls inside its own box, and the page follows the caret. Those do not count.
+    let typedAt = 0;
+    const onInput = () => { typedAt = Date.now(); };
+    const onScroll = (e: Event) => {
+      if (e.target === document.activeElement || Date.now() - typedAt < 400) return;
+      blurActive();
+    };
     const onTouchMove = () => blurActive();
     document.addEventListener('pointerdown', onDown, true);
     document.addEventListener('keydown', onKey, true);
+    document.addEventListener('input', onInput, true);
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     document.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
     return () => {
       document.removeEventListener('pointerdown', onDown, true);
       document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('input', onInput, true);
       document.removeEventListener('scroll', onScroll, true);
       document.removeEventListener('touchmove', onTouchMove, true);
     };

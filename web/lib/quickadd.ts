@@ -46,7 +46,7 @@ const NOT_BEFORE_A_DAY_WORD = new Set(['the', 'a', 'an', 'my', 'our', 'your', 'o
 const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 // First tier that has any hit decides: the whole name, the first word, the start of the name, the start of any word.
-function match<T extends Named>(word: string, items: T[]): Mention<T> {
+export function match<T extends Named>(word: string, items: T[]): Mention<T> {
   const w = norm(word);
   if (!w) return { word, status: 'none' };
   const compact = w.replace(/ /g, '');
@@ -62,6 +62,16 @@ function match<T extends Named>(word: string, items: T[]): Mention<T> {
     if (hits.length > 1) return { word, status: 'ambiguous', items: hits };
   }
   return { word, status: 'none' };
+}
+
+// For a picker that opens on "@" or "#": the items the typed word points at, best tier first. An empty word lists
+// the first few. When no tier hits, any item with the word inside its name still counts.
+export function suggest<T extends Named>(word: string, items: T[], limit = 6): T[] {
+  const m = match(word, items);
+  if (m.status === 'matched') return [m.item];
+  if (m.status === 'ambiguous') return m.items.slice(0, limit);
+  const w = norm(word);
+  return items.filter((i) => !w || norm(i.name).includes(w)).slice(0, limit);
 }
 
 function ymd(y: number, m: number, d: number): string | null {

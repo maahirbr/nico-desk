@@ -1480,3 +1480,25 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
   .glance-head .rlink { display: inline-flex; align-items: center; min-height: var(--button-height); }
   .glance-name { max-width: 70%; }
 }
+
+/* Comments (components/CommentThread.tsx): a thread under the update log or the project, and the @ / # picker under the field. */
+.cm { margin-top: var(--space-xl); display: grid; gap: var(--space-sm); }
+.cm-title { font: var(--type-heading); margin: 0; display: flex; align-items: baseline; gap: var(--space-xs); }
+.cm-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-md); }
+.cm-item { display: grid; gap: var(--space-xxs); }
+.cm-head { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
+.cm-body { margin: 0; font: var(--type-meta); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cm-ref { color: var(--primary); text-decoration: none; }
+.cm-ref:hover { text-decoration: underline; }
+.cm-ref-btn { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.cm-acts { display: flex; align-items: center; gap: var(--space-md); }
+.cm-form { display: grid; gap: var(--space-xs); position: relative; }
+.cm-hint { margin: 0; }
+.cm-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; }
+.cm-urgent { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-meta); color: var(--ink-2); cursor: pointer; }
+.cm-btns { display: inline-flex; align-items: center; gap: var(--space-md); }
+.cm-mail { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin: 0; }
+.cm-pick { list-style: none; margin: 0; padding: var(--space-xxs); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--shadow-1); display: flex; flex-direction: column; }
+.cm-opt { font: var(--type-meta); padding: var(--space-sm); border-radius: var(--radius-control); cursor: pointer; overflow-wrap: anywhere; }
+.cm-opt[aria-selected="true"], .cm-opt:hover { background: var(--sunk); }
+@media (max-width: 767px) { .cm-opt { min-height: var(--button-height); display: flex; align-items: center; gap: var(--space-xs); } }

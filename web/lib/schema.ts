@@ -145,11 +145,36 @@ CREATE TABLE update_seen (
   PRIMARY KEY (person_id, scope)
 );
 
+-- Comments on a task or a project. @person, #task and #project are stored as ids in comment_refs, not parsed from the text
+-- again. A removed comment keeps its row (deleted_at) with an empty body, so the thread still reads "Comment removed".
+CREATE TABLE comments (
+  id            text PRIMARY KEY,
+  subject_kind  text NOT NULL CHECK (subject_kind IN ('task','project')),
+  subject_id    text NOT NULL,
+  author_id     text NOT NULL REFERENCES people(id),
+  body          text NOT NULL CHECK (char_length(body) <= 2000),
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  edited_at     timestamptz,
+  deleted_at    timestamptz
+);
+CREATE INDEX comments_subject ON comments (subject_kind, subject_id, created_at);
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE comment_refs (
+  comment_id  text NOT NULL REFERENCES comments(id),
+  ref_kind    text NOT NULL CHECK (ref_kind IN ('person','task','project')),
+  ref_id      text NOT NULL,
+  PRIMARY KEY (comment_id, ref_kind, ref_id)
+);
+ALTER TABLE comment_refs ENABLE ROW LEVEL SECURITY;
+
+-- A 'mentioned' notice has no task: comment_id points at the comment, and the comment at its task or project.
 CREATE TABLE notices (
   id          text PRIMARY KEY,
   person_id   text NOT NULL REFERENCES people(id),
-  task_id     text NOT NULL REFERENCES tasks(id),
-  kind        text NOT NULL CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned','reassigned_away')),
+  task_id     text REFERENCES tasks(id),
+  comment_id  text REFERENCES comments(id),
+  kind        text NOT NULL CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned','reassigned_away','mentioned')),
   for_date    date NOT NULL,
   created_at  timestamptz NOT NULL,
   read_at     timestamptz,

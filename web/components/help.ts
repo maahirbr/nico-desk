@@ -114,6 +114,10 @@ export const HELP = {
   remind_gmail: 'Opens a draft in your Gmail, from your address. You press Send. The app sends nothing.',
   remind_mail: 'Opens a draft in your mail app. You press Send. The app sends nothing.',
   remind_copy: 'Copies the subject and the text, so you can paste them into any email or chat.',
+  // Comments
+  comment_box: 'Write a note for everyone who can see this. Type @ to mention a person. Type # to link a task or a project.',
+  comment_mention: 'A mention adds a notice for that person. People who cannot see this item are not told.',
+  comment_urgent: 'Opens a draft in your Gmail for each person you mentioned. You press Send. The app sends nothing.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;

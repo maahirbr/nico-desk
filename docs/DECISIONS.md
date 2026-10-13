@@ -460,3 +460,16 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   change in what is shown. Suggested order stays a later choice in the sort menu and never the default. Nothing here
   makes room for it: there is no score and no hook, and due date remains the order for open work. Rollback:
   `git revert` this commit.
+
+- **2026-10-13 · Sonnet 5.5 · Comments with @ and # (workstream 5).** Anyone who can see a task or a project can comment
+  on it, in the task drawer under History and on the project page. Typing `@` picks a person and `#` picks a task or a
+  project. The text is stored with id tokens (`[[person:ID]]`), the server checks every token again, and `comment_refs`
+  holds the ids, so a mention never depends on a name matching. A reference the writer cannot see is refused. A reader
+  who cannot see a referenced item gets "a hidden item", never its title. Only the author edits or removes a comment;
+  a removed one keeps its row with an empty body and reads "Comment removed". Writes are refused under View as, and a
+  hidden task or project reads as 404. A mention adds an in-app notice (`notices.task_id` is now nullable, with a new
+  `comment_id` and the kind `mentioned`) shown on Home as "Mentioned you". Nobody is told who cannot see the item.
+  "Urgent: also email" only shows Gmail links that open a draft in the writer's own browser; the app sends nothing.
+  `KeyboardDismiss` no longer closes the keyboard on the scroll a note makes while it is typed into. The hosted
+  database needs `npm run db:upgrade` before a build that uses this is promoted. Rollback: `git revert` this commit;
+  the `comments` and `comment_refs` tables and the nullable `notices.task_id` can stay, nothing else reads them.
