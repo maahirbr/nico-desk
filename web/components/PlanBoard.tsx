@@ -215,7 +215,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             </button>
           </td>
           <td className="owner-td" data-label="Owner">
-            {l.ownerId ? <PersonLink id={l.ownerId} className="person-cell"><Avatar name={ownerName(l)} />{ownerName(l)}</PersonLink> :<span className="tbn">Pending</span>}
+            {l.ownerId ? <PersonLink id={l.ownerId} className="person-cell"><Avatar id={l.ownerId} name={ownerName(l)} />{ownerName(l)}</PersonLink> :<span className="tbn">Pending</span>}
             {l.ownerWith && <div className="who-with">with {l.ownerWith}</div>}
           </td>
           <td className="owner-td" data-label={partner}>

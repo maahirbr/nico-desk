@@ -3,6 +3,7 @@ import type { Health, Outcome, Task } from '@/lib/derive';
 import { fmtDate } from '@/lib/time';
 import type { HelpTerm } from './help';
 import { Help } from './HelpMode';
+import { Avatar } from './Avatar';
 
 // A word in a quiet pill, always. The tone only picks a token pair in globals.css (.tone-*).
 
@@ -50,13 +51,8 @@ export function dueLine(t: Task): string {
   return `Due ${fmtDate(t.dueOn)} (first given ${fmtDate(t.firstDueOn)}, ${moved})`;
 }
 
-// Initials on a neutral mark. The viewer's own mark is the one blue one.
-export function Avatar({ name, lg = false, you = false }: { name: string; lg?: boolean; you?: boolean }) {
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
-  return <span className={`av${lg ? ' lg' : ''}${you ? ' you' : ''}`} style={{ '--h': h } as React.CSSProperties} aria-hidden>{initials}</span>;
-}
+// The mark is in Avatar.tsx: a photo if there is one, else initials. The viewer's own mark is the one blue one.
+export { Avatar };
 
 // A person's name or mark that opens their page (/people/[id]). Without an id it is plain text.
 export function PersonLink({ id, className, children }: { id?: string | null; className?: string; children: React.ReactNode }) {
@@ -65,5 +61,5 @@ export function PersonLink({ id, className, children }: { id?: string | null; cl
 }
 
 export function Person({ name, id }: { name: string; id?: string }) {
-  return <PersonLink id={id} className="person-cell"><Avatar name={name} />{name}</PersonLink>;
+  return <PersonLink id={id} className="person-cell"><Avatar name={name} id={id} />{name}</PersonLink>;
 }

@@ -90,7 +90,21 @@ export async function upgrade(db: Db) {
   await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id text REFERENCES people(id);`);
   // 13 Oct: one person can sign in from more than one address (a company and a partner address).
   await db.exec(`ALTER TABLE people ADD COLUMN IF NOT EXISTS alt_emails text[] NOT NULL DEFAULT '{}';`);
+  // 13 Oct: a profile photo (Google's, or one uploaded) and an optional phone.
+  await db.exec(PEOPLE_PROFILE_UPGRADE);
 }
+
+// Idempotent: adds the profile columns and the photo table. RLS on with no policies, like every other table.
+export const PEOPLE_PROFILE_UPGRADE = `
+  ALTER TABLE people ADD COLUMN IF NOT EXISTS photo_url text;
+  ALTER TABLE people ADD COLUMN IF NOT EXISTS phone text CHECK (phone ~ '^[0-9 +-]{7,20}$');
+  CREATE TABLE IF NOT EXISTS person_photos (
+    person_id   text PRIMARY KEY REFERENCES people(id),
+    bytes       bytea NOT NULL,
+    mime        text NOT NULL CHECK (mime IN ('image/webp','image/jpeg','image/png')),
+    updated_at  timestamptz NOT NULL DEFAULT now()
+  );
+  ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: adds the archive columns and lets a notice be of kind reassigned_away. No new table, so no new RLS step.
 export const PROJECT_ARCHIVE_UPGRADE = `

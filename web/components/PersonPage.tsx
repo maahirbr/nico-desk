@@ -5,6 +5,8 @@ import type { Task } from '@/lib/derive';
 import type { OnTimeRecord, PersonProject } from '@/lib/service';
 import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
+import { CopyEmail } from './CopyEmail';
+import { EditProfileButton } from './EditProfile';
 import { useOpenTask } from './taskUrl';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
 import { Stagger } from './motion-ui';
@@ -16,8 +18,8 @@ import { DitherArt } from './DitherArt';
 
 export type PersonLogItem = { id: string; at: string; whoId: string | null; who: string; text: string; taskId: string; task: string };
 
-export function PersonPage({ personId, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record }: {
-  personId: string; name: string; role: string; department: string; active: boolean; meId: string; isLead: boolean; today: string;
+export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhoto, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record }: {
+  personId: string; email: string; phone: string | null; teamName: string; appRoles: string[]; hasPhoto: boolean; name: string; role: string; department: string; active: boolean; meId: string; isLead: boolean; today: string;
   names: Record<string, string>; projectNames: Record<string, string>; people: Opt[]; workstreamsByProject: Record<string, string[]>;
   projects: PersonProject[]; open: Task[]; waitingOnThem: Task[]; waitingOnOthers: Task[]; recent: PersonLogItem[]; record: OnTimeRecord | null;
 }) {
@@ -36,10 +38,18 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
       <header className="page-head pp-banner">
         <DitherArt field="glow" cols={96} rows={12} className="dither-banner" />
         <div className="pp-head">
-          <Avatar name={name} lg you={mine} />
+          <Avatar id={personId} name={name} lg you={mine} />
           <div>
             <h1>{name}{mine && <span className="dim"> (you)</span>}</h1>
             <p className="person-meta">{[role, department, active ? '' : 'Not active'].filter(Boolean).join(' · ')}</p>
+            <p className="person-meta">{[teamName, ...appRoles.filter((r) => r !== 'member')].filter(Boolean).join(' · ')}</p>
+            <p className="person-contact">
+              <span className="pc-email">{email}</span> <CopyEmail email={email} />
+              {phone && <> <span className="dim" aria-hidden>·</span> <a className="rlink" href={`tel:${phone.replace(/[^0-9+]/g, '')}`}>{phone}</a></>}
+            </p>
+            {projects.length > 0 && (
+              <p className="person-meta">{projects.map((p, i) => <span key={p.id}>{i > 0 && ' · '}<Link className="rlink" href={`/projects/${p.id}`}>{p.name}</Link> ({p.role})</span>)}</p>
+            )}
           </div>
         </div>
         <div className="head-side">
@@ -48,6 +58,7 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
           {waitingOnThem.length > 0 && <> · {waitingOnThem.length} waiting on {first}</>}
         </p>
           <CopyLink path={`/people/${personId}`} what="person" />
+          {mine && <EditProfileButton personId={personId} name={name} phone={phone} hasPhoto={hasPhoto} />}
         </div>
       </header>
 

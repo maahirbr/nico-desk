@@ -11,9 +11,9 @@ import { setView, type ViewPerson } from './ViewAs';
 // the skin, keyboard shortcuts and sign out. The skin goes in a cookie so the server can set data-skin before first paint.
 
 // viewPeople is null unless the real session person is an admin; the server checks again on every call.
-type Props = { name: string; email: string; role: string; initial: SkinId; viewPeople: ViewPerson[] | null; viewingId: string | null };
+type Props = { meId: string; name: string; email: string; role: string; initial: SkinId; viewPeople: ViewPerson[] | null; viewingId: string | null };
 
-export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId }: Props) {
+export function ProfileMenu({ meId, name, email, role, initial, viewPeople, viewingId }: Props) {
   const router = useRouter();
   const [skin, setSkin] = useState<SkinId>(initial);
   const [open, setOpen] = useState(false);
@@ -52,7 +52,7 @@ export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId 
   return (
     <div className="menu-wrap profile-wrap" ref={wrap}>
       <button ref={btn} className="who" aria-haspopup="menu" aria-expanded={open} aria-label={`${name}, account menu`} onClick={() => setOpen(!open)}>
-        <Avatar name={name} you />
+        <Avatar id={meId} name={name} you />
         <span className="who-text">
           <span className="who-name">{name}</span>
           <span className="who-role">{role}</span>
@@ -79,7 +79,7 @@ export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId 
                   {viewPeople.map((p) => (
                     <button key={p.id} role="menuitemradio" aria-checked={viewingId === p.id} onClick={() => viewAs(p.id)}>
                       <span className="pm-tick" aria-hidden>{viewingId === p.id ? '✓' : ''}</span>
-                      <Avatar name={p.name} />
+                      <Avatar id={p.id} name={p.name} />
                       <span className="va-text"><b>{p.name}</b><span className="va-roles">{p.roles}</span></span>
                     </button>
                   ))}

@@ -729,6 +729,77 @@ export async function patchPerson(
   return (await getPerson(db, teamId, personId))!;
 }
 
+// ---------- profile: phone and photo ----------
+
+export const PHONE_RE = /^[0-9 +-]{7,20}$/;
+export const PHOTO_MAX_BYTES = 200 * 1024;
+export type PhotoMime = 'image/webp' | 'image/jpeg' | 'image/png';
+
+// An empty phone clears it. Anything else must be 7 to 20 digits, spaces, + or -.
+export function checkPhone(phone: unknown): string | null {
+  const v = typeof phone === 'string' ? phone.trim() : '';
+  if (v === '') return null;
+  if (!PHONE_RE.test(v)) throw bad('invalid_body', 'Use 7 to 20 digits, spaces, + or -.', 'phone');
+  return v;
+}
+
+// The first bytes say what the file is, whatever the client claims. Returns null for anything else.
+export function sniffImage(b: Uint8Array): PhotoMime | null {
+  const at = (i: number, s: string) => s.split('').every((c, k) => b[i + k] === c.charCodeAt(0));
+  if (b.length >= 12 && at(0, 'RIFF') && at(8, 'WEBP')) return 'image/webp';
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b.length >= 8 && b[0] === 0x89 && at(1, 'PNG') && b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a) return 'image/png';
+  return null;
+}
+
+// Only a person's own profile: the actor id is the person. The route layer has already refused View as.
+export async function setPhone(db: Db, meId: string, phone: unknown): Promise<string | null> {
+  const v = checkPhone(phone);
+  await db.query(`UPDATE people SET phone = $2 WHERE id = $1`, [meId, v]);
+  return v;
+}
+
+export async function savePhoto(db: Db, meId: string, bytes: Uint8Array, claimedMime: string): Promise<void> {
+  if (bytes.length === 0) throw bad('invalid_body', 'Choose a photo.', 'photo');
+  if (bytes.length > PHOTO_MAX_BYTES) throw new ApiError(413, 'photo_too_big', 'The photo must be under 200 KB.', 'photo');
+  const mime = sniffImage(bytes);
+  if (!mime || mime !== claimedMime) throw new ApiError(415, 'photo_type', 'Use a WebP, JPEG or PNG photo.', 'photo');
+  await db.query(
+    `INSERT INTO person_photos (person_id, bytes, mime, updated_at) VALUES ($1,$2,$3, now())
+     ON CONFLICT (person_id) DO UPDATE SET bytes = EXCLUDED.bytes, mime = EXCLUDED.mime, updated_at = now()`,
+    [meId, bytes, mime],
+  );
+}
+
+export async function deletePhoto(db: Db, meId: string): Promise<void> {
+  await db.query(`DELETE FROM person_photos WHERE person_id = $1`, [meId]);
+}
+
+// A photo goes only to someone signed in on the same team as its owner. The version is the upload time, for the ETag.
+export async function getPhoto(db: Db, teamId: string, personId: string): Promise<{ bytes: Uint8Array; mime: string; version: number } | null> {
+  const { rows } = await db.query<{ bytes: Uint8Array; mime: string; v: string | number }>(
+    `SELECT f.bytes, f.mime, (extract(epoch FROM f.updated_at) * 1000)::bigint AS v FROM person_photos f
+     WHERE f.person_id = $2 AND $2 IN (SELECT person_id FROM team_members WHERE team_id = $1)`,
+    [teamId, personId],
+  );
+  const r = rows[0];
+  return r ? { bytes: new Uint8Array(r.bytes), mime: r.mime, version: Number(r.v) } : null;
+}
+
+// What each teammate's avatar shows: the upload version if there is one, else Google's photo address, else initials.
+export type PhotoInfo = { v?: number; url?: string };
+export async function teamPhotos(db: Tx, teamId: string): Promise<Record<string, PhotoInfo>> {
+  const { rows } = await db.query<{ id: string; photo_url: string | null; v: string | number | null }>(
+    `SELECT p.id, p.photo_url, (extract(epoch FROM f.updated_at) * 1000)::bigint AS v FROM people p
+     LEFT JOIN person_photos f ON f.person_id = p.id
+     WHERE p.id IN (SELECT person_id FROM team_members WHERE team_id = $1) AND (p.photo_url IS NOT NULL OR f.person_id IS NOT NULL)`,
+    [teamId],
+  );
+  const out: Record<string, PhotoInfo> = {};
+  for (const r of rows) out[r.id] = r.v != null ? { v: Number(r.v) } : { url: r.photo_url! };
+  return out;
+}
+
 // ---------- project log ----------
 
 // The update log across one project's tasks, newest first. It also holds the project's own archive, restore, owner and lead events.
@@ -827,6 +898,9 @@ export type PersonView = {
   waitingOnOthers: Task[]; // their open tasks blocked on someone else
   recent: (LogLine & { taskTitle: string })[]; // events on their tasks, or made by them, newest first
   record: OnTimeRecord | null; // null unless the viewer is a lead, an admin, or this person (the ledger's own rule)
+  phone: string | null; // shown to signed-in teammates only: this view is built for the viewer's own team
+  teamName: string;
+  hasPhoto: boolean; // an uploaded photo exists (the profile form offers Remove only then)
 };
 
 // What one teammate is doing, drawn only from what a teammate can already read: team tasks and their logs, and
@@ -839,7 +913,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
   const tasks = await teamTasks(db, teamId, today);
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
   const open = tasks.filter((t) => t.statusCategory === 'open');
-  const [proj, rec] = await Promise.all([
+  const [proj, rec, ph] = await Promise.all([
     db.query<{ id: string; name: string; role: string }>(
       `SELECT pr.id, pr.name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
        LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
@@ -851,6 +925,11 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
        JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
        LEFT JOIN people a ON a.id = e.actor_id
        WHERE t.team_id = $1 AND (t.owner_id = $2 OR e.actor_id = $2) ORDER BY e.at DESC, e.id DESC LIMIT 60`,
+      [teamId, personId],
+    ),
+    db.query<{ phone: string | null; team_name: string; has_photo: boolean }>(
+      `SELECT p.phone, t.name AS team_name, EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id) AS has_photo
+       FROM people p, teams t WHERE p.id = $2 AND t.id = $1`,
       [teamId, personId],
     ),
   ]);
@@ -873,5 +952,8 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
     recent: rec.rows,
     record,
+    phone: ph.rows[0]?.phone ?? null,
+    teamName: ph.rows[0]?.team_name ?? '',
+    hasPhoto: ph.rows[0]?.has_photo ?? false,
   };
 }
