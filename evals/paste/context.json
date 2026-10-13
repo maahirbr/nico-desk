@@ -1,0 +1,175 @@
+{
+  "today": "2026-10-09",
+  "note": "Synthetic. People, projects and tasks match fixtures/. The viewer sees every project except the ones listed under hidden. Outside names and numbers are invented.",
+  "people": [
+    {
+      "id": "per_ada",
+      "name": "Meera Iyer",
+      "role": "Digital lead"
+    },
+    {
+      "id": "per_bo",
+      "name": "Kabir Sethi",
+      "role": "Web producer"
+    },
+    {
+      "id": "per_cy",
+      "name": "Ananya Rao",
+      "role": "Brand lead"
+    },
+    {
+      "id": "per_dee",
+      "name": "Ishaan Bhatt",
+      "role": "Designer"
+    },
+    {
+      "id": "per_eli",
+      "name": "Arjun Nair",
+      "role": "Retail lead"
+    },
+    {
+      "id": "per_fay",
+      "name": "Priya Menon",
+      "role": "Retention lead"
+    }
+  ],
+  "projects": [
+    {
+      "id": "prj_landing",
+      "name": "Autumn landing page"
+    },
+    {
+      "id": "prj_shoot",
+      "name": "Campaign shoot plan"
+    },
+    {
+      "id": "prj_tiers",
+      "name": "Loyalty tier pilot"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "tsk_025",
+      "title": "Fix form error messages",
+      "owner": "per_bo",
+      "project": "prj_landing",
+      "status": "Blocked",
+      "due_on": "2026-10-06"
+    },
+    {
+      "id": "tsk_027",
+      "title": "Final crop of campaign images",
+      "owner": "per_dee",
+      "project": "prj_shoot",
+      "status": "Blocked",
+      "due_on": "2026-10-09"
+    },
+    {
+      "id": "tsk_028",
+      "title": "Plan weekend store roster",
+      "owner": "per_eli",
+      "project": null,
+      "status": "Not started",
+      "due_on": "2026-10-09"
+    },
+    {
+      "id": "tsk_030",
+      "title": "Run landing page link check",
+      "owner": "per_bo",
+      "project": "prj_landing",
+      "status": "In progress",
+      "due_on": "2026-10-09"
+    },
+    {
+      "id": "tsk_033",
+      "title": "Draft tier launch note",
+      "owner": "per_fay",
+      "project": "prj_tiers",
+      "status": "Blocked",
+      "due_on": "2026-10-05"
+    },
+    {
+      "id": "tsk_035",
+      "title": "Write tier launch email subject lines",
+      "owner": "per_ada",
+      "project": "prj_tiers",
+      "status": "Not started",
+      "due_on": "2026-10-09"
+    },
+    {
+      "id": "tsk_036",
+      "title": "Review landing page speed report",
+      "owner": "per_ada",
+      "project": "prj_landing",
+      "status": "In progress",
+      "due_on": "2026-10-09"
+    },
+    {
+      "id": "tsk_037",
+      "title": "Build the festive landing page",
+      "owner": "per_ada",
+      "project": "prj_landing",
+      "status": "In progress",
+      "due_on": "2026-10-16"
+    },
+    {
+      "id": "tsk_039",
+      "title": "Confirm model bookings",
+      "owner": "per_cy",
+      "project": "prj_shoot",
+      "status": "In progress",
+      "due_on": "2026-10-12"
+    },
+    {
+      "id": "tsk_040",
+      "title": "Approve crop sizes for hero images",
+      "owner": "per_cy",
+      "project": "prj_shoot",
+      "status": "In progress",
+      "due_on": "2026-10-09"
+    },
+    {
+      "id": "tsk_041",
+      "title": "Retouch campaign stills",
+      "owner": "per_dee",
+      "project": "prj_shoot",
+      "status": "Not started",
+      "due_on": "2026-10-14"
+    },
+    {
+      "id": "tsk_042",
+      "title": "Collect window display photos from stores",
+      "owner": "per_eli",
+      "project": null,
+      "status": "In progress",
+      "due_on": "2026-10-13"
+    },
+    {
+      "id": "tsk_043",
+      "title": "Final tier names for the landing page",
+      "owner": "per_fay",
+      "project": "prj_landing",
+      "status": "In progress",
+      "due_on": "2026-10-14"
+    },
+    {
+      "id": "tsk_045",
+      "title": "Update site footer links",
+      "owner": "per_bo",
+      "project": "prj_landing",
+      "status": "Blocked",
+      "due_on": "2026-10-14"
+    }
+  ],
+  "hidden": {
+    "per_dee": [
+      "prj_tiers"
+    ]
+  },
+  "outside": [
+    "Studio Coordinator",
+    "Printer Desk",
+    "+91 90000 00099",
+    "+91 90000 00098"
+  ]
+}

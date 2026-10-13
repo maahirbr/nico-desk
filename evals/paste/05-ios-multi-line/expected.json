@@ -1,0 +1,39 @@
+{
+  "type": "multi-line",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Arjun Nair",
+      "date": "2026-10-09",
+      "time": "14:05",
+      "text": "The weekend roster is final now:\nSaturday: mall store\nSunday: high street\n\nMarking the roster task done."
+    },
+    {
+      "index": 1,
+      "sender": "Arjun Nair",
+      "date": "2026-10-09",
+      "time": "14:06",
+      "text": "Window photos are still missing from two stores.\nI will chase them on Monday."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_028",
+      "status": "Done",
+      "due_on": null,
+      "source": 0,
+      "quote": "Marking the roster task done."
+    },
+    {
+      "kind": "note",
+      "task": "tsk_042",
+      "source": 1,
+      "quote": "Window photos are still missing from two stores."
+    }
+  ],
+  "must_not": []
+}

@@ -1,0 +1,37 @@
+{
+  "type": "hidden-project",
+  "viewer": "per_dee",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Priya Menon",
+      "date": "2026-10-09",
+      "time": "16:00",
+      "text": "The tier launch email subject lines will slip to Monday."
+    },
+    {
+      "index": 1,
+      "sender": "Ishaan Bhatt",
+      "date": "2026-10-09",
+      "time": "16:01",
+      "text": "On my side, the retouching stays on track for 14 Oct."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "note",
+      "task": "tsk_041",
+      "source": 1,
+      "quote": "the retouching stays on track for 14 Oct"
+    }
+  ],
+  "must_not": [
+    {
+      "quote": "The tier launch email subject lines will slip to Monday.",
+      "why": "The task is in a project this viewer cannot see. Hidden reads as missing.",
+      "task": "tsk_035"
+    }
+  ]
+}

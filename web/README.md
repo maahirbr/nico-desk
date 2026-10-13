@@ -126,6 +126,17 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   recent meetings to pick from; a meeting already imported into a project is refused. Wispr Flow has
   no public API (only an MCP connection for AI assistants), so it stays paste-only.
 - **Search** (sidebar, or Ctrl/⌘+K): projects, tasks, plan lines and people in one list.
+- **Paste a chat** (New task, then "Paste a chat"; not shown under View as): paste a WhatsApp chat or pick an
+  exported `.txt` file. `lib/chat.ts` reads iOS, Android (12 or 24 hour) and plain lines into messages and drops
+  system lines. Before the text goes to Claude, `lib/redact.ts` masks it: roster names and addresses, project names,
+  phone numbers, links, amounts. A sender who is not on the roster becomes "an outside person". Claude may only point at
+  the tasks and projects the signed-in person can see, and it reads the chat as data, never as instructions. Each answer
+  is checked in `lib/paste.ts`: status as one of the five words, a real date, a quote that is in the source message.
+  The review screen shows the reading beside the change, with Approve, Edit and Skip. Nothing is written until Approve.
+  Approve goes through the normal service rules, one change per proposal, so the undo toast works for status and date
+  changes (a new task and a note have none). The raw text is dropped after the read and is not stored. Needs
+  `ANTHROPIC_API_KEY`: without it the read returns 503 `model_off`. Tests: `tests/chat.test.ts`, `tests/paste.test.ts`,
+  `tests/paste-evals.test.ts`. The 20 synthetic chats are in `evals/paste/`.
 
 ### Ledger and reasons
 

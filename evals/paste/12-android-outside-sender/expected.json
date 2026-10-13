@@ -1,0 +1,34 @@
+{
+  "type": "outside-sender",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Studio Coordinator",
+      "date": "2026-10-09",
+      "time": "15:30",
+      "text": "Can someone send us the final crop sizes? We need them before Wednesday."
+    },
+    {
+      "index": 1,
+      "sender": "Ishaan Bhatt",
+      "date": "2026-10-09",
+      "time": "15:31",
+      "text": "I will send them tonight."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "new",
+      "title_has": "crop sizes",
+      "owner": "per_dee",
+      "due_on": "2026-10-13",
+      "project": "prj_shoot",
+      "source": 0,
+      "quote": "send us the final crop sizes"
+    }
+  ],
+  "must_not": []
+}

@@ -1,0 +1,34 @@
+{
+  "type": "masking",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "+91 90000 00099",
+      "date": "2026-10-09",
+      "time": "10:15",
+      "text": "Hi, this is the studio. Please mail the brief to studio@example.test and call me on 90000 00099."
+    },
+    {
+      "index": 1,
+      "sender": "Ananya Rao",
+      "date": "2026-10-09",
+      "time": "10:16",
+      "text": "Will do. I will send the shoot brief by 13 Oct."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "new",
+      "title_has": "shoot brief",
+      "owner": "per_cy",
+      "due_on": "2026-10-13",
+      "project": "prj_shoot",
+      "source": 1,
+      "quote": "send the shoot brief by 13 Oct"
+    }
+  ],
+  "must_not": []
+}

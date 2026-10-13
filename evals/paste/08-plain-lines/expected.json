@@ -1,0 +1,46 @@
+{
+  "type": "plain-paste",
+  "viewer": "per_ada",
+  "format": "plain",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": null,
+      "date": null,
+      "time": null,
+      "text": "Footer links will now take until 21 Oct"
+    },
+    {
+      "index": 1,
+      "sender": null,
+      "date": null,
+      "time": null,
+      "text": "Still waiting on the legal wording for it"
+    },
+    {
+      "index": 2,
+      "sender": null,
+      "date": null,
+      "time": null,
+      "text": "Lunch on Friday?"
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_045",
+      "status": null,
+      "due_on": "2026-10-21",
+      "source": 0,
+      "quote": "until 21 Oct"
+    },
+    {
+      "kind": "note",
+      "task": "tsk_045",
+      "source": 1,
+      "quote": "waiting on the legal wording"
+    }
+  ],
+  "must_not": []
+}

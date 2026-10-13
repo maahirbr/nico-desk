@@ -90,6 +90,8 @@ export const HELP = {
   proposal_sure: 'Sure. The app is confident about the line, owner and date it read from the minutes. You can still change it.',
   proposal_unsure: 'Not sure. The app could not tell the line, the owner or the date from the minutes. Check it before you accept.',
   proposal_accept_sure: 'Accepts every proposal marked sure in one step. The ones that are not sure stay for you to check.',
+  paste_review: 'Proposals from a pasted chat. Each one shows what the chat said and the change it would make. Nothing is written until you approve it.',
+  paste_masked: 'Names, emails, phone numbers and project names are masked before the chat leaves the server. The pasted text is dropped after review and is not stored.',
 
   // Person page
   done_ahead: 'Done ahead. Tasks this person finished before the date first given.',

@@ -11,7 +11,7 @@ import { teamTasks } from './service';
 //   roster people (display name, first name, last name, emails, alt emails)  ->  Person 1, Person 2 ...
 //   project names and workstream names                                       ->  Project 1 ...
 //   extra terms from web/pilot/jev-terms.local.json (git-ignored)            ->  Term 1 ...
-//   any email, phone number or link found by pattern                         ->  Email 1, Phone 1, Link 1
+//   any email, phone number (with or without a country code) or link found by pattern                         ->  Email 1, Phone 1, Link 1
 //   currency amounts and plain numbers of 4 digits or more                   ->  Amount 1
 // Dates (2026-10-09) and status words stay, because Jev needs them.
 //
@@ -36,7 +36,8 @@ const wordRe = (s: string) => new RegExp(`(?<![\\p{L}\\p{N}_])${esc(s).replace(/
 const RE_DATE = /(?<![\d-])\d{4}-\d{2}-\d{2}(?![\d-])/g;
 const RE_URL = /\b(?:https?:\/\/|www\.)[^\s)>\]"']+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|in|co|org|net|io|ai|app|dev|test|me)\b(?:\/[^\s)>\]"']*)?/gi;
 const RE_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
-const RE_PHONE = /(?<![\w])\+?\d[\d\s().-]{7,}\d(?![\w])/g;
+// Separators are spaces, tabs, dots, dashes and brackets only, never a line break, so two lines never join into one number.
+const RE_PHONE = /(?<![\w])\+?\(?\d[\d \t().-]{6,}\d(?![\w])/g;
 const RE_MONEY = /(?:(?:₹|Rs\.?|INR|USD|\$|€|£)\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:k|lakhs?|lacs?|cr|crores?|m|mn|million)\b)?|\b\d[\d,]*(?:\.\d+)?\s?(?:k|lakhs?|lacs?|crores?|rupees|rs|inr|usd|dollars)\b)/gi;
 const RE_NUMBER = /(?<![\w.])\d[\d,]{3,}(?:\.\d+)?(?![\w])|(?<![\w.])\d{4,}(?![\w])/g;
 
@@ -102,7 +103,7 @@ export function makeMasker(dict: MaskDict): Masker {
     // 3. names, longest first
     for (const r of rules) if (!r.alias.includes('@')) sub(r.re, () => label(r.kind, r.canonical));
     // 4. phones (nine digits or more), money, then plain long numbers
-    sub(RE_PHONE, (m) => (m.replace(/\D/g, '').length >= 9 ? label('Phone', m) : null));
+    sub(RE_PHONE, (m) => { const n = m.replace(/\D/g, '').length; return n >= 9 || (m.startsWith('+') && n >= 8) ? label('Phone', m) : null; });
     sub(RE_MONEY, (m) => label('Amount', m));
     sub(RE_NUMBER, (m) => label('Amount', m));
     // 5. put the labels and the held dates in

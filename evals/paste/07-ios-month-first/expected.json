@@ -1,0 +1,40 @@
+{
+  "type": "month-first",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Priya Menon",
+      "date": "2026-09-25",
+      "time": "18:10",
+      "text": "The draft tier names are ready for review."
+    },
+    {
+      "index": 1,
+      "sender": "Priya Menon",
+      "date": "2026-10-08",
+      "time": "23:58",
+      "text": "The tier names are final now, so the tier names task is done."
+    },
+    {
+      "index": 2,
+      "sender": "Priya Menon",
+      "date": "2026-10-09",
+      "time": "00:02",
+      "text": "I will send them to the web team tomorrow."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_043",
+      "status": "Done",
+      "due_on": null,
+      "source": 1,
+      "quote": "the tier names task is done"
+    }
+  ],
+  "must_not": []
+}

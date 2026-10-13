@@ -1,0 +1,41 @@
+{
+  "type": "status-and-date",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Meera Iyer",
+      "date": "2026-10-09",
+      "time": "11:15",
+      "text": "The festive landing page is blocked until the tier names are final, so it slips to 20 Oct."
+    },
+    {
+      "index": 1,
+      "sender": "Priya Menon",
+      "date": "2026-10-09",
+      "time": "11:16",
+      "text": "I will get the tier names to you on Monday."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_037",
+      "status": "Blocked",
+      "due_on": null,
+      "source": 0,
+      "quote": "blocked until the tier names are final"
+    },
+    {
+      "kind": "update",
+      "task": "tsk_037",
+      "status": null,
+      "due_on": "2026-10-20",
+      "source": 0,
+      "quote": "slips to 20 Oct"
+    }
+  ],
+  "must_not": []
+}

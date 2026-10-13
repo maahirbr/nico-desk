@@ -86,6 +86,7 @@ Add new entries at its bottom, never here. The rules below come from that log an
 
 ```
 python3 -I evals/meetings/check.py
+python3 -I evals/paste/check.py
 grep -rilf fixtures/denylist.txt fixtures/*.json evals/
 cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
