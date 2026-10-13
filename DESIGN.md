@@ -446,7 +446,7 @@ A pill means a state or a choice of date. Nothing else is a capsule.
 
 ## Motion
 
-Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with two named exceptions: a status chip eases its colour, and a tick draws its stroke. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
+Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with three named exceptions: a status chip eases its colour, and a tick and the Home trend line draw their strokes. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
 
 1. **A line arrives.** A committed or asked line fades in and rises 8px, 180ms, ease-out. It happens on the page where the line lands.
 2. **A date moves.** The old date strikes through over 160ms, then the new date slides in from 6px below, 200ms. The struck date stays.
@@ -462,6 +462,7 @@ Other motion is not a gesture. It is the screen keeping up with the user.
 - **A list loads.** The first time a list is shown in a browser tab, its rows rise `--stagger-rise` (6px) and fade over `--dur-stagger` (200ms), 30ms apart, the delay capped at the eighth row. It never replays for a row added later. This is the one motion allowed to run past 300ms.
 - **A status changes.** The chip eases its fill and text colour over `--dur-state` (120ms) and its icon pops in from a scale of 0.5.
 - **A task is marked done.** The tick in the box draws itself over `--dur-tick` (160ms). The same tick draws in the Done chip.
+- **The Home glance draws in.** The first time Home is shown in a browser tab, its bars grow from the left (`transform: scaleX`) and the on-time line draws itself (`stroke-dashoffset`, the third named exception, like the tick) over `--dur-slide` (200ms). It never replays on a later visit in the same tab, and reduced motion shows the finished charts at once.
 - **A number counts up.** A figure on the ledger counts from 0 to its value once per session, in 280ms. A hard page load, a repeat visit and reduced motion show the true value at once.
 - **A dithered picture is shown.** Only in empty states, the sign-in screen and the people page header. It is an ordered dither (`web/lib/dither.ts`) in `--dither-ink`, a thin tint of the skin accent. It never moves, never sits under text and is hidden from screen readers.
 - **A confirmation appears.** A small bar at the foot of the screen fades in over `--dur-toast` (160ms), stays for `--dwell-confirm`, then fades out. It has `aria-live="polite"`. At most three show at once.
