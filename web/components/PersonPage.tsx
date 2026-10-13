@@ -10,6 +10,7 @@ import { Help } from './HelpMode';
 import { CopyEmail } from './CopyEmail';
 import { EditProfileButton } from './EditProfile';
 import { useOpenTask } from './taskUrl';
+import { TaskLink } from './TaskLink';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
@@ -105,7 +106,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
                 <li key={t.id}>
                   <span className="pg-main">
                     <PersonLink id={t.ownerId}><b>{names[t.ownerId]?.split(' ')[0]}</b></PersonLink>{' '}
-                    <button className="callout-link" onClick={() => setOpenId(t.id)}>needs: {t.blocked?.ask}<span className="dim"> · for “{t.title}”</span></button>
+                    <TaskLink id={t.id} className="callout-link" onOpen={() => setOpenId(t.id)}>needs: {t.blocked?.ask}<span className="dim"> · for “{t.title}”</span></TaskLink>
                   </span>
                   <span className="pg-side">{dueText(t, today).text}</span>
                 </li>
@@ -120,7 +121,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
               {waitingOnOthers.map((t) => (
                 <li key={t.id}>
                   <span className="pg-main">
-                    <button className="callout-link" onClick={() => setOpenId(t.id)}>{t.title}</button>
+                    <TaskLink id={t.id} className="callout-link" onOpen={() => setOpenId(t.id)}>{t.title}</TaskLink>
                     <span className="dim"> · waits on </span>
                     <PersonLink id={t.blocked?.onId}><b>{t.blocked?.onId ? names[t.blocked.onId] : ''}</b></PersonLink>
                   </span>
@@ -154,7 +155,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
                 <li key={e.id}>
                   <span className="pg-main">
                     <PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{' '}
-                    <button className="callout-link" onClick={() => setOpenId(e.taskId)}>on “{e.task}”</button>
+                    <TaskLink id={e.taskId} className="callout-link" onOpen={() => setOpenId(e.taskId)}>on “{e.task}”</TaskLink>
                   </span>
                   <span className="pg-side">{e.at}</span>
                 </li>

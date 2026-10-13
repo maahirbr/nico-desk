@@ -9,7 +9,7 @@ import { addDays, fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
 import { Help } from './HelpMode';
 import { useOpenTask } from './taskUrl';
-import { useRemembered, useRememberedParam } from './remember';
+import { useRemembered, useRememberedParam, useUrlText } from './remember';
 import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
@@ -22,12 +22,12 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   meId: string; isLead: boolean; opts: Opt[];
 }) {
   useRememberedParam('team-tab', 'view', view, ['person', 'status']);
-  const [kept, keep] = useRemembered('team', { project: '' }, (raw) => ({ project: oneOf(raw.project, projects.map((p) => p.id), '') }));
+  const [kept, keep] = useRemembered('team', { project: '' }, (raw) => ({ project: oneOf(raw.project, projects.map((p) => p.id), '') }), ['project']);
   const project = kept.project;
   const setProject = (v: string) => keep('project', v);
   const [openId, setOpenId] = useOpenTask();
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useUrlText('q');
   const [more, setMore] = useState<Record<string, boolean>>({});
   const needle = q.trim().toLowerCase();
   const found = (p: Person) => !needle || p.name.toLowerCase().includes(needle) || p.role.toLowerCase().includes(needle);
@@ -39,7 +39,10 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   const overdue = open.filter((t) => t.dueOn < today).length;
   const done = list.filter((t) => t.statusCategory === 'done').length;
   const href = (o: Record<string, string>) => {
+    // The project and the search follow the week and the tab, so a link keeps the view as it is.
     const p = new URLSearchParams({ week: weekStart, view, ...o });
+    if (project) p.set('project', project);
+    if (q) p.set('q', q);
     return `/team?${p}`;
   };
   const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ');

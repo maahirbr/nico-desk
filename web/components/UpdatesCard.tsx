@@ -6,6 +6,7 @@ import { Fragment, useState } from 'react';
 import { ago, type UpdateGroup, type UpdateItem } from '@/lib/updates';
 import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
+import { TaskLink } from './TaskLink';
 
 // "Updates for you": changes other people made to your tasks, tasks blocked on you, or your project's
 // tasks. Grouped by project, one line per task: its current title, then who did what. Small renames stay
@@ -52,7 +53,7 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
             )}
           </div>
           {g.rows.map((r) => (
-            <button key={r.taskId} className={`callout-row upd-row${r.closed ? ' is-closed' : ''}`} onClick={() => { onOpen(r.taskId); seen({ taskIds: [r.taskId] }, false); }}>
+            <TaskLink key={r.taskId} id={r.taskId} className={`callout-row upd-row${r.closed ? ' is-closed' : ''}`} onOpen={() => { onOpen(r.taskId); seen({ taskIds: [r.taskId] }, false); }}>
               <span className="upd-mark" aria-hidden>{r.closed ? '✓' : '●'}</span>
               <span className="upd-body">
                 <span className="upd-title">{r.title}</span>
@@ -62,7 +63,7 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
                 </span>
               </span>
               {r.due && <span className={`upd-due due-${r.due.tone}`}>{r.due.label}</span>}
-            </button>
+            </TaskLink>
           ))}
         </div>
       ))}

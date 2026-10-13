@@ -74,7 +74,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 }) {
   const [drill, setDrill] = useState<Drill>(null);
   // The drill list's sort comes back the next time the ledger is opened in this browser (components/remember.ts).
-  const [kept, keep] = useRemembered('ledger', { drillSort: 'recent' as EndedSort }, (raw) => ({ drillSort: endedSortOf(raw.drillSort) }));
+  const [kept, keep] = useRemembered('ledger', { drillSort: 'recent' as EndedSort }, (raw) => ({ drillSort: endedSortOf(raw.drillSort) }), ['drillSort']);
   const weekList = Array.from({ length: weeks }, (_, i) => {
     const d = new Date(`${from}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i); return d.toISOString().slice(0, 10);
   }).reverse();

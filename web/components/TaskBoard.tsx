@@ -26,6 +26,7 @@ import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
 import { endedSortOf, oneOf } from '@/lib/remember';
 import { useRemembered } from './remember';
+import { TaskLink } from './TaskLink';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
 import { FreshDot } from './viewer';
@@ -69,7 +70,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All', closedSort: 'recent' as EndedSort }, (raw) => ({
     closedSort: endedSortOf(raw.closedSort),
     tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, people.map((p) => p.id), null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
-  }));
+  }), ['tile', 'who', 'ws', 'closedSort']);
   const { tile, who, ws, closedSort } = kept;
   const setTile = (v: string | null) => keep('tile', v);
   const setWho = (v: string | null) => keep('who', v);
@@ -151,7 +152,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
               onChange={(e) => (e.target.checked ? changeStatus(t, 'done') : setPrompt({ kind: 'reopen', t }))} />
           </td>
           <td className="title">
-            <button className="task-link" onClick={() => { setOpenId(t.id); setStartStatus(undefined); }}>{t.title}</button><FreshDot id={t.id} />
+            <TaskLink id={t.id} className="task-link" onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }}>{t.title}</TaskLink><FreshDot id={t.id} />
             {ws === 'All' && t.workstream && <span className="ws-tag">{t.workstream}</span>}
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
