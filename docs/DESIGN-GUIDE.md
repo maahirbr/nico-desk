@@ -181,28 +181,7 @@ Each line is a decision that is the PM's to make. The current default is in brac
 
 ## 8. Cut or out of date in DESIGN.md
 
-These parts of `DESIGN.md` no longer match the app. Nothing is deleted. The repo owner decides what to cut or rewrite. Line numbers are for `DESIGN.md` as it stands.
-
-| Lines | What no longer matches |
-|---|---|
-| 4, 366-377 | The overview describes NicoPlain (white, blue, Geist). The default is NicoWarm (paper, terracotta, Inter, Fraunces). |
-| 6-37, 380-393 | The colour table and "Colors" text are NicoPlain's values. NicoWarm's palette is not listed. |
-| 39-111, 397-415 | Type is all Geist. NicoWarm uses Inter at 14.5, 13.5 and 12px, and Fraunces titles at 500 weight. |
-| 164-199, 493-494 | Six state words (on track, off track, waiting, asked). The app has five status words plus flags. |
-| 375, 391, 543, 494 | "Red and amber only mean late and off track", "no fourth colour". The app also uses yellow, green and the terracotta accent. |
-| 130-135, 478-479 | A top bar with a commit field and five nav words. The app has a left side nav (Home, Team, Projects, and More: Ledger, Reminders, Roster) and a search. |
-| 481-483, 635 | The commit field is reached with `/`. No commit field is in the app. `/` opens search (line 635 is right). |
-| 182-188, 496-503, 563-567 | Asks, answer options, "Send to ...?". There is no Asks page. "Waiting on you" is a card with a Done button. |
-| 421-424, 579-586 | "My week" and "Team" layouts, rail widths, 1360px page width. Home is `/me`, and NicoWarm stops at 1120px. Line 586 describes a bottom commit bar that does not exist. |
-| 534-535 | "No icons beside nav words, no empty-state art." The nav has icons, status chips have icons, and empty states have a dither picture (line 468 allows it). |
-| 415, 552 | "No tracked caps." In NicoWarm the small flags (such as Late) are uppercase and letter-spaced (`tokens.css`, `.flag`). |
-| 438-445, 533 | One radius set (10 and 14px, "no other radii"). NicoWarm uses 8 and 12px, 14px project cards and a pill search field. |
-| 615, 631 | The skin table says NicoWarm is Geist with an accent of `#a24621`. It is Inter, and the accent is now `#b3522c`. The red and amber values quoted in line 631 have also changed (`#b83d27`, `#8c5b14`). |
-| 626 | Contrast ratios were measured before NicoWarm's values changed on 12 Oct. They have not been measured again. |
-| 584 | "Every control is at least 44px tall on touch screens." Buttons are 36px and small links 24px. |
-| 593 | `npm run shots` does not exist in `web/package.json`. |
-| 643 | "Error states are not yet written." `error.tsx` and `not-found.tsx` exist (not yet checked in a browser). |
-| 432, 481-482, 496, 524, 564-567 | Fixture first names appear in the examples. `CLAUDE.md` says no people's names in repo files. Use roles or generic words. |
+Fixed on 13 Oct: DESIGN.md now matches the app. Report new drift as a pull request (section 9).
 
 ## 9. How to edit this file
 

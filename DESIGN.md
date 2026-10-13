@@ -1,118 +1,155 @@
 ---
 version: alpha
 name: nico-desk
-description: "Mood A, plain and familiar. White ground, near-black ink, and one blue that marks only dates and the viewer's own lines. Geist throughout, with large tabular dates as the biggest thing on every line. States are single words in soft pills. The pace is act: open it, see what is due, press one button."
+description: "NicoWarm, the default skin. Warm paper ground, near-black ink, and one terracotta accent that marks dates and the viewer's own marks. Inter for text and Fraunces for titles. A dark sidebar holds the navigation. Status is one of five words in a soft chip with an icon. Late, At risk, Ahead and On time are small flags worked out from dates. The pace is act: open it, see what is due, press one button."
 
 colors:
-  primary: "#1C5BD9"
+  primary: "#B3522C"
   on-primary: "#FFFFFF"
-  primary-soft: "#E8EFFC"
-  ink: "#111317"
-  ink-2: "#4D535E"
-  ink-3: "#666C77"
-  canvas: "#FFFFFF"
+  primary-soft: "#F6E6DC"
+  ink: "#1F1C18"
+  ink-2: "#6E675C"
+  ink-3: "#766E61"
+  canvas: "#F5F2EC"
   surface: "#FFFFFF"
-  sunk: "#F4F5F7"
-  pill: "#EEF0F3"
-  hairline: "#E6E8EC"
-  line-strong: "#C9CED6"
-  late: "#C3352B"
-  late-soft: "#FCEBEA"
-  off: "#93560A"
-  off-soft: "#FFF3DC"
-  night-primary: "#86ABFF"
-  night-primary-soft: "#1A2540"
-  night-ink: "#F2F4F7"
-  night-ink-2: "#A9B0BB"
-  night-ink-3: "#8A909A"
-  night-canvas: "#0F1114"
-  night-surface: "#171A1F"
-  night-sunk: "#171A1F"
-  night-pill: "#22262D"
-  night-hairline: "#262A31"
-  night-line-strong: "#3A3F48"
-  night-late: "#FF8A80"
-  night-late-soft: "#3A1A18"
-  night-off: "#F2B866"
-  night-off-soft: "#33270F"
+  sunk: "#FAF8F4"
+  pill: "#E8E1D3"
+  hairline: "#E8E2D6"
+  line-strong: "#D6CEBF"
+  late: "#B83D27"
+  late-soft: "#FAE5DF"
+  off: "#8C5B14"
+  off-soft: "#F8ECD0"
+  status-idle: "#ECE9E3"
+  status-idle-ink: "#57514A"
+  status-active: "#FBEFC9"
+  status-active-ink: "#7A5A00"
+  status-blocked: "#FBE1DC"
+  status-blocked-ink: "#A8321F"
+  status-done: "#DCF1E3"
+  status-done-ink: "#22663F"
+  status-dropped: "#5F5951"
+  status-dropped-ink: "#FFFFFF"
+  side-bg: "#1E1B17"
+  side-hover: "#2B2722"
+  side-surface: "#26231F"
+  side-line: "#38332C"
+  side-ink: "#E9E3D7"
+  side-ink-2: "#9D9588"
+  side-primary: "#E07B4F"
+  night-primary: "#E07B4F"
+  night-on-primary: "#1B1916"
+  night-primary-soft: "#3A261C"
+  night-ink: "#EDE8DE"
+  night-ink-2: "#A39B8E"
+  night-ink-3: "#A39B8E"
+  night-canvas: "#12110F"
+  night-surface: "#1B1916"
+  night-sunk: "#211F1B"
+  night-pill: "#2B2822"
+  night-hairline: "#2E2B26"
+  night-line-strong: "#403B34"
+  night-late: "#F07158"
+  night-late-soft: "#3A1F1A"
+  night-off: "#E5A845"
+  night-off-soft: "#33281A"
+  night-status-idle: "#34302B"
+  night-status-idle-ink: "#CFC8BB"
+  night-status-active: "#3D3317"
+  night-status-active-ink: "#F0C75E"
+  night-status-blocked: "#3F201B"
+  night-status-blocked-ink: "#FF9A8A"
+  night-status-done: "#1C3527"
+  night-status-done-ink: "#7FD6A3"
+  night-status-dropped: "#57514A"
+  night-status-dropped-ink: "#F2EDE4"
+  night-side-bg: "#0C0B0A"
 
 typography:
   date-xl:
-    fontFamily: Geist
+    fontFamily: Inter
     fontSize: 30px
     fontWeight: 650
     lineHeight: 1.05
     letterSpacing: -0.02em
     fontFeature: '"tnum" 1'
   date-lg:
-    fontFamily: Geist
+    fontFamily: Inter
     fontSize: 22px
     fontWeight: 650
     lineHeight: 1.05
     letterSpacing: -0.02em
     fontFeature: '"tnum" 1'
   date-phone:
-    fontFamily: Geist
+    fontFamily: Inter
     fontSize: 36px
     fontWeight: 650
     lineHeight: 1.05
     letterSpacing: -0.02em
     fontFeature: '"tnum" 1'
   page-title:
-    fontFamily: Geist
-    fontSize: 26px
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: -0.01em
+    fontFamily: Fraunces
+    fontSize: 30px
+    fontWeight: 500
+    lineHeight: 1.15
+    letterSpacing: -0.02em
   ask-title:
-    fontFamily: Geist
-    fontSize: 18px
-    fontWeight: 600
-    lineHeight: 1.3
+    fontFamily: Fraunces
+    fontSize: 21px
+    fontWeight: 500
+    lineHeight: 1.2
   line:
-    fontFamily: Geist
-    fontSize: 16px
+    fontFamily: Inter
+    fontSize: 14.5px
     fontWeight: 500
-    lineHeight: 1.4
+    lineHeight: 1.55
   body:
-    fontFamily: Geist
-    fontSize: 15px
+    fontFamily: Inter
+    fontSize: 14.5px
     fontWeight: 400
-    lineHeight: 1.4
+    lineHeight: 1.55
   meta:
-    fontFamily: Geist
-    fontSize: 14px
+    fontFamily: Inter
+    fontSize: 13.5px
     fontWeight: 400
-    lineHeight: 1.4
+    lineHeight: 1.5
   state:
-    fontFamily: Geist
-    fontSize: 13px
+    fontFamily: Inter
+    fontSize: 12px
     fontWeight: 500
     lineHeight: 1.3
+  flag:
+    fontFamily: Inter
+    fontSize: 10.5px
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: 0.03em
   button:
-    fontFamily: Geist
-    fontSize: 14px
-    fontWeight: 500
+    fontFamily: Inter
+    fontSize: 13.5px
+    fontWeight: 600
     lineHeight: 1.2
   heading:
-    fontFamily: Geist
+    fontFamily: Inter
     fontSize: 16px
     fontWeight: 600
     lineHeight: 1.3
   small:
-    fontFamily: Geist
-    fontSize: 13px
+    fontFamily: Inter
+    fontSize: 12.5px
     fontWeight: 400
-    lineHeight: 1.4
+    lineHeight: 1.5
   input:
-    fontFamily: Geist
+    fontFamily: Inter
     fontSize: 16px
     fontWeight: 400
     lineHeight: 1.4
 
 rounded:
-  control: 10px
-  card: 14px
+  control: 8px
+  card: 12px
+  project-card: 14px
+  flag: 4px
   pill: 999px
   full: 999px
 
@@ -132,80 +169,97 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.body}"
     height: 64px
-    padding: 0 40px
-  commit-field:
+    padding: 12px 40px
+  search-field:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.control}"
-    height: 40px
-    padding: 0 14px
+    rounded: "{rounded.pill}"
+    padding: 9px 64px 9px 40px
+  side-nav:
+    backgroundColor: "{colors.side-bg}"
+    textColor: "{colors.side-ink-2}"
+    typography: "{typography.body}"
+    width: 236px
+    padding: 22px 14px
   nav-item:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink-2}"
+    backgroundColor: "{colors.side-bg}"
+    textColor: "{colors.side-ink-2}"
     typography: "{typography.body}"
     rounded: "{rounded.control}"
-    padding: 6px 12px
+    padding: 9px 10px
   nav-item-on:
-    backgroundColor: "{colors.sunk}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.side-hover}"
+    textColor: "{colors.side-ink}"
     typography: "{typography.body}"
     rounded: "{rounded.control}"
-    padding: 6px 12px
+    padding: 9px 10px
   line-row:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.line}"
-    padding: 16px 0
+    padding: 12px 0
   date-block:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.primary}"
     typography: "{typography.date-xl}"
-  state-on-track:
-    backgroundColor: "{colors.pill}"
-    textColor: "{colors.ink-2}"
+  status-not-started:
+    backgroundColor: "{colors.status-idle}"
+    textColor: "{colors.status-idle-ink}"
     typography: "{typography.state}"
     rounded: "{rounded.pill}"
     padding: 3px 10px
-  state-off-track:
-    backgroundColor: "{colors.off-soft}"
-    textColor: "{colors.off}"
+  status-in-progress:
+    backgroundColor: "{colors.status-active}"
+    textColor: "{colors.status-active-ink}"
     typography: "{typography.state}"
     rounded: "{rounded.pill}"
     padding: 3px 10px
-  state-late:
-    backgroundColor: "{colors.late-soft}"
+  status-blocked:
+    backgroundColor: "{colors.status-blocked}"
+    textColor: "{colors.status-blocked-ink}"
+    typography: "{typography.state}"
+    rounded: "{rounded.pill}"
+    padding: 3px 10px
+  status-done:
+    backgroundColor: "{colors.status-done}"
+    textColor: "{colors.status-done-ink}"
+    typography: "{typography.state}"
+    rounded: "{rounded.pill}"
+    padding: 3px 10px
+  status-dropped:
+    backgroundColor: "{colors.status-dropped}"
+    textColor: "{colors.status-dropped-ink}"
+    typography: "{typography.state}"
+    rounded: "{rounded.pill}"
+    padding: 3px 10px
+  flag-late:
     textColor: "{colors.late}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  state-asked:
-    backgroundColor: "{colors.primary-soft}"
-    textColor: "{colors.primary}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  state-waiting:
-    backgroundColor: "{colors.pill}"
+    typography: "{typography.flag}"
+    rounded: "{rounded.flag}"
+  flag-at-risk:
+    textColor: "{colors.off}"
+    typography: "{typography.flag}"
+    rounded: "{rounded.flag}"
+  flag-neutral:
     textColor: "{colors.ink-2}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  state-done:
-    backgroundColor: "{colors.pill}"
-    textColor: "{colors.ink-3}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  ask-card:
+    typography: "{typography.flag}"
+    rounded: "{rounded.flag}"
+  waiting-card:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    typography: "{typography.ask-title}"
+    typography: "{typography.body}"
+    rounded: "{rounded.card}"
+    padding: 20px
+  card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
     rounded: "{rounded.card}"
     padding: 20px
   button-primary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.canvas}"
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
     typography: "{typography.button}"
     rounded: "{rounded.control}"
     height: 36px
@@ -217,85 +271,41 @@ components:
     rounded: "{rounded.control}"
     height: 36px
     padding: 0 14px
-  answer-option:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    typography: "{typography.line}"
-    rounded: "{rounded.control}"
-    padding: 14px 16px
   date-chip:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink-2}"
-    typography: "{typography.button}"
+    typography: "{typography.small}"
     rounded: "{rounded.pill}"
-    padding: 6px 12px
-  date-chip-on:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.canvas}"
-    typography: "{typography.button}"
-    rounded: "{rounded.pill}"
-    padding: 6px 12px
+    padding: 4px 12px
   initials-mark:
-    backgroundColor: "{colors.sunk}"
+    backgroundColor: "{colors.side-hover}"
     textColor: "{colors.ink-2}"
     typography: "{typography.state}"
     rounded: "{rounded.full}"
-    size: 26px
+    size: 28px
   initials-mark-lg:
     backgroundColor: "{colors.pill}"
     textColor: "{colors.ink-2}"
     typography: "{typography.state}"
     rounded: "{rounded.full}"
     size: 36px
-  side-nav:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink-2}"
-    typography: "{typography.body}"
-    width: 232px
   initials-mark-you:
     backgroundColor: "{colors.primary-soft}"
     textColor: "{colors.primary}"
     typography: "{typography.state}"
     rounded: "{rounded.full}"
-    size: 26px
-  as-of-scrubber:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-2}"
-    typography: "{typography.meta}"
-    rounded: "{rounded.control}"
-    padding: 5px 12px
+    size: 28px
   switch-on:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     rounded: "{rounded.pill}"
     size: 36px
-  friday-note:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    typography: "{typography.meta}"
-    rounded: "{rounded.card}"
-    padding: 18px 20px
-  draft-line:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    typography: "{typography.line}"
-    rounded: "{rounded.control}"
-    padding: 12px 14px
-  source-sentence-lit:
-    backgroundColor: "{colors.primary-soft}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
   confirmation:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.canvas}"
-    typography: "{typography.body}"
+    typography: "{typography.small}"
     rounded: "{rounded.control}"
     padding: 10px 16px
-  record-page:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    padding: 40px
   hairline-rule:
     backgroundColor: "{colors.hairline}"
     height: 1px
@@ -306,7 +316,7 @@ components:
     backgroundColor: "{colors.night-canvas}"
     textColor: "{colors.night-ink}"
     typography: "{typography.line}"
-    padding: 16px 0
+    padding: 12px 0
   night-meta:
     backgroundColor: "{colors.night-canvas}"
     textColor: "{colors.night-ink-2}"
@@ -315,45 +325,59 @@ components:
     backgroundColor: "{colors.night-canvas}"
     textColor: "{colors.night-primary}"
     typography: "{typography.date-xl}"
-  night-nav-item-on:
-    backgroundColor: "{colors.night-sunk}"
-    textColor: "{colors.night-ink}"
+  night-side-nav:
+    backgroundColor: "{colors.night-side-bg}"
+    textColor: "{colors.side-ink-2}"
     typography: "{typography.body}"
-    rounded: "{rounded.control}"
-    padding: 6px 12px
-  night-ask-card:
+    width: 236px
+  night-card:
     backgroundColor: "{colors.night-surface}"
     textColor: "{colors.night-ink}"
-    typography: "{typography.ask-title}"
+    typography: "{typography.body}"
     rounded: "{rounded.card}"
     padding: 20px
-  night-state-on-track:
-    backgroundColor: "{colors.night-pill}"
-    textColor: "{colors.night-ink-2}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  night-state-done:
-    backgroundColor: "{colors.night-pill}"
-    textColor: "{colors.night-ink-3}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  night-state-late:
-    backgroundColor: "{colors.night-late-soft}"
+  night-button-primary:
+    backgroundColor: "{colors.night-primary}"
+    textColor: "{colors.night-on-primary}"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
+    height: 36px
+    padding: 0 14px
+  night-flag-late:
     textColor: "{colors.night-late}"
-    typography: "{typography.state}"
-    rounded: "{rounded.pill}"
-    padding: 3px 10px
-  night-state-off-track:
-    backgroundColor: "{colors.night-off-soft}"
+    typography: "{typography.flag}"
+    rounded: "{rounded.flag}"
+  night-flag-at-risk:
     textColor: "{colors.night-off}"
+    typography: "{typography.flag}"
+    rounded: "{rounded.flag}"
+  night-status-not-started:
+    backgroundColor: "{colors.night-status-idle}"
+    textColor: "{colors.night-status-idle-ink}"
     typography: "{typography.state}"
     rounded: "{rounded.pill}"
     padding: 3px 10px
-  night-state-asked:
-    backgroundColor: "{colors.night-primary-soft}"
-    textColor: "{colors.night-primary}"
+  night-status-in-progress:
+    backgroundColor: "{colors.night-status-active}"
+    textColor: "{colors.night-status-active-ink}"
+    typography: "{typography.state}"
+    rounded: "{rounded.pill}"
+    padding: 3px 10px
+  night-status-blocked:
+    backgroundColor: "{colors.night-status-blocked}"
+    textColor: "{colors.night-status-blocked-ink}"
+    typography: "{typography.state}"
+    rounded: "{rounded.pill}"
+    padding: 3px 10px
+  night-status-done:
+    backgroundColor: "{colors.night-status-done}"
+    textColor: "{colors.night-status-done-ink}"
+    typography: "{typography.state}"
+    rounded: "{rounded.pill}"
+    padding: 3px 10px
+  night-status-dropped:
+    backgroundColor: "{colors.night-status-dropped}"
+    textColor: "{colors.night-status-dropped-ink}"
     typography: "{typography.state}"
     rounded: "{rounded.pill}"
     padding: 3px 10px
@@ -363,86 +387,101 @@ components:
 
 This file outranks everything visual in the repo, the handout included. The code follows it: `web/app/tokens.css` holds every value named here and nothing else holds a colour, a size or a radius. Change the two together, in one commit.
 
+The values in the front matter and the prose below are NicoWarm, the default skin. The Skins section lists the others. Where a value here differs from `tokens.css`, `tokens.css` is what the app shows, so fix this file.
+
 ## Overview
 
-nico-desk is where a Nicobar team keeps what it promised: who owes what, by when, and what moved. The people using it are busy, slightly non-technical, and already have WhatsApp. So the bar is that a first-time member understands their own week in ten seconds with no help text.
+nico-desk is where a Nicobar team keeps what it promised: who owns what, by when, and what moved. The people using it are busy, slightly non-technical, and already have WhatsApp. So the bar is that a first-time member understands their own week in ten seconds with no help text.
 
-The look is mood A, plain and familiar. It borrows the mechanism of Apple Reminders and Calendar (the date is read first, one tap finishes a thing), of Linear and Things (a state is one word, the ask is an object), and of Notion and Craft (a note turns into lines that keep their source). It borrows none of their looks.
+The default look is NicoWarm: a paper ground, near-black ink, one terracotta accent, a dark sidebar and a serif for titles. The pilot team asked for it (see NicoWarm, the default skin). NicoPlain, a white and blue look, is one of five other skins in the account menu. The mechanism comes from Apple Reminders and Calendar (the date is read first, one tap finishes a thing), from Linear and Things (a status is one word) and from Notion and Craft (a note turns into lines that keep their source). It borrows none of their looks.
 
 **Key characteristics:**
 - The date is the biggest thing on every line. The relative word comes first ("Today", "Mon"), the calendar date under it.
-- Every line shows three things and never fewer: what, by when, and one state word.
-- One accent, blue `{colors.primary}`, for dates and for the viewer's own marks. Red and amber exist only to say late and off track.
-- White ground, near-black ink, hairline rules. No gradients, no texture, no illustration.
-- The ask is a first-class object with an asker, an owner, a date, and the line it unblocks.
+- Every line shows three things and never fewer: what, by when, and one status word.
+- Status is one of five words: Not started, In progress, Blocked, Done, Dropped. A person picks it.
+- Late, At risk, Ahead and On time are flags. The app works them out from dates. A person never picks one. On time is judged against the first due date.
+- One accent, terracotta `{colors.primary}`, for dates, the main button and the viewer's own marks. Red marks Late and the Blocked chip, and amber marks At risk. The other status chips use soft grey, yellow and green, one fill for each word.
+- Paper ground, near-black ink, hairline rules. A dark sidebar. No gradients and no texture.
+- Pictures are rare: icons on the nav and on status chips, and an ordered-dither picture in empty states.
 
 ## Colors
 
-The palette is two neutrals, one accent and two warnings. Every colour has one meaning.
+The palette is a warm neutral set, one accent and two warnings. The five status chips add a soft fill each. Every colour has one meaning.
 
-- **Blue ({colors.primary}):** dates on open lines, the viewer's initials mark, the "asked" state, the on switch, the lit source sentence. Nothing else.
-- **Ink ({colors.ink}):** text, primary buttons, the selected chip and scrubber day.
-- **Ink 2 ({colors.ink-2}):** the second line under a title, nav words, on track and waiting pills.
-- **Ink 3 ({colors.ink-3}):** the struck first date, done lines, quiet counts. It clears 4.5:1 on white and on the pill grey.
-- **Canvas and surface ({colors.canvas}, {colors.surface}):** both white in day. Cards differ by a hairline and a soft shadow, not by fill.
-- **Sunk ({colors.sunk}) and pill ({colors.pill}):** the active nav item, initials marks, neutral state pills.
-- **Hairline ({colors.hairline}):** the 1px rule between lines and around controls.
-- **Late ({colors.late}) on late soft:** a line past its date with no new date. Also the date of a late line.
-- **Off ({colors.off}) on off soft:** a line moved in the open, or that its owner marked off track.
+- **Terracotta ({colors.primary}):** dates on open lines, the main button, links, the viewer's initials mark, the on switch. White text on it (`{colors.on-primary}`).
+- **Ink ({colors.ink}):** text, and the selected segment in a switch such as By person and By status.
+- **Ink 2 ({colors.ink-2}):** the second line under a title, table headings, the neutral flags (Ahead, On time).
+- **Ink 3 ({colors.ink-3}):** done lines, quiet counts.
+- **Canvas and surface ({colors.canvas}, {colors.surface}):** paper and white. A card is white on paper, with a hairline and a soft shadow.
+- **Sunk ({colors.sunk}) and pill ({colors.pill}):** a recessed area, and the neutral pill and initials fill.
+- **Hairline ({colors.hairline}) and line strong ({colors.line-strong}):** the 1px rule between lines, and the edge of controls.
+- **Late ({colors.late}) on late soft:** a line past its date and not done. The Late flag.
+- **Off ({colors.off}) on off soft:** the At risk flag.
+- **Status chips:** Not started is warm grey, In progress is soft yellow, Blocked is soft red, Done is soft green and Dropped is a dark grey chip with struck text. The pairs are in the front matter.
+- **Sidebar:** the sidebar is dark in day and in night (`{colors.side-bg}`, deeper in night). Its text uses `{colors.side-ink}` and `{colors.side-ink-2}`. The logo tile and the edge of the current page use `#b5532c`. Code in `tokens.css` re-points the colour tokens on `.side`, so no component changes.
 
-**Night.** Every colour has a `night-` twin, and the `night-*` components pin the pairs that must keep contrast. Night lifts the blue to `{colors.night-primary}` so it keeps contrast, turns cards into one step of surface lift instead of a shadow, and keeps the same meanings.
+**Night.** Every colour has a `night-` twin. Night lifts the terracotta to `{colors.night-primary}` and puts dark text on it (`{colors.night-on-primary}`). A card is one step of surface lift with no shadow. The meanings stay the same. Night sets ink 2 and ink 3 to the same value.
 
 ## Typography
 
-One family, Geist (SIL Open Font License 1.1), loaded through `next/font` from the `geist` npm package. No font file is committed. The licence text sits at `web/app/fonts/OFL.txt`. Fallback: `system-ui, -apple-system, "Segoe UI", sans-serif`.
+Two families, loaded only through `next/font/google` in `web/app/layout.tsx`. No font file is committed. Inter (SIL Open Font License 1.1) carries text, dates and buttons. Fraunces (also OFL) carries titles: the page title, the ask title, the stat numbers (28px, weight 500) and the wordmark (16px, weight 600). Fallback for Inter: `system-ui, -apple-system, "Segoe UI", sans-serif`.
 
 | Token | Size | Weight | Line height | Use |
 |---|---|---|---|---|
-| `{typography.date-phone}` | 36px | 650 | 1.05 | The ask's date on a phone |
-| `{typography.date-xl}` | 30px | 650 | 1.05 | The date on My week and in the ask card |
-| `{typography.page-title}` | 26px | 600 | 1.2 | "Your week", the team name |
-| `{typography.date-lg}` | 22px | 650 | 1.05 | The date on Team and the record |
-| `{typography.ask-title}` | 18px | 600 | 1.3 | What the ask is for |
-| `{typography.line}` | 16px | 500 | 1.4 | The title of a line |
-| `{typography.body}` | 15px | 400 | 1.4 | Body, the commit field |
-| `{typography.meta}` | 14px | 400 | 1.4 | The second line under a title, rail text |
-| `{typography.button}` | 14px | 500 | 1.2 | Buttons and chips |
-| `{typography.state}` | 13px | 500 | 1.3 | State pills, initials |
+| `{typography.date-phone}` | 36px | 650 | 1.05 | A date on a phone |
+| `{typography.date-xl}` | 30px | 650 | 1.05 | The big date |
+| `{typography.page-title}` | 30px | 500 | 1.15 | Page titles (Fraunces) |
+| `{typography.date-lg}` | 22px | 650 | 1.05 | A date in a table or card |
+| `{typography.ask-title}` | 21px | 500 | 1.2 | Card and callout titles (Fraunces) |
+| `{typography.heading}` | 16px | 600 | 1.3 | Section headings |
+| `{typography.line}` | 14.5px | 500 | 1.55 | The title of a line |
+| `{typography.body}` | 14.5px | 400 | 1.55 | Body, the search field |
+| `{typography.meta}` | 13.5px | 400 | 1.5 | The second line under a title |
+| `{typography.button}` | 13.5px | 600 | 1.2 | Buttons and links that act |
+| `{typography.small}` | 12.5px | 400 | 1.5 | Counts, hints, date chips |
+| `{typography.state}` | 12px | 500 | 1.3 | Status chips, initials |
+| `{typography.flag}` | 10.5px | 600 | 1 | Flags such as Late |
+
+Form fields use 16px (`{typography.input}`) so a phone does not zoom in.
 
 **Principles:**
-- Dates use tabular figures and tighten to -0.02em. Nothing else changes letter-spacing.
-- A date is always larger than the page title on My week. The page title is a label, the date is the content.
-- Sentence case everywhere. No tracked caps, no eyebrows.
+- Dates use tabular figures and tighten to -0.02em.
+- The page title and the wordmark tighten to -0.02em too.
+- Flags are the one place with tracked capitals: uppercase, 10.5px, 0.03em. Section headings stay in sentence case. No eyebrows above headlines.
+- Sentence case everywhere else.
 
 ## Layout
 
 - **Base unit:** 4px. Scale: `{spacing.xxs}` 4 · `{spacing.xs}` 8 · `{spacing.sm}` 12 · `{spacing.md}` 16 · `{spacing.lg}` 24 · `{spacing.xl}` 32 · `{spacing.xxl}` 40 · `{spacing.section}` 56.
-- **Frame:** a 64px top bar, then a page padded 40px on the sides, max width 1360px, left aligned.
-- **My week at 1440:** two columns. The lines take the rest. The right rail is 400px and holds "Waiting on you" above "You are waiting on", so an ask is above the fold.
-- **Team at 1440:** the same two columns with a 380px rail: moved this week, who waits on whom, the Friday note.
-- **A line:** a grid of date (150px on My week, 130px on Team), what (fills), state (fits). Rows are 16px top and bottom on My week, 12px on Team.
-- **Whitespace:** groups are separated by 24px to 36px of space, lines by a hairline. Never a box around a group.
+- **Frame:** a dark left sidebar 236px wide, then the main area. The top of the main area is a 64px bar with a centred search field (560px at most). The page is padded 40px at the sides. Its maximum width is 1120px.
+- **Home (`/me`) and Team (`/team`):** one column, no side rail. Both use the `calm` width, 980px at most.
+- **Home** opens with a greeting and one summary line, then a small glance of charts, an updates card and the "Waiting on you" callout when something is waiting. Your tasks follow in groups: Late, Today, This week, Later. Your projects and a collapsed "Done this week" come last.
+- **Team** has a week switcher, a By person and By status switch, a project filter and a person search. By person, each person's tasks sit in Late, This week and Coming up.
+- **A line:** a grid of date (about 150px), what (fills) and status (fits). Rows are 12px top and bottom.
+- **Whitespace:** groups are separated by 24px to 36px of space, lines by a hairline.
 
 ## Elevation & Depth
 
 | Level | Treatment | Use |
 |---|---|---|
 | 0 | Flat, hairline rules | Lines, groups, the top bar |
-| 1 | Hairline border plus `0 1px 2px` and `0 6px 20px` at 5 to 6% ink | The ask card, the Friday note, the answer sheet |
-| 2 | Level 1 plus a dimmed page behind | The commit confirm and the "Send to Wren?" step |
+| 1 | Hairline border plus `0 1px 2px` and `0 4px 14px` at 4 to 5% ink | Cards, the "Waiting on you" callout |
+| 2 | Level 1 plus a dimmed page behind | A drawer or a dialog over the page |
 
-Night drops the shadows. A card is one step lighter than the canvas instead.
+Night drops the card shadow. A card is one step lighter than the canvas instead.
 
 ## Shapes
 
 | Token | Value | Use |
 |---|---|---|
-| `{rounded.control}` | 10px | Buttons, the commit field, answer options, the scrubber |
-| `{rounded.card}` | 14px | The ask card, the Friday note |
-| `{rounded.pill}` | 999px | State pills, date chips, the switch |
+| `{rounded.control}` | 8px | Buttons, fields, menus |
+| `{rounded.card}` | 12px | Cards, the callout |
+| `{rounded.project-card}` | 14px | Project cards |
+| `{rounded.flag}` | 4px | Flags such as Late |
+| `{rounded.pill}` | 999px | Status chips, date chips, the search field, the switch |
 | `{rounded.full}` | 999px | Initials marks |
 
-A pill means a state or a choice of date. Nothing else is a capsule.
+A pill means a status, a choice of date or the search field. Nothing else is a capsule.
 
 ## Motion
 
@@ -477,75 +516,66 @@ Every duration and easing is a token in `web/app/tokens.css`. Under `prefers-red
 
 Each component lists its tokens, then the line it must pass before it ships.
 
-**`top-bar`.** Wordmark, the five nav words for the role, the commit field, the viewer's initials and first name.
-Done when: the nav shows only My week, Asks and Team (plus Record under Team for leads and the founder), and the commit field is reachable with `/` from any page.
+**`top-bar`.** A 64px bar above the page with the search field in the middle and the help toggle.
+Done when: search opens with `/` or Ctrl/Cmd+K from any page, and the bar holds no navigation words.
 
-**`commit-field`.** One field on every page. It reads back the three parts before anything is saved: "Wren · final tier names · Wed 14 Oct".
-Done when: a line with no owner or no date cannot be saved, the read-back names all three parts, and an `@name` turns it into an ask that asks "Send to Wren?" before it goes.
+**`search-field`.** A pill-shaped field with a search icon and a key hint.
+Done when: it finds tasks, projects, people and plan lines, and `Esc` closes it.
 
-**`nav-item` / `nav-item-on`.** Plain words, sentence case.
-Done when: the current page is the only one with the sunk fill.
+**`side-nav` / `nav-item` / `nav-item-on`.** The dark sidebar. Home (`/me`), Team (`/team`) and Projects (`/projects`) come first, each with an icon. A "More" group follows with Ledger, plus Reminders for leads and admins and Roster for admins. A "+ New task" button sits in the sidebar. The account menu is at the bottom. On a phone the sidebar becomes a sticky row at the top.
+Done when: the current page is the only item with the raised fill and the edge mark, and each role sees only its own words.
 
-**`line-row`.** Date block, what with its second line, one state pill.
-Done when: every row shows what, by when and a state word, and a moved line shows its first date struck beside the new one.
+**`line-row`.** Date block, what with its second line, one status chip and a flag when there is one.
+Done when: every row shows what, by when and a status word, and a moved line shows its first date struck beside the new one.
 
 **`date-block`.** Relative word on top in `{typography.date-xl}`, calendar date under it in `{typography.meta}`.
-Done when: it is the largest text in its row, it is blue on open lines, red on late lines, and ink 3 on done lines.
+Done when: it is the largest text in its row, terracotta on open lines, red on late lines, and ink 3 on done lines.
 
-**`state-*`.** One word: done, on track, off track, late, waiting, asked.
-Done when: the six words are the only state words in the interface, and only late and off track carry a warning colour.
+**`status-*`.** One of five words: Not started, In progress, Blocked, Done, Dropped. Each chip has an icon. A person picks the status.
+Done when: the five words are the only status words in the interface, and Dropped reads struck through.
 
-**`ask-card`.** "Tamsin needs", the title, the date, "For:" the line it unblocks, three answers.
-Done when: it sits above the fold on My week at 1440 and 375, and the three answers are visible without opening anything.
+**`flag-*`.** Late, At risk, Ahead and On time. The app works them out from dates. A person never picks one. Late is red, At risk is amber, and Ahead and On time are neutral. Each flag explains itself on hover or in help mode.
+Done when: no screen lets a person set a flag, and On time is judged against the first due date.
 
-**`button-primary` / `button-secondary`.** Ink fill for the one main action, outline for the rest.
+**`waiting-card`.** The "Waiting on you" callout on Home. It lists tasks where someone else is blocked until you act, with a Done button on each row.
+Done when: it sits above your task groups on Home at 1440 and 375, and it is absent when nothing waits on you.
+
+**`card`.** White on paper, 12px radius, a hairline and a soft shadow. Project cards use 14px.
+Done when: in day a card is white on paper, and in night it is one step lighter than the canvas.
+
+**`button-primary` / `button-secondary`.** Terracotta fill for the one main action, outline (the ghost button) for the rest. A red variant marks a destructive action.
 Done when: a screen has at most one primary button in view.
 
-**`answer-option`.** Yes, by then · Later, because… · Not me, because…
-Done when: "Later" needs a date and a reason, "Not me" needs a reason and takes an optional `@name`, and the selected option shows its fields inline.
+**`date-chip`.** Quick date choices beside a date field. The chosen one has a sunk fill.
+Done when: a common date can be chosen in one tap on a phone.
 
-**`date-chip` / `date-chip-on`.** The next three working days plus "Pick".
-Done when: a date can be chosen in one tap on a phone.
+**`initials-mark` / `initials-mark-you`.** Two letters in a 28px circle. The viewer's mark is terracotta on its soft tint.
+Done when: every person on screen has a mark and a name, and the viewer reads "you".
 
-**`initials-mark` / `initials-mark-you`.** Two letters in a 26px circle. The viewer's mark is blue.
-Done when: every person on screen has a mark and a first name, and the viewer reads "you".
-
-**`as-of-scrubber`.** The days of the week. Picking one redraws the team page as it stood that day.
-Done when: picking Monday shows Monday's dates and states, and the page says it is a past view.
-
-**`switch-on`.** The visible off switch for anything automatic.
+**`switch-on`.** The visible off switch for anything automatic, such as Sounds in the account menu.
 Done when: every automatic behaviour has one, next to what it controls.
 
-**`friday-note`.** Drafted from the week, read and sent by the lead.
-Done when: it says the team sees it only when the lead sends it, and the switch turns the drafting off.
-
-**`draft-line` / `source-sentence-lit`.** Draft lines beside the note. Picking one lights the sentence it came from.
-Done when: every draft has a lit source sentence, and a draft with no owner or date says what is missing.
-
-**`confirmation`.** One sentence, then gone after four seconds.
-Done when: it names where the line went: "On Wren's week for Wednesday."
-
-**`record-page`.** One printable page per team per week: counted, ahead, on time, late, silent slips.
-Done when: it prints on one A4 page with no clipped text, judged against each line's first date.
+**`confirmation`.** One sentence in a small bar at the foot of the screen, then gone.
+Done when: it is announced politely to screen readers, and at most three show at once.
 
 ## Do's and Don'ts
 
 Check every screen against this list before showing it. An element that breaks a rule gets fixed or cut, not argued for.
 
 ### Shape
-1. **One shape, one meaning.** A pill is a state or a date choice. Buttons and fields are 10px rectangles. Cards are 14px. No other radii.
-2. **No decoration.** No icons beside nav words, no illustrations, no empty-state art. An initials mark is the only graphic.
+1. **One shape, one meaning.** A pill is a status, a date choice or the search field. Buttons and fields are 8px rectangles. Cards are 12px, project cards 14px, flags 4px. No other radii.
+2. **Little decoration.** Icons appear on the nav and on status chips, nowhere else. The only picture is the ordered dither in empty states, the sign-in screen and the people page header. An initials mark is the only other graphic.
 
 ### Type
-3. **Dates are the largest text on a line,** in Geist 650 with tabular figures.
-4. **No letter-spacing changes** except tightening dates and the page title.
+3. **Dates are the largest text on a line,** in Inter 650 with tabular figures.
+4. **No letter-spacing changes** except tightening dates, the page title and the wordmark, and the tracked capitals on flags.
 5. **Few sizes.** Per screen, at most one date size, one title size and three text sizes.
 
 ### Colour
-6. **One accent, one meaning.** Blue is dates and you. Red is late. Amber is off track. Nothing else takes a colour. No gradients, no glows, no fourth colour.
+6. **One accent, plain meanings.** Terracotta is dates, the main button and you. Red is Late and the Blocked chip. Amber is At risk. The other status chips take their one fill each. Nothing else takes a colour. No gradients, no glows.
 
 ### Material
-7. **One shadow per card**, and only on the cards listed under Elevation. Lines never get a shadow or a box.
+7. **One shadow per card,** and only on cards. Lines never get a shadow or a box.
 
 ### Motion
 8. **Only the motions listed under Motion.** Feedback under 200ms, nothing past 300ms except the first-load stagger, nothing loops. Reduced motion means instant.
@@ -560,41 +590,36 @@ Check every screen against this list before showing it. An element that breaks a
 
 ## Voice
 
-A colleague, not a mascot. Short, plain, first names, the viewer is "you". Verbs in the interface: commit, ask, done, move, decline. Never renegotiate, ledger, outcome, event or approve. "Send" appears only on the button that sends, and on the line that says nothing goes until you press it.
+A colleague, not a mascot. Short, plain, first names, the viewer is "you". Verbs in the interface: add, update, move, done, block. Never renegotiate, outcome, event or approve. "Ledger" names one page and is not a word for body copy. "Send" appears only on the button that sends, and on the line that says nothing goes until you press it.
 
 1. "Nothing on you today."
-2. "On Wren's week for Wednesday."
-3. "Send to Wren?"
-4. "Wren will see this when you send it."
-5. "Tamsin needs: Final tier names for the landing page."
-6. "Late by 2 days, no word yet."
-7. "Moved: the store count changed."
-8. "Who is this for, and by when?"
-9. "The team sees the Friday note when you send it."
-10. "You are looking at Monday. Back to today."
+2. "Waiting on you."
+3. "A teammate is waiting on this."
+4. "Late by 2 days, no word yet."
+5. "Moved: the store count changed."
+6. "Who owns this, and by when?"
+7. "You're clear. Nothing open on your side."
 
 ## Responsive Behavior
 
 | Name | Width | Key changes |
 |---|---|---|
-| Desktop | 1440px | The design width. Two columns. |
-| Laptop | 1280px | Same, rail narrows to 340px. |
-| Tablet | 1024px | Rail moves under the lines. |
-| Phone | 375px | One column. My week and the ask answer are designed here. Team is readable, not designed. |
+| Desktop | Above 860px | The sidebar sits on the left. Home and Team are one column, 980px at most. |
+| Phone | 860px and under | The sidebar becomes a sticky row at the top. One column. Controls grow to 40px. Home is designed at 375px. Team is readable, not designed. |
 
-- **Phone order on My week:** waiting on you first, then your lines, then you are waiting on. The ask is the one thing a member must not miss.
-- **Touch:** every control is at least 44px tall on touch screens.
+- **Phone order on Home:** the summary, the glance and the updates, then "Waiting on you", then your tasks. Something someone else is blocked on must not be missed.
+- **Touch:** buttons are 36px tall on desktop and 40px at 860px and under. Plain links and the row opener are about 24px tall, and their hit area grows by 4px above and below on a phone. A few controls already reach 44px (`--touch-min` in `tokens.css`): the sign-in buttons, the guide note close button, the remove button on a list chip and some list rows. The goal is 44px for every control on a touch screen. That goal is open. See Known Gaps.
 - **Keyboard:** the on-screen keyboard closes on a tap outside a field, on return or done, and on scroll. No field leaves it stuck open.
-- **The commit field** stays in the top bar on desktop and becomes a bottom bar on phones.
+- **The top bar** is sticky on desktop and static on a phone.
 
 ## Iteration Guide
 
 1. Change one component at a time and name it by its `components:` key.
 2. A new value goes in the front matter and in `web/app/tokens.css` in the same commit.
 3. Run `npx @google/design.md lint DESIGN.md` after every edit.
-4. Run `npm run shots --prefix web` and look at the contact sheet before showing anyone.
+4. Run the app (`npm run dev --prefix web`, port 3100). Check `/team`, `/me` and a project page at desktop width and 375px, in day and night, before showing anyone. There is no `shots` script.
 5. A new variant is a new component entry, with its own "done when" line.
-6. Treat blue as scarce. If a new thing wants a colour, it probably wants a word.
+6. Treat the terracotta as scarce. If a new thing wants a colour, it probably wants a word.
 
 ## Sources
 
@@ -602,11 +627,11 @@ The three ranked references from the handout, section 7. Take the mechanism, nev
 
 | Reference | What it does well | What we take | What we leave |
 |---|---|---|---|
-| 1. Apple Reminders and Calendar | The date is read before anything else. Lists run top to bottom. One tap completes. Nothing to set up. | The relative date as the largest text on a line. Done in one tap. No settings screen. Empty states that give the good news. | iOS chrome, colour-coded lists, smart lists, the red badge for today. |
-| 2. Linear and Things | A state is one word. Rows are dense but still breathe. The keyboard drives everything. An issue is an object with one owner. | One-word states. The row rhythm. One field that takes commands from the keyboard. The ask as its own object with an asker, an owner and a date. | Cycles, priorities, estimates, the project tree, brand purple, the round checkboxes. |
-| 3. Notion and Craft | Text turns into structure. A block keeps its source. A page prints clean. | The note turns into draft lines beside it. Picking a line lights the sentence it came from. The record prints as one page per week. | Blank-canvas freedom, slash menus, nested pages, emoji icons, cover images. |
+| 1. Apple Reminders and Calendar | The date is read before anything else. Lists run top to bottom. One tap completes. Nothing to set up. | The relative date as the largest text on a line. Done in one tap. Empty states that give the good news. | iOS chrome, colour-coded lists, smart lists, the red badge for today. |
+| 2. Linear and Things | A status is one word. Rows are dense but still breathe. The keyboard drives everything. | One-word statuses. The row rhythm. Single-key shortcuts. | Cycles, priorities, estimates, brand purple, the round checkboxes. |
+| 3. Notion and Craft | Text turns into structure. A page prints clean. | Pasted minutes turn into proposed tasks beside the note. | Blank-canvas freedom, slash menus, nested pages, emoji icons, cover images. |
 
-Mood page: `docs/design/moods.html`. A, B and C are offered as skins (NicoPlain, NicoCalm, NicoSoft), and W, NicoWarm, is the default (see Skins).
+Mood page: `docs/design/moods.html`. A, B and C came from it. W, NicoWarm, is the default (see Skins).
 
 ## Skins
 
@@ -614,23 +639,26 @@ A skin is a block of token overrides in `web/app/tokens.css`, selected by `data-
 
 | Id | Name | Type | Accent (day / night) | Shape |
 |---|---|---|---|---|
-| w | NicoWarm (default) | Geist, Fraunces headings | `#a24621` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
-| a | NicoPlain | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 6px controls, soft pills, light shadow |
+| w | NicoWarm (default) | Inter, Fraunces titles | `#b3522c` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
+| a | NicoPlain | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 10px controls, 14px cards, round pills |
 | b | NicoCalm | IBM Plex Sans, IBM Plex Mono | `#0a736e` / `#4fc2bb` | 3px corners, outlined pills, no shadow |
 | c | NicoSoft | Source Sans 3 | `#2d6a55` / `#7cc3a6` | 6px corners, warm ground, soft card shadow |
-| m | NicoOS | System font stack, no download | `#0062cc` / `#64a8ff` | 8px controls, 12px cards, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
-| i | NicoNote | Inter | `#1b63ae` / `#6bb0e8` | 4px controls, 6px cards, off-white page, no shadow, muted tinted tags for status |
+| m | NicoOS | System font stack, no download | `#0062cc` / `#64a8ff` | 10px controls, 18px cards, 7px pills, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
+| i | NicoNote | Inter | `#1b63ae` / `#6bb0e8` | 6px controls, 16px cards, 4px pills, off-white page, no shadow, muted tinted tags for status |
 
-- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value, the server sets `w`. A has no token block, so choosing it stores `a` and the base values apply.
+- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value, the server sets `w`. NicoPlain has no token block, so choosing it stores `a` and the base values apply.
 - The switcher is the Appearance row in the account menu (the button at the bottom left of the sidebar). Its items use the names above. The same flyout holds the System, Light and Dark choice.
 - Fonts load only through `next/font/google`. No font file is committed.
 - Skin hooks, beyond colour and type: `--bar`, `--avatar-bg`, `--avatar-you-ring`, `--pill-ring`, `--callout-bg`, `--callout-line`, `--card-shadow`, `--row-pad`, `--font-date`, `--skeleton-fill`, `--toast-bg`, `--toast-ink`.
-- Text contrast is at least 4.5:1 in all twelve skin and scheme sets, for ink, ink-2, ink-3, primary, late and off on canvas, surface, sunk and the bar, and for each state pill on its fill. Lowest ratios: W day 4.57, W night 4.83, A day 4.63, A night 4.73, B day 4.76, B night 5.17, C day 4.57, C night 5.66, M day 4.58, M night 4.70, I day 4.79, I night 4.83. M and I also keep 3:1 on field edges and the focus ring.
+- Text contrast. NicoWarm was measured again on 13 Oct, from the current hex values in `tokens.css`, with the WCAG relative-luminance formula. The other five skins were not measured since 12 Oct, so their ratios are not stated here.
+  - NicoWarm day: ink on canvas 15.19, ink 2 on canvas 5.00, ink 3 on canvas 4.50, terracotta on canvas 4.52, on surface 5.05, white on terracotta 5.05, Late red on canvas 5.03, At risk amber on canvas 5.19. Late red on its soft fill is 4.64 and amber on its soft fill is 4.94. The five status chips run from 5.38 to 6.92. The sidebar text runs from 5.79 to 13.42.
+  - NicoWarm night: ink on canvas 15.46, ink 2 on canvas 6.86, terracotta on canvas 6.39, dark text on terracotta 5.94, red on canvas 6.48, amber on canvas 9.00. The status chips run from 6.72 to 7.88. The lowest night pair is red on its soft fill, 5.18.
+  - Below 4.5 in day, and still to review where they are used for small text: terracotta on its soft tint (the viewer's initials mark) 4.15, ink 2 on the pill grey 4.30 and ink 3 on the pill grey 3.87.
 - Night follows the system setting by default. The Appearance flyout offers System, Light and Dark, kept in the cookie `nd_theme` (one year). `layout.tsx` reads it and sets `data-theme="light"` or `"dark"` on `<html>` on the server, so there is no flash. System sets no attribute. Every skin has a day block and a night block under both `data-theme` and the system setting, so the pick works in all six.
 
 ### NicoWarm, the default skin
 
-The pilot team built its own version of this tool, and that build used a warm look: paper ground, one terracotta accent, a dark sidebar and a serif for headings. The pilot team asked for nico-desk to match it, so W is the default and A, B and C stay one click away in the menu. W takes the team's own values (paper `#f5f2ec`, ink `#1f1c18`, the dark sidebar `#1e1b17`, border `#e8e2d6`) and keeps the rules above: one accent for dates and the viewer, red for late, amber for off track, pills for states. Three values were nudged darker so they pass 4.5:1 as text: the accent from `#b5532c` to `#a24621`, the red from `#c4432b` to `#ae3822`, and the amber from `#b7791f` to `#8a560b`. The team's lighter grey `#9a9284` is not used for text, and the team's purple, green and navy ledger bars have no token here. Headings (page title, ask title, the wordmark) use Fraunces through `next/font/google`, scoped to W by `--font-serif`. Body and dates stay Geist. The sidebar is dark in day and night, set by re-pointing the colour tokens on `.side` in `tokens.css`, so no component changes.
+The pilot team built its own version of this tool, and that build used a warm look: paper ground, one terracotta accent, a dark sidebar and a serif for headings. The pilot team asked for nico-desk to match it, so W is the default and the other five skins stay one click away in the menu. W starts from the team's own values (paper `#f5f2ec`, ink `#1f1c18`, the dark sidebar `#1e1b17`, border `#e8e2d6`) and keeps the rules above: one accent for dates and the viewer, red for late, amber for at risk, chips for status. Some values were darkened so they read as text. The accent is now `#b3522c` (the team's own was `#b5532c`, which the logo tile and the current-page edge still use). The Late red is `#b83d27` and the At risk amber is `#8c5b14`. The team's lighter grey `#9a9284` is not used for text, and the team's purple, green and navy ledger bars have no token here. Titles (page title, ask title, stat numbers, the wordmark) use Fraunces through `next/font/google`, scoped to W by `--font-serif`. Body, dates and buttons use Inter. The sidebar is dark in day and night, set by re-pointing the colour tokens on `.side` in `tokens.css`, so no component changes.
 
 ## Keyboard
 
@@ -642,4 +670,7 @@ The pilot team built its own version of this tool, and that build used a warm lo
 - Print styles for the record are untested on paper.
 - Night values are set but not yet reviewed on a real screen in a dark room.
 - The phone layout of Team is readable but not designed.
-- Error states for a failed save or a lost connection are not yet written.
+- Error states exist as `web/app/error.tsx` and `web/app/not-found.tsx`. They have not yet been checked in a browser.
+- Touch targets: the goal is 44px for every control. Buttons are 36px (40px on a phone), and plain links are about 24px. This is open.
+- Contrast: only NicoWarm was measured again, on 13 Oct. The other five skins were last measured on 12 Oct. The three NicoWarm day pairs below 4.5 (see Skins) need a review.
+- The first design had an as-of scrubber, a Friday note, draft lines that light their source sentence, an Asks page and a commit field. None of these is in the app, so this file no longer describes them.
