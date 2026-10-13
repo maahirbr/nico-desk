@@ -19,6 +19,11 @@ export function useHelpOn(): boolean {
   return useContext(HelpCtx).on;
 }
 
+// For the search box command "Toggle help". It does what the ? button and key do.
+export function useHelpToggle(): () => void {
+  return useContext(HelpCtx).toggle;
+}
+
 export function HelpProvider({ initial, enabled, children }: { initial: boolean; enabled: boolean; children: React.ReactNode }) {
   const [on, setOn] = useState(initial && enabled);
   const toggle = () => {

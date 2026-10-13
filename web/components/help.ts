@@ -120,6 +120,10 @@ export const HELP = {
   comment_urgent: 'Opens a draft in your Gmail for each person you mentioned. You press Send. The app sends nothing.',
   // Connects to
   connects_to: 'Connects to. What this item is part of, what it waits on, what waits on it, and where it is mentioned. You see only what you can open.',
+  // Search
+  search_filters: 'Filters. Add is:late, is:blocked, is:done or is:mine for status. Add @name for an owner, #project for a project, and due:today or due:week for dates.',
+  search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',
+  search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;

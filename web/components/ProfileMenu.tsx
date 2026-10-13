@@ -43,6 +43,12 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
     document.documentElement.dataset.skin = next;
     document.cookie = `${SKIN_COOKIE}=${next}; path=/; max-age=31536000; SameSite=Lax`;
   };
+  // The search box command "Appearance: ..." sends the same choice as the menu.
+  useEffect(() => {
+    const on = (e: Event) => pick(skinOf((e as CustomEvent<string>).detail));
+    window.addEventListener('nd:skin', on);
+    return () => window.removeEventListener('nd:skin', on);
+  });
   const pickTheme = (id: ThemeId) => {
     const next = themeOf(id);
     setTheme(next);

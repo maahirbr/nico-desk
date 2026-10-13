@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
+import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flags';
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
@@ -75,34 +76,19 @@ export function CheckTick() {
 // What a row's status menu can ask the side panel to open: a status that needs words, a date move, or a new owner.
 export type RowAction = StatusKey | 'date' | 'reassign';
 
-export function statusKey(t: Task): StatusKey {
-  if (t.statusCategory === 'done') return 'done';
-  if (t.statusCategory === 'dropped') return 'dropped';
-  if (t.blocked) return 'blocked';
-  if (!t.health || t.health === 'not_started') return 'todo';
-  return 'doing';
-}
+export const statusKey: (t: Task) => StatusKey = statusOf; // lib/flags.ts, shared with the search filters
 
-// Days of warning before an unstarted or blocked task counts as at risk.
-export const RISK_DAYS = 2;
-const daysTo = (d: string, today: string) => Math.round((Date.parse(`${d}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400000);
+export { RISK_DAYS };
 
-export type Flag = { key: 'late' | 'at_risk' | 'ahead' | 'on_time'; word: string; tone: Tone; why: string };
+export type Flag = { key: FlagKey; word: string; tone: Tone; why: string };
 export function flagOf(t: Task, today: string): Flag | null {
-  if (t.statusCategory === 'done') {
-    if (t.outcome === 'ahead') return { key: 'ahead', word: 'Ahead', tone: 'ok', why: `Done before the first date, ${fmtDate(t.firstDueOn)}.` };
-    if (t.outcome === 'late') return { key: 'late', word: 'Late', tone: 'late', why: `Done after the first date, ${fmtDate(t.firstDueOn)}.` };
-    if (t.outcome === 'on_time') return { key: 'on_time', word: 'On time', tone: 'ok', why: `Done by the first date, ${fmtDate(t.firstDueOn)}.` };
-    return null;
-  }
-  if (t.statusCategory !== 'open') return null;
+  const key = flagKeyOf(t, today); // lib/flags.ts, shared with the search filters
+  if (!key) return null;
+  if (key === 'ahead') return { key, word: 'Ahead', tone: 'ok', why: `Done before the first date, ${fmtDate(t.firstDueOn)}.` };
+  if (key === 'on_time') return { key, word: 'On time', tone: 'ok', why: `Done by the first date, ${fmtDate(t.firstDueOn)}.` };
+  if (key === 'late') return { key, word: 'Late', tone: 'late', why: t.statusCategory === 'done' ? `Done after the first date, ${fmtDate(t.firstDueOn)}.` : 'The date has passed and it is not done.' };
   const n = daysTo(t.dueOn, today);
-  if (n < 0) return { key: 'late', word: 'Late', tone: 'late', why: 'The date has passed and it is not done.' };
-  const k = statusKey(t);
-  if (n <= RISK_DAYS && (k === 'todo' || k === 'blocked')) {
-    return { key: 'at_risk', word: 'At risk', tone: 'risk', why: `Due ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`} and ${k === 'blocked' ? 'still blocked' : 'not started'}.` };
-  }
-  return null;
+  return { key, word: 'At risk', tone: 'risk', why: `Due ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`} and ${statusKey(t) === 'blocked' ? 'still blocked' : 'not started'}.` };
 }
 
 // hideLate: the row already says "3 days late" in red, so most skins do not say Late a second time.

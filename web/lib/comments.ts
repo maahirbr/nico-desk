@@ -92,6 +92,11 @@ function partsOf(body: string, names: Map<string, string | null>): Part[] {
   return parts;
 }
 
+// The comment as plain words, for search: a reference becomes its label, and one the reader may not see becomes nothing.
+export function plainOf(body: string, label: (kind: RefKind, id: string) => string | null): string {
+  return body.replace(TOKEN, (_m, kind: RefKind, id: string) => label(kind, id) ?? '').replace(/\s+/g, ' ').trim();
+}
+
 async function views(tx: Tx, me: Me, sight: Sight, rows: Row[]): Promise<CommentView[]> {
   const names = await labels(tx, me, sight, rows.flatMap((r) => (r.deleted_at ? [] : refsIn(r.body))));
   return rows.map((r) => {
