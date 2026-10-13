@@ -225,7 +225,7 @@
    Each skin changes colour, face, corners and spacing and nothing else. Day is the skin block itself;
    night repeats the colours under the same two selectors the base night uses. */
 
-/* W. Warm: the pilot team's own build, warm paper, one terracotta, a dark sidebar, Fraunces headings.
+/* W. NicoWarm: the pilot team's own build, warm paper, one terracotta, a dark sidebar, Fraunces headings.
    Accent, red and amber are the team's values nudged darker where they missed 4.5:1 as text. */
 :root[data-skin="w"] {
   --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
@@ -333,7 +333,7 @@
 }
 :root[data-skin="w"] .mark-name { font-family: var(--font-serif); font-weight: 600; }
 
-/* B. Calm and precise: IBM Plex, a teal, square corners, outlined states */
+/* B. NicoCalm: IBM Plex, a teal, square corners, outlined states */
 :root[data-skin="b"] {
   --font-sans: var(--font-plex-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
@@ -419,7 +419,7 @@
   --scrim: rgb(0 0 0 / 0.6);
 }
 
-/* C. Soft and warm: Source Sans 3, a pine green, warm paper, more air */
+/* C. NicoSoft: Source Sans 3, a pine green, warm paper, more air */
 :root[data-skin="c"] {
   --font-sans: var(--font-source-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-date: var(--font-sans);
@@ -722,7 +722,7 @@
 :root[data-skin="w"] .habit-facts { font-size: 13.5px; gap: 6px 10px; }
 :root[data-skin="w"] .habit-facts dt { color: var(--ink-2); }
 
-/* ---------- M, Mac: liquid, minimal macOS ----------
+/* ---------- M, NicoOS: liquid, minimal macOS ----------
    Trait list. Glass belongs to the functional layer (sidebar, toolbar, pop-ups, side panel), never to content cards.
    The sidebar floats over a soft wallpaper tint and blurs it. The page is an opaque rounded sheet. Radii are large.
    Type is the system font with tight headings. Lists are grouped and inset. Pickers are segmented controls with a
@@ -993,7 +993,7 @@
   :root[data-skin="m"] :is(.card, .stat, .pcard, .tlist, .callout, .side, .main, .topbar, .pop, .menu, .ts-drop, .modal, .drawer, .seg, .seg::before) { corner-shape: squircle; }
 }
 
-/* ---------- I, Ink: content first, in the manner of Craft and Notion ----------
+/* ---------- I, NicoNote: content first, in the manner of Craft and Notion ----------
    Trait list. A paper-white page. One centred reading column with generous line height. A large, quiet page title.
    Tasks are blocks: soft hover rows with a grip handle in the margin. Callouts and toggles are plain blocks.
    The sidebar is soft grey and borderless. The top bar has almost no chrome. Cards, where they appear, are round
@@ -1225,7 +1225,7 @@
 /* Fields keep a 3:1 edge. Inline-edit titles stay borderless until hovered. */
 :root[data-skin="i"] :is(input, select, textarea, .sel-btn):not(.drawer-title, .drawer-desc, :focus, [aria-expanded="true"]) { border-color: var(--ui-line); }
 
-/* ---------- View as banner, Mac and Ink ----------
+/* ---------- View as banner, NicoOS and NicoNote ----------
    The grey banner and its hairline Back button blended into the chrome in these two skins. It is now amber, which
    neither skin uses for anything else, with a solid 2px edge and a Back button edged in the same amber. */
 :root[data-skin="m"] .view-banner, :root[data-skin="i"] .view-banner { background: var(--off-soft); color: var(--ink); border-bottom: 2px solid var(--off); }
