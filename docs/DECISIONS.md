@@ -595,3 +595,7 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   the tables only repeated them by week and made the page read like a spreadsheet. The collapsed section keeps the
   definitions and is now called "Definitions". The intro reads "Kept dates, per person, over the last 4 weeks." Every
   number on the cards still opens the tasks behind it. Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · "(optional)" and "(if any)" are lower case, at the PM's call.** Wherever they appear, even
+  inside a Title Case label ("Category (optional)", "Details (if any)"). Other notes in brackets are not covered by this
+  rule ("Warm (Default)" keeps its capital). `DESIGN.md` Typography holds the rule. Rollback: `git revert` this commit.

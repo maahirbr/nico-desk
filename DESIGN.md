@@ -448,7 +448,7 @@ Form fields use 16px (`{typography.input}`) so a phone does not zoom in.
 - Dates use tabular figures and tighten to -0.02em.
 - The page title and the wordmark tighten to -0.02em too.
 - Flags are the one place with tracked capitals: uppercase, 10.5px, 0.03em. Section headings stay in sentence case. No eyebrows above headlines.
-- Form field labels, and the headings and titles inside a form, use Title Case: "Project Name", "Project Description", "Start a Project" (the PM's call, 13 Oct). A note in brackets stays lower case: "Category (optional)", "Details (if any)" (14 Oct). Typed text is the largest (`--type-input`, 16px), then the field label (`--type-label`, 14px), then the hint inside the field (`--type-small`, 13px). Short words stay lower case (a, an, the, and, of, in, on, to, for). Hints, notes, placeholders, options and buttons keep sentence case. The Start a project form follows this today; other forms move over as they are touched.
+- Form field labels, and the headings and titles inside a form, use Title Case: "Project Name", "Project Description", "Start a Project" (the PM's call, 13 Oct). "(optional)" and "(if any)" are always lower case, even inside a Title Case label: "Category (optional)", "Details (if any)" (the PM's call, 14 Oct). Typed text is the largest (`--type-input`, 16px), then the field label (`--type-label`, 14px), then the hint inside the field (`--type-small`, 13px). Short words stay lower case (a, an, the, and, of, in, on, to, for). Hints, notes, placeholders, options and buttons keep sentence case. The Start a project form follows this today; other forms move over as they are touched.
 - Sentence case everywhere else.
 
 ## Layout
@@ -645,7 +645,7 @@ Two skins are offered, at the PM's call (13 Oct): Warm and Cool. Each comes in L
 
 | Id | Name in the menu | Was | Type | Accent (day / night) | Shape |
 |---|---|---|---|---|---|
-| w | Warm (default) | NicoWarm | Inter, Fraunces titles | `#b3522c` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
+| w | Warm (Default) | NicoWarm | Inter, Fraunces titles | `#b3522c` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
 | m | Cool | NicoOS | System font stack, no download | `#0062cc` / `#64a8ff` | 10px controls, 18px cards, 7px pills, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
 
 The token blocks for the retired skins (a NicoPlain, b NicoCalm, c NicoSoft, i NicoNote) are still in `tokens.css` but are not offered. The base `:root` values (once NicoPlain) stay, since W and M override them.
