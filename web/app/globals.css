@@ -1590,3 +1590,57 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .fb-state { margin-left: auto; }
 .fb-body { margin: var(--space-xs) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .fb-item.is-read .fb-body { color: var(--ink-2); }
+
+/* ---------- Thread map (13 Oct): the Connects to links drawn as a graph, see lib/threadLayout.ts ---------- */
+/* Kinds differ by shape (task square, project diamond, person circle) and by token colour. Dimming is opacity only. */
+.tmap-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm) var(--space-lg); margin: 0 0 var(--space-md); }
+.tmap-sum { font: var(--type-meta); color: var(--ink-2); margin: 0; }
+.tmap-ctl { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tmap-canvas, .tmap-list { background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); box-shadow: var(--card-shadow); padding: var(--card-pad); }
+.tmap-canvas.is-hidden, .tmap-list.is-hidden { display: none; }
+.tmap-svg { display: block; max-width: 100%; height: auto; margin: 0 auto; overflow: visible; }
+.tmap-edge { fill: none; stroke: var(--line-strong); stroke-width: 1.5; transition: opacity var(--dur-state) var(--ease); }
+.tmap-edge.is-lit { stroke: var(--ink-2); }
+.tmap-e-waits_on { stroke-dasharray: 6 4; }
+.tmap-e-mentions { stroke-dasharray: 1.5 4; stroke-linecap: round; }
+.tmap-arrow { fill: var(--ink-3); }
+.tmap-node { cursor: pointer; outline: none; transition: opacity var(--dur-state) var(--ease); }
+.tmap-edge.is-dim, .tmap-node.is-dim { opacity: 0.22; }
+.tmap-hit { fill: transparent; stroke: transparent; stroke-width: var(--ring-width); rx: 6; }
+.tmap-node:focus-visible .tmap-hit { stroke: var(--ring-color); }
+.tmap-label { font: var(--type-meta); fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.tmap-node.is-focus .tmap-label { font-weight: 600; }
+.tmap-node.is-self .tmap-label { text-decoration: underline; text-underline-offset: 3px; }
+.tmap-mark { stroke: var(--surface); stroke-width: 1.5; }
+.tmap-mark.tmap-task { fill: var(--status-todo-fg); }
+.tmap-mark.tmap-st-doing { fill: var(--status-doing-fg); }
+.tmap-mark.tmap-st-blocked { fill: var(--status-blocked-fg); }
+.tmap-mark.tmap-st-done { fill: var(--status-done-fg); }
+.tmap-mark.tmap-st-dropped { fill: var(--status-dropped-fg); }
+.tmap-mark.tmap-project { fill: var(--ink); }
+.tmap-mark.tmap-person { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2; }
+.tmap-mark.tmap-late { stroke: var(--late); stroke-width: 2.5; }
+.tmap-node.is-focus .tmap-mark { stroke: var(--primary); stroke-width: 3; }
+.tmap-now { font: var(--type-meta); color: var(--ink); margin: var(--space-sm) 0 0; min-height: calc(var(--space-md) * 1.5); overflow-wrap: anywhere; }
+.tmap-now-sub { color: var(--ink-3); }
+.tmap-step + .tmap-step { margin-top: var(--space-md); }
+.tmap-items { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.tmap-item { font: var(--type-meta); overflow-wrap: anywhere; }
+.tmap-item-link { color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--touch-min); }
+.tmap-item-link:hover { text-decoration: underline; }
+.tmap-item-sub { color: var(--ink-3); }
+.tmap-dot { display: inline-block; width: 10px; height: 10px; flex: none; background: var(--ink-2); }
+.tmap-dot.tmap-task { border-radius: 2px; }
+.tmap-dot.tmap-project { transform: rotate(45deg) scale(0.85); background: var(--ink); }
+.tmap-dot.tmap-person { border-radius: 50%; background: var(--surface); border: 2px solid var(--ink-2); box-sizing: border-box; }
+.tmap-rels { list-style: none; margin: 0; padding: 0 0 0 var(--space-md); color: var(--ink-3); }
+.tmap-from { display: inline-flex; align-items: center; min-height: var(--touch-min); padding-left: var(--space-md); color: var(--primary); text-decoration: none; }
+.tmap-from:hover { text-decoration: underline; }
+.cn-map-row { margin: var(--space-xs) 0 0; font: var(--type-meta); }
+.cn-map { display: inline-flex; align-items: center; min-height: var(--touch-min); color: var(--primary); text-decoration: none; }
+.cn-map:hover { text-decoration: underline; }
+/* On a phone the list is the whole view: the picture is too small to read at 375px. */
+@media (max-width: 640px) {
+  .tmap .tmap-canvas, .tmap .tmap-canvas.is-hidden, .tmap-ctl .seg:last-child { display: none; }
+  .tmap .tmap-list, .tmap .tmap-list.is-hidden { display: block; }
+}

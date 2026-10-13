@@ -28,7 +28,8 @@ function Line({ l, inDrawer, open }: { l: ThreadLine; inDrawer: boolean; open: (
   return <li className="cn-line"><Link className="cn-link" href={l.href} prefetch={false}>{text}</Link></li>;
 }
 
-export function ConnectsTo({ lines, inDrawer = false }: { lines: ThreadLine[]; inDrawer?: boolean }) {
+// `focus` is the item this block belongs to (task:<id>, project:<id> or person:<id>). With it, the block links to the thread map.
+export function ConnectsTo({ lines, inDrawer = false, focus }: { lines: ThreadLine[]; inDrawer?: boolean; focus?: string }) {
   const [, open] = useOpenTask();
   const [more, setMore] = useState<Record<string, boolean>>({});
   const groups: { rel: string; items: ThreadLine[] }[] = [];
@@ -59,6 +60,7 @@ export function ConnectsTo({ lines, inDrawer = false }: { lines: ThreadLine[]; i
           })}
         </dl>
       )}
+      {focus && <p className="cn-map-row"><Link className="cn-map" href={`/map?focus=${focus}`} prefetch={false}>Thread map</Link> <Help term="thread_map"><span className="cn-sub">· key T</span></Help></p>}
     </section>
   );
 }
@@ -72,5 +74,5 @@ export function TaskConnects({ id, version }: { id: string; version: number }) {
     return () => { live = false; };
   }, [id, version]);
   if (!lines) return null;
-  return <ConnectsTo lines={lines} inDrawer />;
+  return <ConnectsTo lines={lines} inDrawer focus={`task:${id}`} />;
 }

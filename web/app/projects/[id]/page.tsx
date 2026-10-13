@@ -80,7 +80,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           }))}
         />
       )}
-      <div className="card card-pad cn-card"><ConnectsTo lines={await threadsFor(d, me, 'project', p.id)} /></div>
+      <div className="card card-pad cn-card"><ConnectsTo lines={await threadsFor(d, me, 'project', p.id)} focus={`project:${p.id}`} /></div>
       <CommentThread subjectKind="project" subjectId={p.id} subjectTitle={p.name} people={opts} drawer={p.kind !== 'plan'} />
       </ReadOnlyProvider>
     </>

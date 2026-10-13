@@ -87,7 +87,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             </dl>
           </div>
 
-          <div className="card card-pad"><ConnectsTo lines={threads} /></div>
+          <div className="card card-pad"><ConnectsTo lines={threads} focus={`task:${t.id}`} /></div>
 
           <div className="card card-pad">
             <p className="section-title">Update log</p>
