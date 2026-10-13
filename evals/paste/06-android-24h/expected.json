@@ -1,0 +1,41 @@
+{
+  "type": "time-24h",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Ananya Rao",
+      "date": "2026-10-08",
+      "time": "17:45",
+      "text": "The crop sizes are approved. I sent them to Ishaan."
+    },
+    {
+      "index": 1,
+      "sender": "Ishaan Bhatt",
+      "date": "2026-10-08",
+      "time": "17:46",
+      "text": "Got them, I am starting the final crop now."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_040",
+      "status": "Done",
+      "due_on": null,
+      "source": 0,
+      "quote": "The crop sizes are approved"
+    },
+    {
+      "kind": "update",
+      "task": "tsk_027",
+      "status": "In progress",
+      "due_on": null,
+      "source": 1,
+      "quote": "I am starting the final crop now"
+    }
+  ],
+  "must_not": []
+}

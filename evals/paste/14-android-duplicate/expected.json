@@ -1,0 +1,46 @@
+{
+  "type": "duplicate",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Meera Iyer",
+      "date": "2026-10-09",
+      "time": "10:00",
+      "text": "Kabir, please add the sign-up form to the festive page by 15 Oct."
+    },
+    {
+      "index": 1,
+      "sender": "Meera Iyer",
+      "date": "2026-10-09",
+      "time": "10:05",
+      "text": "Reminder: the sign-up form for the festive page, 15 Oct."
+    },
+    {
+      "index": 2,
+      "sender": "Kabir Sethi",
+      "date": "2026-10-09",
+      "time": "10:06",
+      "text": "On it."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "new",
+      "title_has": "sign-up form",
+      "owner": "per_bo",
+      "due_on": "2026-10-15",
+      "project": "prj_landing",
+      "source": 0,
+      "quote": "add the sign-up form to the festive page"
+    }
+  ],
+  "must_not": [
+    {
+      "quote": "Reminder: the sign-up form for the festive page, 15 Oct.",
+      "why": "The same task said twice. One proposal only."
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "type": "relative-date",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Meera Iyer",
+      "date": "2026-10-08",
+      "time": "09:30",
+      "text": "Kabir, the speed fixes for the landing page need to be done by next Wednesday."
+    },
+    {
+      "index": 1,
+      "sender": "Kabir Sethi",
+      "date": "2026-10-08",
+      "time": "09:31",
+      "text": "Okay."
+    },
+    {
+      "index": 2,
+      "sender": "Arjun Nair",
+      "date": "2026-10-08",
+      "time": "09:32",
+      "text": "I will plan the festive weekend roster tomorrow."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "new",
+      "title_has": "speed fixes",
+      "owner": "per_bo",
+      "due_on": "2026-10-14",
+      "project": "prj_landing",
+      "source": 0,
+      "quote": "the speed fixes for the landing page"
+    },
+    {
+      "kind": "new",
+      "title_has": "festive weekend roster",
+      "owner": "per_eli",
+      "due_on": "2026-10-09",
+      "project": null,
+      "source": 2,
+      "quote": "plan the festive weekend roster tomorrow"
+    }
+  ],
+  "must_not": []
+}

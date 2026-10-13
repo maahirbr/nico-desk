@@ -1,0 +1,33 @@
+{
+  "type": "status-update",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Kabir Sethi",
+      "date": "2026-10-09",
+      "time": "09:41",
+      "text": "The link check is stuck. The staging site is down until the host replies."
+    },
+    {
+      "index": 1,
+      "sender": "Meera Iyer",
+      "date": "2026-10-09",
+      "time": "09:42",
+      "text": "Okay, keep me posted."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_030",
+      "status": "Blocked",
+      "due_on": null,
+      "source": 0,
+      "quote": "The link check is stuck"
+    }
+  ],
+  "must_not": []
+}

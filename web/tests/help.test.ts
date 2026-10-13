@@ -19,6 +19,7 @@ describe('help text', () => {
       'done_ahead', 'done_on_time', 'done_late', 'open_past_due', 'date_moves', 'recent_updates',
       'delivery_habits', 'needs_attention', 'moved_late',
       'waiting_done', 'plan_done_looks_like', 'plan_actions', 'plan_by_subproject', 'plan_by_date', 'proposal_accept_sure',
+      'paste_review', 'paste_masked',
     ];
     expect([...COVERED].sort()).toEqual([...HELP_TERMS].sort());
     expect([...HELP_TERMS].sort()).toEqual(Object.keys(HELP).sort());

@@ -460,3 +460,15 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   change in what is shown. Suggested order stays a later choice in the sort menu and never the default. Nothing here
   makes room for it: there is no score and no hook, and due date remains the order for open work. Rollback:
   `git revert` this commit.
+
+- **2026-10-13 · Sonnet 5.5 · Paste to tasks (HANDOFF 8.5).** A person pastes a chat or a WhatsApp `.txt`, and Claude
+  proposes tasks, status or date changes and notes, each with a one-sentence reading and the message it came from. The
+  parser (`lib/chat.ts`) and the checks on the model answer (`lib/paste.ts`) are plain code, so they are tested offline.
+  Text is masked before the model sees it, and `lib/redact.ts` gained phone numbers. A sender who is not on the roster
+  becomes "an outside person". The model can only point at tasks and projects the signed-in person can see, so a hidden
+  one reads as missing. The chat is data: a line that gives orders to the tool is never acted on, and 4 of the 20 eval
+  chats test this. Nothing is written until the person presses Approve. Approve runs the normal service call, one per
+  proposal, so every rule (reasons, versions, View as refusal) and the client undo work as they do everywhere else. The
+  raw text is dropped after the read and is not stored, and the screen says so. No schema change. The minutes flow in
+  `lib/plan.ts` still sends unmasked text. This flow does not, and moving minutes onto the same masking is a later call.
+  Residual risk: a name that is not on the roster or in the project list is not masked. Rollback: git revert this commit.

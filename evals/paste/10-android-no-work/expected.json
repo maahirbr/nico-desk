@@ -1,0 +1,31 @@
+{
+  "type": "no-work",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Kabir Sethi",
+      "date": "2026-10-09",
+      "time": "13:10",
+      "text": "Lunch anyone?"
+    },
+    {
+      "index": 1,
+      "sender": "Meera Iyer",
+      "date": "2026-10-09",
+      "time": "13:11",
+      "text": "Canteen at 1:30"
+    },
+    {
+      "index": 2,
+      "sender": "Arjun Nair",
+      "date": "2026-10-09",
+      "time": "13:12",
+      "text": "👍"
+    }
+  ],
+  "proposals": [],
+  "must_not": []
+}

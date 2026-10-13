@@ -559,6 +559,8 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
 .pc-why { font: var(--type-small); color: var(--ink-3); }
 .pc-task { font-weight: 500; }
 .pc-actions { gap: var(--space-xs); }
+.pc-quote { margin: 0; padding-left: var(--space-sm); border-left: var(--rule) solid var(--line-strong); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pc-gone { margin: 0; }
 
 @media (max-width: 720px) {
   .plan-wrap { overflow: visible; background: none; border: 0; }

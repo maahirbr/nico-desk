@@ -24,6 +24,17 @@ describe('masking', () => {
     expect(out).toContain('Amount 1');
   });
 
+  it('masks phone numbers with and without a country code, spaces and dashes, on or off the roster', () => {
+    const m = makeMasker(DICT);
+    for (const n of ['+91 90000 00001', '+919000000001', '09000000001', '90000-00001', '90000 00001', '(0124) 400 1234', '+44 20 7946 0958']) {
+      const out = m.mask(`call ${n} today`);
+      expect(out, n).toMatch(/^call Phone \d+ today$/);
+    }
+    // a short number is not a phone, and a line break never joins two numbers
+    expect(m.mask('room 4021 or 12-34-56')).not.toContain('Phone');
+    expect(m.mask('90000\n00001')).not.toContain('Phone'); // two separate numbers, not one phone
+  });
+
   it('keeps dates and status words', () => {
     const out = makeMasker(DICT).mask('Blocked until 2026-10-09, then In progress.');
     expect(out).toBe('Blocked until 2026-10-09, then In progress.');
