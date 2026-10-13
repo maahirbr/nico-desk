@@ -444,8 +444,9 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     }}>
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
+      <div className="form-split"><span>Fill It In Yourself</span></div>
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-      <label className="f"><span>Details (Optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
+      <label className="f"><span>Details (If Any)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
           <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />

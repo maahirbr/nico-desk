@@ -1580,4 +1580,7 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .say-mic { display: inline-flex; align-items: center; justify-content: center; padding-left: var(--space-sm); padding-right: var(--space-sm); }
 .say-mic.on { color: var(--late); border-color: var(--late); }
 @media (max-width: 480px) { .say-row { flex-wrap: wrap; } .say-row input { flex-basis: 100%; } }
+/* Between Quick Add and the form: a soft rule with a quiet label, not a new section. */
+.form-split { display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs); color: var(--ink-2); font: var(--type-meta); }
+.form-split::after { content: ""; flex: 1; border-top: var(--rule) solid var(--hairline); }
 

@@ -582,3 +582,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   answers a list; the rules split on lines, list markers, sentence ends and joining words, and read a name spoken to
   ("Sam, can you ...") and "I need to ..." as the owner. The label reads "Quick Add", without "(Optional)".
   Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · New task form wording, at the PM's call.** Quick Add and the form sit on one card with a soft
+  rule between them labelled "Fill It In Yourself". The page line reads "Say it in one line, or fill it in yourself." The
+  description is "Details (If Any)", hint "Anything the owner should know"; Note stays "Note (Optional)" with no hint.
+  The project list's empty choice reads "None (one-off task)". The line "The due date is kept as the first date. Moving
+  it later needs a reason." leaves the form: the move-date form already asks for the reason when it applies.
+  Rollback: `git revert` this commit.

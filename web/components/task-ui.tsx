@@ -687,8 +687,9 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onChat={readOnly ? undefined : setPasting} onMany={setMany} />
+      <div className="form-split"><span>Fill It In Yourself</span></div>
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} onBlur={guessProject} /></label>
-      <label className="f"><span>Details (Optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
+      <label className="f"><span>Details (If Any)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
           <OwnerPicker key={f.projectId} projectId={f.projectId || null} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
@@ -710,7 +711,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
           {projects && (
             <label className="f"><span>Project</span>
               <Select value={f.projectId} onChange={(p) => { setF({ ...f, projectId: p, workstream: '', ownerRole: undefined, ownerId: !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
-                <option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                <option value="">None (one-off task)</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </Select>
             </label>
           )}
@@ -724,7 +725,6 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         </div>
       )}
       <label className="f"><span>Note (Optional)</span><input maxLength={140} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
-      <p className="hint" style={{ margin: 0 }}>The due date is kept as the first date. Moving it later needs a reason.</p>
       {err && <p className="err" role="alert">{err}</p>}
       <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button></div>
     </form>

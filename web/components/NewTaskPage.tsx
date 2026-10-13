@@ -9,7 +9,7 @@ export function NewTaskPage({ people, meId, today, projects, wsByProject }: {
   const router = useRouter();
   return (
     <div className="calm narrow">
-      <header className="page-head"><div><h1>New Task</h1><p className="summary">Pick a project, or leave it empty for a one-off task this week.</p></div></header>
+      <header className="page-head"><div><h1>New Task</h1><p className="summary">Say it in one line, or fill it in yourself.</p></div></header>
       <div className="card form-card">
         <AddTaskForm people={people} meId={meId} today={today} projects={projects} wsByProject={wsByProject} onDone={() => router.push('/me')} />
       </div>
