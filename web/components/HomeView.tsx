@@ -92,7 +92,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {groups.length === 0 && (
         <div className="empty-state">
-          <DitherArt field="hill" className="dither-empty" />
+          <DitherArt field="hill" className="dither-empty" fade />
           <p>You’re clear. Nothing open on your side.</p>
           {!readOnly && <button className="btn" onClick={() => setAdding(true)}>Add a task</button>}
         </div>

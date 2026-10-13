@@ -134,8 +134,8 @@
   --shadow-1: 0 1px 2px rgb(17 19 23 / 0.05), 0 6px 20px rgb(17 19 23 / 0.06);
   --scrim: rgb(17 19 23 / 0.4);
 
-  /* Motion: transform and opacity only, with two small exceptions: a status chip eases its colour,
-     and a tick draws its stroke. Nothing loops. Nothing runs past 300ms except the first-load stagger. */
+  /* Motion: transform and opacity only, with named exceptions: a status chip eases its colour,
+     and a tick and the Home trend line draw their strokes. Nothing loops. Nothing runs past 300ms except the first-load stagger. */
   --ease: ease-out;
   --dur-arrive: 180ms;
   --dur-strike: 160ms;
@@ -156,6 +156,14 @@
   --dur-stagger: 200ms;
   --stagger-step: 30ms;
   --stagger-rise: 6px;
+  /* A mention chip pops in when picked; a dither picture fades in row by row (the last row starts --dither-spread
+     after the first, so a picture is done within --dither-spread + --dur-dither, under 300ms); an old status
+     glyph fades out as the new one pops in. */
+  --dur-pop: 140ms;
+  --pop-scale-from: 0.8;
+  --dur-dither: 160ms;
+  --dither-spread: 120ms;
+  --dur-glyph: 120ms;
   /* A checked box: the fill and the tick drawn on it. Skin W fills green. */
   --check-fill: var(--primary);
   --check-tick: var(--on-primary);
@@ -521,6 +529,10 @@
     --dur-tick: 0ms;
     --dur-stagger: 0ms;
     --stagger-step: 0ms;
+    --dur-pop: 0ms;
+    --dur-dither: 0ms;
+    --dither-spread: 0ms;
+    --dur-glyph: 0ms;
   }
 }
 
