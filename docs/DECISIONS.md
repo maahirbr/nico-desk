@@ -368,3 +368,11 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   `keys.ts`, so the pop-up and the guide share one source. The rule reads "move a date before it passes, and say why"
   with the first date kept, to match the on-time rule (not "on time in spirit", as the plan first said). Not checked:
   light mode, skins other than W, the account-menu item in a browser, measured contrast. Rollback: `git revert -m 1 6cb4f68`.
+- 2026-10-13 · Sonnet 5.5 · More visual data (section 12 of `docs/PLAN-13-OCT.md`), merged by Opus 5.5. Project cards and
+  each project page show one status bar: done, in progress, not started, blocked, late. Late counts only in late,
+  dropped is left out, so the parts add up to the total. Plan boards use the line words and `lineLate`. Blocked is
+  hatched and late solid, since both are red in most skins, and the counts are written under the bar. Each project page
+  has a six-week done-against-due chart in inline SVG. The person page reuses the Home "This week" and on-time cards,
+  under the on-time record's visibility rule. Home charts start collapsed under 768px until the person uses the toggle,
+  decided in CSS, so there is no flash. Not checked: light mode, skins other than W, measured contrast. No schema
+  change. Rollback: `git revert -m 1 821c4f8`.
