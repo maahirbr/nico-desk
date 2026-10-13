@@ -61,12 +61,13 @@ TypeSafe's own docs list its weak spots: dates, durations and counting, a lean t
 
 **More use cases to test (the repo owner's experience says Jev is strong here).** Each is a classify or score job over text we already hold.
 
-- Triage inbox: score each draft task as ready, needs owner or needs date. Sort the approver's queue.
-- Duplicate check: "is this draft the same commitment as an open task?" Stops repeat tasks across weekly meetings.
-- Status-update check: "does this comment say the task is done, blocked or still open?" Feeds the on-time ledger. A person confirms the close.
-- Risk flag: score a weekly update as on track, at risk or slipping, to help the lead's review. It never sets a red/amber/green value alone.
-- Route: assign a task to a project or team from a fixed list.
-- Nudge check: "is this reminder still needed?" before a draft nudge goes to its owner for a yes.
+- Triage inbox: score each draft task as ready, needs owner or needs date. Sort the approver's queue. **Built (13 Oct):** "Check drafts" notes vague wording; code alone decides owner and date.
+- Duplicate check: "is this draft the same commitment as an open task?" Stops repeat tasks across weekly meetings. **Built (13 Oct):** code finds up to two likely tasks, Jev answers yes or no for each.
+- Status-update check: "does this comment say the task is done, blocked or still open?" Feeds the on-time ledger. A person confirms the close. **Built (13 Oct):** a new comment reuses the status banner; the person confirms.
+- Risk flag: score a weekly update as on track, at risk or slipping, to help the lead's review. It never sets a red/amber/green value alone. **Built (13 Oct):** "Suggest how it is going" on the project page; never saved.
+- Route: assign a task to a project or team from a fixed list. **Built (13 Oct):** a suggested project when adding a task; filled only if the person left it empty.
+- Nudge check: "is this reminder still needed?" before a draft nudge goes to its owner for a yes. **Not built:** reminder items have no ids and the draft is editable email text.
+- Suggested order (use case 10 in `PLAN-13-OCT.md`). **Built (13 Oct):** a "Suggested" sort on Home. By date stays the default.
 
 Rules from Paca still apply: a confidence floor, no overwrite of human-set fields, an API error means no answer, and a person decides.
 

@@ -86,7 +86,7 @@ describe('fallbacks', () => {
     expect(await jevAsk({ note: 'x' }, Q, { dict: DICT, env: ON })).toEqual({ ok: false, reason: 'timeout' });
   });
 
-  it('retries once on 429 and on 529, then gives up', async () => {
+  it('retries 429 and 529 up to three times, then gives up', async () => {
     fetchMock.mockResolvedValueOnce(new Response('', { status: 429 })).mockResolvedValueOnce(ok(blocked()));
     expect((await jevAsk({ note: 'a' }, Q, { dict: DICT, env: ON, backoffMs: 1 })).ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -94,7 +94,7 @@ describe('fallbacks', () => {
     fetchMock.mockReset();
     fetchMock.mockResolvedValue(new Response('', { status: 529 }));
     expect(await jevAsk({ note: 'b' }, Q, { dict: DICT, env: ON, backoffMs: 1 })).toEqual({ ok: false, reason: 'rate' });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('answers a repeat request from the cache', async () => {

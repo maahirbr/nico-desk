@@ -17,6 +17,8 @@ import { THEME_COOKIE, themeAttr, themeOf } from '@/components/theme';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
 import { ReadOnlyProvider } from '@/components/readonly';
+import { JevProvider } from '@/components/jevFlag';
+import { jevOn } from '@/lib/jev';
 import { ViewerProvider } from '@/components/viewer';
 import { ViewBanner } from '@/components/ViewAs';
 import { db, rosterFile } from '@/lib/db';
@@ -72,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {me && <Shortcuts />}
         {me ? (
           <ReadOnlyProvider readOnly={me.viewingAs}>
+          <JevProvider on={jevOn()}>
           <PhotoProvider photos={photos}>
           <ViewerProvider meId={me.person.id} isLead={isLeadOrAdmin(me.person.appRoles)} today={todayIst()} fresh={fresh}>
           <div className="shell">
@@ -92,6 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
           </ViewerProvider>
           </PhotoProvider>
+          </JevProvider>
           </ReadOnlyProvider>
         ) : (
           <main className="page-solo">{children}</main>

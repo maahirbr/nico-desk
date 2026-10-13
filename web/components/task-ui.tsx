@@ -25,6 +25,7 @@ import { notify } from './toast';
 import { playFor } from './sound';
 import { useReadOnly } from './readonly';
 import { Help, useHelpOn } from './HelpMode';
+import { useJev } from './jevFlag';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
@@ -353,9 +354,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     const note = typeof body.note === 'string' ? body.note : '';
     const ok = await run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved', editFields(body));
     if (!ok || !note || !can) return;
+    await offerFromNote(note);
+  }
+  // The same offer, from a note or a comment. The server reads at most 280 characters. A comment is not a field change.
+  async function offerFromNote(note: string) {
+    if (!t) return;
     try {
-      const r = await api(`/tasks/${t.id}/suggest-status`, 'POST', { text: note });
-      if (r?.suggestion) setNudge({ status: r.suggestion.status, word: r.suggestion.word, note });
+      const r = await api(`/tasks/${t.id}/suggest-status`, 'POST', { text: note.slice(0, 280) });
+      if (r?.suggestion) setNudge({ status: r.suggestion.status, word: r.suggestion.word, note: note.slice(0, 280) });
     } catch { /* no offer */ }
   }
   // The click. The status calls are the same as the buttons above. A status that needs words opens its form with the note filled in.
@@ -606,7 +612,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             <TaskConnects id={t.id} version={t.version} />
 
-            <CommentThread subjectKind="task" subjectId={t.id} subjectTitle={t.title} people={people} drawer />
+            <CommentThread subjectKind="task" subjectId={t.id} subjectTitle={t.title} people={people} drawer onPosted={can && !readOnly ? offerFromNote : undefined} />
           </>
         )}
       </motion.aside>
@@ -630,6 +636,21 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
   const [pasting, setPasting] = useState(false); // "Paste a chat": proposals from a team chat, in place of this form
   const readOnly = useReadOnly();
   const workstreams = wsByProject ? wsByProject[f.projectId] ?? [] : fixedWs;
+
+  // A project for the title (Jev), picked from the list in the Project field. It asks once, when the person leaves the
+  // title, and only while no project is chosen. It offers; it never fills the field. Off or unsure: nothing shows.
+  const jev = useJev();
+  const [guess, setGuess] = useState<string | null>(null);
+  const askedFor = useRef('');
+  async function guessProject() {
+    const title = f.title.trim();
+    if (!jev || readOnly || !projects || f.projectId || title.length < 3 || title === askedFor.current) return;
+    askedFor.current = title; setGuess(null);
+    try {
+      const r = await api('/tasks/suggest-project', 'POST', { title });
+      if (typeof r?.projectId === 'string' && projects.some((p) => p.id === r.projectId)) setGuess(r.projectId);
+    } catch { /* no suggestion */ }
+  }
 
   // Quick add (components/QuickAdd.tsx) fills these fields from one line; they stay editable.
   const titleRef = useRef<HTMLInputElement | null>(null);
@@ -663,7 +684,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     }}>
       {!readOnly && <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="act" onClick={() => setPasting(true)}>Paste a chat</button></div>}
       <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
-      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} onBlur={guessProject} /></label>
       <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
@@ -671,6 +692,16 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         </label>
         <label className="f"><span>Due</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
+      {guess && !f.projectId && projects && (
+        <p className="suggest-line" role="status"><Help term="jev_project_guess">Suggested project</Help>: {projects.find((p) => p.id === guess)?.name}.
+          <button type="button" className="mini-btn" onClick={() => {
+            // Re-checked at the click: a project the person picked in the meantime stays.
+            setF((cur) => cur.projectId ? cur : { ...cur, projectId: guess, workstream: '', ownerRole: undefined, ownerId: (map[guess] ?? []).includes(cur.ownerId) ? cur.ownerId : '' });
+            setGuess(null);
+          }}>Use it</button>
+          <button type="button" className="mini-btn" onClick={() => setGuess(null)}>Not this</button>
+        </p>
+      )}
       {(projects || workstreams.length > 0) && (
         <div className="row">
           {projects && (

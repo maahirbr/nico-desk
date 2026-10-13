@@ -12,7 +12,7 @@ import { makeMasker, type MaskDict } from './redact';
 const URL_API = 'https://api.typesafe.ai/v1/systemone';
 const MODEL = 'jev-latest';
 const BUDGET_MS = 4000; // the whole call, retries included
-const TRIES = 2;
+const TRIES = 4; // one call and up to three retries, on 429 and 529 only
 const CACHE_MAX = 300;
 const CACHE_MS = 10 * 60 * 1000;
 

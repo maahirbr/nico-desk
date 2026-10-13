@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useJev } from './jevFlag';
+import { Select } from './Select';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { endedSortOf } from '@/lib/remember';
 import { fmtDate } from '@/lib/time';
@@ -18,7 +20,7 @@ import { NewNotices } from './NewNotices';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
-import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
+import { AddTaskForm, Modal, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { GuideNote } from './GuideNote';
@@ -49,6 +51,32 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const setDoneSort = (v: EndedSort) => keep('doneSort', v);
   const setDroppedSort = (v: EndedSort) => keep('droppedSort', v);
   const isNew = new Set(newIds);
+  // Suggested order (Jev). Off unless the person picks it. The default stays the date groups below. When Jev has no
+  // answer, the list stays as it is and a short note says so.
+  const jev = useJev();
+  const [order, setOrder] = useState<'date' | 'suggested'>('date');
+  const [ranked, setRanked] = useState<{ ids: string[]; why: Record<string, string> } | null>(null);
+  const [orderNote, setOrderNote] = useState<string | null>(null);
+  const [ordering, setOrdering] = useState(false);
+  async function pickOrder(v: string) {
+    setOrderNote(null);
+    if (v !== 'suggested') { setOrder('date'); return; }
+    setOrdering(true);
+    try {
+      const r = await api('/me/tasks/order', 'POST');
+      if (r?.ok && Array.isArray(r.ids)) { setRanked({ ids: r.ids, why: r.why ?? {} }); setOrder('suggested'); }
+      else { setOrder('date'); setOrderNote('No suggestion right now. Showing the default order.'); }
+    } catch { setOrder('date'); setOrderNote('No suggestion right now. Showing the default order.'); }
+    finally { setOrdering(false); }
+  }
+  const suggested = order === 'suggested' && ranked
+    ? (() => {
+        const byId = new Map(mine.map((t) => [t.id, t]));
+        const first = ranked.ids.map((id) => byId.get(id)).filter((t): t is Task => !!t);
+        const seen = new Set(first.map((t) => t.id));
+        return [...first, ...mine.filter((t) => !seen.has(t.id))];
+      })()
+    : null;
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : '', t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const groups = [
     { key: 'late', label: 'Late', items: mine.filter((t) => t.dueOn < today) },
@@ -98,7 +126,26 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         </div>
       )}
 
-      {groups.map((g) => (
+      {jev && !readOnly && mine.length > 1 && (
+        <div className="suggest-bar">
+          <Help term="jev_order"><label className="dim" htmlFor="home-order">Order</label></Help>
+          <Select id="home-order" className="sort-pick" value={order} disabled={ordering} onChange={pickOrder}>
+            <option value="date">By date</option>
+            <option value="suggested">Suggested</option>
+          </Select>
+          {ordering && <span className="suggest-note">Reading your tasks…</span>}
+          {suggested && <span className="suggest-note">A suggestion from the words and the dates. Your own order is By date.</span>}
+          {orderNote && <span className="suggest-note" role="status">{orderNote}</span>}
+        </div>
+      )}
+
+      {suggested && (
+        <Stagger id="home-suggested" className="tlist">
+          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign={isLead} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+        </Stagger>
+      )}
+
+      {!suggested && groups.map((g) => (
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}><Help term={HEAD[g.key]}>{g.label}</Help> <span className="n">{g.items.length}</span></h2>
           <Stagger id="home" className="tlist">
