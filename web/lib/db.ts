@@ -96,7 +96,21 @@ export async function upgrade(db: Db) {
   await db.exec(VISIBILITY_UPGRADE);
   // 13 Oct: comments with @ and #, and a notice kind for a mention.
   await db.exec(COMMENTS_UPGRADE);
+  // 13 Oct: a lead's Google Meet link (encrypted refresh token).
+  await db.exec(GOOGLE_LINKS_UPGRADE);
 }
+
+// Idempotent: the google_links table, RLS on with no policies.
+export const GOOGLE_LINKS_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS google_links (
+    person_id    text PRIMARY KEY REFERENCES people(id),
+    email        text NOT NULL,
+    scopes       text[] NOT NULL DEFAULT '{}',
+    refresh_enc  text NOT NULL,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    last_used_at timestamptz
+  );
+  ALTER TABLE google_links ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: the two comment tables (RLS on, no policies) and a notices table that can hold a mention (no task, a comment).
 export const COMMENTS_UPGRADE = `

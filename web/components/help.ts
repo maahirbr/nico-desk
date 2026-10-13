@@ -122,6 +122,7 @@ export const HELP = {
   comment_urgent: 'Opens a draft in your Gmail for each person you mentioned. You press Send. The app sends nothing.',
   // Connections
   conn_from_env: 'From the server environment. This key is set where the app is hosted, not in this page. Change it in the hosting settings.',
+  conn_meet: 'Google Meet. Read only. The app lists your meetings and reads their notes and transcripts. It cannot change anything, send mail or open your other files. Disconnect ends the link.',
 
   // Connects to
   connects_to: 'Connects to. What this item is part of, what it waits on, what waits on it, and where it is mentioned. You see only what you can open.',

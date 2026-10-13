@@ -22,7 +22,7 @@ describe('help text', () => {
       'search_filters', 'search_commands', 'search_recent',
       'waiting_done', 'plan_done_looks_like', 'plan_actions', 'plan_by_subproject', 'plan_by_date', 'proposal_accept_sure',
       'paste_review', 'paste_masked',
-      'conn_from_env',
+      'conn_from_env', 'conn_meet',
     ];
     expect([...COVERED].sort()).toEqual([...HELP_TERMS].sort());
     expect([...HELP_TERMS].sort()).toEqual(Object.keys(HELP).sort());

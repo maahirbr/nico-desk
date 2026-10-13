@@ -13,19 +13,25 @@ import { SlideInd } from './motion-ui';
 
 type Op = (b: Record<string, unknown>) => Promise<boolean>;
 
-type Provider = 'granola' | 'fireflies' | 'fathom';
+type Provider = 'granola' | 'fireflies' | 'fathom' | 'google_meet';
 type Source = 'paste' | Provider | 'wispr';
 type Read = { title: string; date: string; text: string; source?: { provider: Provider; id: string; link?: string | null } };
-const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom', wispr: 'Wispr Flow' };
+const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom', google_meet: 'Google Meet', wispr: 'Wispr Flow' };
+// Google Meet is one lead's own link, so it has its own address and its own status call.
+const PATH: Record<Provider, string> = { granola: 'granola', fireflies: 'fireflies', fathom: 'fathom', google_meet: 'google-meet' };
 
 export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tasks'; busy: boolean; today: string; onRead: (b: Read) => void }) {
   const [tab, setTab] = useState<Source>('paste');
   const [f, setF] = useState({ title: '', date: today, text: '' });
+  const [meet, setMeet] = useState(false); // the Google Meet tab shows only for a lead who has connected it
+  useEffect(() => {
+    fetch('/api/v1/connections/google-meet').then((r) => (r.ok ? r.json() : null)).then((s) => setMeet(!!s?.connected)).catch(() => setMeet(false));
+  }, []);
   return (
     <div className="card imp-panel">
       <div className="imp-head"><h3>Import meeting minutes</h3></div>
       <nav className="tabs imp-tabs" aria-label="Where the minutes come from">
-        {(Object.keys(NAME) as Source[]).map((k) => (
+        {(Object.keys(NAME) as Source[]).filter((k) => k !== 'google_meet' || meet).map((k) => (
           <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-minutes" className="tab-ind" />}{NAME[k]}</button>
         ))}
       </nav>
@@ -44,7 +50,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
           </div>
         </div>
       )}
-      {(tab === 'granola' || tab === 'fireflies' || tab === 'fathom') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
+      {(tab === 'granola' || tab === 'fireflies' || tab === 'fathom' || tab === 'google_meet') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
       {tab === 'wispr' && (
         <div className="stack small">
           <p style={{ margin: 0 }}>This app can’t read Wispr Flow directly yet. Its Notetaker connects through a read-only MCP server for AI assistants such as Claude, not through a key.</p>
@@ -71,14 +77,14 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
 
   async function load(d = days, query = q) {
     setMsg(null); setRows(null);
-    const res = await fetch(`/api/v1/connections/${provider}/meetings?days=${d}${query ? `&q=${encodeURIComponent(query)}` : ''}`);
+    const res = await fetch(`/api/v1/connections/${PATH[provider]}/meetings?days=${d}${query ? `&q=${encodeURIComponent(query)}` : ''}`);
     const data = await res.json().catch(() => null);
     if (!res.ok) { setMsg(data?.error?.message ?? 'Could not load meetings.'); setRows([]); return; }
     setRows(data);
   }
   useEffect(() => {
-    fetch('/api/v1/connections').then((r) => r.json()).then((s) => {
-      const on = !!s?.[provider]?.connected;
+    fetch(provider === 'google_meet' ? '/api/v1/connections/google-meet' : '/api/v1/connections').then((r) => r.json()).then((s) => {
+      const on = !!(provider === 'google_meet' ? s : s?.[provider])?.connected;
       setStatus(on ? 'on' : 'off');
       if (on) load();
     }).catch(() => setStatus('off'));
@@ -87,7 +93,7 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
   if (status === 'loading') return <p className="small dim">Checking the connection…</p>;
   if (status === 'off') return (
     <div className="stack small">
-      <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. A lead adds the team’s {NAME[provider]} API key once: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>
+      <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. {provider === 'google_meet' ? 'A lead connects their own Google account once' : `A lead adds the team’s ${NAME[provider]} API key once`}: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>
     </div>
   );
   return (
@@ -101,7 +107,7 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
         <button className="btn ghost" onClick={() => load(days, q)}>Search</button>
       </div>
       {msg && <p className="err" role="alert">{msg}</p>}
-      {rows === null ? <p className="small dim">Loading meetings…</p> : rows.length === 0 && !msg ? <p className="small dim">No meetings in this range.</p> : (
+      {rows === null ? <p className="small dim">Loading meetings…</p> : rows.length === 0 && !msg ? <p className="small dim">{provider === 'google_meet' ? 'No Meet meetings in this range. Only meetings you were part of show here.' : 'No meetings in this range.'}</p> : (
         <div className="meet-list">
           {rows.map((m) => (
             <div key={m.id} className="meet">
@@ -112,7 +118,7 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
               <button className="btn small-btn" disabled={busy || pick === m.id} onClick={async () => {
                 setPick(m.id); setMsg(null);
                 try {
-                  const res = await fetch(`/api/v1/connections/${provider}/meetings/${encodeURIComponent(m.id)}`);
+                  const res = await fetch(`/api/v1/connections/${PATH[provider]}/meetings/${encodeURIComponent(m.id)}`);
                   const note = await res.json();
                   if (!res.ok) throw new Error(note?.error?.message ?? 'Could not fetch the meeting.');
                   if (!note.text?.trim()) throw new Error('This meeting has no summary or action items yet.');
@@ -124,6 +130,7 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
           ))}
         </div>
       )}
+      {provider === 'google_meet' && <p className="small dim" style={{ margin: 0 }}>Reads the Gemini notes when Meet made them, and the transcript when it did not. This does not record anything.</p>}
     </div>
   );
 }

@@ -340,4 +340,16 @@ CREATE TABLE reminders (
   at          timestamptz NOT NULL
 );
 CREATE INDEX reminders_person ON reminders (team_id, person_id, at);
+
+-- A lead's own Google Meet link. Only the refresh token is kept, sealed with AES-256-GCM (lib/meet.ts); the plain token
+-- is never stored. One row per person. RLS on with no policies, like every other table.
+CREATE TABLE google_links (
+  person_id    text PRIMARY KEY REFERENCES people(id),
+  email        text NOT NULL,
+  scopes       text[] NOT NULL DEFAULT '{}',
+  refresh_enc  text NOT NULL,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  last_used_at timestamptz
+);
+ALTER TABLE google_links ENABLE ROW LEVEL SECURITY;
 `;

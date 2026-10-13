@@ -108,6 +108,7 @@ export function GuideView() {
           <li><b>Team</b> lists every open task, by person or by status.</li>
           <li><b>Ledger</b> shows how each person kept their dates, and any silent slips.</li>
           <li><b>Reminders</b> write one draft per person who has late tasks. Each opens as a draft in your own Gmail. You press Send. The app sends nothing.</li>
+          <li><b>Google Meet</b> is on only when the app is set up for it. A lead connects it on Connections. It reads the notes and transcripts of meetings that lead was in. These are notes Google already made. It does not record. Recording still needs everyone&rsquo;s consent.</li>
         </ul>
       </section>
 
