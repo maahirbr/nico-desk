@@ -817,7 +817,7 @@ td .flag { margin-top: var(--space-xxs); }
 .pform .same-lead input { width: 14px; height: 14px; margin: 0; accent-color: var(--primary); }
 .pform .target-date { display: flex; flex-direction: column; gap: var(--space-xxs); flex: 2 1 300px; min-width: 0; }
 .pform .target-date > span { font: var(--type-state); color: var(--ink-2); }
-.pform .target-date-pair { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.pform .target-date-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-xs); }
 .pform .target-date-pair .sel-btn { flex: 0 0 140px; }
 .pform .target-date-pair .other-label { flex: 1 1 100%; order: 3; min-width: 0; }
 .pform .target-date-pair .datefield { flex: 1 1 140px; min-width: 0; }
