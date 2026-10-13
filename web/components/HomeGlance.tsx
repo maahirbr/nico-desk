@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   barShare, lineY, loadSummary, teamSummary, trendRuns, trendSummary, weekSummary,
   type Glance, type LoadRow, type TeamRow, type TrendWeek, type WeekSplit,
@@ -15,12 +16,13 @@ import { useRemembered } from './remember';
 // number alone: each bar has its count written beside it, and each chart has a plain sentence for screen readers.
 // The draw-in plays once per browser tab (CSS in globals.css, .glance-in) and not at all under reduced motion.
 
-function Card({ title, href, link, summary, wide, children }: { title: string; href: string; link: string; summary: string; wide?: boolean; children: React.ReactNode }) {
+// The pieces below are also used by the person page and the project page (PersonGlance, components/ProjectVisuals.tsx).
+export function Card({ title, href, link, summary, wide, children }: { title: string; href?: string; link?: string; summary: string; wide?: boolean; children: React.ReactNode }) {
   return (
     <section className={`card glance-card${wide ? ' wide' : ''}`} aria-label={title}>
       <div className="glance-head">
         <h3>{title}</h3>
-        <Link href={href} className="rlink small dim">{link}</Link>
+        {href && link && <Link href={href} className="rlink small dim">{link}</Link>}
       </div>
       <p className="glance-sr">{summary}</p>
       {children}
@@ -28,7 +30,7 @@ function Card({ title, href, link, summary, wide, children }: { title: string; h
   );
 }
 
-function WeekBar({ s }: { s: WeekSplit }) {
+export function WeekBar({ s }: { s: WeekSplit }) {
   const parts = [['done', s.done, 'Done'], ['open', s.open, 'Open'], ['late', s.late, 'Late']] as const;
   return (
     <div aria-hidden>
@@ -46,9 +48,9 @@ function WeekBar({ s }: { s: WeekSplit }) {
 
 const W = 240, H = 64, PAD = 8;
 
-function TrendLine({ weeks }: { weeks: TrendWeek[] }) {
+export function TrendLine({ weeks, subject = 'Your' }: { weeks: TrendWeek[]; subject?: string }) {
   if (weeks.every((w) => w.rate === null)) {
-    return <p className="empty glance-empty" aria-hidden>No finished tasks in the last four weeks yet. Your on-time rate shows here once something closes.</p>;
+    return <p className="empty glance-empty" aria-hidden>No finished tasks in the last four weeks yet. {subject} on-time rate shows here once something closes.</p>;
   }
   const x = (i: number) => ((i + 0.5) / weeks.length) * W;
   return (
@@ -135,22 +137,51 @@ function TeamTable({ rows }: { rows: TeamRow[] }) {
   );
 }
 
+// Whose charts these are on a teammate's page: this week and the on-time rate, the first two Home cards. The page
+// passes them only to a viewer who may see that person's on-time record (lib/service.ts personView).
+export function PersonGlance({ personId, firstName, mine, week, trend }: { personId: string; firstName: string; mine: boolean; week: WeekSplit; trend: TrendWeek[] }) {
+  const first = useFirstView(`person-glance:${personId}`);
+  const draw = typeof window === 'undefined' ? true : first;
+  const subject = mine ? 'Your' : `${firstName}'s`;
+  return (
+    <div className={`glance-grid glance-two${draw ? ' glance-in' : ''}`} suppressHydrationWarning>
+      <Card title="This week" summary={weekSummary(week)}><WeekBar s={week} /></Card>
+      <Card title="On-time rate" href={`/ledger?person=${personId}`} link="See the ledger" summary={trendSummary(trend, subject)}><TrendLine weeks={trend} subject={subject} /></Card>
+    </div>
+  );
+}
+
+// On a phone the strip starts shut, so the page opens on the person's own work. That is decided in CSS from the
+// section's data-choice ("auto" until the person has used the toggle), so the first paint is already right and
+// nothing jumps. Once they open or close it, the choice is kept (components/remember.ts) and wins on every screen.
+const PHONE = '(max-width: 767px)';
+
 export function HomeGlance({ glance }: { glance: Glance }) {
-  // Whether the strip is open comes back the next time Home is opened in this browser (components/remember.ts).
-  const [kept, keep] = useRemembered('home-glance', { open: true }, (raw) => (typeof raw.open === 'boolean' ? { open: raw.open } : {}));
+  // Whether the strip is open comes back the next time Home is opened in this browser. null means no choice yet.
+  const [kept, keep] = useRemembered('home-glance', { open: null as boolean | null }, (raw) => (typeof raw.open === 'boolean' ? { open: raw.open } : {}));
   const first = useFirstView('home-glance');
+  // Only for aria-expanded and the toggle: what "auto" means on this screen. The look itself comes from CSS.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia(PHONE);
+    setPhone(q.matches);
+    const on = () => setPhone(q.matches);
+    q.addEventListener('change', on);
+    return () => q.removeEventListener('change', on);
+  }, []);
+  const open = kept.open ?? !phone;
   // The server always writes the class, so a hard load draws in with no flash; a client visit to Home already
   // seen in this tab leaves it out, and so does reduced motion.
   const draw = typeof window === 'undefined' ? true : first;
   const { week, trend, load, team } = glance;
   return (
-    <section className="glance" aria-label="Home at a glance">
+    <section className="glance" aria-label="Home at a glance" data-choice={kept.open === null ? 'auto' : kept.open ? 'open' : 'closed'}>
       <div className="list-head">
-        <button className="log-toggle small-toggle" aria-expanded={kept.open} onClick={() => keep('open', !kept.open)}>
-          <span aria-hidden>{kept.open ? '▾' : '▸'}</span> At a glance
+        <button className="log-toggle small-toggle" aria-expanded={open} onClick={() => keep('open', !open)}>
+          <span className="glance-caret" aria-hidden /> At a glance
         </button>
       </div>
-      {kept.open && (
+      {kept.open !== false && (
         <div className={`glance-grid${draw ? ' glance-in' : ''}`} suppressHydrationWarning>
           <Card title="This week" href="/team?view=status" link="See the week" summary={weekSummary(week)}><WeekBar s={week} /></Card>
           <Card title="On-time rate" href="/ledger" link="See the ledger" summary={trendSummary(trend)}><TrendLine weeks={trend} /></Card>

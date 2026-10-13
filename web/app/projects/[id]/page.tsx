@@ -4,12 +4,14 @@ import { requireMe } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
 import { getProject, pendingProposals, planState, projectMembers, type Project } from '@/lib/plan';
+import { dueDoneByWeek, lineDates, lineSplit, taskDates, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
+import { DueDoneChart } from '@/components/ProjectVisuals';
 import { TaskBoard } from '@/components/TaskBoard';
 
 export const dynamic = 'force-dynamic';
@@ -29,26 +31,34 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const active = people.filter((x) => x.active).map((x) => ({ id: x.id, name: x.displayName, role: x.role, department: x.department }));
   const opts = active.map((x) => ({ id: x.id, name: x.name }));
   const members = await projectMembers(d, p.id);
+  const now = today();
+  // The status bar and the weekly chart read the same work the board below shows: tasks on a task board, lines on a plan board.
+  const plan = p.kind === 'plan' ? await planState(d, p.id) : null;
+  const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
+  const split = plan ? lineSplit(plan.lines, now) : taskSplit(tasks, now);
+  const weeks = dueDoneByWeek(plan ? lineDates(plan.lines) : taskDates(tasks), now);
 
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} names={names} people={opts} meId={me.person.id}
-        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={today()} />
+        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now}
+        split={split} />
+      <div className="glance-grid glance-one"><DueDoneChart weeks={weeks} /></div>
       {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
       {p.kind === 'plan' ? (
-        <PlanBoard project={p} state={await planState(d, p.id)} people={active} names={names} meId={me.person.id} today={today()} />
+        <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
       ) : (
         <TaskBoard
           projectId={p.id}
-          tasks={await projectTasks(d, p.id)}
+          tasks={tasks}
           people={active}
           names={names}
           projectNames={projectNames}
           meId={me.person.id}
           isLead={isLead}
-          today={today()}
+          today={now}
           workstreams={p.workstreams}
           proposals={await pendingProposals(d, p.id)}
           log={groupLog(await projectLog(d, p.id, 60), names, { [p.id]: p.name }).map((e) => ({

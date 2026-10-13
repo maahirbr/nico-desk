@@ -1,7 +1,8 @@
 import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
-import { createTask, newId } from './service';
+import { createTask, newId, teamTasks } from './service';
+import { lineSplit, taskSplit, type StatusSplit } from './progress';
 import { today as todayIst } from './time';
 import {
   lineLate, needsWhy, nextStepsOf, plainParse, stampRel,
@@ -134,6 +135,20 @@ export async function projectCounts(db: Tx, teamId: string, today = todayIst()) 
       overdue: s.lines.filter((l) => lineLate(l, today)).length,
       done: s.lines.filter((l) => l.status === 'Done').length,
     };
+  }
+  return out;
+}
+
+// The status bar on each project card: done, in progress, not started, blocked and late (lib/progress.ts). A task
+// board is counted from its tasks and a plan board from its lines. Every project gets an entry, empty or not.
+export async function projectSplits(db: Tx, teamId: string, today = todayIst()): Promise<Record<string, StatusSplit>> {
+  const out: Record<string, StatusSplit> = {};
+  const projects = await teamProjects(db, teamId);
+  const tasks = await teamTasks(db, teamId, today);
+  for (const p of projects) {
+    out[p.id] = p.kind === 'plan'
+      ? lineSplit((await planState(db, p.id)).lines, today)
+      : taskSplit(tasks.filter((t) => t.projectId === p.id), today);
   }
   return out;
 }

@@ -29,7 +29,7 @@ export default async function PersonRoute({ params }: { params: Promise<{ id: st
       personId={v.person.id} email={v.person.email} phone={v.phone} teamName={v.teamName} appRoles={v.person.appRoles} hasPhoto={v.hasPhoto} name={v.person.displayName} role={v.person.role} department={v.person.department} active={v.person.active}
       meId={me.person.id} isLead={isLead} today={today()} names={names} projectNames={projectNames} people={activeOpts}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
-      projects={v.projects} open={v.open} waitingOnThem={v.waitingOnThem} waitingOnOthers={v.waitingOnOthers} record={v.record}
+      projects={v.projects} open={v.open} waitingOnThem={v.waitingOnThem} waitingOnOthers={v.waitingOnOthers} record={v.record} glance={v.glance}
       recent={groupLog(v.recent, names, projectNames).slice(0, 12).map((e) => ({
         id: e.key, at: fmtStamp(e.at), whoId: e.actor_id, who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
         text: e.text, taskId: e.entity_id, task: e.taskTitle,

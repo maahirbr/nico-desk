@@ -66,7 +66,7 @@ export const HELP = {
   project_archived: 'Archived. A closed project with no open tasks. Its history stays on record. The owner, the lead or an admin can restore it.',
   project_internal: 'Internal. A project run by our own team.',
   project_partner: 'Partner or collaboration. A project run with people outside the team. It has a plan with lines of work.',
-  project_progress: 'Progress. The share of tasks, or of plan lines, that are done.',
+  project_progress: 'Progress. How the tasks, or the plan lines, split by status. A late one counts as late only, so the parts add up to the total. Dropped tasks are left out.',
 
   // Task board
   tile_open: 'Open. Tasks that are not done and not dropped.',

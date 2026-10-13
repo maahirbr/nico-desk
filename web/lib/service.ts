@@ -1,6 +1,7 @@
 import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
+import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { isLeadOrAdmin } from './roles';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
@@ -898,6 +899,7 @@ export type PersonView = {
   waitingOnOthers: Task[]; // their open tasks blocked on someone else
   recent: (LogLine & { taskTitle: string })[]; // events on their tasks, or made by them, newest first
   record: OnTimeRecord | null; // null unless the viewer is a lead, an admin, or this person (the ledger's own rule)
+  glance: { week: WeekSplit; trend: TrendWeek[] } | null; // the Home charts for this person, shown under the same rule as record
   phone: string | null; // shown to signed-in teammates only: this view is built for the viewer's own team
   teamName: string;
   hasPhoto: boolean; // an uploaded photo exists (the profile form offers Remove only then)
@@ -952,6 +954,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
     recent: rec.rows,
     record,
+    glance: mayRecord ? { week: weekSplit(tasks, personId, today), trend: onTimeTrend(tasks, personId, today) } : null,
     phone: ph.rows[0]?.phone ?? null,
     teamName: ph.rows[0]?.team_name ?? '',
     hasPhoto: ph.rows[0]?.has_photo ?? false,
