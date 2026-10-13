@@ -7,6 +7,8 @@ import { PersonLink } from './chips';
 import { DateField } from './DateField';
 import { Help } from './HelpMode';
 import { Select } from './Select';
+import { useJev } from './jevFlag';
+import { api } from './task-ui';
 import { SlideInd } from './motion-ui';
 import { isRealEnter } from './ime';
 
@@ -129,16 +131,46 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
   );
 }
 
-export function Inbox({ mode, proposals, lines = [], people = [], workstreams = [], busy, today, op }: {
+// What Jev noted about one draft (lib/jevUses.ts DraftCheck). Notes only: the owner and date rule stays in the badge.
+type Check = { wording: 'not_a_task' | 'vague' | 'clear' | null; duplicate: { taskId: string; title: string } | null };
+const checkNotes = (c: Check | undefined): string[] => !c ? [] : [
+  c.wording === 'not_a_task' ? 'Reads like a remark, not a task.' : c.wording === 'vague' ? 'The wording is vague. Say what done looks like.' : '',
+  c.duplicate ? `May repeat an open task: ${c.duplicate.title}` : '',
+].filter(Boolean);
+
+export function Inbox({ mode, proposals, lines = [], people = [], workstreams = [], busy, today, op, projectId }: {
   mode: 'plan' | 'tasks'; proposals: Proposal[]; lines?: PlanLine[]; people?: { id: string; name: string }[]; workstreams?: string[];
-  busy: boolean; today: string; op: Op;
+  busy: boolean; today: string; op: Op; projectId?: string;
 }) {
+  // Check drafts (Jev, tasks mode only). The lead asks; nothing runs on its own. Notes are suggestions and change nothing.
+  const jev = useJev();
+  const [checks, setChecks] = useState<Record<string, Check> | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkNote, setCheckNote] = useState<string | null>(null);
+  async function check() {
+    if (!projectId) return;
+    setChecking(true); setCheckNote(null);
+    try {
+      const r = await api(`/projects/${projectId}/check-drafts`, 'POST');
+      if (r?.ok && Array.isArray(r.checks)) {
+        setChecks(Object.fromEntries((r.checks as (Check & { id: string })[]).map((c) => [c.id, c])));
+        if (!(r.checks as Check[]).some((c) => checkNotes(c).length)) setCheckNote('Nothing to note on these drafts.');
+      } else setCheckNote('No suggestion right now.');
+    } catch { setCheckNote('No suggestion right now.'); }
+    finally { setChecking(false); }
+  }
   const [editingP, setEditingP] = useState<string | null>(null);
   const [armed, setArmed] = useState<string | null>(null);
   const batches = [...new Set(proposals.map((p) => p.batch))];
   return (
     <section className="inbox">
       <div className="inbox-head"><h2><Help term="proposals">Meeting updates</Help></h2><span className="count-badge">{proposals.length} to review</span></div>
+      {jev && mode === 'tasks' && projectId && (
+        <div className="suggest-bar">
+          <Help term="jev_check_drafts" host><button className="mini-btn" type="button" disabled={busy || checking} onClick={check}>{checking ? 'Reading…' : checks ? 'Check again' : 'Check drafts'}</button></Help>
+          {checkNote && <span className="suggest-note" role="status">{checkNote}</span>}
+        </div>
+      )}
       {batches.map((b) => {
         const items = proposals.filter((p) => p.batch === b).sort((x, y) => x.position - y.position);
         const m = items[0].meeting;
@@ -155,7 +187,7 @@ export function Inbox({ mode, proposals, lines = [], people = [], workstreams = 
                 </button>
               </div>
             </div>
-            {items.map((p) => <ProposalCard key={p.id} mode={mode} p={p} lines={lines} people={people} workstreams={workstreams} busy={busy} today={today} editing={editingP === p.id}
+            {items.map((p) => <ProposalCard key={p.id} notes={checkNotes(checks?.[p.id])} mode={mode} p={p} lines={lines} people={people} workstreams={workstreams} busy={busy} today={today} editing={editingP === p.id}
               onEdit={() => setEditingP(editingP === p.id ? null : p.id)} op={op} />)}
           </div>
         );
@@ -164,8 +196,8 @@ export function Inbox({ mode, proposals, lines = [], people = [], workstreams = 
   );
 }
 
-function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editing, onEdit, op }: {
-  mode: 'plan' | 'tasks'; p: Proposal; lines: PlanLine[]; people: { id: string; name: string }[]; workstreams: string[];
+function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editing, onEdit, op, notes = [] }: {
+  notes?: string[]; mode: 'plan' | 'tasks'; p: Proposal; lines: PlanLine[]; people: { id: string; name: string }[]; workstreams: string[];
   busy: boolean; today: string; editing: boolean; onEdit: () => void; op: Op;
 }) {
   const [lineId, setLineId] = useState(p.lineId ?? '');
@@ -216,6 +248,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
           </div>
         </div>
       )}
+      {notes.map((n) => <p key={n} className="suggest-line">{n}</p>)}
       <div className="row pc-actions">
         <button className="btn small-btn" disabled={busy || (mode === 'tasks' && unsure)} title={mode === 'tasks' && unsure ? 'Pick an owner, and a date under Edit' : undefined} onClick={() => op({
           op: 'acceptProposal', proposalId: p.id, lineId: lineId || null,

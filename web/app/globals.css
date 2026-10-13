@@ -819,6 +819,12 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .list-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; margin: 0 0 var(--space-xs); }
 .list-head .small-toggle { margin: 0; }
 .sort-pick { font: var(--type-meta); }
+/* Jev suggestions: quiet and plainly marked. A hairline on the left, small text, no colour of their own. */
+.suggest-bar { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin: 0 0 var(--space-sm); font: var(--type-meta); }
+.suggest-note { font: var(--type-meta); color: var(--ink-3); }
+.suggest-line { font: var(--type-meta); color: var(--ink-2); border-left: var(--rule) solid var(--line-strong); padding-left: var(--space-sm); margin: var(--space-xxs) 0 0; }
+.suggest-line .mini-btn { margin-left: var(--space-xs); }
+.health-hint { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin: 0 0 var(--space-md); font: var(--type-meta); color: var(--ink-2); }
 .st-wrap, .status-picker { display: inline-flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
 td .flag { margin-top: var(--space-xxs); }
 

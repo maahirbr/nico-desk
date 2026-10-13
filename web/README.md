@@ -53,6 +53,21 @@ ID token, then `checkSignIn` lets in only an active roster person on `NICO_ALLOW
 `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`). The roster picker stays for local runs
 (`NICO_DEV_SIGNIN=1`).
 
+### Jev uses (suggestions only)
+
+With `NICO_JEV` on (and `TYPESAFE_API_KEY`; hosted also needs `NICO_JEV_LIVE`), five small checks run through
+`lib/jevUses.ts`. Each one finds candidates in code, asks Jev, then merges in code. An answer needs 0.6 confidence
+(yes/no 0.65). An error or a low answer shows nothing. Nothing is saved or changed. With the flag off the screens show
+nothing new.
+
+- Home `/me`: a "Suggested" sort next to By date (the default). It falls back and says so.
+- Project page, lead only: "Suggest how it is going" (on track, at risk or slipping) from the last 14 days of notes.
+- Minutes queue: "Check drafts" notes vague wording and a likely repeat of an open task.
+- Task drawer: a new comment can offer the usual done or blocked banner.
+- New task: a suggested project, filled only while the field is empty.
+
+Not built: "is this reminder still needed", and the sort on the Team page.
+
 ### Projects
 
 `/projects` lists every project; each has its own page with a header (eyebrow, phase, launch

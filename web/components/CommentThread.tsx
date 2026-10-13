@@ -193,8 +193,9 @@ function Parts({ parts, drawer, open }: { parts: Part[]; drawer: boolean; open: 
 
 // subjectTitle names the task or project in the Gmail draft. drawer says a task drawer is on this page, so a #task opens it
 // there; without one the link goes to the task's own page.
-export function CommentThread({ subjectKind, subjectId, subjectTitle, people, drawer }: {
+export function CommentThread({ subjectKind, subjectId, subjectTitle, people, drawer, onPosted }: {
   subjectKind: 'task' | 'project'; subjectId: string; subjectTitle: string; people: Person[]; drawer: boolean;
+  onPosted?: (plainText: string) => void; // a task's drawer uses it to ask for a status nudge (Jev). It only offers.
 }) {
   const readOnly = useReadOnly();
   const [, openTask] = useOpenTask();
@@ -227,6 +228,7 @@ export function CommentThread({ subjectKind, subjectId, subjectTitle, people, dr
     setList((l) => [...(l ?? []), r.comment]);
     setFresh(r.comment.id);
     offerMail(r, urgent);
+    if (onPosted) onPosted(plain(r.comment.parts));
   }
   async function save(id: string, body: string, urgent: boolean) {
     const r: CommentResult = await api(`/comments/${id}`, 'PATCH', { body });

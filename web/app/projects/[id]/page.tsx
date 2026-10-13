@@ -15,6 +15,7 @@ import { ConnectsTo } from '@/components/ConnectsTo';
 import { threadsFor } from '@/lib/threads';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
+import { ProjectHealth } from '@/components/ProjectHealth';
 import { DueDoneChart } from '@/components/ProjectVisuals';
 import { TaskBoard } from '@/components/TaskBoard';
 
@@ -48,6 +49,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id}
         canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now}
         split={split} />
+      {/* A suggestion for the lead, drawn only while Jev is on. It is not stored and sets no status. */}
+      {!p.archivedAt && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin) && <ProjectHealth projectId={p.id} late={split.late} blocked={split.blocked} />}
       <div className="glance-grid glance-one"><DueDoneChart weeks={weeks} /></div>
       {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>

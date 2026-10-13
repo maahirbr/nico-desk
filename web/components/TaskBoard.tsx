@@ -235,7 +235,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       {importOpen && <ImportPanel what="tasks" busy={busy} today={today} onRead={async (b) => { if (await planOp({ op: 'importMinutes', ...b })) setImportOpen(false); }} />}
       {addOpen && <AddTask projectId={projectId} people={people} meId={meId} today={today} workstreams={wsList} defaultWs={ws !== 'All' && ws !== '__none' ? ws : ''} onDone={() => setAddOpen(false)} />}
       {(error || note) && <p className={error ? 'err banner' : 'ok banner'} role={error ? 'alert' : 'status'}>{error ?? note}</p>}
-      {!readOnly && proposals.length > 0 && <Inbox mode="tasks" proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
+      {!readOnly && proposals.length > 0 && <Inbox mode="tasks" projectId={projectId} proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
 
       <div className="pills">
         <button className="pill" aria-pressed={!who} onClick={() => setWho(null)}>Everyone ({open.length})</button>
