@@ -5,6 +5,7 @@ import type { Task } from '@/lib/derive';
 import { canUndo, planUndo, type UndoField } from '@/lib/undo';
 import { useReadOnly } from './readonly';
 import { notify } from './toast';
+import { playFor } from './sound';
 import { useViewer } from './viewer';
 
 // "Marked done. Undo" for six seconds. An undo is a new change through the same API and rules as any
@@ -15,6 +16,7 @@ async function call(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
     method, headers: body === undefined ? undefined : { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
   });
+  playFor(method, path, body, res.ok);
   const data = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error?.message ?? `Request failed (${res.status}).`);
   return data;

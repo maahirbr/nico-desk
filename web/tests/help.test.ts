@@ -7,7 +7,7 @@ describe('help text', () => {
       'status_todo', 'status_doing', 'status_blocked', 'status_done', 'status_dropped',
       'late', 'at_risk', 'ahead', 'on_time', 'flagged_early', 'missed', 'on_time_record', 'slipped_silently',
       'ledger_kept', 'ledger_closed_ok', 'ledger_closed_late', 'ledger_pastdue',
-      'moved_date', 'moved_in_time', 'blocked_on', 'project_owner', 'project_lead', 'view_as',
+      'moved_date', 'moved_in_time', 'blocked_on', 'project_owner', 'project_lead', 'sounds', 'view_as',
       'remind_gmail', 'remind_mail', 'remind_copy',
       // coverage pass of 13 Oct
       'group_today', 'group_this_week', 'group_later', 'overdue', 'waiting_on_you', 'updates_for_you', 'mark_seen', 'your_projects', 'done_this_week',

@@ -48,6 +48,7 @@ export default async function Home() {
       mine={[...mine.assigned, ...mine.tasks]}
       newIds={mine.assigned.map((x) => x.id)}
       assignedNotice={assignedNotice}
+      noticeIds={notices.map((n) => n.id)}
       movedAway={movedAway}
       waiting={mine.blockedOnMe}
       done={doneThisWeek}

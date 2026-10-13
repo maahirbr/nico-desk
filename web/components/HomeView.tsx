@@ -13,6 +13,7 @@ import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
+import { NewNotices } from './NewNotices';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
@@ -27,9 +28,9 @@ const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', wee
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, glance }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, glance }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; movedAway: MovedAway[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[]; glance: Glance;
 }) {
@@ -69,6 +70,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text"><Help term="overdue">{overdue} late</Help></span></>}</> : 'Nothing open'}
             {waiting.length > 0 && <> · {waiting.length} <Help term="waiting_on_you">waiting on you</Help></>}
             <span className="dim"> · {fmtDate(today)}</span>
+            <NewNotices known={noticeIds} />
           </p>
         </div>
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}

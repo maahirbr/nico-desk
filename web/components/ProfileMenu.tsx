@@ -6,20 +6,22 @@ import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './chips';
 import { Help } from './HelpMode';
 import { SKINS, SKIN_COOKIE, skinOf, type SkinId } from './skins';
+import { SOUND_COOKIE, play } from './sound';
 import { THEMES, THEME_COOKIE, themeOf, type ThemeId } from './theme';
 import { setView, type ViewPerson } from './ViewAs';
 
 // The one place for "you" at the foot of the sidebar: who you are, switching person (admins),
-// the skin, light or dark, keyboard shortcuts and sign out. The skin and the theme go in cookies so the server can set
-// data-skin and data-theme before first paint.
+// the skin, light or dark, sounds, keyboard shortcuts and sign out. The skin and the theme go in cookies so the server can set
+// data-skin and data-theme before first paint. Sounds is the nd_sound cookie (components/sound.ts), off until switched on.
 
 // viewPeople is null unless the real session person is an admin; the server checks again on every call.
-type Props = { meId: string; name: string; email: string; role: string; initial: SkinId; initialTheme: ThemeId; viewPeople: ViewPerson[] | null; viewingId: string | null };
+type Props = { meId: string; name: string; email: string; role: string; initial: SkinId; initialTheme: ThemeId; initialSound: boolean; viewPeople: ViewPerson[] | null; viewingId: string | null };
 
-export function ProfileMenu({ meId, name, email, role, initial, initialTheme, viewPeople, viewingId }: Props) {
+export function ProfileMenu({ meId, name, email, role, initial, initialTheme, initialSound, viewPeople, viewingId }: Props) {
   const router = useRouter();
   const [skin, setSkin] = useState<SkinId>(initial);
   const [theme, setTheme] = useState<ThemeId>(initialTheme);
+  const [sound, setSound] = useState(initialSound);
   const [open, setOpen] = useState(false);
   const [looks, setLooks] = useState(false);
   const [who, setWho] = useState(false);
@@ -47,6 +49,12 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, vi
     if (next === 'system') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.dataset.theme = next;
     document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=31536000; SameSite=Lax`;
+  };
+  const toggleSound = () => {
+    const next = !sound;
+    setSound(next);
+    document.cookie = `${SOUND_COOKIE}=${next ? '1' : '0'}; path=/; max-age=31536000; SameSite=Lax`;
+    if (next) play('ping'); // the click lets the browser play, and the person hears what they chose
   };
   const viewAs = async (id: string | null) => {
     setOpen(false);
@@ -119,6 +127,14 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, vi
                 </div>
               </div>
             )}
+          </div>
+          <div className="pm-looks">
+            <Help term="sounds" host><button role="menuitemcheckbox" aria-checked={sound} onClick={toggleSound}>
+              <svg className="pm-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" />
+              </svg>
+              Sounds<span className="pm-current">{sound ? 'On' : 'Off'}</span>
+            </button></Help>
           </div>
           <Link role="menuitem" className="pm-sep" href="/guide" onClick={() => setOpen(false)}>Guide</Link>
           <button role="menuitem" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>
