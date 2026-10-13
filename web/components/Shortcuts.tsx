@@ -2,17 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { isTyping } from './keys';
+import { isTyping, SHORTCUTS } from './keys';
 import { Modal } from './task-ui';
 
 // Single-key shortcuts for the whole app. "/" and Ctrl/Cmd+K live in TopSearch, next to the box they focus.
-
-const LIST: [string, string][] = [
-  ['/ or Ctrl/Cmd K', 'Search'],
-  ['n', 'New task'],
-  ['?', 'Help mode on or off'],
-  ['Esc', 'Close a panel, a menu or the search'],
-];
 
 export function Shortcuts() {
   const router = useRouter();
@@ -40,7 +33,7 @@ export function Shortcuts() {
   return (
     <Modal title="Keyboard shortcuts" onClose={() => setHelp(false)}>
       <dl className="keylist">
-        {LIST.map(([k, what]) => (<div key={k}><dt><kbd className="kbd-key">{k}</kbd></dt><dd>{what}</dd></div>))}
+        {SHORTCUTS.map(([k, what]) => (<div key={k}><dt><kbd className="kbd-key">{k}</kbd></dt><dd>{what}</dd></div>))}
       </dl>
     </Modal>
   );
