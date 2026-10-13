@@ -685,8 +685,10 @@ async function rolesOf(tx: Tx, teamId: string, personId: string): Promise<Set<st
 }
 
 export async function createProject(db: Db, meId: string, teamId: string, input: ProjectInput): Promise<Project> {
+  // Anyone on the team may start a project, big or small, at the PM's call (13 Oct). Editing it stays with its owner,
+  // its lead, a team lead or an admin (updateProject).
   const roles = await rolesOf(db, teamId, meId);
-  if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can start a project.');
+  if (roles.size === 0) throw forbidden('You are not on this team.');
   const c = clean(input);
   const id = newId('prj');
   await db.transaction(async (tx) => {

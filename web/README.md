@@ -115,7 +115,7 @@ person: what is next for each person, overdue, this week and coming up, with a f
 status: the week's work;
 `/week` and `/status` redirect there), Projects, and More (Ledger, Reminders, Roster). Every list
 uses one line per task with one status word and, where it applies, one flag (see Statuses);
-clicking a task opens a side panel with its details, actions and history. Leads start a project
+clicking a task opens a side panel with its details, actions and history. Anyone on the team starts a project
 from Projects (name, what done looks like, date, lead, people with their project role,
 sub-projects or pillars, partner); the project's Settings edits the same fields.
 

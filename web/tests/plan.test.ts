@@ -183,14 +183,15 @@ describe('starting a project', () => {
   const base = { name: 'Diwali hampers', kind: 'tasks' as const, ownerId: ME, goal: 'Hampers in every store by 25 Oct.', launchOn: '2026-10-25',
     targetLabel: 'Launch', phase: 'Sampling', workstreams: ['Hampers', 'Packaging'], members: [{ personId: 'per_bo', role: 'Packaging POC' }] };
 
-  it('lets a lead start one with roles, a date and sub-projects', async () => {
+  it('lets anyone on the team start one with roles, a date and sub-projects', async () => {
     const { createProject, projectMembers } = await import('../lib/plan');
     const p = await createProject(db, ME, TEAM_ID, base);
     expect(p).toMatchObject({ kind: 'tasks', launchOn: '2026-10-25', targetLabel: 'Launch', workstreams: ['Hampers', 'Packaging'] });
     expect(p.pills.map((x) => x.label)).toEqual(['Launch', 'Phase']);
     expect(await projectMembers(db, p.id)).toEqual([{ personId: 'per_bo', role: 'Packaging POC' }]);
     expect(await code(createProject(db, ME, TEAM_ID, base))).toBe('400 invalid_body'); // same name
-    expect(await code(createProject(db, 'per_bo', TEAM_ID, { ...base, name: 'Other' }))).toBe('403 not_allowed');
+    expect((await createProject(db, 'per_bo', TEAM_ID, { ...base, name: 'Other', ownerId: 'per_bo', members: [] })).name).toBe('Other'); // a member
+    expect(await code(createProject(db, 'per_nobody', TEAM_ID, { ...base, name: 'Outsider' }))).toBe('403 not_allowed');
   });
 
   it('gives a partner project one unnamed group when it has no sub-projects, and keeps keys on rename', async () => {

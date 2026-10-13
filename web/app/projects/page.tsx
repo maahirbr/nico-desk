@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Projects() {
   const me = await requireMe();
-  const { d, sight, names, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
+  const { d, sight, names, activeOpts, readOnly } = await lookups(me);
   const [projects, counts] = await Promise.all([seenProjects(d, me, sight), projectCounts(d, me.team.id)]);
   const t = today();
   const bySoonest = (a: (typeof projects)[number], b: (typeof projects)[number]) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999');
@@ -68,7 +68,7 @@ export default async function Projects() {
     <div className="calm">
       <header className="page-head">
         <div><h1>Projects</h1><p className="summary">{live.length} projects · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
-        {(isLead || isAdmin) && !readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
+        {!readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
       <Stagger id="projects" className="pcards">
         {live.map(card)}

@@ -553,3 +553,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   `chat_reads`, `chat_task_links`, `notices.message_id`) stay in `lib/schema.ts` and `upgrade()`, so messages already on
   the live database are kept and nothing there needs a change. The idea for later is an assistant that answers
   questions from the desk's data (ROADMAP, Later). Tests drop from 765 to 715. Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · Anyone on the team can start a project, at the PM's call.** A project need not be a big one:
+  a team's own internal work is a project too. `createProject` now asks only that the person is on the team, and
+  "+ New project" shows for everyone except under View as. Editing, archiving and adding people stay with the project's
+  owner, its lead, a team lead or an admin. Adding tasks was already open to every member (inside a project, only to its
+  people). Rollback: `git revert` this commit.
