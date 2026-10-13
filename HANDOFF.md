@@ -143,3 +143,94 @@ From the Nicobar repos:
 4. Draw the data map: each source, what it gives, who owns access, read or write.
 5. Sketch the three first screens (the week, a person, a project) in the Nicobar UI.
 6. Agree the concept and the 31 Dec criteria with the sponsor and the pilot lead by 7 Oct.
+
+## 8. Next session (written 13 Oct, nothing below is built yet)
+
+Work in this order. Each build item is spec only. Source edits still ask first.
+
+### 8.1 Release (waits on the repo owner's `db:upgrade`)
+
+1. The repo owner runs `npm run db:upgrade` on the hosted database, from a network that reaches it.
+2. Add to Vercel production: `TYPESAFE_API_KEY` (piped from `web/.env.local`, never printed),
+   `NICO_JEV=1`, `NICO_JEV_LIVE=1`, and `NICO_JOB_SECRET` (a new random 32-byte value).
+3. Deploy with `vercel --prod` from `web/`. Open `/team` and check a task note gives the status nudge.
+
+### 8.2 Security fixes (from the 13 Oct audit)
+
+The full report is `web/.data/security-audit-13-oct.md`. It is git-ignored and stays local because the
+repo is public. Do the High items first, then the Medium items, then the row level security SQL in its
+section 4.3. The SQL is a live database change, so it asks first.
+
+### 8.3 Project visibility (new, 13 Oct)
+
+The ask: selected people see only the projects they are assigned to, or were given view rights on.
+Admins see everything.
+
+- Open question for the repo owner: does "selected" mean a per-person `restricted` flag (only flagged
+  people are limited), or every member who is not a lead or admin? The default proposal is the flag,
+  because it changes nothing for the pilot until someone is flagged.
+- A project gets a `viewer` role on its membership, next to owner, lead and member.
+- A restricted person sees: projects where they hold any role, tasks they own or are named on, and
+  nothing else. Leads and admins see all.
+- Every read path needs the same filter. The places that leak project names are the risk: search
+  (local and Jev), notices, the ledger, Home charts, people pages, "Connects to", reminders and the
+  Jev masking dictionary. A map of the current read paths is in section 8.9 when it lands.
+- Tests: a restricted person gets a 404 on a project page, an empty search hit, and no project name in
+  notices or Home.
+
+### 8.4 The planned batch
+
+1. Real links: every task, project, person and page is a link that opens in a new tab on right click
+   or middle click. Filters and sort live in the URL.
+2. Workstreams 5 (comments), 6 (Connects to), 7 (sounds), 8 (motion), 9 (local search), as spec'd in
+   `docs/PLAN-13-OCT.md`. Build with Sonnet subagents in worktrees.
+3. Suggested order is a choice in the sort menu, not the default.
+4. The status nudge also shows on the full-page "Add an update" form.
+
+### 8.5 Paste to tasks (WhatsApp and similar)
+
+A box in the add flow where a person pastes copied chat messages, or uploads an exported WhatsApp
+`.txt`. The app reads it and proposes changes. Nothing changes until the person approves.
+
+- Input: pasted text, or an exported chat file. Parse each line into sender, date, time and text.
+  Handle both the iOS and Android export formats and multi-line messages.
+- Masking: everything goes through `lib/redact.ts` before it leaves the server. Add phone numbers,
+  including outside numbers that are not on the roster.
+- Model: Claude, masked, the same way the minutes-to-proposals flow in `lib/plan.ts` works.
+- Output, three kinds:
+  1. New tasks: title, owner, due date, project.
+  2. Updates to existing tasks: a status, a new due date or a note, matched to a task by title.
+  3. A note or comment on a task or project.
+- Review screen: show the app's reading of each message next to the proposal ("This message says the
+  print run is done, so mark it Done"). Each proposal has approve, edit and skip. Approve goes through
+  the normal service rules, one change each, so undo works.
+- Evals: about 20 synthetic chats in `evals/paste/`, like `evals/meetings/`, with injection cases
+  (a message that tells the model to do something) and a `check.py`.
+- Open question: keep the raw pasted text, or drop it after review? Default: drop it.
+
+### 8.6 OpenWhispr and dictation
+
+OpenWhispr types into any text field with a hotkey, so it works today with nothing built.
+
+- Check that every text field takes dictated text well: the drawer title, notes, the add box, the
+  update form. Watch for lost text on fast input and for the keyboard rule on phone.
+- Add one line to `/guide`: "You can dictate into any box with a dictation app such as OpenWhispr."
+- Later options: read OpenWhispr notes through its API (`notes:read`, per-user key, paid plan) and
+  feed them to the paste flow, or a mic button in the app.
+
+### 8.7 Other free connections
+
+Granola (read through each note-taker's own MCP sign-in) and Fireflies (API key) are already built.
+Research on the free options is in section 8.10 when it lands.
+
+### 8.8 Later
+
+Jev next uses (use cases 2, 10 and 11, then 3 to 8), the thread map (key T), install on phone (PWA),
+and team chat. The last two are overnight runs.
+
+### 8.9 Docs for the team
+
+- `docs/ROADMAP.md`: a short README for the team with this roadmap, roles not names, no em dashes.
+  Publish it as a private page too.
+- `docs/DESIGN-GUIDE.md`: a short, plain design guide the PM edits on GitHub. `DESIGN.md` stays the
+  full source.
