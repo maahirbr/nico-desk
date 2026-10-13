@@ -6,6 +6,7 @@ import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
 import { glanceOf } from '@/lib/glance';
+import { listMentions } from '@/lib/comments';
 import { HomeView } from '@/components/HomeView';
 
 export const dynamic = 'force-dynamic';
@@ -20,9 +21,9 @@ export default async function Home() {
   const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
-  const [mine, notices, all, projects, onProjects] = await Promise.all([
+  const [mine, notices, all, projects, onProjects, mentions] = await Promise.all([
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
-    myProjects(d, me.team.id, me.person.id),
+    myProjects(d, me.team.id, me.person.id), listMentions(d, me),
   ]);
   const weekStart = mondayOf(t);
   const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart).sort(latestEndedFirst);
@@ -49,6 +50,7 @@ export default async function Home() {
       newIds={mine.assigned.map((x) => x.id)}
       assignedNotice={assignedNotice}
       movedAway={movedAway}
+      mentions={mentions}
       waiting={mine.blockedOnMe}
       done={doneThisWeek}
       dropped={dropped}

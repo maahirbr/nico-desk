@@ -94,7 +94,42 @@ export async function upgrade(db: Db) {
   await db.exec(PEOPLE_PROFILE_UPGRADE);
   // 13 Oct: project visibility. A restricted person sees only their projects and the ones they were given view on.
   await db.exec(VISIBILITY_UPGRADE);
+  // 13 Oct: comments with @ and #, and a notice kind for a mention.
+  await db.exec(COMMENTS_UPGRADE);
 }
+
+// Idempotent: the two comment tables (RLS on, no policies) and a notices table that can hold a mention (no task, a comment).
+export const COMMENTS_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS comments (
+    id            text PRIMARY KEY,
+    subject_kind  text NOT NULL CHECK (subject_kind IN ('task','project')),
+    subject_id    text NOT NULL,
+    author_id     text NOT NULL REFERENCES people(id),
+    body          text NOT NULL CHECK (char_length(body) <= 2000),
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    edited_at     timestamptz,
+    deleted_at    timestamptz
+  );
+  CREATE INDEX IF NOT EXISTS comments_subject ON comments (subject_kind, subject_id, created_at);
+  ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+  CREATE TABLE IF NOT EXISTS comment_refs (
+    comment_id  text NOT NULL REFERENCES comments(id),
+    ref_kind    text NOT NULL CHECK (ref_kind IN ('person','task','project')),
+    ref_id      text NOT NULL,
+    PRIMARY KEY (comment_id, ref_kind, ref_id)
+  );
+  ALTER TABLE comment_refs ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE notices ALTER COLUMN task_id DROP NOT NULL;
+  ALTER TABLE notices ADD COLUMN IF NOT EXISTS comment_id text REFERENCES comments(id);
+  DO $$ DECLARE c text; BEGIN
+    SELECT conname INTO c FROM pg_constraint WHERE conrelid = 'notices'::regclass AND contype = 'c'
+      AND pg_get_constraintdef(oid) LIKE '%due_tomorrow%' AND pg_get_constraintdef(oid) NOT LIKE '%mentioned%';
+    IF c IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE notices DROP CONSTRAINT %I', c);
+      ALTER TABLE notices ADD CONSTRAINT notices_kind_check
+        CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned','reassigned_away','mentioned'));
+    END IF;
+  END $$;`;
 
 // Idempotent: the restricted flag and the viewers table. RLS on with no policies, like every other table.
 export const VISIBILITY_UPGRADE = `

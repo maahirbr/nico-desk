@@ -12,6 +12,7 @@ import { Help } from './HelpMode';
 import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
+import { MentionsCard } from './MentionsCard';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { UpdatesCard } from './UpdatesCard';
 import { useReadOnly } from './readonly';
@@ -22,14 +23,15 @@ import { DitherArt } from './DitherArt';
 import { GuideNote } from './GuideNote';
 import { HomeGlance } from './HomeGlance';
 import type { Glance } from '@/lib/glance';
+import type { Mention } from '@/lib/comments';
 
 const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', week: 'group_this_week', later: 'group_later' };
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, glance }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, movedAway, mentions, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, glance }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; movedAway: MovedAway[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; movedAway: MovedAway[]; mentions: Mention[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[]; glance: Glance;
 }) {
@@ -79,6 +81,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       <HomeGlance glance={glance} />
 
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
+
+      <MentionsCard items={mentions} />
 
       <MovedAwayCard items={movedAway} />
 
