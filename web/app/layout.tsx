@@ -32,7 +32,6 @@ import { listPeople, teamPhotos } from '@/lib/service';
 import { PhotoProvider } from '@/components/Avatar';
 import { localOwnerId } from '@/lib/seed';
 import { today as todayIst } from '@/lib/time';
-import { unreadTotal } from '@/lib/teamchat';
 import './tokens.css';
 import './globals.css';
 
@@ -79,7 +78,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const projectPeople = me && sight ? Object.fromEntries(Object.entries(await projectPeopleMap(await db(), me.team.id)).filter(([id]) => seesProject(sight, id))) : {};
   const mayAddTo = me && sight ? (await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles))).filter((id) => seesProject(sight, id)) : [];
   const fresh = me ? await freshFor(me, await db()) : {};
-  const chatUnread = me ? await unreadTotal(await db(), me) : 0;
   const photos = me ? await teamPhotos(await db(), me.team.id) : {};
   return (
     <html lang="en" data-skin={skin} data-theme={themeAttr(theme)} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
@@ -105,7 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="mark-sub mark-wordmark" role="img" aria-label="Nicobar" />
                 </span>
               </Link>
-              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} chatUnread={chatUnread} />
+              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
               <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme} initialSound={sound}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />

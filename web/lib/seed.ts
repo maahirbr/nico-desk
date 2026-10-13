@@ -102,7 +102,6 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
   }
 
   await seedPlan(tx, dir, people, !!local?.drop_sample_plan);
-  await seedChat(tx, dir);
   if (local) await seedLocalProjects(tx, local, people);
   // A smaller local team: a person marked merged_into hands their work to that person and leaves
   // the team. Their history stays, under their name.
@@ -116,22 +115,6 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
     await tx.query(`UPDATE plan_lines SET owner_id = $2 WHERE owner_id = $1`, [id, to]);
     await tx.query(`DELETE FROM team_members WHERE person_id = $1`, [id]);
     await tx.query(`UPDATE people SET active = false WHERE id = $1`, [id]);
-  }
-}
-
-// A few synthetic chat messages (fixtures/chat.json) with the @ and # references each body carries. A real pilot
-// (drop_samples) returns early above, so it starts with an empty chat.
-async function seedChat(tx: Tx, dir: string): Promise<void> {
-  if (!fs.existsSync(path.join(dir, 'chat.json'))) return;
-  for (const m of load(dir, 'chat.json')) {
-    await tx.query(`INSERT INTO chat_messages (id, room_kind, room_id, author_id, body, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
-      [m.id, m.room_kind, m.room_id, m.author_id, m.body, m.created_at]);
-    const seen = new Set<string>();
-    for (const t of String(m.body).matchAll(/\[\[(person|task|project):([A-Za-z0-9_-]{1,80})\]\]/g)) {
-      if (seen.has(t[0])) continue;
-      seen.add(t[0]);
-      await tx.query(`INSERT INTO chat_refs (message_id, ref_kind, ref_id) VALUES ($1,$2,$3)`, [m.id, t[1], t[2]]);
-    }
   }
 }
 

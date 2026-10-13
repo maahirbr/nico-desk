@@ -40,13 +40,11 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
 - **More uses for Jev.** A suggested order on Home (a sort option, never the default), a health line on each
   project, a check on drafted tasks, and a suggested project for a new task.
 - **Google Meet notes.** A lead can read the notes Google Meet already made, as with Granola. The app records nothing.
-- **Team chat.** A chat room per project and one for the team, with `@person` mentions. Any message can become a task.
 
 ## Now (week of 13 Oct)
 
 - Release: the database upgrade, the production secrets and a deploy.
 - Google Meet notes go live after the new Google sign-in permission is set up.
-- Small chat fixes: an edit to an older message shows without a reload, and a task made from chat says so.
 
 ## Next (week of 19 Oct, when the second team starts)
 
@@ -88,7 +86,7 @@ Nine projects and meetings, each set up as one project:
 | Set up a project and add members | Projects, roles, who sees what | A setup check-list for a new lead |
 | Meet on a rhythm | Rhythm and next date per project, an agenda from late, blocked and open items | Nothing for the pilot |
 | Run the agenda and action items | Minutes from paste, Granola, Fireflies, Fathom, Google Meet notes | A "run the meeting" view |
-| Members update their own tasks | Five status words, comments, Home, install on phone, dictation, team chat | Nothing for the pilot |
+| Members update their own tasks | Five status words, comments, Home, install on phone, dictation | Nothing for the pilot |
 | No WhatsApp reminders | Reminders open as Gmail drafts, paste a chat to tasks | A "still needed?" check before a nudge |
 | No spreadsheets | Task and plan boards, the ledger | An export for the monthly review, if leads ask |
 | A senior-team group as members | Members one by one | A saved group to add in one step |
@@ -111,6 +109,7 @@ Refine the setup from the feedback, then extend to other teams and meetings.
 
 ## Later
 
+- **An assistant (V2, V3).** Ask the desk a question and get an answer from its own data, for example "has this task been done" or "what is late on this project". It answers only from what the asker can see, and links to the tasks it used. Team chat (people messaging people) was built on 13 Oct and removed for V1, because the team already talks on WhatsApp and Google Chat and V1 should stay simple.
 - Saved groups of people, to add as members in one step.
 - An export for the monthly review.
 

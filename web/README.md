@@ -190,33 +190,6 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   /api/v1/feedback/[id]` (mark read) are admin only. Admins read the notes at `/feedback`, newest first. Nothing is
   emailed. Test: `tests/feedback.test.ts`.
 
-### Team chat
-
-- **Rooms.** One team room for everyone, and one room per project for whoever can see that project (`lib/visibility.ts`).
-  A hidden project's room reads as missing. There are no direct messages. An archived project's room is read-only.
-  A room's id is the team id or the project id.
-- **Messages.** Tables `chat_messages`, `chat_refs`, `chat_reads` and `chat_task_links` (`lib/schema.ts` and
-  `upgrade()`, RLS on), and `notices.message_id`. A body is up to 4000 characters. `@person`, `#task` and `#project` are
-  stored as tokens and checked again on the server, the same as comments. Only the author edits or deletes. A delete is
-  soft: the row stays and the room shows "Message removed". A mention writes an in-app notice and nothing else. Nothing is
-  emailed or pushed. Mentions show on Home under "Mentioned you", with a link to the room.
-- **Make a task.** The message action opens `/tasks/new?fromMessage=<id>`, filled in with the message and the room's
-  project. A person checks it and adds it. The task links back to the message, and the message shows "Task made".
-  The link is checked before the task is made, so a message the person cannot see makes nothing.
-- **Unread.** A read mark per person and room (`chat_reads`) that never moves back. The nav shows the total. Reading a
-  room also clears that room's mention notices.
-- **API** (`app/api/v1/chat/`, all through `route()`): `GET rooms`, `GET unread`, `GET rooms/[id]/messages?before=&limit=`
-  (newest page, oldest first, the cursor is a message id), `POST rooms/[id]/messages`, `POST rooms/[id]/read`,
-  `PATCH` and `DELETE messages/[id]`. View as refuses every write.
-- **UI.** `/chat` (`ChatView`) lists the rooms and shows the open one (`ChatRoom`). On a phone they are two screens with a
-  back button. A project page has a Chat card that stays shut until opened (`ProjectChat`). The room asks for the newest
-  page every 10 seconds, only while the browser tab is on screen. There are no websockets. Enter sends, Shift+Enter starts
-  a new line, and the @ and # pickers are the comment box's (`Composer` in `CommentThread.tsx`). The keyboard closes after
-  a send on a touch screen.
-- **Known limit.** A poll shows edits and removals only for the newest page. An edit to an older message shows after a reload.
-- Files: `lib/teamchat.ts`, `components/ChatView.tsx`, `ChatRoom.tsx`, `ProjectChat.tsx`, `chatLogic.ts`, `chatEvents.ts`.
-  (`lib/chat.ts` is the WhatsApp paste parser, a different thing.) Tests: `tests/teamchat.test.ts`,
-  `tests/chat-routes.test.ts`, `tests/chatLogic.test.ts`. Fixtures: `fixtures/chat.json`.
 
 ### Ledger and reasons
 

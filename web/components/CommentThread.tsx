@@ -11,7 +11,7 @@ import { useReadOnly } from './readonly';
 import { api } from './task-ui';
 import { useOpenTask } from './taskUrl';
 import { notify } from './toast';
-import { composing, isRealEnter } from './ime';
+import { composing } from './ime';
 import { Count } from './LimitNotice';
 
 // Comments on a task or a project. Typing @ or # opens a picker; a pick puts the name in the text and remembers the id,
@@ -19,19 +19,18 @@ import { Count } from './LimitNotice';
 // Nothing is emailed from here: "Urgent: also email" only shows Gmail links that open a draft the writer sends.
 // The mobile keyboard rule is met by components/KeyboardDismiss.tsx, which covers every field in the app.
 
-export type Person = { id: string; name: string };
+type Person = { id: string; name: string };
 type Choice = { kind: 'person' | 'task' | 'project'; id: string; label: string; sub?: string };
 type Pick = { at: number; mark: '@' | '#'; word: string };
 type Sent = { mail: MailTarget[]; text: string; by: string };
 
 const MAX_TYPED = 1500; // leaves room for the tokens, which are longer than the names they stand for
-const MAX_TYPED_CHAT = 3500; // a chat message holds 4000 (lib/teamchat.ts), with the same room left for tokens
 const tokenOf = (c: Choice) => `[[${c.kind}:${c.id}]]`;
 const labelOf = (c: Choice) => (c.kind === 'person' ? '@' : '#') + c.label.replace(/\s+/g, ' ').trim();
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // The text the writer sees for a saved comment, and the label-to-token map that goes with it.
-export function editable(parts: Part[]): { text: string; map: [string, string][] } {
+function editable(parts: Part[]): { text: string; map: [string, string][] } {
   const map: [string, string][] = [];
   const text = parts.map((p) => {
     if (p.t === 'text') return p.text;
@@ -45,13 +44,10 @@ export function editable(parts: Part[]): { text: string; map: [string, string][]
 
 const plain = (parts: Part[]) => parts.map((p) => (p.t === 'text' ? p.text : p.t === 'person' ? `@${p.name}` : p.t === 'task' ? p.title : p.t === 'project' ? p.name : 'a hidden item')).join('');
 
-// chat: the box for a chat room (components/ChatRoom.tsx). Enter sends and Shift+Enter starts a new line. There is no
-// "Urgent" option, because a mention in chat already writes a notice. On a phone the keyboard closes after a send.
-export function Composer({ people, initial, label, resetOnPost, submit, onCancel, chat }: {
+function Composer({ people, initial, label, resetOnPost, submit, onCancel }: {
   people: Person[]; initial?: { text: string; map: [string, string][] }; label: string; resetOnPost?: boolean;
-  submit: (body: string, urgent: boolean) => Promise<void>; onCancel?: () => void; chat?: boolean;
+  submit: (body: string, urgent: boolean) => Promise<void>; onCancel?: () => void;
 }) {
-  const max = chat ? MAX_TYPED_CHAT : MAX_TYPED;
   const [text, setText] = useState(initial?.text ?? '');
   const map = useRef(new Map<string, string>(initial?.map ?? []));
   const [urgent, setUrgent] = useState(false);
@@ -122,8 +118,6 @@ export function Composer({ people, initial, label, resetOnPost, submit, onCancel
     try {
       await submit(tokenize(), urgent);
       if (resetOnPost) { setText(''); map.current.clear(); setUrgent(false); }
-      // The mobile keyboard rule: return closes the keyboard. A desktop keeps the cursor in the box to go on writing.
-      if (chat && window.matchMedia('(pointer: coarse)').matches) ta.current?.blur();
     } catch (e) { setErr((e as Error).message); }
     setBusy(false);
   }
@@ -138,14 +132,13 @@ export function Composer({ people, initial, label, resetOnPost, submit, onCancel
         if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); choose(found[sel]); return; }
       }
     }
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void post(); return; }
-    if (chat && isRealEnter(e) && !e.shiftKey && !e.altKey) { e.preventDefault(); void post(); }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void post(); }
   }
 
   return (
     <div className="cm-form">
       <textarea
-        ref={ta} rows={chat ? 2 : 3} value={text} maxLength={max} aria-label={label} placeholder={label}
+        ref={ta} rows={3} value={text} maxLength={MAX_TYPED} aria-label={label} placeholder={label}
         role="combobox" aria-expanded={!!pick && found.length > 0} aria-controls={listId} aria-autocomplete="list"
         onChange={(e) => { setText(e.target.value); look(e.target.value, e.target.selectionStart); }}
         onClick={(e) => look(text, e.currentTarget.selectionStart)}
@@ -153,7 +146,7 @@ export function Composer({ people, initial, label, resetOnPost, submit, onCancel
         onKeyDown={onKeyDown}
         onBlur={() => setTimeout(() => { if (!picking.current) setPick(null); }, 150)}
       />
-      <Count value={text} max={max} />
+      <Count value={text} max={MAX_TYPED} />
       {pick && found.length > 0 && (
         <ul className="cm-pick" id={listId} role="listbox" aria-label={pick.mark === '@' ? 'People' : 'Tasks and projects'}>
           {found.map((c, i) => (
@@ -169,15 +162,12 @@ export function Composer({ people, initial, label, resetOnPost, submit, onCancel
           {chips.map((label) => <li key={label} className={`cm-chip${opened.current.has(label) ? '' : ' cm-chip-new'}`}>{label}</li>)}
         </ul>
       )}
-      <p className="hint cm-hint">
-        {chat ? <Help term="chat_mention">Type @ for a person</Help> : <Help term="comment_mention">Type @ for a person</Help>}. Type # for a task or a project.
-        {chat && ' Enter sends. Shift+Enter starts a new line.'}
-      </p>
+      <p className="hint cm-hint"><Help term="comment_mention">Type @ for a person</Help>. Type # for a task or a project.</p>
       <div className="cm-bar">
-        {!chat && <label className="cm-urgent"><input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} /> <Help term="comment_urgent">Urgent: also email</Help></label>}
+        <label className="cm-urgent"><input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} /> <Help term="comment_urgent">Urgent: also email</Help></label>
         <span className="cm-btns">
           {onCancel && <button type="button" className="act" onClick={onCancel}>Cancel</button>}
-          <button type="button" className="btn" disabled={busy || !text.trim()} onClick={post}>{busy ? (chat && !onCancel ? 'Sending…' : 'Saving…') : onCancel ? 'Save' : chat ? 'Send' : 'Post'}</button>
+          <button type="button" className="btn" disabled={busy || !text.trim()} onClick={post}>{busy ? 'Saving…' : onCancel ? 'Save' : 'Post'}</button>
         </span>
       </div>
       {err && <p className="err" role="alert">{err}</p>}
@@ -185,7 +175,7 @@ export function Composer({ people, initial, label, resetOnPost, submit, onCancel
   );
 }
 
-export function Parts({ parts, drawer, open }: { parts: Part[]; drawer: boolean; open: (id: string) => void }) {
+function Parts({ parts, drawer, open }: { parts: Part[]; drawer: boolean; open: (id: string) => void }) {
   return (
     <>
       {parts.map((p, i) => {

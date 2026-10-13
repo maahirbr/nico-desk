@@ -12,8 +12,6 @@ import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { CommentThread } from '@/components/CommentThread';
-import { ProjectChat } from '@/components/ProjectChat';
-import { listRooms } from '@/lib/teamchat';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
 import { ProjectHealth } from '@/components/ProjectHealth';
@@ -38,7 +36,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const opts = active.map((x) => ({ id: x.id, name: x.name }));
   const [members, viewers] = await Promise.all([projectMembers(d, p.id), projectViewers(d, p.id)]);
   const now = today();
-  const chatUnread = (await listRooms(d, me)).find((r) => r.id === p.id)?.unread ?? 0;
   // The lead's health line reads the same work the board shows: tasks on a task board, lines on a plan board.
   const plan = p.kind === 'plan' ? await planState(d, p.id) : null;
   const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
@@ -79,7 +76,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         canRun={p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin} today={now} />
       {/* A suggestion for the lead, drawn only while Jev is on. It is not stored and sets no status. */}
       {!p.archivedAt && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin) && <ProjectHealth projectId={p.id} late={split.late} blocked={split.blocked} />}
-      <ProjectChat projectId={p.id} people={opts} unread={chatUnread} />
       <CommentThread subjectKind="project" subjectId={p.id} subjectTitle={p.name} people={opts} drawer={p.kind !== 'plan'} />
       </ReadOnlyProvider>
     </>

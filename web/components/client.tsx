@@ -14,7 +14,6 @@ import { playFor } from './sound';
 import { SlideInd } from './motion-ui';
 import { StatusNudge } from './StatusNudge';
 import { moveWithWords, type StatusKey } from './task-ui';
-import { CHAT_CHANGED, tabVisible } from './chatEvents';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
 
@@ -65,7 +64,6 @@ const ICON: Record<string, React.ReactNode> = {
   '/status': <path d="M4 6h16M4 12h10M4 18h6" />,
   '/ledger': <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   '/reminders': <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />,
-  '/chat': <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.6-.8L3 21l1.9-5.4A8.4 8.4 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z" />,
   '/projects': <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />,
   '/feedback': <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />,
   '/admin': <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />,
@@ -75,37 +73,16 @@ const Icon = ({ d }: { d: React.ReactNode }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>
 );
 
-const CHAT_NAV_MS = 30_000;
-
-// The unread count on the Chat entry. It starts from the number the page was built with, asks again every 30 seconds
-// while this tab is on screen, and at once when a room is read or a message goes out (chatEvents.ts).
-function useChatUnread(start: number): number {
-  const [n, setN] = useState(start);
-  useEffect(() => setN(start), [start]);
-  useEffect(() => {
-    const ask = () => {
-      if (!tabVisible()) return;
-      fetch('/api/v1/chat/unread').then((r) => (r.ok ? r.json() : null)).then((d) => { if (d && typeof d.unread === 'number') setN(d.unread); }).catch(() => {});
-    };
-    const timer = setInterval(ask, CHAT_NAV_MS);
-    window.addEventListener(CHAT_CHANGED, ask);
-    document.addEventListener('visibilitychange', ask);
-    return () => { clearInterval(timer); window.removeEventListener(CHAT_CHANGED, ask); document.removeEventListener('visibilitychange', ask); };
-  }, []);
-  return n;
-}
-
-export function Nav({ isAdmin, isLead = false, chatUnread = 0 }: { isAdmin: boolean; isLead?: boolean; chatUnread?: number }) {
+export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: boolean }) {
   const path = usePathname();
   const readOnly = useReadOnly();
-  const unread = useChatUnread(chatUnread);
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
-  const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/chat', 'Chat']];
+  const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
   const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ...(isAdmin ? [['/admin', 'Roster'], ['/feedback', 'Feedback']] : [])];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
-    <Link key={href} href={href} aria-current={here(href) ? 'page' : undefined}>{here(href) && <SlideInd group="nav" className="nav-ind" />}<Icon d={ICON[href]} />{label}{href === '/chat' && unread > 0 && <span className="nav-count" aria-label={`${unread} unread`}>{unread > 99 ? '99+' : unread}</span>}</Link>
+    <Link key={href} href={href} aria-current={here(href) ? 'page' : undefined}>{here(href) && <SlideInd group="nav" className="nav-ind" />}<Icon d={ICON[href]} />{label}</Link>
   );
   return (
     <nav className="nav" aria-label="Views">

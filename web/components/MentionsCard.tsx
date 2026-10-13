@@ -6,7 +6,7 @@ import { useState } from 'react';
 import type { Mention } from '@/lib/comments';
 import { useReadOnly } from './readonly';
 
-// "Mentioned you": comments and chat messages that tag this person with @. It is an in-app notice only, nothing is sent anywhere. Dismiss
+// "Mentioned you": comments that tag this person with @. It is an in-app notice only, nothing is sent anywhere. Dismiss
 // marks the notice read, and so does following the link. While an admin views as this person, it shows but cannot be changed.
 
 export function MentionsCard({ items }: { items: Mention[] }) {
@@ -32,8 +32,8 @@ export function MentionsCard({ items }: { items: Mention[] }) {
       {shown.map((i) => (
         <div key={i.noticeId} className="callout-row moved-row">
           <span className="moved-text">
-            {i.byName} {i.viaChat ? 'in chat,' : 'on'}{' '}
-            <Link className="rlink" href={i.href ?? `/${i.subjectKind}s/${i.subjectId}`} onClick={() => { if (!readOnly) read(i.noticeId).catch(() => {}); }}>{i.subjectTitle}</Link>
+            {i.byName} on{' '}
+            <Link className="rlink" href={`/${i.subjectKind}s/${i.subjectId}`} onClick={() => { if (!readOnly) read(i.noticeId).catch(() => {}); }}>{i.subjectTitle}</Link>
             : {i.snippet}
           </span>
           {!readOnly && <button className="mini-btn" onClick={() => dismiss(i.noticeId)}>Dismiss</button>}

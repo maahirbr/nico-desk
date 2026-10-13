@@ -544,3 +544,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   and Light, the setting everyone starts on, and otherwise the skin picked ("Cool", or "Warm" on Dark), so it never says
   Default when it is not. The list reads "Warm (Default)" and "Cool". The skin names in the search box stay Warm and Cool.
   Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · Team chat removed for V1, at the PM's call.** V1 should be simple, clear and easy to pick
+  up, and the team already talks on WhatsApp and Google Chat, so a third place to talk splits the conversation. Talk
+  about a task stays in its comments, and "Paste a chat" (WhatsApp to tasks) stays. The chat merge (`8de69f0`) is
+  reverted in code: the Chat tab, `/chat`, the project-page chat card, the chat API, "Make a task" from a message, the
+  unread count, chat mentions on Home, its help terms, CSS, fixtures and tests. The tables (`chat_messages`, `chat_refs`,
+  `chat_reads`, `chat_task_links`, `notices.message_id`) stay in `lib/schema.ts` and `upgrade()`, so messages already on
+  the live database are kept and nothing there needs a change. The idea for later is an assistant that answers
+  questions from the desk's data (ROADMAP, Later). Tests drop from 765 to 715. Rollback: `git revert` this commit.
