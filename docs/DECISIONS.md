@@ -392,3 +392,27 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   textarea shrank to 10px and the title vanished. `flex-shrink: 0` keeps it at its content height. Checked at 375px with
   the drawer scrolling: 37.5px. The reported missing nudge on a no-project task opened from a project page did not
   reproduce: the drawer stays mounted and the nudge shows. Rollback: remove `flex-shrink: 0` from `.drawer-title`.
+
+- **2026-10-13 · Opus 5.5 · Project form wording, at the PM's call** (branch `mvp-local-desk-look`, built on `maahir/mvp`).
+  Phase is gone from the form (a project that has one keeps it and still shows it). The description is one line ("In one
+  line", same 600-character limit), "Category (optional)" replaces "Category line", the add button reads "+ Add person",
+  and the "The project" and "Dates" headings are gone. Sentence case stays, as DESIGN.md asks; whether form labels move to
+  title case is the repo owner's call. On a phone the target-date picker no longer stretches beside the date shortcuts.
+  No schema change. Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · Start a project form tidied after the PM's QC against their build.** The "why Start is off"
+  line no longer shows on a fresh form: Start stays pressable, and only a try with something missing shows the reason,
+  in red above the buttons. This reverses the 13 Oct "the form says why Start or Save is off" for this form only. The
+  date label picker sits on its own row with the date and its chips below, instead of stretching to their height. On
+  the live database, at the repo owner's call: the `db:upgrade` steps ran (all idempotent; counts unchanged), one
+  pilot member was added to the roster with a placeholder email, and a pilot project got a new owner, a separate lead
+  and seven tasks finished before the desk existed, each closed on its first due date with its done events, so the
+  ledger reads them as on time. Nothing of that data is in the repo. Rollback: `git revert` this commit; the live rows
+  are ids `tsk_ns_h1` to `tsk_ns_h7`, their events, and the project event `evt_ns_owner_1310`.
+
+- **2026-10-13 · Opus 5.5 · Jev goes live on pilot data with roster masking only, at the repo owner's call (as sponsor).**
+  `NICO_JEV` and `NICO_JEV_LIVE` are set in production. Every request still goes through `lib/redact.ts`, which masks
+  the roster's people and the team's projects, emails, phones, links and amounts. `web/pilot/jev-terms.local.json` is
+  not filled, so other names written in notes or searches (vendors, studios, outside people) reach TypeSafe as written.
+  This replaces the earlier rule that the terms file is filled first. Rollback: `vercel env rm NICO_JEV_LIVE production`,
+  then redeploy (search goes local, no nudge).

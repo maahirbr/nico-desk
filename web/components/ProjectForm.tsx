@@ -55,6 +55,8 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // The reason Start is not ready shows only after a try, so a fresh form opens clean.
+  const [tried, setTried] = useState(false);
   const set = <K extends keyof ProjectValues>(k: K, v: ProjectValues[K]) => setF({ ...f, [k]: v });
   const [otherLabel, setOtherLabel] = useState(!LABELS.includes(f.targetLabel));
   const [sameLead, setSameLead] = useState(f.leadId === f.ownerId);
@@ -62,7 +64,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
   const leadId = sameLead ? f.ownerId : f.leadId;
   const taken = (id: string) => id === f.ownerId || id === leadId;
   const free = people.filter((p) => !taken(p.id) && !f.members.some((m) => m.personId === p.id));
-  // Why Start or Save is off, in plain words, shown beside the button.
+  // Why Start or Save cannot go yet, in plain words, shown above the buttons after a try.
   const why = f.name.trim().length < 2 ? 'Give the project a name.'
     : !leadId ? 'Pick a project lead, or tick that the owner is also the lead.'
     : otherLabel && !f.targetLabel.trim() ? 'Type what the date is, or pick one from the list.'
@@ -70,7 +72,9 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
 
   return (
     <form className="pform" onSubmit={async (e) => {
-      e.preventDefault(); setBusy(true); setErr(null);
+      e.preventDefault();
+      if (why) { setTried(true); return; }
+      setBusy(true); setErr(null);
       const body = {
         name: f.name, kind: f.kind, ownerId: f.ownerId, leadId, goal: f.goal, eyebrow: f.eyebrow, phase: f.phase, launchOn: f.launchOn || null,
         targetLabel: f.targetLabel, workstreams: f.workstreams, members: f.members.filter((m) => m.personId),
@@ -84,8 +88,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <fieldset>
-        <legend>The project</legend>
-        <label className="f"><span>Project name</span><input ref={focusOnDesktop} required maxLength={80} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
+        <label className="f"><span>Project name</span><input ref={focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
             <button type="button" role="radio" aria-checked={f.kind === 'tasks'} onClick={() => set('kind', 'tasks')}>
@@ -96,14 +99,13 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
             </button>
           </div>
         )}
-        <label className="f"><span>Project description (optional)</span>
-          <textarea rows={2} maxLength={GOAL_MAX} enterKeyHint="done" value={f.goal} placeholder="A line or two on what this project is" onChange={(e) => set('goal', e.target.value)} />
+        <label className="f"><span>Project description</span>
+          <input maxLength={GOAL_MAX} enterKeyHint="next" autoComplete="off" value={f.goal} placeholder="In one line" onChange={(e) => set('goal', e.target.value)} />
         </label>
-        <label className="f"><span>Category line (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
+        <label className="f"><span>Category (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & Home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
       </fieldset>
 
       <fieldset>
-        <legend>Dates</legend>
         <div className="row">
           <div className="f target-date"><span>Target date</span>
             <div className="target-date-pair">
@@ -115,7 +117,6 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
               <DateField aria-label="Target date" value={f.launchOn} onChange={(e) => set('launchOn', e.target.value)} />
             </div>
           </div>
-          <label className="f"><span>Phase (optional)</span><input maxLength={60} enterKeyHint="done" autoComplete="off" value={f.phase} placeholder="e.g. Sampling" onChange={(e) => set('phase', e.target.value)} /></label>
         </div>
       </fieldset>
 
@@ -151,12 +152,12 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
-            <input value={m.role} maxLength={60} enterKeyHint="done" autoComplete="off" placeholder="Their role in this project, e.g. Sourcing, Design" aria-label="Role on this project"
+            <input value={m.role} maxLength={60} enterKeyHint="done" autoComplete="off" placeholder="Their role in this project, e.g. Sourcing, Design, etc." aria-label="Role on this project"
               onChange={(e) => set('members', f.members.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))} />
             <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>
           </div>
         ))}
-        {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add a person and their role</button>}
+        {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
 
         {f.kind === 'plan' && (
           <>
@@ -173,10 +174,10 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       </fieldset>
 
       {err && <p className="err banner" role="alert">{err}</p>}
+      {tried && why && <p className="err small pform-why" id="pform-why" role="alert">{why}</p>}
       <div className="row pform-actions">
-        {why && <p className="dim small pform-why" id="pform-why">{why}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn" disabled={busy || !!why} aria-describedby={why ? 'pform-why' : undefined}>{editing ? 'Save project' : 'Start project'}</button>
+        <button className="btn" disabled={busy} aria-describedby={tried && why ? 'pform-why' : undefined}>{editing ? 'Save project' : 'Start project'}</button>
       </div>
     </form>
   );
