@@ -354,6 +354,12 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   The note field has `enterKeyHint="done"`, and Escape or Cancel closes the form. The dot for new changes now reads the same
   account marks. The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds the `update_seen` table; keeps all data).
   Rollback: `git revert -m 1 1bb9df7`. The table can stay.
+- 2026-10-13 · Opus 5.5 · Project form wording, at the PM's call, on branch `mvp-local-desk-look` (built on `maahir/mvp`).
+  Phase is gone from the form (a project that has one keeps it and still shows it). The description is one line ("In one
+  line", same 600-character limit), "Category (optional)" replaces "Category line", the add button reads "+ Add person",
+  and the "The project" and "Dates" headings are gone. Sentence case stays, as DESIGN.md asks; whether form labels move to
+  title case is the repo owner's call. On a phone the target-date picker no longer stretches beside the date shortcuts.
+  No schema change. Rollback: `git revert` this commit.
 - 2026-10-13 · Opus 5.5 · Start a project form tidied after the PM's QC against their build. The "why Start is off"
   line no longer shows on a fresh form: Start stays pressable, and only a try with something missing shows the reason,
   in red above the buttons. This reverses the 13 Oct "the form says why Start or Save is off" for this form only. The

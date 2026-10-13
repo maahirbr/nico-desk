@@ -88,7 +88,6 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <fieldset>
-        <legend>The project</legend>
         <label className="f"><span>Project name</span><input ref={focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
@@ -100,14 +99,13 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
             </button>
           </div>
         )}
-        <label className="f"><span>Project description (optional)</span>
-          <textarea rows={2} maxLength={GOAL_MAX} enterKeyHint="done" value={f.goal} placeholder="A line or two on what this project is" onChange={(e) => set('goal', e.target.value)} />
+        <label className="f"><span>Project description</span>
+          <input maxLength={GOAL_MAX} enterKeyHint="next" autoComplete="off" value={f.goal} placeholder="In one line" onChange={(e) => set('goal', e.target.value)} />
         </label>
-        <label className="f"><span>Category line (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
+        <label className="f"><span>Category (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & Home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
       </fieldset>
 
       <fieldset>
-        <legend>Dates</legend>
         <div className="row">
           <div className="f target-date"><span>Target date</span>
             <div className="target-date-pair">
@@ -119,7 +117,6 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
               <DateField aria-label="Target date" value={f.launchOn} onChange={(e) => set('launchOn', e.target.value)} />
             </div>
           </div>
-          <label className="f"><span>Phase (optional)</span><input maxLength={60} enterKeyHint="done" autoComplete="off" value={f.phase} placeholder="e.g. Sampling" onChange={(e) => set('phase', e.target.value)} /></label>
         </div>
       </fieldset>
 
@@ -155,12 +152,12 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
-            <input value={m.role} maxLength={60} enterKeyHint="done" autoComplete="off" placeholder="Their role in this project, e.g. Sourcing, Design" aria-label="Role on this project"
+            <input value={m.role} maxLength={60} enterKeyHint="done" autoComplete="off" placeholder="Their role in this project, e.g. Sourcing, Design, etc." aria-label="Role on this project"
               onChange={(e) => set('members', f.members.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))} />
             <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>
           </div>
         ))}
-        {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add a person and their role</button>}
+        {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
 
         {f.kind === 'plan' && (
           <>
