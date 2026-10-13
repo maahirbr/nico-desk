@@ -447,3 +447,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   the same `StatusNudge`; the click goes through the normal status calls (`moveWithWords` in `task-ui.tsx`, which the
   drawer forms now share). Under View as nothing is written, because the update post is refused first. The guide
   gained one line that a dictation app such as OpenWhispr works in any box. Rollback: git revert this commit.
+
+- **2026-10-13 · Sonnet 5.5 · DESIGN.md brought in line with the app (DESIGN-GUIDE section 8).** `DESIGN.md` outranks
+  everything visual, so a stale `DESIGN.md` misleads every later change. It still described NicoPlain, Geist, a
+  commit field, Asks and a top bar, while the app ships NicoWarm with Inter and Fraunces, a dark side nav, five status
+  words and derived flags. Every row of the guide's section 8 was rewritten against `tokens.css`, `globals.css`, the
+  components and `package.json`, and no value was copied from the guide without a check. Contrast was computed again
+  for NicoWarm only, from the current hex values. The other five skins are marked as not measured since 12 Oct. The
+  44px touch goal stays, with what the code does today stated beside it. The `npm run shots` line is gone because no
+  such script exists. Fixture first names are replaced by generic words. Section 8 of `docs/DESIGN-GUIDE.md` is now one
+  line. Docs only, no code. Rollback: `git revert <this commit>`.
