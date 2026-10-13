@@ -220,8 +220,10 @@ OpenWhispr types into any text field with a hotkey, so it works today with nothi
 
 ### 8.7 Other free connections
 
-Granola (read through each note-taker's own MCP sign-in) and Fireflies (API key) are already built.
-Research on the free options is in section 8.10 when it lands.
+Granola and Fireflies are built, both read with a team-wide API key. The research and the fixes to make
+first are in `docs/CONNECTIONS-RESEARCH.md`. Recommended next: Fathom (small, free recording, same
+shape as the current connectors), then Google Meet and Gemini notes (medium, no new vendor), then the
+Wispr Flow Notetaker through MCP, only if the team uses it.
 
 ### 8.8 Later
 
