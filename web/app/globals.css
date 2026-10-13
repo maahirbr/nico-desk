@@ -638,6 +638,14 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .empty-state { text-align: center; padding: var(--space-xxl) var(--space-md); color: var(--ink-3); border: var(--rule) dashed var(--line-strong); border-radius: var(--radius-card); margin-top: var(--space-lg); }
 .empty-state p { margin: 0 0 var(--space-sm); }
 
+/* 404 and error pages: a dither picture, a title, one plain line and the ways back. */
+.lost { max-width: 520px; margin: var(--space-xxl) auto 0; }
+.lost .dither-lost { width: 100%; height: 88px; margin-bottom: var(--space-lg); border-radius: var(--radius-card); }
+.lost h1 { margin-bottom: var(--space-xs); }
+.lost .lede { margin-bottom: var(--space-md); }
+.lost-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+@media (max-width: 860px) { .lost { margin-top: var(--space-lg); } }
+
 /* one-line task rows */
 .tlist { background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--card-shadow); }
 .trow { display: grid; grid-template-columns: 36px minmax(0, 1fr) var(--col-owner) var(--date-col-team) var(--col-status); align-items: center; gap: var(--space-xs); padding: 0 var(--space-sm) 0 var(--space-xxs);
@@ -1188,6 +1196,12 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .pm-flyout { left: calc(100% + var(--space-xs)); right: auto; top: auto; bottom: 0; min-width: 200px; }
 .pm-flyout > button { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--button-height); white-space: nowrap; }
 .pm-tick { display: inline-block; width: 1em; text-align: center; color: var(--primary); }
+/* System, Light, Dark: one row under the skin names. The picked one has a ring and the ink fill, so it reads without colour. */
+.pm-flyout > .pm-theme, .pm-flyout > .pm-theme:hover { display: flex; gap: var(--space-xxs); background: none; cursor: default; margin-top: var(--space-xxs); border-top: var(--rule) solid var(--hairline); border-radius: 0; }
+.pm-theme button { flex: 1 1 0; min-height: var(--button-height); padding: 0 var(--space-xs); font: var(--type-small); cursor: pointer; color: var(--ink-2); background: none;
+  border: var(--rule) solid var(--line-strong); border-radius: var(--radius-control); }
+.pm-theme button:hover { background: var(--sunk); color: var(--ink); }
+.pm-theme button[aria-checked="true"] { background: var(--sunk); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--ink); }
 .pm-sep { border-top: var(--rule) solid var(--hairline) !important; border-radius: 0 !important; margin-top: var(--space-xxs); }
 .keylist { margin: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
 .keylist > div { display: grid; grid-template-columns: 150px 1fr; gap: var(--space-sm); align-items: center; }

@@ -5,17 +5,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './chips';
 import { Help } from './HelpMode';
 import { SKINS, SKIN_COOKIE, skinOf, type SkinId } from './skins';
+import { THEMES, THEME_COOKIE, themeOf, type ThemeId } from './theme';
 import { setView, type ViewPerson } from './ViewAs';
 
 // The one place for "you" at the foot of the sidebar: who you are, switching person (admins),
-// the skin, keyboard shortcuts and sign out. The skin goes in a cookie so the server can set data-skin before first paint.
+// the skin, light or dark, keyboard shortcuts and sign out. The skin and the theme go in cookies so the server can set
+// data-skin and data-theme before first paint.
 
 // viewPeople is null unless the real session person is an admin; the server checks again on every call.
-type Props = { name: string; email: string; role: string; initial: SkinId; viewPeople: ViewPerson[] | null; viewingId: string | null };
+type Props = { name: string; email: string; role: string; initial: SkinId; initialTheme: ThemeId; viewPeople: ViewPerson[] | null; viewingId: string | null };
 
-export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId }: Props) {
+export function ProfileMenu({ name, email, role, initial, initialTheme, viewPeople, viewingId }: Props) {
   const router = useRouter();
   const [skin, setSkin] = useState<SkinId>(initial);
+  const [theme, setTheme] = useState<ThemeId>(initialTheme);
   const [open, setOpen] = useState(false);
   const [looks, setLooks] = useState(false);
   const [who, setWho] = useState(false);
@@ -36,6 +39,13 @@ export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId 
     setSkin(next);
     document.documentElement.dataset.skin = next;
     document.cookie = `${SKIN_COOKIE}=${next}; path=/; max-age=31536000; SameSite=Lax`;
+  };
+  const pickTheme = (id: ThemeId) => {
+    const next = themeOf(id);
+    setTheme(next);
+    if (next === 'system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.dataset.theme = next;
+    document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=31536000; SameSite=Lax`;
   };
   const viewAs = async (id: string | null) => {
     setOpen(false);
@@ -101,6 +111,11 @@ export function ProfileMenu({ name, email, role, initial, viewPeople, viewingId 
                     <span className="pm-tick" aria-hidden>{skin === s.id ? '✓' : ''}</span>{s.name}
                   </button>
                 ))}
+                <div className="pm-theme" role="radiogroup" aria-label="Light or dark">
+                  {THEMES.map((t) => (
+                    <button key={t.id} type="button" role="radio" aria-checked={theme === t.id} onClick={() => pickTheme(t.id)}>{t.name}</button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
