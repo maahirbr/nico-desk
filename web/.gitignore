@@ -5,7 +5,8 @@ next-env.d.ts
 *.tsbuildinfo
 roster.local.json
 projects.local.json
-.env*.local
+.env
+.env.*
 !.env.example
 .vercel/
 pilot/jev-terms.local.json

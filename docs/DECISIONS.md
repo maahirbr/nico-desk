@@ -416,3 +416,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   not filled, so other names written in notes or searches (vendors, studios, outside people) reach TypeSafe as written.
   This replaces the earlier rule that the terms file is filled first. Rollback: `vercel env rm NICO_JEV_LIVE production`,
   then redeploy (search goes local, no nudge).
+
+- **2026-10-13 · Opus 5.5 · Security fixes from the 13 Oct audit (HANDOFF.md 8.2), code only.** The weekly reseed route
+  is removed: the live site holds the real pilot, and a cron that can drop tables must not exist there. With
+  `DATABASE_URL` set, a derived session or job secret is refused (`lib/secret.ts`), so `NICO_SESSION_SECRET` and
+  `NICO_JOB_SECRET` must be set, and the roster picker and open demo stay off unless `NICO_ALLOW_DEMO_IN_HOSTED=1`.
+  `db()` no longer reads the job secret on Vercel. `next.config.ts` adds framing, referrer, nosniff, HSTS and
+  permissions headers, and a report-only CSP. Browsing connected meetings is lead and admin only; members paste
+  minutes. `.env` and `.env.*` are git-ignored. The RLS revoke on the live database and the unused public Supabase env
+  vars are left for the repo owner's yes. Rollback: `git revert` this commit.

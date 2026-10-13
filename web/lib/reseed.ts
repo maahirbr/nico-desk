@@ -6,7 +6,7 @@ import { seed, type LocalProjects, type RosterOverlay } from './seed';
 import { shiftDays, shiftJson } from './shift';
 
 // Hosted demo upkeep: the seeded dates go stale once a week passes (lib/shift.ts moves them by whole
-// weeks at seed time), so app/api/cron/reseed can wipe and reseed. The cron is off while the live site holds the real pilot.
+// weeks at seed time), so scripts/db-remote.ts can wipe and reseed. The reseed route was removed on 13 Oct: the live site holds the real pilot.
 
 const read = (dir: string, name: string) => JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
 

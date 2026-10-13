@@ -1,5 +1,5 @@
 // Loads the schema and the synthetic fixtures, or the git-ignored roster.local.json and projects.local.json when present, into the hosted database named by DATABASE_URL.
-// Run: npm run db:remote (reads .env.remote.local). Page loads never create or seed; app/api/cron/reseed runs the same body.
+// Run: npm run db:remote (reads .env.remote.local). Page loads never create or seed.
 import { openRemote } from '../lib/pgRemote';
 import path from 'node:path';
 import { rosterFile } from '../lib/db';

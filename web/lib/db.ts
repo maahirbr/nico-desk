@@ -153,8 +153,8 @@ function openLocal(): Promise<Db> {
 
 export function db(): Promise<Db> {
   if (!g.__ndDb) {
-    jobSecret(); // make sure the local job secret exists for npm run job:*
-    // Hosted: the schema and seed come from scripts/db-remote.ts or app/api/cron/reseed (lib/reseed.ts), never from a page load.
+    if (!process.env.VERCEL) jobSecret(); // make sure the local job secret exists for npm run job:*
+    // Hosted: the schema and seed come from scripts/db-remote.ts (lib/reseed.ts), never from a page load.
     const url = process.env.DATABASE_URL;
     const opening = url ? import('./pgRemote').then((m) => m.openRemote(url)) : openLocal();
     // A failed open must not stick for the life of a warm serverless instance.

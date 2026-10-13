@@ -151,8 +151,10 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 - The live site holds the real pilot, loaded by `NICO_ROSTER=pilot/roster.local.json npm run db:remote` from the
   git-ignored `web/pilot/` (`drop_samples` in its `projects.local.json` leaves the fixtures out).
 - Crons (`vercel.json`): a daily job at 09:00 IST calls `/api/v1/jobs/reminders` (in-app due and overdue notices
-  only, needs `CRON_SECRET`). The weekly reseed is off. `/api/cron/reseed` (`lib/reseed.ts`) still exists and never
-  wipes a database without the fixture marker task.
+  only, needs `CRON_SECRET`). The weekly reseed route was removed on 13 Oct. `lib/reseed.ts` runs only from
+  `npm run db:remote`.
+- With `DATABASE_URL` set, `NICO_SESSION_SECRET` and `NICO_JOB_SECRET` must be set (the app refuses a derived one),
+  and the roster picker and open demo stay off unless `NICO_ALLOW_DEMO_IN_HOSTED=1`.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its
   ask columns are not in the Supabase schema.
 

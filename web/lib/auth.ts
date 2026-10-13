@@ -22,7 +22,7 @@ export type Me = { person: Person; realPerson: Person; viewingAs: boolean; team:
 let cached: string | null = null;
 function secret(): string {
   if (process.env.NICO_SESSION_SECRET) return process.env.NICO_SESSION_SECRET;
-  if (process.env.VERCEL) return derivedSecret('session');
+  if (process.env.VERCEL) return derivedSecret('session', 'NICO_SESSION_SECRET');
   if (cached) return cached;
   const file = path.join(dataDir(), 'session-secret');
   fs.mkdirSync(dataDir(), { recursive: true });
@@ -98,15 +98,19 @@ export function emailAllowed(email: string): boolean {
   return (process.env.NICO_ALLOWED_EMAILS ?? '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).includes(e);
 }
 
+// A hosted database holds the real pilot, so the roster picker and the open demo stay off there even if
+// their flag is set by mistake. NICO_ALLOW_DEMO_IN_HOSTED=1 is the deliberate override.
+const hostedLock = () => !!process.env.DATABASE_URL && process.env.NICO_ALLOW_DEMO_IN_HOSTED !== '1';
+
 export function devSignInEnabled(): boolean {
-  return process.env.NICO_DEV_SIGNIN === '1';
+  return process.env.NICO_DEV_SIGNIN === '1' && !hostedLock();
 }
 
 // Open demo (NICO_OPEN_DEMO=1): no sign-in. A visitor with no session is the team lead (DEMO_PERSON
 // on the fixtures, else the first lead); the roster picker at /signin switches who they view as.
 export const DEMO_PERSON = 'per_ada';
 export function openDemo(): boolean {
-  return process.env.NICO_OPEN_DEMO === '1';
+  return process.env.NICO_OPEN_DEMO === '1' && !hostedLock();
 }
 
 // Returns the person id if they may sign in, else a reason.
