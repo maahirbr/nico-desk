@@ -174,7 +174,7 @@ Admins see everything.
   nothing else. Leads and admins see all.
 - Every read path needs the same filter. The places that leak project names are the risk: search
   (local and Jev), notices, the ledger, Home charts, people pages, "Connects to", reminders and the
-  Jev masking dictionary. A map of the current read paths is in section 8.9 when it lands.
+  Jev masking dictionary. The full map and plan: `docs/VISIBILITY-PLAN.md`.
 - Tests: a restricted person gets a 404 on a project page, an empty search hit, and no project name in
   notices or Home.
 
