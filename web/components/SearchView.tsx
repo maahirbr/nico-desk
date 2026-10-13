@@ -21,13 +21,24 @@ export function SearchView({ initial }: { initial: string }) {
   useEffect(() => {
     const term = q.trim();
     if (!term) { setHits(null); return; }
+    let stale = false;
     const t = setTimeout(async () => {
       const res = await fetch(`/api/v1/search?q=${encodeURIComponent(term)}`);
+      if (stale) return;
       setHits(res.ok ? await res.json() : []);
       setSel(0);
       window.history.replaceState(null, '', `/search?q=${encodeURIComponent(term)}`);
+      // Jev on: ask for the same results ordered by meaning. Any failure keeps the list above.
+      if (res.ok && res.headers.get('x-nico-jev') === 'on' && term.length >= 3) {
+        try {
+          const r2 = await fetch(`/api/v1/search?q=${encodeURIComponent(term)}&meaning=1`);
+          if (stale || !r2.ok || r2.headers.get('x-nico-jev') !== 'ranked') return;
+          setHits(await r2.json());
+          setSel(0);
+        } catch { /* keep the plain list */ }
+      }
     }, 180);
-    return () => clearTimeout(t);
+    return () => { stale = true; clearTimeout(t); };
   }, [q]);
 
   const kinds = (['project', 'person', 'task', 'line'] as const).filter((k) => hits?.some((h) => h.kind === k));

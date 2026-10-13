@@ -9,6 +9,7 @@ import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
+import { StatusNudge } from './StatusNudge';
 import { LINKS_PER_TASK } from '@/lib/links';
 import { groupLog } from './logText';
 import { canMoveTo } from './statusRules';
@@ -303,6 +304,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [showLog, setShowLog] = useState(false);
   const [target, setTarget] = useState<StatusKey>('todo');
   const [unNote, setUnNote] = useState('');
+  const [nudge, setNudge] = useState<{ status: StatusKey; word: string; note: string } | null>(null); // Jev's offer after a note
   const [linkForm, setLinkForm] = useState({ url: '', label: '' });
   const [closing, close] = useClosing(onClose);
   const undo = useUndo();
@@ -328,12 +330,32 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   }, [close]);
 
   // fields: what the change touched, so its toast can offer Undo (lib/undo.ts). None, no Undo.
-  async function run(fn: (v: number) => Promise<unknown>, done?: string, fields?: UndoField[]) {
-    if (!t) return;
+  async function run(fn: (v: number) => Promise<unknown>, done?: string, fields?: UndoField[]): Promise<boolean> {
+    if (!t) return false;
     setBusy(true); setErr(null);
-    try { await fn(t.version); if (done) { if (fields) undo.announce(done, t, fields); else notify(done); } setMode(null); setForm({ date: '', text: '', person: '' }); await load(); router.refresh(); }
-    catch (e) { setErr((e as Error).message); }
+    try { await fn(t.version); if (done) { if (fields) undo.announce(done, t, fields); else notify(done); } setMode(null); setForm({ date: '', text: '', person: '' }); setNudge(null); await load(); router.refresh(); return true; }
+    catch (e) { setErr((e as Error).message); return false; }
     finally { setBusy(false); }
+  }
+
+  // After a note is saved, ask Jev what status the words imply. Any failure, or Jev off, shows nothing.
+  async function saveChanges() {
+    if (!t) return;
+    const note = typeof body.note === 'string' ? body.note : '';
+    const ok = await run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved', editFields(body));
+    if (!ok || !note || !can) return;
+    try {
+      const r = await api(`/tasks/${t.id}/suggest-status`, 'POST', { text: note });
+      if (r?.suggestion) setNudge({ status: r.suggestion.status, word: r.suggestion.word, note });
+    } catch { /* no offer */ }
+  }
+  // The click. The status calls are the same as the buttons above. A status that needs words opens its form with the note filled in.
+  function acceptNudge() {
+    if (!nudge) return;
+    const { status, note } = nudge;
+    setNudge(null);
+    setForm({ date: '', text: note, person: '' });
+    setStatus(status);
   }
 
   const names = Object.fromEntries(people.map((p) => [p.id, p.name]));
@@ -476,6 +498,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               </div>
             )}
             {err && <p className="err banner" role="alert">{err}</p>}
+            {nudge && nudge.status !== key && can && canMoveTo(t, nudge.status, meId, isLead) && (
+              <StatusNudge word={nudge.word} busy={busy} onAccept={acceptNudge} onDismiss={() => setNudge(null)} />
+            )}
 
             {t.blocked && (
               <div className="ask">
@@ -545,7 +570,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {dirty && mode !== 'reassign' && (
               <div className="row">
-                <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={() => run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, ...body }), 'Changes saved', editFields(body))}>Save changes</button>
+                <button className="btn" disabled={busy || edit.title.trim().length < 3 || !ownerReady(edit.ownerId, edit.ownerRole)} onClick={saveChanges}>Save changes</button>
                 <button className="btn ghost" onClick={() => { setEdit({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined, workstream: t.workstream ?? '' }); setPickKey((k) => k + 1); }}>Discard</button>
               </div>
             )}

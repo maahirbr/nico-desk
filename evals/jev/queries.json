@@ -1,0 +1,20 @@
+{
+  "note": "Synthetic search queries over fixtures/. Each lists ids that are right answers. A query is a hit when any of them is in the top 3. Several share no word with the right answer on purpose.",
+  "queries": [
+    { "q": "hiring someone to take the photos", "expect": ["task-tsk_053", "task-tsk_047", "task-tsk_009"] },
+    { "q": "who is covering the shop floor on weekends", "expect": ["task-tsk_028"] },
+    { "q": "customer rewards programme", "expect": ["project-prj_tiers"] },
+    { "q": "the website feels slow", "expect": ["task-tsk_036", "task-tsk_017", "task-tsk_038"] },
+    { "q": "pictures for the campaign", "expect": ["task-tsk_027", "task-tsk_041", "task-tsk_002", "task-tsk_022"] },
+    { "q": "broken links on the site", "expect": ["task-tsk_030", "task-tsk_045"] },
+    { "q": "sign-up form problems", "expect": ["task-tsk_025", "task-tsk_034"] },
+    { "q": "who is free on the day of the shoot", "expect": ["task-tsk_015", "task-tsk_032"] },
+    { "q": "inventory numbers do not match", "expect": ["task-tsk_021", "task-tsk_055"] },
+    { "q": "phone layout bug", "expect": ["task-tsk_011"] },
+    { "q": "shop window", "expect": ["task-tsk_013", "task-tsk_042"] },
+    { "q": "actors for the shoot", "expect": ["task-tsk_039"] },
+    { "q": "wording of the loyalty email", "expect": ["task-tsk_035", "task-tsk_014"] },
+    { "q": "when does the shop open", "expect": ["task-tsk_004"] },
+    { "q": "video on the homepage", "expect": ["task-tsk_057", "task-tsk_016"] }
+  ]
+}

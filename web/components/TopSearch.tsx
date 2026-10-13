@@ -36,12 +36,26 @@ export function TopSearch() {
   useEffect(() => {
     const term = q.trim();
     if (!term) { setHits([]); return; }
+    let stale = false;
+    let t2: ReturnType<typeof setTimeout> | undefined;
     const t = setTimeout(async () => {
       const res = await fetch(`/api/v1/search?q=${encodeURIComponent(term)}`);
+      if (stale) return;
       setHits(res.ok ? (await res.json()).slice(0, 8) : []);
       setSel(0);
+      // Jev on: once typing pauses, ask for the same results ordered by meaning. Any failure keeps the list above.
+      if (res.ok && res.headers.get('x-nico-jev') === 'on' && term.length >= 3) {
+        t2 = setTimeout(async () => {
+          try {
+            const r2 = await fetch(`/api/v1/search?q=${encodeURIComponent(term)}&meaning=1`);
+            if (stale || !r2.ok || r2.headers.get('x-nico-jev') !== 'ranked') return;
+            setHits((await r2.json()).slice(0, 8));
+            setSel(0);
+          } catch { /* keep the plain list */ }
+        }, 600);
+      }
     }, 160);
-    return () => clearTimeout(t);
+    return () => { stale = true; clearTimeout(t); clearTimeout(t2); };
   }, [q]);
 
   const go = (href: string) => { setOpen(false); setQ(''); box.current?.blur(); router.push(href); };
