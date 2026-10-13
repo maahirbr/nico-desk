@@ -86,7 +86,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
   return (
     <>
       <div className="f">
-        <label htmlFor="say-line"><span>Quick Add (Optional)</span></label>
+        <label htmlFor="say-line"><span>Quick Add</span></label>
         <div className="say-row">
           <input id="say-line" ref={focusOnDesktop} enterKeyHint="go" autoComplete="off" maxLength={500} value={text} disabled={busy}
             placeholder={listening ? 'Listening…' : 'e.g. Ask Sam to send me the design files by Monday'}
