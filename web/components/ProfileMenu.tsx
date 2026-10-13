@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './chips';
 import { FeedbackDialog } from './FeedbackDialog';
 import { Help } from './HelpMode';
-import { SKINS, SKIN_COOKIE, skinOf, type SkinId } from './skins';
+import { SKINS, SKIN_COOKIE, appearanceLabel, skinMenuName, skinOf, type SkinId } from './skins';
 import { SOUND_COOKIE, play } from './sound';
 import { THEMES, THEME_COOKIE, themeOf, type ThemeId } from './theme';
 import { setView, type ViewPerson } from './ViewAs';
@@ -123,13 +123,13 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
               <svg className="pm-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <circle cx="12" cy="12" r="9" /><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18" fill="currentColor" stroke="none" />
               </svg>
-              Appearance<span className="pm-current">{SKINS.find((x) => x.id === skin)?.name}</span><span className="pm-chev" aria-hidden>▸</span>
+              Appearance<span className="pm-current">{appearanceLabel(skin, theme)}</span><span className="pm-chev" aria-hidden>▸</span>
             </button>
             {looks && (
               <div className="menu pm-flyout" role="menu" aria-label="Appearance">
                 {SKINS.map((s) => (
                   <button key={s.id} role="menuitemradio" aria-checked={skin === s.id} onClick={() => pick(s.id)}>
-                    <span className="pm-tick" aria-hidden>{skin === s.id ? '✓' : ''}</span>{s.name}
+                    <span className="pm-tick" aria-hidden>{skin === s.id ? '✓' : ''}</span>{skinMenuName(s.id)}
                   </button>
                 ))}
                 <div className="pm-theme" role="radiogroup" aria-label="Light or dark">

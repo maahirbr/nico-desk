@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SKINS, skinOf } from '../components/skins';
+import { SKINS, appearanceLabel, skinMenuName, skinOf } from '../components/skins';
 import { THEME_COOKIE, themeAttr, themeOf } from '../components/theme';
 import { commandsFor } from '../components/commands';
 
@@ -35,6 +35,20 @@ describe('skins', () => {
 
   it('moves a retired skin pick to Warm', () => {
     for (const old of ['a', 'b', 'c', 'i']) expect(skinOf(old)).toBe('w');
+  });
+});
+
+describe('appearance labels', () => {
+  it('says Default only on Warm and Light, else the skin picked', () => {
+    expect(appearanceLabel('w', 'light')).toBe('Default');
+    expect(appearanceLabel('w', 'dark')).toBe('Warm');
+    expect(appearanceLabel('m', 'light')).toBe('Cool');
+    expect(appearanceLabel('m', 'dark')).toBe('Cool');
+  });
+
+  it('marks the default skin in the menu', () => {
+    expect(skinMenuName('w')).toBe('Warm (Default)');
+    expect(skinMenuName('m')).toBe('Cool');
   });
 });
 

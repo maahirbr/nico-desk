@@ -539,3 +539,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   (`lib/threads.ts`, `lib/threadMap.ts`, `lib/threadLayout.ts`, `ConnectsTo.tsx`, `ThreadMapView.tsx`). Comments with
   `@` and `#` stay; they never depended on threads. Nothing was stored for threads, so there is no data or schema to undo.
   Tests drop from 833 to 763. Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · The Appearance row says "Default", at the PM's call.** The closed row reads "Default" on Warm
+  and Light, the setting everyone starts on, and otherwise the skin picked ("Cool", or "Warm" on Dark), so it never says
+  Default when it is not. The list reads "Warm (Default)" and "Cool". The skin names in the search box stay Warm and Cool.
+  Rollback: `git revert` this commit.

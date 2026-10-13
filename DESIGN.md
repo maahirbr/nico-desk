@@ -652,7 +652,7 @@ Two skins are offered, at the PM's call (13 Oct): Warm and Cool. Each comes in L
 The token blocks for the retired skins (a NicoPlain, b NicoCalm, c NicoSoft, i NicoNote) are still in `tokens.css` but are not offered. The base `:root` values (once NicoPlain) stay, since W and M override them.
 
 - The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value (including the retired `a`, `b`, `c` and `i`), the server sets `w`.
-- The switcher is the Appearance row in the account menu (the button at the bottom left of the sidebar). Its items are Warm and Cool. The same flyout holds the Light and Dark choice, and the row shows the skin name. The search box also runs "Appearance: Warm", "Cool", "Light" and "Dark".
+- The switcher is the Appearance row in the account menu (the button at the bottom left of the sidebar). Its items are Warm and Cool. The same flyout holds the Light and Dark choice. The closed row says "Default" on Warm and Light, and otherwise the skin picked ("Cool", or "Warm" on Dark). The list marks the default: "Warm (Default)" and "Cool". The search box also runs "Appearance: Warm", "Cool", "Light" and "Dark".
 - Fonts load only through `next/font/google`. No font file is committed.
 - Skin hooks, beyond colour and type: `--bar`, `--avatar-bg`, `--avatar-you-ring`, `--pill-ring`, `--callout-bg`, `--callout-line`, `--card-shadow`, `--row-pad`, `--font-date`, `--skeleton-fill`, `--toast-bg`, `--toast-ink`.
 - Text contrast. NicoWarm was measured again on 13 Oct, from the current hex values in `tokens.css`, with the WCAG relative-luminance formula. Cool (NicoOS) was not measured since 12 Oct, so its ratios are not stated here.
