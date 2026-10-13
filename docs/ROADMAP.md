@@ -25,23 +25,22 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
   extra people who may view it.
 - **Help.** A help mode explains every screen, and `/guide` covers the basics.
 - **Skins.** Several looks, with System, Light or Dark.
+- **Comments.** Comments on tasks and projects, with `@person` and `#task` links.
+- **Real links.** Every task, project and person opens in a new tab on a middle click. Filters live in the URL.
+- **Connects to.** Every task, project and person shows what it is part of, waits on and is mentioned in.
+- **Stronger local search.** Typos, filters such as `is:late` and `@name`, and commands in Cmd+K.
+- **Paste to tasks.** Paste a WhatsApp chat or upload its export, and the app proposes tasks and updates.
+  Nothing changes until the person approves. The read step needs the model key on the server.
+- **Fathom.** A lead can read meetings from Fathom, as with Granola and Fireflies.
+- **Sounds and motion.** Sounds are off by default. A motion pass covers rows, status changes and new comments.
 
 ## Now (week of 13 Oct)
 
 - Release: the database upgrade, the production secrets and a deploy.
-- Comments on tasks and projects, with `@person` and `#task` links.
-- Real links: every task, project and person opens in a new tab on a middle click. Filters live in the URL.
-- Sounds, off by default.
-- The status nudge on the full update form.
 
 ## Next (week of 19 Oct, when the second team starts)
 
-- "Connects to" on every task, project and person: what it is part of, waits on and is mentioned in.
-- Stronger local search: typos, filters such as `is:late` and `@name`, and commands in Cmd+K.
-- A motion pass.
-- Paste to tasks: paste a WhatsApp chat or upload its export, and the app proposes tasks and updates.
-  Nothing changes until the person approves.
-- More note-takers: Fathom first, then Google Meet notes.
+- Google Meet notes as a source of minutes.
 
 ## Later
 
