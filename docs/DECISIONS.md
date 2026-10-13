@@ -354,3 +354,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   per tab (bars `scaleX`, the line `stroke-dashoffset` as a third named exception, 200ms) and stops under reduced motion.
   Not checked: measured contrast, light mode, skins other than W, and reduced motion. At 375px the cards stack and the
   task list starts about a screen and a half down. No schema change. Rollback: `git revert -m 1 ce8bfdc`.
+- 2026-10-13 · Opus 5.5 · The repo owner sponsors Jev on real pilot data, on one condition: every request to TypeSafe
+  goes through a masking layer (`web/lib/redact.ts`, built in the Jev workstream). Roster names, emails, project and
+  workstream names, phone numbers, links and amounts become stable placeholders ("Person 1", "Project 1") for that one
+  request. The answer maps back in memory, and the map is never logged or stored. With `NICO_JEV_LIVE=1` masking is
+  required: if it fails, nothing is sent. Known gap: names that are not on the roster (vendors, partners) can pass
+  through in free text. Turning `NICO_JEV_LIVE` on in production is still a deploy step that asks first.
+  Rollback: unset `NICO_JEV` in Vercel env; Jev features fall back to today's behaviour.
