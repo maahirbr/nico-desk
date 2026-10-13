@@ -7,7 +7,7 @@ import { DitherArt } from '@/components/DitherArt';
 export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <div className="lost" role="alert">
-      <DitherArt field="bands" cols={56} rows={14} className="dither-lost" />
+      <DitherArt field="bands" cols={56} rows={14} className="dither-lost" fade />
       <h1>Something went wrong</h1>
       <p className="lede">This page did not load. Try again. If it keeps happening, tell the team admin.</p>
       <div className="lost-actions">

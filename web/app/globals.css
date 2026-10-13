@@ -1084,6 +1084,12 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .state-set { animation: state-set var(--dur-state) var(--ease) both; }
 .st-glyph { transform-box: fill-box; transform-origin: center; }
 .state-set .st-glyph { animation: glyph-in var(--dur-state) var(--ease) both; }
+/* The status icon morphs: the ring stays, the old glyph shrinks and fades out while the new one pops in
+   (StatusIcon in task-ui.tsx adds .st-morph and the outgoing glyph for --dur-glyph after a change). Opacity and transform. */
+@keyframes glyph-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.5); } }
+.st-glyph-out { transform-box: fill-box; transform-origin: center; animation: glyph-out var(--dur-glyph) var(--ease) both; pointer-events: none; }
+.st-morph .st-glyph { animation: glyph-in var(--dur-glyph) var(--ease) both; }
+.st-morph .st-tick { animation: tick-draw var(--dur-tick) var(--ease) both; }
 /* The done tick draws itself when a status changes to Done. It is a stroke, not a transform, and short. */
 .st-tick { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .state-set .st-tick { animation: tick-draw var(--dur-tick) var(--ease) both; }
@@ -1119,6 +1125,10 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 
 /* ---------- dithered pictures: empty states, sign-in, people header. Decoration, never under text ---------- */
 .dither { display: block; color: var(--dither-ink); pointer-events: none; }
+/* Empty states and the 404 and error pages fade in by rows, top to bottom (DitherArt with fade, one path per row).
+   --row-t runs 0 to 1 down the picture, so the whole picture is done within --dither-spread + --dur-dither. Opacity only. */
+@keyframes dither-row { from { opacity: 0; } to { opacity: 1; } }
+.dither-fade path { animation: dither-row var(--dur-dither) var(--ease) backwards; animation-delay: calc(var(--row-t, 0) * var(--dither-spread)); }
 .dither-empty { width: 144px; height: 48px; margin: 0 auto var(--space-md); }
 .dither-signin { width: 100%; height: 72px; margin-bottom: var(--space-lg); border-radius: var(--radius-card); }
 .pp-banner { position: relative; }
@@ -1255,6 +1265,7 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .dither-fade path, .st-glyph-out, .st-morph .st-glyph, .st-morph .st-tick, .cm-chip-new { animation: none; }
   .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot, .sbar-in > span { animation: none; }
   .btn:active, .pill:active, .mini-btn:active, button.stat:active, .nav .nav-new:active, .st-pick:active, .status-picker button:active,
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
@@ -1497,6 +1508,12 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .cm-head { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
 .cm-body { margin: 0; font: var(--type-meta); white-space: pre-wrap; overflow-wrap: anywhere; }
 .cm-ref { color: var(--primary); text-decoration: none; }
+/* The people, tasks and projects picked so far in the box. A new one pops in (scale from --pop-scale-from, opacity). */
+.cm-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.cm-chip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--type-meta); color: var(--ink);
+  background: var(--sunk); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); padding: var(--space-xxs) var(--space-xs); }
+@keyframes chip-pop { from { opacity: 0; transform: scale(var(--pop-scale-from)); } to { opacity: 1; transform: none; } }
+.cm-chip-new { animation: chip-pop var(--dur-pop) var(--ease) both; transform-origin: left center; }
 .cm-ref:hover { text-decoration: underline; }
 .cm-ref-btn { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
 .cm-acts { display: flex; align-items: center; gap: var(--space-md); }

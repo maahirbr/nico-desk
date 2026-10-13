@@ -31,15 +31,23 @@ export function dotOn(v: number, c: number, r: number): boolean {
   return v > (BAYER[r % 4][c % 4] + 0.5) / 16;
 }
 
-// SVG path data for a cols x rows grid, one `cell` unit square per lit dot. Deterministic.
-export function ditherPath(field: FieldName, cols: number, rows: number, cell = 1): string {
+// SVG path data for each row of a cols x rows grid, one `cell` unit square per lit dot. Deterministic.
+// An empty string means that row has no lit dot.
+export function ditherRows(field: FieldName, cols: number, rows: number, cell = 1): string[] {
   const f = FIELDS[field];
-  let d = '';
+  const out: string[] = [];
   for (let r = 0; r < rows; r++) {
+    let d = '';
     for (let c = 0; c < cols; c++) {
       const v = f((c + 0.5) / cols, (r + 0.5) / rows);
       if (dotOn(v, c, r)) d += `M${c * cell} ${r * cell}h${cell}v${cell}h${-cell}z`;
     }
+    out.push(d);
   }
-  return d;
+  return out;
+}
+
+// The same picture as one path.
+export function ditherPath(field: FieldName, cols: number, rows: number, cell = 1): string {
+  return ditherRows(field, cols, rows, cell).join('');
 }

@@ -260,8 +260,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         )}
         <div style={{ minWidth: 0 }}>
           {table(openRows, filtered
-            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
-            : <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
+            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
+            : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
           {closedRows.length > 0 && tile !== 'done' && (
             <>
               <div className="list-head" style={{ marginTop: 22 }}>

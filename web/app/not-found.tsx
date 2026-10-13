@@ -5,7 +5,7 @@ import { DitherArt } from '@/components/DitherArt';
 export default function NotFound() {
   return (
     <div className="lost">
-      <DitherArt field="hill" cols={56} rows={14} className="dither-lost" />
+      <DitherArt field="hill" cols={56} rows={14} className="dither-lost" fade />
       <h1>This page is not here</h1>
       <p className="lede">The link may be old, or the page may have moved. Go back to Home, or search for what you need.</p>
       <div className="lost-actions">

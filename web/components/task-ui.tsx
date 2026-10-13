@@ -51,19 +51,28 @@ export const STATUS: Record<StatusKey, { word: string; tone: Tone }> = {
   dropped: { word: 'Dropped', tone: 'quiet' },
 };
 
-// Each status also has an icon, so it reads without colour: circle, half circle, bar, tick, cross.
-export function StatusIcon({ s }: { s: StatusKey }) {
-  // The ring stays; the glyph inside is keyed by status, so a change plays a small pop-in (.state-set .st-glyph).
-  // The tick has pathLength 1 so it can draw itself (.st-tick).
+// The glyph for one status inside the ring. The tick has pathLength 1 so it can draw itself (.st-tick).
+function Glyph({ s }: { s: StatusKey }) {
   return (
-    <svg className="st-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    <>
+      {s === 'doing' && <path d="M6 1.4a4.6 4.6 0 0 1 0 9.2z" fill="currentColor" stroke="none" />}
+      {s === 'blocked' && <path d="M3.6 6h4.8" strokeWidth="1.8" />}
+      {s === 'done' && <path className="st-tick" d="M3.9 6.2l1.5 1.5 2.8-3" pathLength={1} />}
+      {s === 'dropped' && <path d="M4.4 4.4l3.2 3.2M7.6 4.4l-3.2 3.2" />}
+    </>
+  );
+}
+
+// Each status also has an icon, so it reads without colour: circle, half circle, bar, tick, cross.
+// The ring stays. When the status changes, the icon morphs: the old glyph shrinks and fades out while the new one
+// pops in (.st-morph, .st-glyph-out in globals.css), for --dur-glyph. Not on first render, and not under reduced motion.
+export function StatusIcon({ s }: { s: StatusKey }) {
+  const from = usePreviousWhileChanging(s, 140);
+  return (
+    <svg className={`st-icon${from !== undefined ? ' st-morph' : ''}`} viewBox="0 0 12 12" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="6" cy="6" r="4.6" />
-      <g key={s} className="st-glyph">
-        {s === 'doing' && <path d="M6 1.4a4.6 4.6 0 0 1 0 9.2z" fill="currentColor" stroke="none" />}
-        {s === 'blocked' && <path d="M3.6 6h4.8" strokeWidth="1.8" />}
-        {s === 'done' && <path className="st-tick" d="M3.9 6.2l1.5 1.5 2.8-3" pathLength={1} />}
-        {s === 'dropped' && <path d="M4.4 4.4l3.2 3.2M7.6 4.4l-3.2 3.2" />}
-      </g>
+      {from !== undefined && <g key={`out-${from}`} className="st-glyph-out"><Glyph s={from} /></g>}
+      <g key={s} className="st-glyph"><Glyph s={s} /></g>
     </svg>
   );
 }

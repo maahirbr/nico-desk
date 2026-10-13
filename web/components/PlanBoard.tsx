@@ -176,10 +176,10 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     (pillar === 'All' || l.pillar === pillar) && (!tile || TILES.find((t) => t.key === tile)!.match(l)) && (!who || involves(l, who)) && (!q || matches(l, q)));
   const emptyReason = q ? `No lines match “${q}”.` : who ? `No lines for ${isPartner(who) ? who : names[who]} with these filters.` : tile ? 'No lines match that tile right now.' : '';
   const emptyNode = emptyReason
-    ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
+    ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>{emptyReason}</p><button className="btn ghost" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear filters</button></div>
     : pillar !== 'All'
-      ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this sub-project yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all sub-projects</button></div>
-      : <div className="empty-block"><DitherArt field="bands" className="dither-empty" /><p>No lines in this plan yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a line</button>}</div>;
+      ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No lines in this sub-project yet.</p><button className="btn ghost" onClick={() => setPillar('All')}>Show all sub-projects</button></div>
+      : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No lines in this plan yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a line</button>}</div>;
 
   const byNext = (a: PlanLine, b: PlanLine) => {
     const x = a.status === 'Done' ? '~' : nextCheckpoint(a)?.date ?? '9999';

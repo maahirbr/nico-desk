@@ -57,6 +57,9 @@ function Composer({ people, initial, label, resetOnPost, submit, onCancel }: {
   const ta = useRef<HTMLTextAreaElement>(null);
   const listId = useId();
   const picking = useRef(false); // a press is on the list: the field losing focus must not close it
+  // Mentions already in the box when it opened (an edit) are shown at once; one picked later pops in (.cm-chip-new).
+  const opened = useRef(new Set((initial?.map ?? []).map(([label]) => label)));
+  const chips = [...map.current.keys()].filter((label) => text.includes(label));
 
   function look(value: string, caret: number) {
     const m = /(^|\s)([@#])([^\s@#]{0,40})$/.exec(value.slice(0, caret));
@@ -150,6 +153,11 @@ function Composer({ people, initial, label, resetOnPost, submit, onCancel }: {
           ))}
         </ul>
       )}
+      {chips.length > 0 && (
+        <ul className="cm-chips" aria-label="Mentioned">
+          {chips.map((label) => <li key={label} className={`cm-chip${opened.current.has(label) ? '' : ' cm-chip-new'}`}>{label}</li>)}
+        </ul>
+      )}
       <p className="hint cm-hint"><Help term="comment_mention">Type @ for a person</Help>. Type # for a task or a project.</p>
       <div className="cm-bar">
         <label className="cm-urgent"><input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} /> <Help term="comment_urgent">Urgent: also email</Help></label>
@@ -191,6 +199,7 @@ export function CommentThread({ subjectKind, subjectId, subjectTitle, people, dr
   const [editing, setEditing] = useState<string | null>(null);
   const [asking, setAsking] = useState<string | null>(null); // the comment whose delete is waiting for a second press
   const [sent, setSent] = useState<Sent | null>(null);
+  const [fresh, setFresh] = useState<string | null>(null); // the comment just posted here: it rises in once (.arrive)
   const base = `/${subjectKind}s/${subjectId}/comments`;
 
   useEffect(() => {
@@ -212,6 +221,7 @@ export function CommentThread({ subjectKind, subjectId, subjectTitle, people, dr
   async function add(body: string, urgent: boolean) {
     const r: CommentResult = await api(base, 'POST', { body });
     setList((l) => [...(l ?? []), r.comment]);
+    setFresh(r.comment.id);
     offerMail(r, urgent);
   }
   async function save(id: string, body: string, urgent: boolean) {
@@ -233,7 +243,7 @@ export function CommentThread({ subjectKind, subjectId, subjectTitle, people, dr
       {list && list.length > 0 && (
         <ol className="cm-list">
           {list.map((c) => (
-            <li key={c.id} className="cm-item">
+            <li key={c.id} className={`cm-item${c.id === fresh ? ' arrive' : ''}`}>
               <div className="cm-head">
                 <Avatar name={c.authorName} id={c.authorId} />
                 <PersonLink id={c.authorId}><b>{c.authorName}</b></PersonLink>
