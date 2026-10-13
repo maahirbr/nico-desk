@@ -361,3 +361,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   required: if it fails, nothing is sent. Known gap: names that are not on the roster (vendors, partners) can pass
   through in free text. Turning `NICO_JEV_LIVE` on in production is still a deploy step that asks first.
   Rollback: unset `NICO_JEV` in Vercel env; Jev features fall back to today's behaviour.
+- 2026-10-13 · Sonnet 5.5 · Guide page (section 13 of `docs/PLAN-13-OCT.md`), merged by Opus 5.5. `/guide` is a short
+  signed-in page in plain words: what the tool is for, a week in it, the five statuses, the one rule, when you are
+  blocked, what leads see, help mode and shortcuts, and where to give feedback. It is linked from the account menu and
+  from a dismissible first-visit note on Home (kept per browser). The shortcut list moved to `SHORTCUTS` in
+  `keys.ts`, so the pop-up and the guide share one source. The rule reads "move a date before it passes, and say why"
+  with the first date kept, to match the on-time rule (not "on time in spirit", as the plan first said). Not checked:
+  light mode, skins other than W, the account-menu item in a browser, measured contrast. Rollback: `git revert -m 1 6cb4f68`.
