@@ -118,6 +118,8 @@ export const HELP = {
   comment_box: 'Write a note for everyone who can see this. Type @ to mention a person. Type # to link a task or a project.',
   comment_mention: 'A mention adds a notice for that person. People who cannot see this item are not told.',
   comment_urgent: 'Opens a draft in your Gmail for each person you mentioned. You press Send. The app sends nothing.',
+  // Connects to
+  connects_to: 'Connects to. What this item is part of, what it waits on, what waits on it, and where it is mentioned. You see only what you can open.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;

@@ -11,6 +11,8 @@ import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { CommentThread } from '@/components/CommentThread';
+import { ConnectsTo } from '@/components/ConnectsTo';
+import { threadsFor } from '@/lib/threads';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
 import { DueDoneChart } from '@/components/ProjectVisuals';
@@ -69,6 +71,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           }))}
         />
       )}
+      <div className="card card-pad cn-card"><ConnectsTo lines={await threadsFor(d, me, 'project', p.id)} /></div>
       <CommentThread subjectKind="project" subjectId={p.id} subjectTitle={p.name} people={opts} drawer={p.kind !== 'plan'} />
       </ReadOnlyProvider>
     </>
