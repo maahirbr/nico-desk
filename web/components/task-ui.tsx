@@ -618,14 +618,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
 // ---------- add a task ----------
 
-export function AddTaskForm({ people, meId, today, projectId, projects, workstreams: fixedWs = [], wsByProject, defaultWs = '', onDone }: {
+export function AddTaskForm({ people, meId, today, projectId, projects, workstreams: fixedWs = [], wsByProject, defaultWs = '', startTitle = '', fromMessage, onDone }: {
   people: Opt[]; meId: string; today: string; projectId?: string; projects?: Opt[]; workstreams?: string[];
-  wsByProject?: Record<string, string[]>; defaultWs?: string; onDone: () => void;
+  wsByProject?: Record<string, string[]>; defaultWs?: string; startTitle?: string; fromMessage?: string; onDone: () => void;
 }) {
   const router = useRouter();
   const map = useProjectPeople();
   const startProject = projectId ?? '';
-  const [f, setF] = useState({ title: '', description: '', ownerId: !startProject || (map[startProject] ?? []).includes(meId) ? meId : '', ownerRole: undefined as string | undefined,
+  const [f, setF] = useState({ title: startTitle, description: '', ownerId: !startProject || (map[startProject] ?? []).includes(meId) ? meId : '', ownerRole: undefined as string | undefined,
     dueOn: '', note: '', workstream: defaultWs, projectId: startProject });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -657,7 +657,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     <form className="stack" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr(null);
       try {
-        const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
+        const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null, ...(fromMessage ? { fromMessage } : {}) });
         if (made?.id) arrivals.add(made.id);
         notify('Task added');
         router.refresh(); onDone();

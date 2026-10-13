@@ -17,6 +17,7 @@ export const GUIDE_SECTIONS = [
   { id: 'rule', title: 'The one rule' },
   { id: 'blocked', title: 'When you are blocked' },
   { id: 'leads', title: 'For leads and admins' },
+  { id: 'chat', title: 'Chat' },
   { id: 'help', title: 'Help mode and shortcuts' },
   { id: 'phone', title: 'On your phone' },
   { id: 'feedback', title: 'Tell us what is not working' },
@@ -109,6 +110,15 @@ export function GuideView() {
           <li><b>Team</b> lists every open task, by person or by status.</li>
           <li><b>Ledger</b> shows how each person kept their dates, and any silent slips.</li>
           <li><b>Reminders</b> write one draft per person who has late tasks. Each opens as a draft in your own Gmail. You press Send. The app sends nothing.</li>
+        </ul>
+      </section>
+
+      <section id="chat" aria-labelledby="g-chat">
+        <h2 id="g-chat">{title('chat')}</h2>
+        <p>Chat stays in the app. There is one room for the team and one for each project you can see. There are no direct messages.</p>
+        <ul className="guide-list">
+          <li><b>Mention someone</b> with @ to tell them. They see a notice on Home. Nothing is emailed.</li>
+          <li><b>Make a task</b> from any message. The form opens filled in. You check it, then add it.</li>
         </ul>
       </section>
 

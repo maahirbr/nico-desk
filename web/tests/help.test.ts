@@ -24,6 +24,7 @@ describe('help text', () => {
       'paste_review', 'paste_masked',
       'conn_from_env',
       'feedback_page', 'feedback_read',
+      'chat_room', 'chat_mention', 'chat_make_task',
     ];
     expect([...COVERED].sort()).toEqual([...HELP_TERMS].sort());
     expect([...HELP_TERMS].sort()).toEqual(Object.keys(HELP).sort());

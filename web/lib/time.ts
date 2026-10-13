@@ -67,3 +67,9 @@ const STAMP = new Intl.DateTimeFormat('en-GB', {
 export function fmtStamp(at: string): string {
   return STAMP.format(new Date(at)).replace('Sept', 'Sep');
 }
+
+const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
+// "14:05": the time of day in IST, for a chat message.
+export function fmtClock(at: string): string {
+  return CLOCK.format(new Date(at));
+}

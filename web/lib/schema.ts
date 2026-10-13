@@ -181,12 +181,57 @@ CREATE TABLE comment_refs (
 );
 ALTER TABLE comment_refs ENABLE ROW LEVEL SECURITY;
 
--- A 'mentioned' notice has no task: comment_id points at the comment, and the comment at its task or project.
+-- Team chat (13 Oct). A room is the team (room_id = the team id) or one project (room_id = the project id). No direct messages.
+-- A removed message keeps its row (deleted_at) with an empty body, so the room still reads "Message removed".
+CREATE TABLE chat_messages (
+  id          text PRIMARY KEY,
+  room_kind   text NOT NULL CHECK (room_kind IN ('team','project')),
+  room_id     text NOT NULL,
+  author_id   text NOT NULL REFERENCES people(id),
+  body        text NOT NULL CHECK (char_length(body) <= 4000),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  edited_at   timestamptz,
+  deleted_at  timestamptz
+);
+CREATE INDEX chat_messages_room ON chat_messages (room_kind, room_id, created_at, id);
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE chat_refs (
+  message_id  text NOT NULL REFERENCES chat_messages(id),
+  ref_kind    text NOT NULL CHECK (ref_kind IN ('person','task','project')),
+  ref_id      text NOT NULL,
+  PRIMARY KEY (message_id, ref_kind, ref_id)
+);
+ALTER TABLE chat_refs ENABLE ROW LEVEL SECURITY;
+
+-- Where each person has read up to in each room. Unread is the count of other people's messages after this point.
+CREATE TABLE chat_reads (
+  person_id    text NOT NULL REFERENCES people(id),
+  room_kind    text NOT NULL CHECK (room_kind IN ('team','project')),
+  room_id      text NOT NULL,
+  read_at      timestamptz NOT NULL,
+  PRIMARY KEY (person_id, room_kind, room_id)
+);
+ALTER TABLE chat_reads ENABLE ROW LEVEL SECURITY;
+
+-- A task made from a message links back to it. The link is a row, so the message and the task stay separate records.
+CREATE TABLE chat_task_links (
+  message_id  text NOT NULL REFERENCES chat_messages(id),
+  task_id     text NOT NULL REFERENCES tasks(id),
+  made_by     text NOT NULL REFERENCES people(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (message_id, task_id)
+);
+CREATE INDEX chat_task_links_task ON chat_task_links (task_id);
+ALTER TABLE chat_task_links ENABLE ROW LEVEL SECURITY;
+
+-- A 'mentioned' notice has no task: comment_id points at the comment (or message_id at a chat message).
 CREATE TABLE notices (
   id          text PRIMARY KEY,
   person_id   text NOT NULL REFERENCES people(id),
   task_id     text REFERENCES tasks(id),
   comment_id  text REFERENCES comments(id),
+  message_id  text REFERENCES chat_messages(id),
   kind        text NOT NULL CHECK (kind IN ('due_tomorrow','due_today','overdue','blocked_on_you','assigned','reassigned_away','mentioned')),
   for_date    date NOT NULL,
   created_at  timestamptz NOT NULL,

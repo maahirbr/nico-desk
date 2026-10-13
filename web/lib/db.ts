@@ -98,7 +98,49 @@ export async function upgrade(db: Db) {
   await db.exec(COMMENTS_UPGRADE);
   // 13 Oct: pilot feedback from inside the app.
   await db.exec(FEEDBACK_UPGRADE);
+  // 13 Oct: team chat, with a message_id on notices for a mention in chat.
+  await db.exec(CHAT_UPGRADE);
 }
+
+// Idempotent: the chat tables (RLS on, no policies) and message_id on notices. The same SQL as lib/schema.ts.
+export const CHAT_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id          text PRIMARY KEY,
+    room_kind   text NOT NULL CHECK (room_kind IN ('team','project')),
+    room_id     text NOT NULL,
+    author_id   text NOT NULL REFERENCES people(id),
+    body        text NOT NULL CHECK (char_length(body) <= 4000),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    edited_at   timestamptz,
+    deleted_at  timestamptz
+  );
+  CREATE INDEX IF NOT EXISTS chat_messages_room ON chat_messages (room_kind, room_id, created_at, id);
+  ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+  CREATE TABLE IF NOT EXISTS chat_refs (
+    message_id  text NOT NULL REFERENCES chat_messages(id),
+    ref_kind    text NOT NULL CHECK (ref_kind IN ('person','task','project')),
+    ref_id      text NOT NULL,
+    PRIMARY KEY (message_id, ref_kind, ref_id)
+  );
+  ALTER TABLE chat_refs ENABLE ROW LEVEL SECURITY;
+  CREATE TABLE IF NOT EXISTS chat_reads (
+    person_id    text NOT NULL REFERENCES people(id),
+    room_kind    text NOT NULL CHECK (room_kind IN ('team','project')),
+    room_id      text NOT NULL,
+    read_at      timestamptz NOT NULL,
+    PRIMARY KEY (person_id, room_kind, room_id)
+  );
+  ALTER TABLE chat_reads ENABLE ROW LEVEL SECURITY;
+  CREATE TABLE IF NOT EXISTS chat_task_links (
+    message_id  text NOT NULL REFERENCES chat_messages(id),
+    task_id     text NOT NULL REFERENCES tasks(id),
+    made_by     text NOT NULL REFERENCES people(id),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (message_id, task_id)
+  );
+  CREATE INDEX IF NOT EXISTS chat_task_links_task ON chat_task_links (task_id);
+  ALTER TABLE chat_task_links ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE notices ADD COLUMN IF NOT EXISTS message_id text REFERENCES chat_messages(id);`;
 
 // Idempotent: the feedback table (RLS on, no policies, like every other table). The same SQL as lib/schema.ts.
 export const FEEDBACK_UPGRADE = `
