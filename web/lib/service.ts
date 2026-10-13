@@ -4,6 +4,7 @@ import { ApiError, bad, forbidden, notFound } from './errors';
 import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { isLeadOrAdmin } from './roles';
+import { seesProject, seesTask, seesTaskRow, sightOf, type Sight } from './sight';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
@@ -17,6 +18,7 @@ export type Person = {
   email: string;
   active: boolean;
   appRoles: AppRole[];
+  restricted: boolean; // sees only their own projects and the ones they may view (lib/sight.ts)
 };
 export type AppRole = 'member' | 'lead' | 'admin';
 
@@ -38,12 +40,12 @@ function needReason(reason: unknown, field = 'reason'): string {
 
 // ---------- people and roles ----------
 
-type PersonRow = { id: string; display_name: string; role: string; department: string; email: string; active: boolean; app_roles: AppRole[] | null };
+type PersonRow = { id: string; display_name: string; role: string; department: string; email: string; active: boolean; app_roles: AppRole[] | null; restricted?: boolean };
 
 function toPerson(r: PersonRow): Person {
   return {
     id: r.id, displayName: r.display_name, role: r.role, department: r.department, email: r.email, active: r.active,
-    appRoles: r.app_roles ?? [],
+    appRoles: r.app_roles ?? [], restricted: r.restricted ?? false,
   };
 }
 
@@ -612,7 +614,12 @@ export type LedgerRow = {
 
 // FR-33: weeks keyed by the Monday of first_due_on; outcome judged against first_due_on (SPEC.md C1).
 export async function ledger(db: Db, teamId: string, from: string, to: string, personId?: string, today = todayIst()): Promise<LedgerRow[]> {
-  const tasks = (await teamTasks(db, teamId, today)).filter(
+  return ledgerOf(await teamTasks(db, teamId, today), from, to, personId);
+}
+
+// The same rows from tasks already loaded (a page passes the tasks its viewer may see, lib/visibility.ts).
+export function ledgerOf(all: Task[], from: string, to: string, personId?: string): LedgerRow[] {
+  const tasks = all.filter(
     (t) => t.statusCategory !== 'dropped' && (!personId || t.ownerId === personId),
   );
   const rows = new Map<string, LedgerRow>();
@@ -642,15 +649,21 @@ export async function ledger(db: Db, teamId: string, from: string, to: string, p
 export type Notice = { id: string; taskId: string; taskTitle: string; kind: string; forDate: string; createdAt: string; readAt: string | null };
 
 export async function listNotices(db: Db, meId: string, unreadOnly = false): Promise<Notice[]> {
-  const { rows } = await db.query<Notice>(
+  type Row = Notice & { team_id: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null };
+  const { rows } = await db.query<Row>(
     `SELECT n.id, n.task_id AS "taskId", t.title AS "taskTitle", n.kind, n.for_date AS "forDate",
-            n.created_at AS "createdAt", n.read_at AS "readAt"
+            n.created_at AS "createdAt", n.read_at AS "readAt", t.team_id, t.project_id, t.owner_id, t.created_by, t.blocked_on_id
      FROM notices n JOIN tasks t ON t.id = n.task_id
      WHERE n.person_id = $1 AND ($2 = false OR n.read_at IS NULL)
      ORDER BY n.read_at IS NOT NULL, n.created_at DESC LIMIT 100`,
     [meId, unreadOnly],
   );
-  return rows;
+  // A task moved away from a restricted person (reassigned_away) can sit in a project they no longer see.
+  const sights = new Map<string, Sight>();
+  for (const r of rows) if (!sights.has(r.team_id)) sights.set(r.team_id, await sightOf(db, r.team_id, meId));
+  return rows.filter((r) => seesTaskRow(sights.get(r.team_id)!, r)).map((r) => ({
+    id: r.id, taskId: r.taskId, taskTitle: r.taskTitle, kind: r.kind, forDate: r.forDate, createdAt: r.createdAt, readAt: r.readAt,
+  }));
 }
 
 export async function markNoticeRead(db: Db, meId: string, id: string): Promise<void> {
@@ -709,7 +722,7 @@ export async function addPerson(
 }
 
 export async function patchPerson(
-  db: Db, meId: string, teamId: string, personId: string, input: { active?: boolean; appRoles?: AppRole[]; role?: string; department?: string },
+  db: Db, meId: string, teamId: string, personId: string, input: { active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean },
 ): Promise<Person> {
   await db.transaction(async (tx) => {
     await requireAdmin(tx, teamId, meId);
@@ -720,6 +733,7 @@ export async function patchPerson(
     if (input.active !== undefined) await tx.query(`UPDATE people SET active = $2 WHERE id = $1`, [personId, input.active]);
     if (input.role !== undefined) await tx.query(`UPDATE people SET role = $2 WHERE id = $1`, [personId, input.role.trim()]);
     if (input.department !== undefined) await tx.query(`UPDATE people SET department = $2 WHERE id = $1`, [personId, input.department.trim()]);
+    if (input.restricted !== undefined) await tx.query(`UPDATE people SET restricted = $2 WHERE id = $1`, [personId, input.restricted]);
     if (input.appRoles) {
       await tx.query(`DELETE FROM team_members WHERE team_id = $1 AND person_id = $2`, [teamId, personId]);
       for (const r of new Set<AppRole>(['member', ...input.appRoles])) {
@@ -824,7 +838,11 @@ export async function projectTasks(db: Tx, projectId: string, today = todayIst()
 // The tasks behind the ledger: every task whose first date falls in [from, to] (Mondays), not dropped.
 // The ledger counts above and the drill-down lists are built from the same tasks.
 export async function ledgerTasks(db: Db, teamId: string, from: string, to: string, personId?: string, today = todayIst()): Promise<Task[]> {
-  return (await teamTasks(db, teamId, today)).filter((t) => {
+  return ledgerTasksOf(await teamTasks(db, teamId, today), from, to, personId);
+}
+
+export function ledgerTasksOf(all: Task[], from: string, to: string, personId?: string): Task[] {
+  return all.filter((t) => {
     if (t.statusCategory === 'dropped' || (personId && t.ownerId !== personId)) return false;
     const week = mondayOf(t.firstDueOn);
     return week >= from && week <= to;
@@ -871,7 +889,8 @@ export async function updatesView(
   seenByTask: Record<string, string> = {},
 ): Promise<{ items: UpdateItem[]; groups: UpdateGroup[] }> {
   const since = new Date(now.getTime() - UPDATE_DAYS * 86_400_000).toISOString();
-  const [tasks, events, projects] = await Promise.all([
+  const [sight, all, events, projects] = await Promise.all([
+    sightOf(db, teamId, meId),
     teamTasks(db, teamId),
     db.query<EventRow>(
       `SELECT e.* FROM events e JOIN tasks t ON t.id = e.entity_id
@@ -881,8 +900,10 @@ export async function updatesView(
     ),
     db.query<{ id: string; owner_id: string; lead_id: string | null }>(`SELECT id, owner_id, lead_id FROM projects WHERE team_id = $1`, [teamId]),
   ]);
+  const tasks = all.filter((t) => seesTask(sight, t));
+  const seen = new Set(tasks.map((t) => t.id));
   const items = buildUpdates({
-    events: events.rows, tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, [p.owner_id, ...(p.lead_id ? [p.lead_id] : [])]])), names, viewerId: meId, now, seenAt,
+    events: events.rows.filter((e) => seen.has(e.entity_id)), tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, [p.owner_id, ...(p.lead_id ? [p.lead_id] : [])]])), names, viewerId: meId, now, seenAt,
   }).filter((i) => !seenByTask[i.taskId] || i.at > seenByTask[i.taskId]);
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }
@@ -912,7 +933,8 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
   if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
   const viewerRoles = await rolesIn(db, teamId, meId);
   const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles);
-  const tasks = await teamTasks(db, teamId, today);
+  const sight = await sightOf(db, teamId, meId);
+  const tasks = (await teamTasks(db, teamId, today)).filter((t) => seesTask(sight, t));
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
   const open = tasks.filter((t) => t.statusCategory === 'open');
   const [proj, rec, ph] = await Promise.all([
@@ -922,8 +944,9 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
        WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) ORDER BY pr.name`,
       [teamId, personId],
     ),
-    db.query<LogLine & { taskTitle: string }>(
-      `SELECT e.*, a.display_name AS "actorName", t.title AS "taskTitle" FROM events e
+    db.query<LogLine & { taskTitle: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null }>(
+      `SELECT e.*, a.display_name AS "actorName", t.title AS "taskTitle",
+              t.project_id, t.owner_id, t.created_by, t.blocked_on_id FROM events e
        JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
        LEFT JOIN people a ON a.id = e.actor_id
        WHERE t.team_id = $1 AND (t.owner_id = $2 OR e.actor_id = $2) ORDER BY e.at DESC, e.id DESC LIMIT 60`,
@@ -940,7 +963,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     const to = mondayOf(today);
     const from = addDays(to, -7 * (weeks - 1));
     const sum: OnTimeRecord = { from, to, ahead: 0, onTime: 0, late: 0, openPastDue: 0, renegotiated: 0 };
-    for (const r of await ledger(db, teamId, from, to, personId, today)) {
+    for (const r of ledgerOf(tasks, from, to, personId)) {
       sum.ahead += r.closedAhead; sum.onTime += r.closedOnTime; sum.late += r.closedLate;
       sum.openPastDue += r.openPastDue; sum.renegotiated += r.renegotiatedOpen + r.renegotiatedLate;
     }
@@ -948,11 +971,11 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
   }
   return {
     person,
-    projects: proj.rows,
+    projects: proj.rows.filter((p) => seesProject(sight, p.id)),
     open: open.filter((t) => t.ownerId === personId).sort(byDue),
     waitingOnThem: open.filter((t) => t.blocked?.onId === personId && t.ownerId !== personId).sort(byDue),
     waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
-    recent: rec.rows,
+    recent: rec.rows.filter((r) => seesTaskRow(sight, r)).map(({ project_id, owner_id, created_by, blocked_on_id, ...line }) => line),
     record,
     glance: mayRecord ? { week: weekSplit(tasks, personId, today), trend: onTimeTrend(tasks, personId, today) } : null,
     phone: ph.rows[0]?.phone ?? null,

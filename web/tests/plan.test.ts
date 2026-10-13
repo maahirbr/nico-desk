@@ -279,12 +279,13 @@ describe('a project task goes to one of its people', () => {
 describe('search', () => {
   it('finds projects, tasks, plan lines and people, title matches first', async () => {
     const { search } = await import('../lib/search');
-    const hits = await search(db, TEAM_ID, 'shoot', AS_OF);
+    const { SEE_ALL } = await import('../lib/sight');
+    const hits = await search(db, TEAM_ID, SEE_ALL, 'shoot', AS_OF);
     expect(hits[0]).toMatchObject({ kind: 'project', title: 'Campaign shoot plan' });
     expect(hits.some((h) => h.kind === 'task')).toBe(true);
-    expect((await search(db, TEAM_ID, 'champions', AS_OF)).map((h) => h.kind)).toContain('line');
-    expect((await search(db, TEAM_ID, 'web producer', AS_OF))[0]).toMatchObject({ kind: 'person', id: 'per_bo' });
-    expect(await search(db, TEAM_ID, '   ', AS_OF)).toEqual([]);
+    expect((await search(db, TEAM_ID, SEE_ALL, 'champions', AS_OF)).map((h) => h.kind)).toContain('line');
+    expect((await search(db, TEAM_ID, SEE_ALL, 'web producer', AS_OF))[0]).toMatchObject({ kind: 'person', id: 'per_bo' });
+    expect(await search(db, TEAM_ID, SEE_ALL, '   ', AS_OF)).toEqual([]);
   });
 });
 

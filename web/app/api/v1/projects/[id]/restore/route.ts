@@ -1,7 +1,8 @@
-import { route, sameTeam } from '@/lib/http';
-import { getProject, restoreProject } from '@/lib/plan';
+import { route } from '@/lib/http';
+import { restoreProject } from '@/lib/plan';
+import { projectFor } from '@/lib/visibility';
 
 export const POST = route<{ id: string }>(async ({ params, me, db }) => {
-  sameTeam(me, (await getProject(db, params.id)).teamId);
+  await projectFor(db, me, params.id);
   return restoreProject(db, me.person.id, params.id);
 });

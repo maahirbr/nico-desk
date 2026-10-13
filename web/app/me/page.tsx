@@ -1,9 +1,10 @@
 import { requireMe } from '@/lib/auth';
 import { latestEndedFirst } from '@/lib/derive';
 import { homeUpdates, lookups } from '@/lib/page';
-import { listNotices, myTasks, teamTasks } from '@/lib/service';
+import { listNotices, myTasks } from '@/lib/service';
+import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
-import { myProjects, teamProjects } from '@/lib/plan';
+import { myProjects } from '@/lib/plan';
 import { glanceOf } from '@/lib/glance';
 import { HomeView } from '@/components/HomeView';
 
@@ -16,11 +17,11 @@ function greeting(): string {
 
 export default async function Home() {
   const me = await requireMe();
-  const { d, names, projectNames, activeOpts, isLead } = await lookups(me);
+  const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
   const [mine, notices, all, projects, onProjects] = await Promise.all([
-    myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), teamTasks(d, me.team.id), teamProjects(d, me.team.id),
+    myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
     myProjects(d, me.team.id, me.person.id),
   ]);
   const weekStart = mondayOf(t);

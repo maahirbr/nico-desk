@@ -1,6 +1,7 @@
 import { requireMe } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
-import { ledger, ledgerTasks, teamTasks } from '@/lib/service';
+import { ledger, ledgerTasks } from '@/lib/service';
+import { seenTasks } from '@/lib/visibility';
 import { addDays, isDate, mondayOf, today } from '@/lib/time';
 import { LedgerView } from '@/components/LedgerView';
 
@@ -16,14 +17,14 @@ export default async function Ledger({ searchParams }: { searchParams: SP }) {
   const from = addDays(to, -7 * (weeks - 1));
   const prevFrom = addDays(from, -7 * weeks);
   const prevTo = addDays(from, -7);
-  const { d, names, people, projectNames, isLead, isAdmin } = await lookups(me);
+  const { d, sight, names, people, projectNames, isLead, isAdmin } = await lookups(me);
   const seeAll = isLead || isAdmin;
   const personId = seeAll ? one(sp.person) : me.person.id;
   const [rows, tasks, prev, all] = await Promise.all([
     ledger(d, me.team.id, from, to, personId),
     ledgerTasks(d, me.team.id, from, to, personId),
     ledgerTasks(d, me.team.id, prevFrom, prevTo, personId),
-    teamTasks(d, me.team.id),
+    seenTasks(d, me, undefined, sight),
   ]);
   const shown = people.filter((p) => p.active && (!personId || p.id === personId));
   return (

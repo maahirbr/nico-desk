@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
-import { projectMembers, projectSplits, teamProjects } from '@/lib/plan';
+import { projectMembers, projectSplits } from '@/lib/plan';
+import { seenProjects } from '@/lib/visibility';
 import { countdown } from '@/lib/planUtil';
 import { emptySplit } from '@/lib/progress';
 import { fmtDate, today } from '@/lib/time';
@@ -16,8 +17,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function Projects() {
   const me = await requireMe();
-  const { d, names, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
-  const [projects, splits] = await Promise.all([teamProjects(d, me.team.id), projectSplits(d, me.team.id)]);
+  const { d, sight, names, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
+  const [projects, splits] = await Promise.all([seenProjects(d, me, sight), projectSplits(d, me.team.id)]);
   const t = today();
   const bySoonest = (a: (typeof projects)[number], b: (typeof projects)[number]) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999');
   const live = projects.filter((p) => !p.archivedAt).sort(bySoonest);

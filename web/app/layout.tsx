@@ -21,6 +21,8 @@ import { ViewBanner } from '@/components/ViewAs';
 import { db, rosterFile } from '@/lib/db';
 import { freshFor } from '@/lib/page';
 import { projectPeopleMap, projectsMayAddTo } from '@/lib/plan';
+import { seesProject } from '@/lib/sight';
+import { sightFor } from '@/lib/visibility';
 import { listPeople, teamPhotos } from '@/lib/service';
 import { PhotoProvider } from '@/components/Avatar';
 import { localOwnerId } from '@/lib/seed';
@@ -53,8 +55,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ? (await listPeople(await db(), me.team.id)).filter((p) => p.active && p.id !== me.realPerson.id)
         .map((p) => ({ id: p.id, name: p.displayName, roles: roleWord(p.appRoles) }))
     : [];
-  const projectPeople = me ? await projectPeopleMap(await db(), me.team.id) : {};
-  const mayAddTo = me ? await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles)) : [];
+  const sight = me ? await sightFor(await db(), me) : null;
+  const projectPeople = me && sight ? Object.fromEntries(Object.entries(await projectPeopleMap(await db(), me.team.id)).filter(([id]) => seesProject(sight, id))) : {};
+  const mayAddTo = me && sight ? (await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles))).filter((id) => seesProject(sight, id)) : [];
   const fresh = me ? await freshFor(me, await db()) : {};
   const photos = me ? await teamPhotos(await db(), me.team.id) : {};
   return (

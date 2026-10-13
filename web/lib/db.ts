@@ -92,7 +92,21 @@ export async function upgrade(db: Db) {
   await db.exec(`ALTER TABLE people ADD COLUMN IF NOT EXISTS alt_emails text[] NOT NULL DEFAULT '{}';`);
   // 13 Oct: a profile photo (Google's, or one uploaded) and an optional phone.
   await db.exec(PEOPLE_PROFILE_UPGRADE);
+  // 13 Oct: project visibility. A restricted person sees only their projects and the ones they were given view on.
+  await db.exec(VISIBILITY_UPGRADE);
 }
+
+// Idempotent: the restricted flag and the viewers table. RLS on with no policies, like every other table.
+export const VISIBILITY_UPGRADE = `
+  ALTER TABLE people ADD COLUMN IF NOT EXISTS restricted boolean NOT NULL DEFAULT false;
+  CREATE TABLE IF NOT EXISTS project_viewers (
+    project_id  text NOT NULL REFERENCES projects(id),
+    person_id   text NOT NULL REFERENCES people(id),
+    added_by    text REFERENCES people(id),
+    added_at    timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (project_id, person_id)
+  );
+  ALTER TABLE project_viewers ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: adds the profile columns and the photo table. RLS on with no policies, like every other table.
 export const PEOPLE_PROFILE_UPGRADE = `

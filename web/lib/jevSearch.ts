@@ -1,6 +1,7 @@
 import type { Tx } from './db';
 import { jevAsk, jevOn, type JevQuestion, type JevResult } from './jev';
 import { maskDictFor, type MaskDict } from './redact';
+import type { Sight } from './sight';
 import { searchCandidates, search, type Cand, type SearchHit } from './search';
 import { today as todayIst } from './time';
 
@@ -54,11 +55,11 @@ export function scoresOf(r: JevResult, cands: Cand[]): Map<string, number> | nul
 }
 
 // The route calls this. { hits, ranked }: ranked says whether Jev changed the order.
-export async function searchByMeaning(db: Tx, teamId: string, q: string, today = todayIst()): Promise<{ hits: SearchHit[]; ranked: boolean }> {
-  const local = async () => ({ hits: await search(db, teamId, q, today), ranked: false });
+export async function searchByMeaning(db: Tx, teamId: string, sight: Sight, q: string, today = todayIst()): Promise<{ hits: SearchHit[]; ranked: boolean }> {
+  const local = async () => ({ hits: await search(db, teamId, sight, q, today), ranked: false });
   if (!jevOn() || q.trim().length < 3) return local();
   try {
-    const cands = await searchCandidates(db, teamId, q, today);
+    const cands = await searchCandidates(db, teamId, sight, q, today);
     if (cands.length < 2) return local();
     const dict = await maskDictFor(db, teamId);
     const scores = scoresOf(await askRerank(dict, q.trim(), cands), cands);

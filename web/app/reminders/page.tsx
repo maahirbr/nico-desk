@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { requireMe } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
-import { teamProjects } from '@/lib/plan';
+import { seenProjects } from '@/lib/visibility';
 import { reminderDrafts } from '@/lib/reminders';
 import { ReminderCards } from '@/components/Reminders';
 import { Select } from '@/components/Select';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
-  const { d, isLead, isAdmin } = await lookups(me);
+  const { d, sight, isLead, isAdmin } = await lookups(me);
   if (!isLead && !isAdmin) return (<><h1>Reminders</h1><p className="lede">Only a lead drafts reminders.</p></>);
   const sp = await searchParams;
   const mode = one(sp.mode) === 'window' ? 'window' : 'overdue';
@@ -21,7 +21,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
   const [{ drafts, skipped }, projects] = await Promise.all([
     reminderDrafts(d, me.team.id, { mode, days, projectId }, appUrl),
-    teamProjects(d, me.team.id),
+    seenProjects(d, me, sight),
   ]);
   const q = (o: Record<string, string | undefined>) => {
     const p = new URLSearchParams();

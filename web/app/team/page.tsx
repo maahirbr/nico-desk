@@ -1,7 +1,6 @@
 import { requireMe } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
-import { teamProjects } from '@/lib/plan';
-import { teamTasks } from '@/lib/service';
+import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, isDate, istDate, mondayOf, today } from '@/lib/time';
 import { TeamView } from '@/components/TeamView';
 
@@ -17,8 +16,8 @@ export default async function Team({ searchParams }: { searchParams: SP }) {
   const weekStart = w && isDate(w) ? mondayOf(w) : mondayOf(t);
   const weekEnd = addDays(weekStart, 6);
   // Updates for you live on Home only: they are about your own tasks, and this page is the team's.
-  const { d, names, people, projectNames, activeOpts, isLead } = await lookups(me);
-  const [all, projects] = await Promise.all([teamTasks(d, me.team.id), teamProjects(d, me.team.id)]);
+  const { d, sight, names, people, projectNames, activeOpts, isLead } = await lookups(me);
+  const [all, projects] = await Promise.all([seenTasks(d, me, undefined, sight), seenProjects(d, me, sight)]);
   // In view: open work due by the end of the week (so overdue too), and anything closed during it.
   const tasks = all.filter((x) =>
     (x.statusCategory === 'open' && x.dueOn <= weekEnd) ||

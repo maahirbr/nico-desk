@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation';
 import { requireMe } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
-import { getProject, pendingProposals, planState, projectMembers, type Project } from '@/lib/plan';
+import { pendingProposals, planState, projectMembers, type Project } from '@/lib/plan';
 import { dueDoneByWeek, lineDates, lineSplit, taskDates, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
+import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { PlanBoard } from '@/components/PlanBoard';
@@ -22,9 +23,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const { d, names, people, projectNames, isLead, isAdmin, readOnly } = await lookups(me);
   let p: Project;
   try {
-    p = await getProject(d, id);
+    p = await projectFor(d, me, id); // hidden or on another team reads as missing
   } catch (e) {
-    if (e instanceof ApiError && e.status === 404) notFound();
+    if (e instanceof ApiError && (e.status === 404 || e.status === 403)) notFound();
     throw e;
   }
   if (p.teamId !== me.team.id) notFound();

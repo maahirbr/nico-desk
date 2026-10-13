@@ -21,7 +21,8 @@ CREATE TABLE people (
   alt_emails    text[] NOT NULL DEFAULT '{}',  -- other addresses that sign in as this person
   never_remind  boolean NOT NULL DEFAULT false, -- e.g. someone who signs off rather than delivers
   photo_url     text,                          -- the Google sign-in photo; an uploaded one (person_photos) wins
-  phone         text CHECK (phone ~ '^[0-9 +-]{7,20}$')  -- optional; shown only to people on the same team
+  phone         text CHECK (phone ~ '^[0-9 +-]{7,20}$'),  -- optional; shown only to people on the same team
+  restricted    boolean NOT NULL DEFAULT false   -- sees only the projects they are on or may view (lib/sight.ts); leads and admins see all
 );
 
 -- An uploaded profile photo: a 256px square the browser made, stored here so no storage service is needed.
@@ -289,6 +290,15 @@ CREATE TABLE project_members (
   project_id    text NOT NULL REFERENCES projects(id),
   person_id     text NOT NULL REFERENCES people(id),
   project_role  text NOT NULL CHECK (char_length(project_role) BETWEEN 2 AND 60),
+  PRIMARY KEY (project_id, person_id)
+);
+
+-- People who may read a project without being on it. Matters only for a restricted person (people.restricted).
+CREATE TABLE project_viewers (
+  project_id  text NOT NULL REFERENCES projects(id),
+  person_id   text NOT NULL REFERENCES people(id),
+  added_by    text REFERENCES people(id),
+  added_at    timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (project_id, person_id)
 );
 

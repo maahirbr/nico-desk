@@ -4,13 +4,18 @@ import { cookies } from 'next/headers';
 import { listNotices, listPeople, listProjects, seenMarks, updatesFor, updatesView } from './service';
 import { seenCookieName } from './updates';
 import type { Me } from './auth';
+import { seesProject } from './sight';
+import { sightFor } from './visibility';
 
 // Lookups every page needs: names by id and project names by id.
 export async function lookups(me: Me) {
   const d = await db();
-  const [people, projects] = await Promise.all([listPeople(d, me.team.id), listProjects(d, me.team.id)]);
+  const [people, all, sight] = await Promise.all([listPeople(d, me.team.id), listProjects(d, me.team.id), sightFor(d, me)]);
+  // Project names and pickers carry only the projects this viewer may see (lib/sight.ts).
+  const projects = all.filter((p) => seesProject(sight, p.id));
   return {
     d,
+    sight,
     people,
     projects,
     names: Object.fromEntries(people.map((p) => [p.id, p.displayName])) as Record<string, string>,

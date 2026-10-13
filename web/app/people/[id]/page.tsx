@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation';
 import { requireMe } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
-import { teamProjects } from '@/lib/plan';
 import { personView } from '@/lib/service';
+import { seenProjects } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { PersonPage } from '@/components/PersonPage';
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export default async function PersonRoute({ params }: { params: Promise<{ id: string }> }) {
   const me = await requireMe();
   const { id } = await params;
-  const { d, names, projectNames, activeOpts, isLead } = await lookups(me);
+  const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   let v;
   try {
     v = await personView(d, me.team.id, me.person.id, id);
@@ -23,7 +23,7 @@ export default async function PersonRoute({ params }: { params: Promise<{ id: st
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
   }
-  const projects = await teamProjects(d, me.team.id);
+  const projects = await seenProjects(d, me, sight);
   return (
     <PersonPage
       personId={v.person.id} email={v.person.email} phone={v.phone} teamName={v.teamName} appRoles={v.person.appRoles} hasPhoto={v.hasPhoto} name={v.person.displayName} role={v.person.role} department={v.person.department} active={v.person.active}

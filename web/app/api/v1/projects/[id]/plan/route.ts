@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { readBody, route, sameTeam, zDate } from '@/lib/http';
-import { getProject, planOp, planState } from '@/lib/plan';
+import { readBody, route, zDate } from '@/lib/http';
+import { planOp, planState } from '@/lib/plan';
+import { projectFor } from '@/lib/visibility';
 
 const id = z.string().min(1).max(80);
 const txt = (max: number) => z.string().max(max);
@@ -34,13 +35,13 @@ const Op = z.discriminatedUnion('op', [
 ]);
 
 export const GET = route<{ id: string }>(async ({ params, me, db }) => {
-  sameTeam(me, (await getProject(db, params.id)).teamId);
+  await projectFor(db, me, params.id);
   return planState(db, params.id);
 });
 
 // Any active member of the team can update the plan; every change lands in the plan's update log.
 export const POST = route<{ id: string }>(async ({ req, params, me, db }) => {
   const b = await readBody(req, Op);
-  sameTeam(me, (await getProject(db, params.id)).teamId);
+  await projectFor(db, me, params.id);
   return planOp(db, me.person.id, params.id, b);
 });

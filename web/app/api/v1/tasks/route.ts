@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { readBody, route, sameTeam, zDate } from '@/lib/http';
 import { createTask } from '@/lib/service';
+import { assertSeesProject } from '@/lib/visibility';
 
 const Body = z.object({
   teamId: z.string().optional(),
@@ -18,5 +19,6 @@ export const POST = route(async ({ req, me, db }) => {
   const b = await readBody(req, Body);
   const teamId = b.teamId ?? me.team.id;
   sameTeam(me, teamId);
+  await assertSeesProject(db, me, b.projectId);
   return Response.json(await createTask(db, me.person.id, { ...b, teamId }), { status: 201 });
 });

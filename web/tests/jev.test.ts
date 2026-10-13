@@ -6,6 +6,7 @@ import { currentStatus, decide, readPick, statusQuestion, suggestStatus, THRESHO
 import { mergeRank, searchByMeaning } from '../lib/jevSearch';
 import { search, searchCandidates, type SearchHit } from '../lib/search';
 import { TEAM_ID } from '../lib/seed';
+import { SEE_ALL } from '../lib/sight';
 import { getTask } from '../lib/service';
 
 // Jev with the network mocked. No test here calls the real API.
@@ -249,9 +250,9 @@ describe('search by meaning', () => {
 
   it('keeps the local result when Jev is off', async () => {
     vi.stubEnv('NICO_JEV', '');
-    const r = await searchByMeaning(db, TEAM_ID, q);
+    const r = await searchByMeaning(db, TEAM_ID, SEE_ALL, q);
     expect(r.ranked).toBe(false);
-    expect(r.hits).toEqual(await search(db, TEAM_ID, q));
+    expect(r.hits).toEqual(await search(db, TEAM_ID, SEE_ALL, q));
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -259,7 +260,7 @@ describe('search by meaning', () => {
     vi.stubEnv('NICO_JEV', '1');
     vi.stubEnv('TYPESAFE_API_KEY', 'test-key-not-real');
     vi.stubEnv('DATABASE_URL', '');
-    const cands = await searchCandidates(db, TEAM_ID, q, '2026-10-09');
+    const cands = await searchCandidates(db, TEAM_ID, SEE_ALL, q, '2026-10-09');
     expect(cands.length).toBeGreaterThan(5);
     const pick = cands[cands.length - 1];
     fetchMock.mockImplementationOnce(async (_u: string, init: { body: string }) => {
@@ -267,14 +268,14 @@ describe('search by meaning', () => {
       expect(Object.keys(qs).length).toBe(cands.length); // one Noul per candidate
       return ok(Object.fromEntries(cands.map((c, i) => [`c${i}`, { noul: c === pick ? 0.95 : 0.1 }])));
     });
-    const ranked = await searchByMeaning(db, TEAM_ID, q);
+    const ranked = await searchByMeaning(db, TEAM_ID, SEE_ALL, q);
     expect(ranked.ranked).toBe(true);
     expect(idOf(ranked.hits[0])).toBe(idOf(pick.hit));
 
     jevCacheClear();
     fetchMock.mockRejectedValueOnce(new Error('offline'));
-    const fell = await searchByMeaning(db, TEAM_ID, q);
+    const fell = await searchByMeaning(db, TEAM_ID, SEE_ALL, q);
     expect(fell.ranked).toBe(false);
-    expect(fell.hits).toEqual(await search(db, TEAM_ID, q));
+    expect(fell.hits).toEqual(await search(db, TEAM_ID, SEE_ALL, q));
   });
 });

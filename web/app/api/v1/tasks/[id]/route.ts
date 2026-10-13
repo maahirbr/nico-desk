@@ -1,13 +1,13 @@
 import { z } from 'zod';
 import { bad } from '@/lib/errors';
-import { readBody, route, sameTeam, zVersion } from '@/lib/http';
-import { editTask, getTask } from '@/lib/service';
+import { readBody, route, zVersion } from '@/lib/http';
+import { editTask } from '@/lib/service';
+import { assertSeesProject, taskFor } from '@/lib/visibility';
 
 type P = { id: string };
 
 export const GET = route<P>(async ({ params, me, db }) => {
-  const t = await getTask(db, params.id);
-  sameTeam(me, t.teamId);
+  const t = await taskFor(db, me, params.id);
   return t;
 });
 
@@ -27,6 +27,7 @@ export const PATCH = route<P>(async ({ req, params, me, db }) => {
   if (raw && typeof raw === 'object' && ('dueOn' in raw || 'firstDueOn' in raw))
     throw bad('due_on_locked', 'Dates change only through renegotiate, with a reason.', 'dueOn');
   const b = await readBody(req, Body);
-  sameTeam(me, (await getTask(db, params.id)).teamId);
+  await taskFor(db, me, params.id);
+  await assertSeesProject(db, me, b.projectId);
   return editTask(db, me.person.id, params.id, b);
 });
