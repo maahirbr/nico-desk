@@ -15,9 +15,9 @@ export const GET = route(async ({ req, me, db }) => {
     let allowed = true;
     try { rateLimit(`jev-q:${me.realPerson.id}`, 20); } catch { allowed = false; }
     if (allowed) {
-      const { hits, ranked } = await searchByMeaning(db, me.team.id, sight, q);
+      const { hits, ranked } = await searchByMeaning(db, me.team.id, sight, q, undefined, me.person.id);
       return Response.json(hits, { headers: { 'x-nico-jev': ranked ? 'ranked' : 'on' } });
     }
   }
-  return Response.json(await search(db, me.team.id, sight, q), { headers: { 'x-nico-jev': on ? 'on' : 'off' } });
+  return Response.json(await search(db, me.team.id, sight, q, undefined, me.person.id), { headers: { 'x-nico-jev': on ? 'on' : 'off' } });
 });

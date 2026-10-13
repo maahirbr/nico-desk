@@ -55,16 +55,19 @@ export function scoresOf(r: JevResult, cands: Cand[]): Map<string, number> | nul
 }
 
 // The route calls this. { hits, ranked }: ranked says whether Jev changed the order.
-export async function searchByMeaning(db: Tx, teamId: string, sight: Sight, q: string, today = todayIst()): Promise<{ hits: SearchHit[]; ranked: boolean }> {
-  const local = async () => ({ hits: await search(db, teamId, sight, q, today), ranked: false });
+export async function searchByMeaning(db: Tx, teamId: string, sight: Sight, q: string, today = todayIst(), meId = ''): Promise<{ hits: SearchHit[]; ranked: boolean }> {
+  const local = async () => ({ hits: await search(db, teamId, sight, q, today, meId), ranked: false });
   if (!jevOn() || q.trim().length < 3) return local();
   try {
-    const cands = await searchCandidates(db, teamId, sight, q, today);
+    const cands = await searchCandidates(db, teamId, sight, q, today, 30, meId);
     if (cands.length < 2) return local();
     const dict = await maskDictFor(db, teamId);
     const scores = scoresOf(await askRerank(dict, q.trim(), cands), cands);
     if (!scores) return local();
-    return { hits: mergeRank(cands, scores), ranked: true };
+    // Jev only re-ranks the items it was shown. Comments are not sent to it, so the local comment hits follow the ranked list.
+    const ranked = mergeRank(cands, scores);
+    const comments = (await search(db, teamId, sight, q, today, meId)).filter((h) => h.kind === 'comment');
+    return { hits: [...ranked, ...comments].slice(0, MAX_OUT), ranked: true };
   } catch {
     return local();
   }

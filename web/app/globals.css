@@ -929,7 +929,7 @@ table.board td.title { width: 48%; }
 .kbd { position: absolute; right: var(--space-sm); font: var(--type-small); color: var(--ink-3); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); padding: 0 var(--space-xs); pointer-events: none; }
 .topsearch input:focus ~ .kbd { display: none; }
 .ts-drop { position: absolute; top: calc(100% + var(--space-xs)); left: 0; right: 0; background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card);
-  box-shadow: var(--shadow-1); overflow: hidden; max-height: 70vh; overflow-y: auto; }
+  box-shadow: var(--shadow-1); overflow: hidden; max-height: 70vh; overflow-y: auto; z-index: 40; }
 .ts-hit { text-decoration: none; display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: var(--space-sm); align-items: center; width: 100%; text-align: left; font: inherit;
   background: none; border: 0; border-top: var(--rule) solid var(--hairline); padding: var(--space-sm) var(--space-md); cursor: pointer; color: var(--ink); }
 .ts-hit:first-child { border-top: 0; }
@@ -938,6 +938,14 @@ table.board td.title { width: 48%; }
 .ts-main { display: flex; flex-direction: column; min-width: 0; }
 .ts-main b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ts-main .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-plain { background: none; border: 0; border-top: var(--rule) solid var(--hairline); cursor: pointer; color: inherit; padding: var(--space-sm) var(--space-md); }
+.ts-head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-xs) var(--space-md); font: var(--type-small); color: var(--ink-3); border-top: var(--rule) solid var(--hairline); }
+.ts-head:first-child { border-top: 0; }
+.ts-clear { background: none; border: 0; font: var(--type-small); color: var(--primary); cursor: pointer; padding: var(--space-xs); }
+.ts-clear:hover { text-decoration: underline; }
+.ts-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); padding: 0 var(--space-md) var(--space-sm); }
+.ts-chip { font: var(--type-small); color: var(--ink-2); background: var(--sunk); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-xs) var(--space-sm); cursor: pointer; }
+.ts-chip:hover { color: var(--ink); }
 .ts-empty { padding: var(--space-md); color: var(--ink-3); font: var(--type-meta); }
 .ts-all { display: block; text-decoration: none; width: 100%; text-align: left; font: var(--type-button); color: var(--primary); background: var(--sunk); border: 0; border-top: var(--rule) solid var(--hairline); padding: var(--space-sm) var(--space-md); cursor: pointer; }
 .ts-all.on, .ts-all:hover { text-decoration: underline; }

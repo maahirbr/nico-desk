@@ -7,7 +7,7 @@ import { DitherArt } from './DitherArt';
 import type { SearchHit } from '@/lib/search';
 import { fmtDate } from '@/lib/time';
 
-const LABEL: Record<SearchHit['kind'], string> = { project: 'Projects', person: 'People', task: 'Tasks', line: 'Plan lines' };
+const LABEL: Record<SearchHit['kind'], string> = { project: 'Projects', person: 'People', task: 'Tasks', line: 'Plan lines', comment: 'Comments' };
 
 export function SearchView({ initial }: { initial: string }) {
   const router = useRouter();
@@ -41,12 +41,12 @@ export function SearchView({ initial }: { initial: string }) {
     return () => { stale = true; clearTimeout(t); };
   }, [q]);
 
-  const kinds = (['project', 'person', 'task', 'line'] as const).filter((k) => hits?.some((h) => h.kind === k));
+  const kinds = (['project', 'person', 'task', 'line', 'comment'] as const).filter((k) => hits?.some((h) => h.kind === k));
   const flat = kinds.flatMap((k) => hits!.filter((h) => h.kind === k));
 
   return (
     <div className="calm narrow">
-      <header className="page-head"><div><h1>Search</h1><p className="summary">Projects, tasks, plan lines and people.</p></div></header>
+      <header className="page-head"><div><h1>Search</h1><p className="summary">Projects, tasks, plan lines, comments and people. Try is:late, @name or #project.</p></div></header>
       <input ref={input} type="search" className="big-search" placeholder="Search for a task, project or person" value={q} aria-label="Search"
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => {

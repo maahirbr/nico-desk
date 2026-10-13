@@ -118,6 +118,10 @@ export const HELP = {
   comment_box: 'Write a note for everyone who can see this. Type @ to mention a person. Type # to link a task or a project.',
   comment_mention: 'A mention adds a notice for that person. People who cannot see this item are not told.',
   comment_urgent: 'Opens a draft in your Gmail for each person you mentioned. You press Send. The app sends nothing.',
+  // Search
+  search_filters: 'Filters. Add is:late, is:blocked, is:done or is:mine for status. Add @name for an owner, #project for a project, and due:today or due:week for dates.',
+  search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',
+  search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;
