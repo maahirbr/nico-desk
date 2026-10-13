@@ -51,10 +51,10 @@ export function TaskDrafts({ drafts, people, projects, projectId, today, onBack,
   return (
     <div className="stack">
       <div className="inbox-head">
-        <h2>{drafts.length} tasks found <span className="count-badge">{left}</span></h2>
+        <h2>{drafts.length} tasks found</h2>
         {left > 0 && <button type="button" className="btn" disabled={!rows.some(ready)} onClick={() => void addAll()}>Add all</button>}
       </div>
-      <p className="hint" style={{ margin: 0 }}>Check each one, then add it. Nothing is made until you do.</p>
+      <p className="hint" style={{ margin: 0 }}>Check each one, then add it.</p>
       <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {rows.map((r, i) => (
           <li key={i} className="pc">

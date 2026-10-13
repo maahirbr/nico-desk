@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { parseChat } from '@/lib/chat';
 import type { Named, QuickParse } from '@/lib/quickadd';
 import type { SentenceRead } from '@/lib/sentence';
-import { fmtDate } from '@/lib/time';
 import { focusOnDesktop } from './motion';
 import { isRealEnter } from './ime';
 
@@ -62,8 +61,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
         owner: owner ? { word: owner.name, status: 'matched', item: owner } : null,
         project: project ? { word: project.name, status: 'matched', item: project } : null,
       })];
-      const got = [owner ? `owner ${owner.name}` : null, one.dueOn ? `due ${fmtDate(one.dueOn)}` : null, project ? `project ${project.name}` : null].filter(Boolean);
-      setDone([got.length ? `Filled in the task, ${got.join(', ')}. Check it below, then Add task.` : 'Filled in the task name. Pick the rest below.', ...notes].join(' '));
+      setDone(['Filled in below. Check it, then Add task.', ...notes].join(' '));
       setText('');
       focusAfter();
     } catch {
