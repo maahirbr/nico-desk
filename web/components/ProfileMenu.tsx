@@ -54,10 +54,14 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
   const pickTheme = (id: ThemeId) => {
     const next = themeOf(id);
     setTheme(next);
-    if (next === 'system') document.documentElement.removeAttribute('data-theme');
-    else document.documentElement.dataset.theme = next;
+    document.documentElement.dataset.theme = next;
     document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=31536000; SameSite=Lax`;
   };
+  useEffect(() => {
+    const on = (e: Event) => pickTheme(themeOf((e as CustomEvent<string>).detail));
+    window.addEventListener('nd:theme', on);
+    return () => window.removeEventListener('nd:theme', on);
+  });
   const toggleSound = () => {
     const next = !sound;
     setSound(next);

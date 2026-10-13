@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { commandsFor } from '../components/commands';
 import { RECENT_MAX, clearRecent, pushRecent, readRecent, writeRecent } from '../components/recent';
 import { allowedEdits, editDistance, fold, matchWord, scoreText } from '../lib/fuzzy';
+import { SKINS } from '../components/skins';
 import { parseQuery, resolveFilters } from '../lib/searchQuery';
 
 // Pure parts of the stronger local search (workstream 9, 13 Oct): typos, the filter words, commands, recent searches.
@@ -107,7 +108,7 @@ describe('commands', () => {
   });
 
   it('lists every skin that the account menu lists', () => {
-    expect(ids('appearance').filter((i) => i.startsWith('skin-')).length).toBeGreaterThanOrEqual(5);
+    expect(ids('appearance').filter((i) => i.startsWith('skin-'))).toEqual(SKINS.map((s) => `skin-${s.id}`));
   });
 
   it('hides New task in View as, and Reminders from a plain member', () => {

@@ -55,7 +55,7 @@ Rules for colour:
 - Body and dates use Inter in NicoWarm `[--font-sans]`. Page titles and the wordmark use Fraunces, a serif `[--font-serif]`.
 - Sizes in NicoWarm: page title 30px, body 14.5px, second line 13.5px, status chip 12px `[--type-*]`.
 - Dates use tabular figures, so columns line up `[--features-date]`.
-- Use sentence case everywhere. Use no tracked capitals for labels.
+- Use sentence case everywhere, except form field labels and form headings, which use Title Case (`DESIGN.md` Typography). Use no tracked capitals for labels.
 - A screen uses at most three text sizes, plus the title.
 
 ### Spacing and shapes
@@ -93,7 +93,7 @@ Ahead, at risk and late are flags worked out from dates. A person never picks th
 
 Voice:
 - Write like a colleague, not a mascot. Short, plain, first names. The viewer is "you".
-- Use sentence case for buttons, labels, headings and menu items. "Clear block", not "Clear Block".
+- Use sentence case for buttons, page headings and menu items. "Clear block", not "Clear Block". Form field labels and form headings use Title Case: "Project Name".
 - Use plain verbs: add, move, mark, clear, drop. Say "Send" only on a button that really sends. Nothing is sent for anyone without their yes.
 - Say what happens, then stop. "Nothing on you today." is a full sentence.
 - No exclamation marks, no emoji, no jokes.
@@ -169,7 +169,7 @@ Banned patterns:
 
 Each line is a decision that is the PM's to make. The current default is in brackets.
 
-1. Sentence case or title case for form labels. (Default: sentence case, as `DESIGN.md` asks.)
+1. Sentence case or title case for form labels. Answered 13 Oct by the PM: Title Case for form labels and form headings (`DESIGN.md` Typography).
 2. Whether "Suggested order" needs its own visual marker in the sort menu. (Not built yet. Default: it looks like any other sort option.)
 3. Colours for the status bar segments, if she wants them changed. (Default: the status chip colours, with blocked hatched and late solid red.)
 4. The look of the Jev nudge on the full-page update form. (Decided: it appears there too. Default: the same banner as in the drawer.)

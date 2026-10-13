@@ -74,7 +74,7 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
         {err && <p className="err small" role="alert">{err}</p>}
       </div>
       {editing && (
-        <Modal title="Project settings" onClose={() => setEditing(false)} wide>
+        <Modal title="Project Settings" onClose={() => setEditing(false)} wide>
           <ProjectForm people={people} meId={meId} projectId={p.id} onDone={() => setEditing(false)} initial={{
             name: p.name, kind: p.kind, ownerId: p.ownerId, leadId: p.leadId, goal: p.intro ?? '', eyebrow: p.eyebrow ?? '', phase: p.phase ?? '',
             launchOn: p.launchOn ?? '', targetLabel: label, workstreams: p.kind === 'plan' ? p.pillars.filter((x) => x.key !== 'general').map((x) => x.label) : p.workstreams,

@@ -91,26 +91,26 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <fieldset>
-        <label className="f"><span>Project name</span><input ref={focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
+        <label className="f"><span>Project Name</span><input ref={focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
             <button type="button" role="radio" aria-checked={f.kind === 'tasks'} onClick={() => set('kind', 'tasks')}>
               <b>Internal</b><span>A task board the Nicobar team runs, with owners and dates.</span>
             </button>
             <button type="button" role="radio" aria-checked={f.kind === 'plan'} onClick={() => set('kind', 'plan')}>
-              <b>Partner / collaboration</b><span>Work shared with an outside partner who owns some tasks, like a brand collab or a consultant.</span>
+              <b>Partner / Collaboration</b><span>Work shared with an outside partner who owns some tasks, like a brand collab or a consultant.</span>
             </button>
           </div>
         )}
-        <label className="f"><span>Project description</span>
+        <label className="f"><span>Project Description</span>
           <input maxLength={GOAL_MAX} enterKeyHint="next" autoComplete="off" value={f.goal} placeholder="In one line" onChange={(e) => set('goal', e.target.value)} />
         </label>
-        <label className="f"><span>Category (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & Home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
+        <label className="f"><span>Category (Optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & Home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
       </fieldset>
 
       <fieldset>
         <div className="row">
-          <div className="f target-date"><span>Target date</span>
+          <div className="f target-date"><span>Target Date</span>
             <div className="target-date-pair">
               <Select aria-label="What the date is" value={otherLabel ? OTHER : f.targetLabel}
                 onChange={(v) => { setOtherLabel(v === OTHER); set('targetLabel', v === OTHER ? '' : v); }}>
@@ -126,7 +126,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       <fieldset>
         <legend>People</legend>
         {f.kind === 'plan' && <span className="pform-side">Nicobar</span>}
-        <label className="f"><span>Project owner</span>
+        <label className="f"><span>Project Owner</span>
           <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v, leadId: f.leadId === v ? '' : f.leadId, members: f.members.filter((m) => m.personId !== v) })}>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </Select>
@@ -140,14 +140,14 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
           The owner is also the project lead
         </label>
         {!sameLead && (
-          <label className="f"><span>Project lead</span>
+          <label className="f"><span>Project Lead</span>
             <Select value={f.leadId} onChange={(v) => setF({ ...f, leadId: v, members: f.members.filter((m) => m.personId !== v) })}>
               <option value="" disabled>Pick a person</option>
               {people.filter((p) => p.id !== f.ownerId).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
           </label>
         )}
-        <span className="pform-sub">Other people</span>
+        <span className="pform-sub">Other People</span>
         <p className="dim small pform-note">Only the people added here can own tasks in this project, and they will see it in their view.</p>
         {f.members.map((m, i) => (
           <div key={i} className="member-row">
@@ -164,7 +164,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
 
         {f.viewers && (
           <>
-            <span className="pform-sub">Can also view</span>
+            <span className="pform-sub">Can Also View</span>
             <p className="dim small pform-note">For people set to own projects only on the Roster. They see this project and its tasks, and own nothing in it.</p>
             {f.viewers.length > 0 && (
               <div className="chips-input">
@@ -185,14 +185,14 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
         {f.kind === 'plan' && (
           <>
             <span className="pform-side">Partner</span>
-            <label className="f"><span>Partner name</span><input maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. Studio" onChange={(e) => set('partnerName', e.target.value)} /></label>
-            <div className="f"><span>Their people</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="Names. Press Enter after each" /></div>
+            <label className="f"><span>Partner Name</span><input maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. Studio" onChange={(e) => set('partnerName', e.target.value)} /></label>
+            <div className="f"><span>Their People</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="Names. Press Enter after each" /></div>
           </>
         )}
       </fieldset>
 
       <fieldset>
-        <legend>Sub-projects (optional)</legend>
+        <legend>Sub-Projects (Optional)</legend>
         <ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Hampers, Packaging. Press Enter after each" />
       </fieldset>
 
@@ -212,7 +212,7 @@ export function NewProjectButton({ people, meId }: { people: Opt[]; meId: string
     <>
       <button className="btn" onClick={() => setOpen(true)}>+ New project</button>
       {open && (
-        <ModalShell title="Start a project" onClose={() => setOpen(false)} wide>
+        <ModalShell title="Start a Project" onClose={() => setOpen(false)} wide>
           <ProjectForm people={people} meId={meId} onDone={() => setOpen(false)} />
         </ModalShell>
       )}

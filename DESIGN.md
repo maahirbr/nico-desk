@@ -393,7 +393,7 @@ The values in the front matter and the prose below are NicoWarm, the default ski
 
 nico-desk is where a Nicobar team keeps what it promised: who owns what, by when, and what moved. The people using it are busy, slightly non-technical, and already have WhatsApp. So the bar is that a first-time member understands their own week in ten seconds with no help text.
 
-The default look is NicoWarm: a paper ground, near-black ink, one terracotta accent, a dark sidebar and a serif for titles. The pilot team asked for it (see NicoWarm, the default skin). NicoPlain, a white and blue look, is one of five other skins in the account menu. The mechanism comes from Apple Reminders and Calendar (the date is read first, one tap finishes a thing), from Linear and Things (a status is one word) and from Notion and Craft (a note turns into lines that keep their source). It borrows none of their looks.
+The default look is NicoWarm: a paper ground, near-black ink, one terracotta accent, a dark sidebar and a serif for titles. The pilot team asked for it (see NicoWarm, the default skin). Cool (once NicoOS), a grey and blue look, is the one other skin in the account menu. Both come in Light and Dark, and Light is the default. The mechanism comes from Apple Reminders and Calendar (the date is read first, one tap finishes a thing), from Linear and Things (a status is one word) and from Notion and Craft (a note turns into lines that keep their source). It borrows none of their looks.
 
 **Key characteristics:**
 - The date is the biggest thing on every line. The relative word comes first ("Today", "Mon"), the calendar date under it.
@@ -448,6 +448,7 @@ Form fields use 16px (`{typography.input}`) so a phone does not zoom in.
 - Dates use tabular figures and tighten to -0.02em.
 - The page title and the wordmark tighten to -0.02em too.
 - Flags are the one place with tracked capitals: uppercase, 10.5px, 0.03em. Section headings stay in sentence case. No eyebrows above headlines.
+- Form field labels, and the headings and titles inside a form, use Title Case: "Project Name", "Project Description", "Category (Optional)", "Sub-Projects (Optional)", "Start a Project" (the PM's call, 13 Oct). Short words stay lower case (a, an, the, and, of, in, on, to, for). Hints, notes, placeholders, options and buttons keep sentence case. The Start a project form follows this today; other forms move over as they are touched.
 - Sentence case everywhere else.
 
 ## Layout
@@ -585,7 +586,7 @@ Check every screen against this list before showing it. An element that breaks a
 8. **Only the motions listed under Motion.** Feedback under 200ms, nothing past 300ms except the first-load stagger, nothing loops. Reduced motion means instant.
 
 ### Copy
-9. Plain words, sentence case, the voice below. No em dashes, no eyebrows, no exclamation marks, no whimsy.
+9. Plain words, sentence case (Title Case for form labels and form headings), the voice below. No em dashes, no eyebrows, no exclamation marks, no whimsy.
 
 ### Before showing
 10. **Encode or cut.** Every element must answer "what does this tell the person about their week?" If nothing, remove it.
@@ -641,28 +642,28 @@ Mood page: `docs/design/moods.html`. A, B and C came from it. W, NicoWarm, is th
 
 A skin is a block of token overrides in `web/app/tokens.css`, selected by `data-skin` on `<html>`. Each has a day set and a night set. Components read `var(--...)` only, so a skin never needs a component change.
 
-| Id | Name | Type | Accent (day / night) | Shape |
-|---|---|---|---|---|
-| w | NicoWarm (default) | Inter, Fraunces titles | `#b3522c` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
-| a | NicoPlain | Geist, Geist Mono | `#1c5bd9` / `#86abff` | 10px controls, 14px cards, round pills |
-| b | NicoCalm | IBM Plex Sans, IBM Plex Mono | `#0a736e` / `#4fc2bb` | 3px corners, outlined pills, no shadow |
-| c | NicoSoft | Source Sans 3 | `#2d6a55` / `#7cc3a6` | 6px corners, warm ground, soft card shadow |
-| m | NicoOS | System font stack, no download | `#0062cc` / `#64a8ff` | 10px controls, 18px cards, 7px pills, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
-| i | NicoNote | Inter | `#1b63ae` / `#6bb0e8` | 6px controls, 16px cards, 4px pills, off-white page, no shadow, muted tinted tags for status |
+Two skins are offered, at the PM's call (13 Oct): Warm and Cool. Each comes in Light and Dark, and anyone can pick either.
 
-- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value, the server sets `w`. NicoPlain has no token block, so choosing it stores `a` and the base values apply.
-- The switcher is the Appearance row in the account menu (the button at the bottom left of the sidebar). Its items use the names above. The same flyout holds the System, Light and Dark choice.
+| Id | Name in the menu | Was | Type | Accent (day / night) | Shape |
+|---|---|---|---|---|---|
+| w | Warm (default) | NicoWarm | Inter, Fraunces titles | `#b3522c` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
+| m | Cool | NicoOS | System font stack, no download | `#0062cc` / `#64a8ff` | 10px controls, 18px cards, 7px pills, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
+
+The token blocks for the retired skins (a NicoPlain, b NicoCalm, c NicoSoft, i NicoNote) are still in `tokens.css` but are not offered. The base `:root` values (once NicoPlain) stay, since W and M override them.
+
+- The choice is stored in the cookie `nd_skin`. `layout.tsx` reads it on the server and sets `data-skin`, so there is no flash on reload. With no cookie, or an unknown value (including the retired `a`, `b`, `c` and `i`), the server sets `w`.
+- The switcher is the Appearance row in the account menu (the button at the bottom left of the sidebar). Its items are Warm and Cool. The same flyout holds the Light and Dark choice, and the row shows the skin name. The search box also runs "Appearance: Warm", "Cool", "Light" and "Dark".
 - Fonts load only through `next/font/google`. No font file is committed.
 - Skin hooks, beyond colour and type: `--bar`, `--avatar-bg`, `--avatar-you-ring`, `--pill-ring`, `--callout-bg`, `--callout-line`, `--card-shadow`, `--row-pad`, `--font-date`, `--skeleton-fill`, `--toast-bg`, `--toast-ink`.
-- Text contrast. NicoWarm was measured again on 13 Oct, from the current hex values in `tokens.css`, with the WCAG relative-luminance formula. The other five skins were not measured since 12 Oct, so their ratios are not stated here.
+- Text contrast. NicoWarm was measured again on 13 Oct, from the current hex values in `tokens.css`, with the WCAG relative-luminance formula. Cool (NicoOS) was not measured since 12 Oct, so its ratios are not stated here.
   - NicoWarm day: ink on canvas 15.19, ink 2 on canvas 5.00, ink 3 on canvas 4.50, terracotta on canvas 4.52, on surface 5.05, white on terracotta 5.05, Late red on canvas 5.03, At risk amber on canvas 5.19. Late red on its soft fill is 4.64 and amber on its soft fill is 4.94. The five status chips run from 5.38 to 6.92. The sidebar text runs from 5.79 to 13.42.
   - NicoWarm night: ink on canvas 15.46, ink 2 on canvas 6.86, terracotta on canvas 6.39, dark text on terracotta 5.94, red on canvas 6.48, amber on canvas 9.00. The status chips run from 6.72 to 7.88. The lowest night pair is red on its soft fill, 5.18.
   - Below 4.5 in day, and still to review where they are used for small text: terracotta on its soft tint (the viewer's initials mark) 4.15, ink 2 on the pill grey 4.30 and ink 3 on the pill grey 3.87.
-- Night follows the system setting by default. The Appearance flyout offers System, Light and Dark, kept in the cookie `nd_theme` (one year). `layout.tsx` reads it and sets `data-theme="light"` or `"dark"` on `<html>` on the server, so there is no flash. System sets no attribute. Every skin has a day block and a night block under both `data-theme` and the system setting, so the pick works in all six.
+- Light is the default for everyone (the PM's call, 13 Oct), whatever the system setting. The Appearance flyout offers Light and Dark, kept in the cookie `nd_theme` (one year). `layout.tsx` reads it and always sets `data-theme="light"` or `"dark"` on `<html>` on the server, so there is no flash and the OS setting never overrides the pick. With no cookie, or any other value (including the retired `system`), the page is light. Warm and Cool each have a day block and a night block.
 
 ### NicoWarm, the default skin
 
-The pilot team built its own version of this tool, and that build used a warm look: paper ground, one terracotta accent, a dark sidebar and a serif for headings. The pilot team asked for nico-desk to match it, so W is the default and the other five skins stay one click away in the menu. W starts from the team's own values (paper `#f5f2ec`, ink `#1f1c18`, the dark sidebar `#1e1b17`, border `#e8e2d6`) and keeps the rules above: one accent for dates and the viewer, red for late, amber for at risk, chips for status. Some values were darkened so they read as text. The accent is now `#b3522c` (the team's own was `#b5532c`, which the logo tile and the current-page edge still use). The Late red is `#b83d27` and the At risk amber is `#8c5b14`. The team's lighter grey `#9a9284` is not used for text, and the team's purple, green and navy ledger bars have no token here. Titles (page title, ask title, stat numbers, the wordmark) use Fraunces through `next/font/google`, scoped to W by `--font-serif`. Body, dates and buttons use Inter. The sidebar is dark in day and night, set by re-pointing the colour tokens on `.side` in `tokens.css`, so no component changes.
+The pilot team built its own version of this tool, and that build used a warm look: paper ground, one terracotta accent, a dark sidebar and a serif for headings. The pilot team asked for nico-desk to match it, so W is the default and Cool stays one click away in the menu. W starts from the team's own values (paper `#f5f2ec`, ink `#1f1c18`, the dark sidebar `#1e1b17`, border `#e8e2d6`) and keeps the rules above: one accent for dates and the viewer, red for late, amber for at risk, chips for status. Some values were darkened so they read as text. The accent is now `#b3522c` (the team's own was `#b5532c`, which the logo tile and the current-page edge still use). The Late red is `#b83d27` and the At risk amber is `#8c5b14`. The team's lighter grey `#9a9284` is not used for text, and the team's purple, green and navy ledger bars have no token here. Titles (page title, ask title, stat numbers, the wordmark) use Fraunces through `next/font/google`, scoped to W by `--font-serif`. Body, dates and buttons use Inter. The sidebar is dark in day and night, set by re-pointing the colour tokens on `.side` in `tokens.css`, so no component changes.
 
 ## Keyboard
 
@@ -676,5 +677,5 @@ The pilot team built its own version of this tool, and that build used a warm lo
 - The phone layout of Team is readable but not designed.
 - Error states exist as `web/app/error.tsx` and `web/app/not-found.tsx`. They have not yet been checked in a browser.
 - Touch targets: the goal is 44px for every control. Buttons are 36px (40px on a phone), and plain links are about 24px. This is open.
-- Contrast: only NicoWarm was measured again, on 13 Oct. The other five skins were last measured on 12 Oct. The three NicoWarm day pairs below 4.5 (see Skins) need a review.
+- Contrast: only NicoWarm was measured again, on 13 Oct. Cool (NicoOS) was last measured on 12 Oct. The three NicoWarm day pairs below 4.5 (see Skins) need a review.
 - The first design had an as-of scrubber, a Friday note, draft lines that light their source sentence, an Asks page and a commit field. None of these is in the app, so this file no longer describes them.

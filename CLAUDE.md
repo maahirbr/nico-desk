@@ -78,7 +78,7 @@ Add new entries at its bottom, never here. The rules below come from that log an
   `NICO_ROSTER=pilot/roster.local.json`: it drops and reseeds.
 - Partner sign-in addresses live only in the env var `NICO_ALLOWED_EMAILS`. A second address for one person goes
   in `people.alt_emails`.
-- Skin W is the default. Motion uses transform and opacity (chip colour and the tick stroke are the named
+- Two skins, Warm (W) and Cool (M), each in Light or Dark. Warm and Light are the default. Motion uses transform and opacity (chip colour and the tick stroke are the named
   exceptions), stays under 300ms except the first-load stagger, and stops under reduced motion.
 - Tests pin today to 2026-10-09.
 

@@ -64,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const me = await currentMe();
   const jar = await cookies();
   const skin = skinOf(jar.get(SKIN_COOKIE)?.value);
-  const theme = themeOf(jar.get(THEME_COOKIE)?.value); // System is no attribute, so the OS setting decides
+  const theme = themeOf(jar.get(THEME_COOKIE)?.value);
   const help = helpOf(jar.get(HELP_COOKIE)?.value); // like the skin: read here so the server HTML already shows help mode
   const sound = soundOf(jar.get(SOUND_COOKIE)?.value); // off unless the cookie says 1
   const ownerId = localOwnerId(rosterFile());

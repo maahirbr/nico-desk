@@ -1,13 +1,9 @@
 // The skins. The server reads the cookie and sets data-skin on <html>; the tokens do the rest.
-// W is the default: with no cookie, or a value that is not listed, the server sets W. A has no token block
-// (it is the base values), so it needs its own cookie value to override the default.
+// Two are offered, at the PM's call (13 Oct): Warm (W, NicoWarm) and Cool (M, NicoOS). W is the default: with no
+// cookie, or a value that is not listed (including the retired a, b, c and i), the server sets W.
 export const SKINS = [
-  { id: 'w', name: 'NicoWarm' },
-  { id: 'a', name: 'NicoPlain' },
-  { id: 'b', name: 'NicoCalm' },
-  { id: 'c', name: 'NicoSoft' },
-  { id: 'm', name: 'NicoOS' },
-  { id: 'i', name: 'NicoNote' },
+  { id: 'w', name: 'Warm' },
+  { id: 'm', name: 'Cool' },
 ] as const;
 
 export type SkinId = (typeof SKINS)[number]['id'];

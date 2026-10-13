@@ -1,5 +1,6 @@
 import { fold, scoreText } from '@/lib/fuzzy';
 import { SKINS } from './skins';
+import { THEMES } from './theme';
 
 // Commands in the search box (Cmd+K). Only actions that already exist: a page in the side menu, New task, the help
 // mode, the shortcut list and the skins in the account menu. This file is data and a filter, with no React, so a test
@@ -24,6 +25,7 @@ const ALL: (Command & { need?: 'write' | 'lead' })[] = [
   { id: 'help', label: 'Toggle help', words: 'help mode tooltips explain', run: { kind: 'help' } },
   { id: 'shortcuts', label: 'Show keyboard shortcuts', words: 'keys keyboard', run: { kind: 'event', name: 'nd:shortcuts' } },
   ...SKINS.map((s) => ({ id: `skin-${s.id}`, label: `Appearance: ${s.name}`, words: 'skin look theme', run: { kind: 'event', name: 'nd:skin', detail: s.id } as CommandRun })),
+  ...THEMES.map((t) => ({ id: `theme-${t.id}`, label: `Appearance: ${t.name}`, words: 'mode night day theme', run: { kind: 'event', name: 'nd:theme', detail: t.id } as CommandRun })),
 ];
 
 const SHOWN_EMPTY = ['new-task', 'go-home', 'go-team', 'go-projects', 'help'];
