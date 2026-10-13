@@ -64,7 +64,7 @@ function RhythmForm({ projectId, rhythm, today, onDone }: { projectId: string; r
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   return (
-    <div className="meet-form">
+    <div className="mtg-form">
       <div className="row">
         <label className="f"><span>How often</span>
           <Select value={every} onChange={(v) => setEvery(v as MeetEvery | 'none')}>
@@ -87,7 +87,7 @@ function RhythmForm({ projectId, rhythm, today, onDone }: { projectId: string; r
       </div>
       {every !== 'none' && <p className="hint">{every === 'as_needed' ? 'As needed has no automatic date. Add one only if you know it.' : 'Leave the date empty and the app works it out.'}</p>}
       {err && <p className="err" role="alert">{err}</p>}
-      <div className="row meet-form-actions">
+      <div className="row mtg-form-actions">
         <button className="btn ghost" onClick={onDone} disabled={busy}>Cancel</button>
         <button className="btn" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
       </div>
@@ -117,17 +117,17 @@ export function MeetingSection({ projectId, kind, rhythm, agenda, canRun, today 
   };
 
   return (
-    <section className="card card-pad meet" aria-label="Meeting">
-      <div className="meet-head">
-        <div className="meet-title">
+    <section className="card card-pad mtg" aria-label="Meeting">
+      <div className="mtg-head">
+        <div className="mtg-title">
           <h3 className="section-title"><Help term="meeting_rhythm">Meeting</Help></h3>
-          <p className="meet-line">
+          <p className="mtg-line">
             <b>{rhythmWords(rhythm)}</b>
             {rhythm.meetEvery && <span className="dim"> · {next ? <>Next {next === today ? 'today' : fmtDate(next)}</> : 'No date set'}</span>}
             {rhythm.meetLast && <span className="dim"> · Last {fmtDate(rhythm.meetLast)}</span>}
           </p>
         </div>
-        <div className="meet-actions">
+        <div className="mtg-actions">
           {!readOnly && <button className="btn ghost" onClick={() => window.dispatchEvent(new Event(IMPORT_EVENT))}>Write the minutes</button>}
           {write && <button className="btn ghost" onClick={() => setEditing(!editing)} aria-expanded={editing}>{rhythm.meetEvery ? 'Edit rhythm' : 'Set the rhythm'}</button>}
           {write && <button className="btn" onClick={held} disabled={busy || heldToday}>{heldToday ? 'Held today' : <Help term="meeting_held">Meeting held</Help>}</button>}
@@ -136,21 +136,21 @@ export function MeetingSection({ projectId, kind, rhythm, agenda, canRun, today 
       {err && <p className="err" role="alert">{err}</p>}
       {editing && write && <RhythmForm projectId={projectId} rhythm={rhythm} today={today} onDone={() => setEditing(false)} />}
 
-      <details className="meet-agenda" open>
+      <details className="mtg-agenda" open>
         <summary><Help term="meeting_agenda">Agenda</Help> <span className="dim">{agenda.total ? `${agenda.total} ${agenda.total === 1 ? 'item' : 'items'}` : 'nothing to raise'}</span></summary>
         {agenda.sections.length === 0 && (
           <p className="hint">Nothing is late, blocked or at risk, and nothing has changed {agenda.last ? `since ${fmtDate(agenda.last)}` : 'this week'}.</p>
         )}
         {agenda.sections.map((s) => (
-          <div className="meet-sec" key={s.key}>
+          <div className="mtg-sec" key={s.key}>
             <h4 className={s.key === 'late' ? 'late-text' : undefined}>{s.title} <span className="count-badge">{s.rows.length + s.more}</span></h4>
-            <ul className="meet-list">
+            <ul className="mtg-list">
               {s.rows.map((r) => (
-                <li key={r.id} className="meet-row">
+                <li key={r.id} className="mtg-row">
                   {r.taskId && kind === 'tasks'
-                    ? <Link className="meet-link" href={`?task=${r.taskId}`} scroll={false}>{r.title}</Link>
-                    : <span className="meet-text">{r.title}</span>}
-                  <span className={`meet-note ${r.tone === 'late' ? 'late-text' : 'dim'}`}>{r.note}</span>
+                    ? <Link className="mtg-link" href={`?task=${r.taskId}`} scroll={false}>{r.title}</Link>
+                    : <span className="mtg-text">{r.title}</span>}
+                  <span className={`mtg-note ${r.tone === 'late' ? 'late-text' : 'dim'}`}>{r.note}</span>
                 </li>
               ))}
             </ul>
