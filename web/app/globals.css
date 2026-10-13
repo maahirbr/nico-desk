@@ -1247,7 +1247,7 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot { animation: none; }
+  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot, .sbar-in > span { animation: none; }
   .btn:active, .pill:active, .mini-btn:active, button.stat:active, .nav .nav-new:active, .st-pick:active, .status-picker button:active,
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
   * { transition-duration: 0ms !important; }
@@ -1442,6 +1442,39 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .glance-in .glance-split > span, .glance-in .glance-fill { animation: glance-bar var(--dur-slide) var(--ease) both; }
 .glance-in .gl-line { animation: glance-line var(--dur-slide) var(--ease) both; }
 .glance-in .gl-dot { animation: glance-dot var(--dur-slide) var(--ease) both; }
+/* The Home strip starts shut on a phone until the person has used the toggle (data-choice="auto"): CSS decides, so there is no flash. */
+.glance-caret::before { content: '▾'; }
+.glance[data-choice="closed"] .glance-caret::before { content: '▸'; }
+@media (max-width: 767px) {
+  .glance[data-choice="auto"] .glance-caret::before { content: '▸'; }
+  .glance[data-choice="auto"] .glance-grid { display: none; }
+}
+/* The person page shows two of the Home cards; the project page shows one chart. */
+.glance-two { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 var(--space-md); }
+.glance-one { grid-template-columns: minmax(0, 560px); margin: 0 0 var(--space-md); }
+
+/* ---------- Project status bar and weekly chart (components/ProjectVisuals.tsx) ----------
+   Each segment takes its status colour from the same tokens as the status chips, so every skin colours it in day and
+   night. Blocked and late are both red in most skins, so blocked is hatched with the surface and late is solid. */
+.sbar-track { display: flex; gap: 2px; height: 8px; border-radius: 4px; background: var(--sunk); box-shadow: inset 0 0 0 var(--rule) var(--hairline); overflow: hidden; }
+.sbar-track > span { height: 100%; flex-basis: 0; min-width: 4px; transform-origin: left center; }
+.sbar-text { margin: var(--space-xs) 0 0; color: var(--ink-2); line-height: 1.5; }
+.sbar-text b { color: var(--ink); font-weight: 600; }
+.sbar-text i, .glance-legend i.sb-due { display: inline-block; width: 8px; height: 8px; border-radius: 2px; vertical-align: -0.5px; }
+.sb-done { background: var(--status-done-fg); }
+.sb-doing { background: var(--status-doing-fg); }
+.sb-todo { background: var(--status-todo-fg); }
+.sb-blocked { background: var(--status-blocked-fg) repeating-linear-gradient(135deg, transparent 0 2px, var(--surface) 2px 4px); }
+.sb-late { background: var(--late); }
+.sb-due { background: var(--ink-3); }
+.glance-legend i.sb-done, .glance-legend i.sb-due { display: inline-block; }
+.phead-main .sbar { max-width: 440px; margin-top: var(--space-sm); }
+.pcard-progress .sbar { width: 100%; }
+.dd-due { fill: var(--ink-3); }
+.dd-done { fill: var(--status-done-fg); }
+@keyframes sbar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* Grows from the left once per tab, with transform only; reduced motion shows the finished bar at once. */
+.sbar-in > span { animation: sbar-grow var(--dur-slide) var(--ease) both; }
 @media (max-width: 860px) {
   .glance-grid { grid-template-columns: minmax(0, 1fr); }
   .glance-head .rlink { display: inline-flex; align-items: center; min-height: var(--button-height); }

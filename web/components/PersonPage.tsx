@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { Task } from '@/lib/derive';
+import type { PersonView } from '@/lib/service';
 import type { OnTimeRecord, PersonProject } from '@/lib/service';
 import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
@@ -12,6 +13,7 @@ import { useOpenTask } from './taskUrl';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
+import { PersonGlance } from './HomeGlance';
 
 // One teammate's page: their open work by project, who waits on them and whom they wait on, what changed lately,
 // their on-time record (only where the viewer may see it) and their projects. Every row links on: a task opens in
@@ -19,10 +21,10 @@ import { DitherArt } from './DitherArt';
 
 export type PersonLogItem = { id: string; at: string; whoId: string | null; who: string; text: string; taskId: string; task: string };
 
-export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhoto, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record }: {
+export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhoto, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record, glance }: {
   personId: string; email: string; phone: string | null; teamName: string; appRoles: string[]; hasPhoto: boolean; name: string; role: string; department: string; active: boolean; meId: string; isLead: boolean; today: string;
   names: Record<string, string>; projectNames: Record<string, string>; people: Opt[]; workstreamsByProject: Record<string, string[]>;
-  projects: PersonProject[]; open: Task[]; waitingOnThem: Task[]; waitingOnOthers: Task[]; recent: PersonLogItem[]; record: OnTimeRecord | null;
+  projects: PersonProject[]; open: Task[]; waitingOnThem: Task[]; waitingOnOthers: Task[]; recent: PersonLogItem[]; record: OnTimeRecord | null; glance: PersonView['glance'];
 }) {
   const [openId, setOpenId] = useOpenTask();
   const mine = personId === meId;
@@ -62,6 +64,8 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
           {mine && <EditProfileButton personId={personId} name={name} phone={phone} hasPhoto={hasPhoto} />}
         </div>
       </header>
+
+      {glance && <PersonGlance personId={personId} firstName={name.split(' ')[0]} mine={mine} week={glance.week} trend={glance.trend} />}
 
       {record && (
         <section className="card card-pad">

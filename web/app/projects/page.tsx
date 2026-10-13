@@ -1,21 +1,23 @@
 import Link from 'next/link';
 import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
-import { projectCounts, projectMembers, teamProjects } from '@/lib/plan';
+import { projectMembers, projectSplits, teamProjects } from '@/lib/plan';
 import { countdown } from '@/lib/planUtil';
+import { emptySplit } from '@/lib/progress';
 import { fmtDate, today } from '@/lib/time';
 import { Avatar } from '@/components/chips';
 import type { HelpTerm } from '@/components/help';
 import { Help } from '@/components/HelpMode';
 import { NewProjectButton } from '@/components/ProjectForm';
 import { Stagger } from '@/components/motion-ui';
+import { StatusBar } from '@/components/ProjectVisuals';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Projects() {
   const me = await requireMe();
   const { d, names, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
-  const [projects, counts] = await Promise.all([teamProjects(d, me.team.id), projectCounts(d, me.team.id)]);
+  const [projects, splits] = await Promise.all([teamProjects(d, me.team.id), projectSplits(d, me.team.id)]);
   const t = today();
   const bySoonest = (a: (typeof projects)[number], b: (typeof projects)[number]) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999');
   const live = projects.filter((p) => !p.archivedAt).sort(bySoonest);
@@ -25,8 +27,7 @@ export default async function Projects() {
     on_track: { word: 'On track', tone: 'ok', help: 'project_on_track' }, at_risk: { word: 'At risk', tone: 'risk', help: 'project_at_risk' }, off_track: { word: 'Off track', tone: 'late', help: 'project_off_track' },
   };
   const card = (p: (typeof projects)[number]) => {
-    const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
-    const total = c.open + c.done;
+    const split = splits[p.id] ?? emptySplit();
     const cd = p.launchOn ? countdown(t, p.launchOn) : null;
     const team = [...new Set([p.ownerId, p.leadId, ...(members[p.id] ?? []).map((m) => m.personId)])];
     const st = STATUS[p.status];
@@ -42,8 +43,7 @@ export default async function Projects() {
         </div>
         {p.intro && <p className="pcard-goal">{p.intro}</p>}
         <div className="pcard-progress">
-          <Help term="project_progress" host><span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span></Help>
-          <span className="small"><Help term="project_progress" host><span><b>{c.done}</b> done · <b>{c.open}</b> open</span></Help>{c.overdue > 0 && <span className="late-text"> · {c.overdue} <Help term="overdue" host><span>overdue</span></Help></span>}</span>
+          <Help term="project_progress" host><StatusBar split={split} what={p.kind === 'plan' ? 'plan lines' : 'tasks'} viewKey="projects-bars" /></Help>
         </div>
         <div className="pcard-foot">
           <span className="avs" title={team.map((id) => names[id]).join(', ')}>

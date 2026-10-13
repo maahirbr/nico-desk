@@ -58,11 +58,12 @@ export function onTimeTrend(tasks: Task[], personId: string, today: string, week
   return out;
 }
 
-export function trendSummary(weeks: TrendWeek[]): string {
+// `subject` is whose rate it is: "Your" on Home, "Wren's" on a teammate's page.
+export function trendSummary(weeks: TrendWeek[], subject = 'Your'): string {
   const withData = weeks.filter((w) => w.rate !== null);
   if (withData.length === 0) return 'No finished tasks in the last four weeks yet, so no on-time rate.';
   const parts = weeks.map((w) => `week of ${fmtDate(w.weekStart)}: ${w.rate === null ? 'nothing finished' : `${w.rate}% of ${plural(w.closed, 'finished task')} on time`}`);
-  return `Your on-time rate, ${parts.join('; ')}.`;
+  return `${subject} on-time rate, ${parts.join('; ')}.`;
 }
 
 // ---------- load by project: your open tasks, and how many are late ----------
