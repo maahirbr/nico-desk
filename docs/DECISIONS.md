@@ -345,3 +345,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   browser: the crop, the WebP encode and its JPEG fallback, 375px, day and night. The hosted database needs
   `npm run db:upgrade` once before a build with this change is promoted (adds two columns and the table; keeps all data).
   Rollback: `git revert -m 1 b26e162`. The columns and table can stay.
+- 2026-10-13 · Sonnet 5.5 · Home at a glance (workstream 4 of `docs/PLAN-13-OCT.md`), merged by Opus 5.5. Home shows four
+  small charts in inline SVG and CSS drawn from tokens, with no chart library: this week (done, open, late), the viewer's
+  own on-time rate over four weeks, open load per project, and for leads and admins a team load table. The sums live in
+  `web/lib/glance.ts`. The trend uses the ledger's rule (a task counts in the week of its first due date; kept means
+  closed ahead or on time) and is tested against `s.ledger` on the fixtures. Each chart has a screen-reader sentence, a
+  link to its full list and an empty state. The strip collapses, and the choice is kept per browser. Draw-in plays once
+  per tab (bars `scaleX`, the line `stroke-dashoffset` as a third named exception, 200ms) and stops under reduced motion.
+  Not checked: measured contrast, light mode, skins other than W, and reduced motion. At 375px the cards stack and the
+  task list starts about a screen and a half down. No schema change. Rollback: `git revert -m 1 ce8bfdc`.
