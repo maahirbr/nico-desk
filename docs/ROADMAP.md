@@ -34,19 +34,27 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
   Nothing changes until the person approves. The read step needs the model key on the server.
 - **Fathom.** A lead can read meetings from Fathom, as with Granola and Fireflies.
 - **Sounds and motion.** Sounds are off by default. A motion pass covers rows, status changes and new comments.
+- **Meeting rhythm.** Each project can set how often it meets and on which day. The project page shows the next
+  date and an agenda built from late, blocked and open items. A lead marks the meeting held.
+- **Install on phone.** The app installs to a phone home screen. Phone dictation works in every text box, and
+  `/guide` says how to use it.
+- **Feedback.** Send feedback from the account menu. An admin reads it on one page.
+- **More uses for Jev.** A suggested order on Home (a sort option, never the default), a health line on each
+  project, a check on drafted tasks, and a suggested project for a new task.
+- **Google Meet notes.** A lead can read the notes Google Meet already made, as with Granola. The app records nothing.
+- **Team chat.** A chat room per project and one for the team, with `@person` mentions. Any message can become a task.
 
 ## Now (week of 13 Oct)
 
 - Release: the database upgrade, the production secrets and a deploy.
-- Meeting rhythm and agenda on each project (in build).
-- Install on phone, a dictation check, and feedback inside the app (in build).
-- More uses for Jev: a suggested order (a sort option, never the default), project health, and the
-  checks in `docs/AI-AND-TECH.md` (in build).
+- Google Meet notes go live after the new Google sign-in permission is set up.
+- Small chat fixes: an edit to an older message shows without a reload, and a task made from chat says so.
 
 ## Next (week of 19 Oct, when the second team starts)
 
-- Google Meet notes as a source of minutes. This needs a new Google sign-in permission, so it waits for a yes.
-- Team chat.
+- A setup check-list for a new lead.
+- A "run the meeting" view that walks the agenda and records action items as it goes.
+- A "still needed?" check before a reminder is drafted.
 
 ## The pilot rollout (Phase 1)
 
@@ -80,13 +88,13 @@ Nine projects and meetings, each set up as one project:
 | Use case | Built | Still needed |
 |---|---|---|
 | Set up a project and add members | Projects, roles, who sees what | A setup check-list for a new lead |
-| Meet on a rhythm | Minutes to tasks, what moved since last week | Rhythm and next date per project, an agenda built from late, blocked and open items |
-| Run the agenda and action items | Minutes from paste, Granola, Fireflies, Fathom | A "run the meeting" view, Google Meet notes |
-| Members update their own tasks | Five status words, comments, Home | Install on phone, dictation into any box |
+| Meet on a rhythm | Rhythm and next date per project, an agenda from late, blocked and open items | Nothing for the pilot |
+| Run the agenda and action items | Minutes from paste, Granola, Fireflies, Fathom, Google Meet notes | A "run the meeting" view |
+| Members update their own tasks | Five status words, comments, Home, install on phone, dictation, team chat | Nothing for the pilot |
 | No WhatsApp reminders | Reminders open as Gmail drafts, paste a chat to tasks | A "still needed?" check before a nudge |
 | No spreadsheets | Task and plan boards, the ledger | An export for the monthly review, if leads ask |
 | A senior-team group as members | Members one by one | A saved group to add in one step |
-| Collect feedback | Nothing in the app yet | Feedback from the account menu, an admin view |
+| Collect feedback | Feedback from the account menu, an admin view | Nothing for the pilot |
 
 ### How we know it worked
 
@@ -97,7 +105,7 @@ owner in the app, and the share closed by their first date.
 ### Still to decide
 
 - The pilot period. (The roadmap's working date: a roll-out-or-stop decision by 31 Dec 2026.)
-- How feedback is collected. The in-app feedback box is one answer.
+- How feedback is collected. The in-app feedback box is built and is one answer.
 
 ### Phase 2
 
