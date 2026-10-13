@@ -32,12 +32,12 @@ export function StatusChips({ t, names }: { t: Task; names?: Record<string, stri
     <span className="chips">
       {t.statusCategory === 'open' && t.health && <Chip {...HEALTH[t.health]} help={t.health === 'not_started' ? 'status_todo' : 'status_doing'} />}
       {t.statusCategory === 'open' && !t.health && <Chip word={t.sourceStatus} tone="quiet" />}
-      {t.outcome && <Chip {...OUTCOME[t.outcome]} />}
+      {t.outcome && <Chip {...OUTCOME[t.outcome]} help={t.outcome} />}
       {t.statusCategory === 'dropped' && <Chip word="Dropped" tone="quiet" help="status_dropped" />}
       {t.overdue && <Chip word="Late" tone="late" help="late" />}
       {t.slippedSilently && <Chip word="Slipped silently" tone="late" help="slipped_silently" />}
       {t.blocked && <Chip word={t.blocked.onId ? `Blocked on ${names?.[t.blocked.onId] ?? 'someone'}` : 'Blocked'} tone="blocked" help={t.blocked.onId ? 'blocked_on' : 'status_blocked'} />}
-      {t.priority && <Chip word={`Priority ${t.priority.value}`} tone="quiet" />}
+      {t.priority && <Chip word={`Priority ${t.priority.value}`} tone="quiet" help="priority" />}
       {t.readOnly && <Chip word="From Sheet" tone="quiet" />}
     </span>
   );

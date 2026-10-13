@@ -256,9 +256,9 @@ export function StatusMenu({ t, current, statuses, canReassign, disabled, set, o
               </button>
             ))}
             <span className="st-menu-sep" role="separator" />
-            {t.blocked && <button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button>}
-            <button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button>
-            {canReassign && <button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button>}
+            {t.blocked && <Help term="unblock" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button></Help>}
+            <Help term="move_date" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button></Help>
+            {canReassign && <Help term="reassign" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button></Help>}
           </Popover>
         )}
       </AnimatePresence>

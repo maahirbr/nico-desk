@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { ago } from '@/lib/updates';
 import { PersonLink } from './chips';
+import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
 import { api } from './task-ui';
 import { notify } from './toast';
@@ -20,7 +21,7 @@ export function WaitingCard({ tasks, names, projectNames, now, onOpen }: {
   if (!tasks.length) return null;
   return (
     <section className="callout" aria-label="Waiting on you">
-      <h2>Waiting on you <span className="count-badge">{tasks.length}</span></h2>
+      <h2><Help term="waiting_on_you">Waiting on you</Help> <span className="count-badge">{tasks.length}</span></h2>
       {tasks.map((t) => (
         <div key={t.id} className="wait-item">
           <div className="callout-row wait-row">
@@ -34,7 +35,7 @@ export function WaitingCard({ tasks, names, projectNames, now, onOpen }: {
                 “{t.blocked?.ask}”{t.blocked?.at && <> · {ago(t.blocked.at, now)}</>}{t.projectId && projectNames[t.projectId] && <> · {projectNames[t.projectId]}</>}
               </span>
             </span>
-            {!readOnly && doing !== t.id && <button className="mini-btn" onClick={() => setDoing(t.id)}>Done</button>}
+            {!readOnly && doing !== t.id && <Help term="waiting_done" host><button className="mini-btn" onClick={() => setDoing(t.id)}>Done</button></Help>}
           </div>
           {!readOnly && doing === t.id && <DoneForm task={t} owner={names[t.ownerId]?.split(' ')[0] ?? 'The owner'} onClose={() => setDoing(null)} />}
         </div>

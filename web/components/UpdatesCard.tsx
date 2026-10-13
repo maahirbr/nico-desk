@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { ago, type UpdateGroup, type UpdateItem } from '@/lib/updates';
+import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
 
 // "Updates for you": changes other people made to your tasks, tasks blocked on you, or your project's
@@ -39,15 +40,15 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
   return (
     <section className="callout updates" aria-label="Updates for you">
       <div className="callout-head">
-        <h2>Updates for you <span className="count-badge">{total}</span></h2>
-        {!readOnly && <button className="mini-btn" onClick={markAll}>Mark all seen</button>}
+        <h2><Help term="updates_for_you">Updates for you</Help> <span className="count-badge">{total}</span></h2>
+        {!readOnly && <Help term="mark_seen" host><button className="mini-btn" onClick={markAll}>Mark all seen</button></Help>}
       </div>
       {shown.map((g) => (
         <div key={g.projectId ?? 'none'} className="upd-group">
           <div className="upd-project-row">
             <h3 className="upd-project">{g.projectId ? <Link className="rlink" href={`/projects/${g.projectId}`}>{g.name}</Link> : g.name}</h3>
             {!readOnly && live.length > 1 && (
-              <button className="linkbtn upd-seen" onClick={() => seen({ taskIds: live.find((x) => x.projectId === g.projectId)!.rows.map((r) => r.taskId) }, false)}>Mark seen</button>
+              <Help term="mark_seen" host><button className="linkbtn upd-seen" onClick={() => seen({ taskIds: live.find((x) => x.projectId === g.projectId)!.rows.map((r) => r.taskId) }, false)}>Mark seen</button></Help>
             )}
           </div>
           {g.rows.map((r) => (

@@ -5,6 +5,7 @@ import type { PlanLine, Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { PersonLink } from './chips';
 import { DateField } from './DateField';
+import { Help } from './HelpMode';
 import { Select } from './Select';
 import { SlideInd } from './motion-ui';
 
@@ -135,7 +136,7 @@ export function Inbox({ mode, proposals, lines = [], people = [], workstreams = 
   const batches = [...new Set(proposals.map((p) => p.batch))];
   return (
     <section className="inbox">
-      <div className="inbox-head"><h2>Meeting updates</h2><span className="count-badge">{proposals.length} to review</span></div>
+      <div className="inbox-head"><h2><Help term="proposals">Meeting updates</Help></h2><span className="count-badge">{proposals.length} to review</span></div>
       {batches.map((b) => {
         const items = proposals.filter((p) => p.batch === b).sort((x, y) => x.position - y.position);
         const m = items[0].meeting;
@@ -145,7 +146,7 @@ export function Inbox({ mode, proposals, lines = [], people = [], workstreams = 
             <div className="batch-head">
               <div><div className="batch-title">{m.title}</div><div className="small dim">{fmtDate(m.date)} · {items.length} next steps</div></div>
               <div className="row">
-                <button className="mini-btn" disabled={busy || !sure} onClick={() => op({ op: 'acceptSure', batch: b })}>Accept all sure ones ({sure})</button>
+                <Help term="proposal_accept_sure" host><button className="mini-btn" disabled={busy || !sure} onClick={() => op({ op: 'acceptSure', batch: b })}>Accept all sure ones ({sure})</button></Help>
                 <button className="mini-btn danger" disabled={busy}
                   onClick={() => { if (armed === b) { op({ op: 'dismissBatch', batch: b }); setArmed(null); } else { setArmed(b); setTimeout(() => setArmed(null), 5000); } }}>
                   {armed === b ? `Confirm dismiss ${items.length}` : 'Dismiss all'}
@@ -173,7 +174,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
   return (
     <div className={`pc${unsure ? ' unsure' : ''}`}>
       <div className="pc-top">
-        <span className={`pc-badge${unsure ? ' unsure' : ''}`}>{unsure ? (mode === 'plan' ? 'Check the line' : 'Needs owner and date') : mode === 'plan' ? 'Sure' : 'Ready'}</span>
+        <span className={`pc-badge${unsure ? ' unsure' : ''}`}><Help term={unsure ? 'proposal_unsure' : 'proposal_sure'}>{unsure ? (mode === 'plan' ? 'Check the line' : 'Needs owner and date') : mode === 'plan' ? 'Sure' : 'Ready'}</Help></span>
         {mode === 'plan' ? (
           <Select className="pc-line" value={lineId} aria-label="Line for this action" onChange={setLineId}>
             <option value="">Other actions (no line)</option>
