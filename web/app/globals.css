@@ -817,16 +817,16 @@ td .flag { margin-top: var(--space-xxs); }
 .pform .same-lead input { width: 14px; height: 14px; margin: 0; accent-color: var(--primary); }
 .pform .target-date { display: flex; flex-direction: column; gap: var(--space-xxs); flex: 2 1 300px; min-width: 0; }
 .pform .target-date > span { font: var(--type-state); color: var(--ink-2); }
-.pform .target-date-pair { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.pform .target-date-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-xs); }
 .pform .target-date-pair .sel-btn { flex: 0 0 140px; }
-.pform .target-date-pair .other-label { flex: 1 1 100%; order: 3; min-width: 0; }
-.pform .target-date-pair .datefield { flex: 1 1 140px; min-width: 0; }
-@media (max-width: 600px) { .pform .target-date { flex-basis: 100%; } .pform .target-date-pair .sel-btn { flex-basis: 112px; } }
+.pform .target-date-pair .other-label { flex: 1 1 140px; min-width: 0; }
+.pform .target-date-pair .datefield { flex: 1 1 100%; min-width: 0; }
+@media (max-width: 600px) { .pform .target-date { flex-basis: 100%; } }
 .pform .pform-side { font: var(--type-heading); color: var(--ink); margin-top: var(--space-xs); }
 .pform .pform-sub { font: var(--type-state); color: var(--ink-2); margin-top: var(--space-xs); }
 .pform .pform-note { margin: calc(-1 * var(--space-xs)) 0 0; }
 .pform .pform-actions { justify-content: flex-end; align-items: center; }
-.pform .pform-why { margin: 0 auto 0 0; flex: 1 1 200px; }
+.pform .pform-why { margin: 0; text-align: right; }
 .kind-pick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
 .kind-pick button { font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: var(--space-xxs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); border: var(--rule) solid var(--line-strong); background: var(--surface); color: var(--ink);
   transition: background var(--dur-state) var(--ease); }

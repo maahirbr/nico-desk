@@ -354,6 +354,15 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   The note field has `enterKeyHint="done"`, and Escape or Cancel closes the form. The dot for new changes now reads the same
   account marks. The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds the `update_seen` table; keeps all data).
   Rollback: `git revert -m 1 1bb9df7`. The table can stay.
+- 2026-10-13 · Opus 5.5 · Start a project form tidied after the PM's QC against their build. The "why Start is off"
+  line no longer shows on a fresh form: Start stays pressable, and only a try with something missing shows the reason,
+  in red above the buttons. This reverses the 13 Oct "the form says why Start or Save is off" for this form only. The
+  date label picker sits on its own row with the date and its chips below, instead of stretching to their height. On
+  the live database, at the repo owner's call: the `db:upgrade` steps ran (all idempotent; counts unchanged), one
+  pilot member was added to the roster with a placeholder email, and a pilot project got a new owner, a separate lead
+  and seven tasks finished before the desk existed, each closed on its first due date with its done events, so the
+  ledger reads them as on time. Nothing of that data is in the repo. Rollback: `git revert` this commit; the live rows
+  are ids `tsk_ns_h1` to `tsk_ns_h7`, their events, and the project event `evt_ns_owner_1310`.
 
 ## VERIFY
 
