@@ -797,7 +797,7 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .drawer-overlay { place-items: stretch end; padding: 0; }
 .drawer { background: var(--surface); border-left: var(--rule) solid var(--hairline); width: min(var(--drawer-width), 100vw); height: 100vh; overflow: auto; padding: var(--space-md) var(--card-pad) var(--space-xl); box-shadow: var(--shadow-1); display: flex; flex-direction: column; gap: var(--space-sm); }
 .drawer-top { display: flex; justify-content: space-between; align-items: center; }
-.drawer-title { field-sizing: content; min-height: 0; font: var(--type-ask-title); border: var(--rule) solid transparent; padding: var(--space-xxs) var(--space-xs); margin: 0 calc(var(--space-xs) * -1); resize: none; width: calc(100% + var(--space-md)); background: none; }
+.drawer-title { field-sizing: content; min-height: 0; flex-shrink: 0; font: var(--type-ask-title); border: var(--rule) solid transparent; padding: var(--space-xxs) var(--space-xs); margin: 0 calc(var(--space-xs) * -1); resize: none; width: calc(100% + var(--space-md)); background: none; }
 .drawer-title:hover:not(.static), .drawer-title:focus { border-color: var(--line-strong); background: var(--surface); }
 .status-picker button { font: var(--type-state); cursor: pointer; border-radius: var(--radius-pill); padding: var(--pill-pad-y) var(--pill-pad-x); border: var(--rule) solid var(--line-strong); background: var(--canvas); color: var(--ink-2);
   transition: background var(--dur-state) var(--ease), transform var(--dur-state) var(--ease); }

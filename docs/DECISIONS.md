@@ -386,3 +386,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   still needs its reason. Threshold 0.65 from the synthetic eval (40 notes): 90% status accuracy masked and unmasked,
   no wrong offer at any threshold from 0.5 to 0.95. Search hit at top 3: 12/15. Re-check the threshold on real notes.
   Rollback: unset `NICO_JEV` (local search, no nudge), or `git revert -m 1 a42ffa7`.
+
+- **2026-10-13 · Opus 5.5 · The task title no longer collapses in a long drawer.** The drawer is a flex column, and
+  `.drawer-title` had `min-height: 0`, so when the drawer content was taller than the screen (most phones) the title
+  textarea shrank to 10px and the title vanished. `flex-shrink: 0` keeps it at its content height. Checked at 375px with
+  the drawer scrolling: 37.5px. The reported missing nudge on a no-project task opened from a project page did not
+  reproduce: the drawer stays mounted and the nudge shows. Rollback: remove `flex-shrink: 0` from `.drawer-title`.
