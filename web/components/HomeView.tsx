@@ -19,6 +19,7 @@ import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
+import { GuideNote } from './GuideNote';
 import { HomeGlance } from './HomeGlance';
 import type { Glance } from '@/lib/glance';
 
@@ -72,6 +73,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         </div>
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
+
+      <GuideNote />
 
       <HomeGlance glance={glance} />
 

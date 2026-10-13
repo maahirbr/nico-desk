@@ -1184,7 +1184,7 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 
 /* ---------- appearance menu (skins) and the shortcuts list ---------- */
 .profile-menu { right: 0; left: 0; top: auto; bottom: calc(100% + var(--space-xs)); min-width: 220px; }
-.profile-menu > button { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--button-height); white-space: nowrap; }
+.profile-menu > button, .profile-menu > a { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--button-height); white-space: nowrap; }
 .pm-head { display: flex; flex-direction: column; padding: var(--space-sm) !important; cursor: default !important; border-bottom: var(--rule) solid var(--hairline); border-radius: 0 !important; margin-bottom: var(--space-xxs); min-width: 0; }
 .pm-name { font: var(--type-state); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pm-email { font: var(--type-small); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

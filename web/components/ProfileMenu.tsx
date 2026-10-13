@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './chips';
@@ -119,7 +120,8 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, vi
               </div>
             )}
           </div>
-          <button role="menuitem" className="pm-sep" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>
+          <Link role="menuitem" className="pm-sep" href="/guide" onClick={() => setOpen(false)}>Guide</Link>
+          <button role="menuitem" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>
           <button role="menuitem" className="pm-sep" onClick={signOut}>Sign out</button>
         </div>
       )}
