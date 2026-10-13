@@ -232,5 +232,5 @@ and team chat. The last two are overnight runs.
 
 - `docs/ROADMAP.md`: a short README for the team with this roadmap, roles not names, no em dashes.
   Publish it as a private page too.
-- `docs/DESIGN-GUIDE.md`: a short, plain design guide the PM edits on GitHub. `DESIGN.md` stays the
+- `docs/DESIGN-GUIDE.md` (written 13 Oct): a short, plain design guide the PM edits on GitHub. Its section 8 lists the parts of `DESIGN.md` that no longer match the app (it still describes NicoPlain, not the NicoWarm default). Update `DESIGN.md` from that list. `DESIGN.md` stays the
   full source.
