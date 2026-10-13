@@ -589,3 +589,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   The project list's empty choice reads "None (one-off task)". The line "The due date is kept as the first date. Moving
   it later needs a reason." leaves the form: the move-date form already asks for the reason when it applies.
   Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · The ledger's week-by-week tables are gone, at the PM's call.** The tiles, the Delivery habits
+  cards (per person, last 4 weeks), the done split and Needs attention already show every number the tables held, so
+  the tables only repeated them by week and made the page read like a spreadsheet. The collapsed section keeps the
+  definitions and is now called "Definitions". The intro reads "Kept dates, per person, over the last 4 weeks." Every
+  number on the cards still opens the tasks behind it. Rollback: `git revert` this commit.
