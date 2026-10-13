@@ -322,3 +322,15 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   here word for word. `CLAUDE.md` keeps the rules from it that still bind, and the hosting detail moved to the Hosting
   section of `web/README.md`. A security audit and RLS policies are now a gate before active use (CONSTRAINTS, and
   `docs/PLAN-13-OCT.md`), raised by a partner teammate. Rollback: `git revert` this commit.
+- 2026-10-13 · Sonnet 5.5 · Skins renamed to Nico names (NicoWarm, NicoPlain, NicoCalm, NicoSoft, NicoOS, NicoNote), light
+  or dark made a separate choice, and 404 and error pages added (workstream 1 of `docs/PLAN-13-OCT.md`), merged by Opus 5.5.
+  The cookie ids w, a, b, c, m and i stay, so no one's saved skin changes. The account menu's Appearance gains System,
+  Light and Dark; the `nd_theme` cookie sets `data-theme` on `<html>`, which `layout.tsx` reads so the page has no flash.
+  Not checked at merge: `error.tsx` was not rendered in a browser, 375px was not checked in skins a and c, and the
+  theme control's contrast was judged by eye. Rollback: `git revert -m 1 aa340de`; the `nd_theme` cookie then does nothing.
+- 2026-10-13 · Sonnet 5.5 · Help coverage on every screen (workstream 2 of `docs/PLAN-13-OCT.md`), merged by Opus 5.5. 54 more
+  terms in `web/components/help.ts`, wrapped with `<Help>` on Home, Team, Projects, the task board, the plan board, the
+  person page, the ledger, minutes and the status menu. Buttons and links use the `host` prop, so a click still acts.
+  Plan-board tiles and the line-status picker stay unwrapped, since the custom Select flattens its options to strings.
+  `web/tests/help.test.ts` requires the covered list to match HELP exactly, so a new term needs a test line. Not checked:
+  the first-tap-explains behaviour on a phone. Rollback: `git revert -m 1 09fbed7`.
