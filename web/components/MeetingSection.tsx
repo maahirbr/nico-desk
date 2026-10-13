@@ -136,7 +136,7 @@ export function MeetingSection({ projectId, kind, rhythm, agenda, canRun, today 
       {err && <p className="err" role="alert">{err}</p>}
       {editing && write && <RhythmForm projectId={projectId} rhythm={rhythm} today={today} onDone={() => setEditing(false)} />}
 
-      <details className="mtg-agenda" open>
+      <details className="mtg-agenda">
         <summary><Help term="meeting_agenda">Agenda</Help> <span className="dim">{agenda.total ? `${agenda.total} ${agenda.total === 1 ? 'item' : 'items'}` : 'nothing to raise'}</span></summary>
         {agenda.sections.length === 0 && (
           <p className="hint">Nothing is late, blocked or at risk, and nothing has changed {agenda.last ? `since ${fmtDate(agenda.last)}` : 'this week'}.</p>

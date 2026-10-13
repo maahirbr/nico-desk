@@ -5,7 +5,6 @@ import { listNotices, myTasks } from '@/lib/service';
 import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
-import { glanceOf } from '@/lib/glance';
 import { listMentions } from '@/lib/comments';
 import { listChatMentions } from '@/lib/teamchat';
 import { HomeView } from '@/components/HomeView';
@@ -37,9 +36,6 @@ export default async function Home() {
   const movedAway = notices.filter((n) => n.kind === 'reassigned_away').map((n) => ({
     noticeId: n.id, taskId: n.taskId, title: n.taskTitle, toName: names[ownerNow.get(n.taskId) ?? ''] ?? null,
   }));
-  const glance = glanceOf(all, {
-    personId: me.person.id, today: t, projects: onProjects, projectNames, people: activeOpts, showTeam: isLead,
-  });
   return (
     <HomeView
       greeting={`${greeting()}, ${me.person.displayName.split(' ')[0]}`}
@@ -63,7 +59,6 @@ export default async function Home() {
       projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       myProjects={onProjects}
-      glance={glance}
     />
   );
 }

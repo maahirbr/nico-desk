@@ -4,20 +4,18 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
-import type { StatusSplit } from '@/lib/progress';
 import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
 import { Help } from './HelpMode';
 import { ProjectForm } from './ProjectForm';
-import { StatusBar } from './ProjectVisuals';
 import { api, Modal, type Opt } from './task-ui';
 import { notify } from './toast';
 
 // The top of a project page: what it is, when it is due, who is on it. Settings edits all of it.
 
-export function ProjectHeader({ project: p, members, viewers, names, people, meId, canEdit, today, split }: {
-  project: Project; members: Member[]; viewers: string[]; names: Record<string, string>; people: Opt[]; meId: string; canEdit: boolean; today: string; split: StatusSplit;
+export function ProjectHeader({ project: p, members, viewers, names, people, meId, canEdit, today }: {
+  project: Project; members: Member[]; viewers: string[]; names: Record<string, string>; people: Opt[]; meId: string; canEdit: boolean; today: string;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -56,7 +54,6 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
         </p>
         {p.archivedAt && <p className="archived-note">Archived. Its tasks stay readable and no new tasks can be added.</p>}
         {p.intro && <p className="phead-goal">{p.intro}</p>}
-        <Help term="project_progress" host><StatusBar split={split} what={p.kind === 'plan' ? 'plan lines' : 'tasks'} viewKey={`project-bar:${p.id}`} /></Help>
         {p.kind === 'plan' ? (
           <div className="phead-sides">
             <span className="side-name">Nicobar</span>

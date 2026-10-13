@@ -4,7 +4,7 @@ import { requireMe } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
 import { pendingProposals, planState, projectMembers, projectViewers, type Project } from '@/lib/plan';
-import { dueDoneByWeek, lineDates, lineSplit, taskDates, taskSplit } from '@/lib/progress';
+import { lineSplit, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
 import { meetingAgenda } from '@/lib/meetings';
@@ -20,7 +20,6 @@ import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
 import { ProjectHealth } from '@/components/ProjectHealth';
 import { MeetingSection } from '@/components/MeetingSection';
-import { DueDoneChart } from '@/components/ProjectVisuals';
 import { TaskBoard } from '@/components/TaskBoard';
 
 export const dynamic = 'force-dynamic';
@@ -42,27 +41,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const [members, viewers] = await Promise.all([projectMembers(d, p.id), projectViewers(d, p.id)]);
   const now = today();
   const chatUnread = (await listRooms(d, me)).find((r) => r.id === p.id)?.unread ?? 0;
-  // The status bar and the weekly chart read the same work the board below shows: tasks on a task board, lines on a plan board.
+  // The lead's health line reads the same work the board shows: tasks on a task board, lines on a plan board.
   const plan = p.kind === 'plan' ? await planState(d, p.id) : null;
   const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
   const split = plan ? lineSplit(plan.lines, now) : taskSplit(tasks, now);
-  const weeks = dueDoneByWeek(plan ? lineDates(plan.lines) : taskDates(tasks), now);
 
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id}
-        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now}
-        split={split} />
-      {/* A suggestion for the lead, drawn only while Jev is on. It is not stored and sets no status. */}
-      {!p.archivedAt && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin) && <ProjectHealth projectId={p.id} late={split.late} blocked={split.blocked} />}
-      <div className="glance-grid glance-one"><DueDoneChart weeks={weeks} /></div>
+        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now} />
       {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
-      <MeetingSection projectId={p.id} kind={p.kind === 'plan' ? 'plan' : 'tasks'}
-        rhythm={{ meetEvery: p.meetEvery, meetDay: p.meetDay, meetNext: p.meetNext, meetLast: p.meetLast }}
-        agenda={await meetingAgenda(d, me, p.id, now)}
-        canRun={p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin} today={now} />
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
       ) : (
@@ -83,6 +73,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           }))}
         />
       )}
+      {/* The PM's layout keeps the header, the counts and the board together at the top. The meeting and the lead's
+          health line come after the board. */}
+      <MeetingSection projectId={p.id} kind={p.kind === 'plan' ? 'plan' : 'tasks'}
+        rhythm={{ meetEvery: p.meetEvery, meetDay: p.meetDay, meetNext: p.meetNext, meetLast: p.meetLast }}
+        agenda={await meetingAgenda(d, me, p.id, now)}
+        canRun={p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin} today={now} />
+      {/* A suggestion for the lead, drawn only while Jev is on. It is not stored and sets no status. */}
+      {!p.archivedAt && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin) && <ProjectHealth projectId={p.id} late={split.late} blocked={split.blocked} />}
       <div className="card card-pad cn-card"><ConnectsTo lines={await threadsFor(d, me, 'project', p.id)} focus={`project:${p.id}`} /></div>
       <ProjectChat projectId={p.id} people={opts} unread={chatUnread} />
       <CommentThread subjectKind="project" subjectId={p.id} subjectTitle={p.name} people={opts} drawer={p.kind !== 'plan'} />
