@@ -100,6 +100,8 @@ export async function upgrade(db: Db) {
   await db.exec(FEEDBACK_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
+  // 13 Oct: a lead's Google Meet link (encrypted refresh token).
+  await db.exec(GOOGLE_LINKS_UPGRADE);
 }
 
 // Idempotent: the feedback table (RLS on, no policies, like every other table). The same SQL as lib/schema.ts.
@@ -121,6 +123,18 @@ export const MEETINGS_UPGRADE = `
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_day smallint CHECK (meet_day BETWEEN 1 AND 7);
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_next date;
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_last date;`;
+
+// Idempotent: the google_links table, RLS on with no policies.
+export const GOOGLE_LINKS_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS google_links (
+    person_id    text PRIMARY KEY REFERENCES people(id),
+    email        text NOT NULL,
+    scopes       text[] NOT NULL DEFAULT '{}',
+    refresh_enc  text NOT NULL,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    last_used_at timestamptz
+  );
+  ALTER TABLE google_links ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: the two comment tables (RLS on, no policies) and a notices table that can hold a mention (no task, a comment).
 export const COMMENTS_UPGRADE = `

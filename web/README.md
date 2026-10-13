@@ -144,6 +144,20 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   minutes then lists that tool's recent meetings to pick from; a meeting already imported into a
   project is refused. Wispr Flow has no key-based API for apps like this one (its Notetaker has a
   read-only MCP server for AI assistants, not used here yet), so it stays paste-only.
+- **Google Meet notes** (Connections, lead or admin; off unless `NICO_MEET=1` with the Google client set). A lead
+  presses Connect Google Meet. That is a second Google permission screen, asked only of that lead and never at
+  sign-in (incremental authorization). It asks to read Meet records and Meet files: `meetings.space.readonly` and
+  `drive.meet.readonly`. The return must come from the lead's own Google address (`people.email` or `alt_emails`), or
+  nothing is saved. Only the refresh token is kept, in `google_links`, sealed with AES-256-GCM under a key from
+  `NICO_TOKEN_KEY` and bound to the person. Access tokens live in memory for one call. Disconnect deletes the row and
+  asks Google to revoke the token. The Import minutes screen then shows a Google Meet tab: the last 14 days of
+  meetings the lead was in. A pick reads the Gemini notes Doc if there is one, else the transcript with speaker names.
+  The text goes through the same minutes reader as Fathom, so nothing is stored beyond what that flow stores. View as
+  refuses every Meet route, reads included. Code: `lib/meet.ts`, `app/api/v1/connections/google-meet/`,
+  `app/api/auth/google/meet/callback/`. Tests: `tests/meet.test.ts`, with Google faked. Limits: a raw transcript has no
+  Next steps heading, so without `ANTHROPIC_API_KEY` the plain reader gives noisy proposals, and the model reader is
+  the better fit. A notes Doc owned by another organizer may not open with these scopes, and the transcript is read
+  instead. Not yet checked against a live Google account.
 - **Search** (sidebar, or Ctrl/⌘+K): projects, tasks, plan lines and people in one list.
 - **Paste a chat** (New task, then "Paste a chat"; not shown under View as): paste a WhatsApp chat or pick an
   exported `.txt` file. `lib/chat.ts` reads iOS, Android (12 or 24 hour) and plain lines into messages and drops
@@ -219,6 +233,17 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   `npm run db:remote`.
 - With `DATABASE_URL` set, `NICO_SESSION_SECRET` and `NICO_JOB_SECRET` must be set (the app refuses a derived one),
   and the roster picker and open demo stay off unless `NICO_ALLOW_DEMO_IN_HOSTED=1`.
+- Google Meet notes (`NICO_MEET=1`), steps for the person who owns the Google Cloud project:
+  1. In APIs and Services, enable the Google Meet REST API and the Google Drive API.
+  2. On the OAuth consent screen, add the scopes `https://www.googleapis.com/auth/meetings.space.readonly` and
+     `https://www.googleapis.com/auth/drive.meet.readonly`. `drive.meet.readonly` is a Restricted scope, so a public
+     app needs Google verification. An Internal app in one Workspace domain does not.
+  3. On the same OAuth client, add the redirect URI `https://<host>/api/auth/google/meet/callback`, and
+     `http://localhost:3100/api/auth/google/meet/callback` for local runs. The sign-in URI stays as it is.
+  4. Set `NICO_MEET=1` and `NICO_TOKEN_KEY` (a long random string; keep it, since losing it makes saved links
+     unreadable and each lead must connect again). Without `NICO_TOKEN_KEY` on Vercel or with `DATABASE_URL` set, the
+     feature stays off.
+  5. Run `npm run db:upgrade` before promoting the build, so `google_links` exists.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its
   ask columns are not in the Supabase schema.
 

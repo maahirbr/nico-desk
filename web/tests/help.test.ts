@@ -22,7 +22,7 @@ describe('help text', () => {
       'search_filters', 'search_commands', 'search_recent', 'meeting_rhythm', 'meeting_agenda', 'meeting_held',
       'waiting_done', 'plan_done_looks_like', 'plan_actions', 'plan_by_subproject', 'plan_by_date', 'proposal_accept_sure',
       'paste_review', 'paste_masked',
-      'conn_from_env',
+      'conn_from_env', 'conn_meet',
       'feedback_page', 'feedback_read',
       'jev_order', 'jev_health', 'jev_check_drafts', 'jev_project_guess',
     ];

@@ -28,12 +28,29 @@ const INFO = {
   },
 } as const;
 
-export function Connections({ status: initial, canManage }: { status: Status; canManage: boolean }) {
+type MeetState = { connected: boolean; email: string | null; since: string | null };
+
+// What the callback tells the lead when they come back from Google, by its short code.
+const MEET_CODES: Record<string, { err: boolean; text: string }> = {
+  connected: { err: false, text: 'Connected. Google Meet notes are ready to use in Import minutes.' },
+  cancelled: { err: true, text: 'Google Meet was not connected. You closed the permission screen.' },
+  scopes: { err: true, text: 'Google Meet was not connected. Both permissions are needed: tick both on the Google screen, then try again.' },
+  mismatch: { err: true, text: 'Google Meet was not connected. The Google account is not the address on your profile. Pick your own account.' },
+  state: { err: true, text: 'Google Meet was not connected. The request expired or came from another browser. Try again.' },
+  no_refresh: { err: true, text: 'Google did not give a lasting link. Remove this app at myaccount.google.com/permissions, then try again.' },
+  viewing_as: { err: true, text: 'Nothing was saved. You are viewing as someone else, and that view is read-only.' },
+  not_allowed: { err: true, text: 'Only a lead can connect Google Meet.' },
+  google: { err: true, text: 'Google did not accept the request. Try again.' },
+  email: { err: true, text: 'Google did not confirm your email address. Try again.' },
+};
+
+export function Connections({ status: initial, canManage, meet = null, meetCode = null }: { status: Status; canManage: boolean; meet?: MeetState | null; meetCode?: string | null }) {
   const [status, setStatus] = useState(initial);
   return (
     <div className="calm narrow">
       <header className="page-head"><div><h1>Connections</h1><p className="summary">Bring meeting notes in from the tools you already use.</p></div></header>
       {(['granola', 'fireflies', 'fathom'] as const).map((p) => <Card key={p} p={p} s={status[p]} canManage={canManage} onChange={setStatus} />)}
+      {meet && <MeetCard initial={meet} code={meetCode} />}
       <section className="card conn">
         <div className="conn-head"><h2>Wispr Flow</h2><span className="st tone-quiet">Paste only</span></div>
         <p className="small dim" style={{ margin: 0 }}>
@@ -85,6 +102,52 @@ function Card({ p, s, canManage, onChange }: { p: Name; s: State; canManage: boo
           </div>
         </>
       ) : <p className="small" style={{ margin: 0 }}>{s.connected ? 'Ready to use in Import minutes.' : 'Ask a lead to connect it.'}</p>}
+      {msg && <p className={msg.err ? 'err' : 'ok'} role={msg.err ? 'alert' : 'status'}>{msg.text}</p>}
+    </section>
+  );
+}
+
+// Google Meet is a lead's own account, not a team key. The app asks Google for read-only access to the notes and
+// transcripts of meetings that lead was part of, and keeps only an encrypted refresh token.
+function MeetCard({ initial, code }: { initial: MeetState; code: string | null }) {
+  const [s, setS] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ err: boolean; text: string } | null>(code ? MEET_CODES[code] ?? null : null);
+  async function connect() {
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch('/api/v1/connections/google-meet', { method: 'POST' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || typeof data?.url !== 'string') throw new Error(data?.error?.message ?? 'That did not work.');
+      window.location.href = data.url;
+    } catch (e) { setMsg({ err: true, text: (e as Error).message }); setBusy(false); }
+  }
+  async function disconnect() {
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch('/api/v1/connections/google-meet', { method: 'DELETE' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message ?? 'That did not work.');
+      setS(data); setMsg({ err: false, text: 'Disconnected. The saved link is deleted and Google was told to end it.' });
+    } catch (e) { setMsg({ err: true, text: (e as Error).message }); }
+    finally { setBusy(false); }
+  }
+  return (
+    <section className="card conn">
+      <div className="conn-head">
+        <h2><Help term="conn_meet">Google Meet</Help></h2>
+        {s.connected ? <span className="st tone-ok">Connected · {s.email}</span> : <span className="st tone-quiet">Not connected</span>}
+      </div>
+      <p className="small dim" style={{ margin: 0 }}>Lists the meetings you were part of and reads the notes Gemini made, or the transcript if there are no notes. This reads what Google already made. It does not record.</p>
+      {!s.connected && <ol className="steps small">
+        <li>Press Connect. Google asks for read-only access to your Meet notes and transcripts.</li>
+        <li>Pick the Google account that matches your email here.</li>
+        <li>Tick both permissions, then allow.</li>
+      </ol>}
+      <div className="row">
+        <button className="btn" disabled={busy} onClick={connect}>{busy && !s.connected ? 'Opening Google…' : s.connected ? 'Reconnect' : 'Connect Google Meet'}</button>
+        {s.connected && <button className="btn ghost" disabled={busy} onClick={disconnect}>Disconnect</button>}
+      </div>
       {msg && <p className={msg.err ? 'err' : 'ok'} role={msg.err ? 'alert' : 'status'}>{msg.text}</p>}
     </section>
   );
