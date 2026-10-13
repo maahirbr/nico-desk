@@ -8,5 +8,6 @@ export const ProjectBody = z.object({
   targetLabel: z.string().max(40).optional(), workstreams: z.array(z.string().max(60)).max(20),
   members: z.array(z.object({ personId: z.string().min(1).max(80), role: z.string().max(60) })).max(40),
   partnerName: z.string().max(80).optional(), partnerPeople: z.array(z.string().max(60)).max(20).optional(),
+  viewers: z.array(z.string().min(1).max(80)).max(40).optional(),
 }).strict();
 

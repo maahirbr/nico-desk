@@ -10,6 +10,7 @@ vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined })
 import type { Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
+import { getProject, projectMembers, projectViewers, updateProject } from '../lib/plan';
 import { search } from '../lib/search';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
@@ -114,6 +115,18 @@ describe('project visibility', () => {
     const v = await s.personView(db, TEAM_ID, DEE, owner, AS_OF);
     expect(v.projects.map((p) => p.id)).not.toContain(HIDDEN);
     for (const t of [...v.open, ...v.waitingOnThem, ...v.waitingOnOthers]) expect(hiddenIds.has(t.id) && t.ownerId !== DEE).toBe(false);
+  });
+
+  it('project settings set the viewer list, and leaving it out keeps it', async () => {
+    const p = await getProject(db, HIDDEN);
+    const base = { name: p.name, kind: p.kind, ownerId: p.ownerId, leadId: p.leadId, goal: p.intro ?? '', workstreams: p.workstreams, members: await projectMembers(db, HIDDEN) };
+    await updateProject(db, LEAD, HIDDEN, { ...base, viewers: [DEE, p.ownerId] });
+    expect(await projectViewers(db, HIDDEN)).toEqual([DEE]); // the owner already sees it
+    expect(seesProject(await sightOf(db, TEAM_ID, DEE), HIDDEN)).toBe(true);
+    await updateProject(db, LEAD, HIDDEN, base);
+    expect(await projectViewers(db, HIDDEN)).toEqual([DEE]);
+    await updateProject(db, LEAD, HIDDEN, { ...base, viewers: [] });
+    expect(await projectViewers(db, HIDDEN)).toEqual([]);
   });
 
   it('refuses the team-wide API views to a restricted person', async () => {

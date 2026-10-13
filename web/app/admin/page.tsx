@@ -12,7 +12,7 @@ export default async function Admin() {
   return (
     <>
       <h1>Roster</h1>
-      <p className="lede">{me.team.name}. Marking someone inactive keeps their history.</p>
+      <p className="lede">{me.team.name}. Marking someone inactive keeps their history. Someone on own projects only sees the projects they own, lead, are on or may view, unless they are a lead or an admin.</p>
       <div className="card table-card"><table className="stacked">
         <thead><tr><th>Name</th><th>Job title</th><th>Email</th><th>Access</th><th></th></tr></thead>
         <tbody>
@@ -21,8 +21,8 @@ export default async function Admin() {
               <td><Person name={p.displayName} id={p.id} /></td>
               <td data-label="Title">{p.role}</td>
               <td data-label="Email" className="mono small">{p.email}</td>
-              <td data-label="Access" className="small" style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</td>
-              <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} email={p.email} />}</td>
+              <td data-label="Access" className="small"><span style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</span>{p.active && p.restricted ? ' · own projects only' : ''}</td>
+              <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} email={p.email} restricted={p.restricted} />}</td>
             </tr>
           ))}
         </tbody>

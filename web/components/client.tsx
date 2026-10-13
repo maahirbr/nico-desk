@@ -407,7 +407,7 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   );
 }
 
-export function PersonControls({ id, active, roles, self, email }: { id: string; active: boolean; roles: string[]; self: boolean; email: string }) {
+export function PersonControls({ id, active, roles, self, email, restricted }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; restricted: boolean }) {
   const { busy, error, run } = useSubmit();
   const toggle = (r: string) => (roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r]).filter((x) => x !== 'member');
   return (
@@ -417,6 +417,9 @@ export function PersonControls({ id, active, roles, self, email }: { id: string;
       </button>
       <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('lead') })}>
         {roles.includes('lead') ? 'Remove lead' : 'Make lead'}
+      </button>
+      <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { restricted: !restricted })}>
+        {restricted ? 'See all projects' : 'Own projects only'}
       </button>
       {active && <CopyInvite email={email} />}
       <Err e={error} />

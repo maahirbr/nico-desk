@@ -144,7 +144,7 @@ From the Nicobar repos:
 5. Sketch the three first screens (the week, a person, a project) in the Nicobar UI.
 6. Agree the concept and the 31 Dec criteria with the sponsor and the pilot lead by 7 Oct.
 
-## 8. Next session (written 13 Oct, nothing below is built yet)
+## 8. Next session (written 13 Oct; 8.2 and 8.3 are built)
 
 Work in this order. Each build item is spec only. Source edits still ask first.
 
@@ -161,22 +161,16 @@ The full report is `web/.data/security-audit-13-oct.md`. It is git-ignored and s
 repo is public. Do the High items first, then the Medium items, then the row level security SQL in its
 section 4.3. The SQL is a live database change, so it asks first.
 
-### 8.3 Project visibility (new, 13 Oct)
+### 8.3 Project visibility (built 13 Oct)
 
-The ask: selected people see only the projects they are assigned to, or were given view rights on.
-Admins see everything.
+An admin marks a person "Own projects only" on the Roster. That person sees the projects they own,
+lead or are a member of, plus any project whose Settings lists them under "Can also view". They also
+see a task they own or that is blocked on them. Leads and admins see everything. Everything else reads
+as missing. View as shows exactly what the person sees. As built, and how it differs from the plan:
+`docs/VISIBILITY-PLAN.md`.
 
-- Open question for the repo owner: does "selected" mean a per-person `restricted` flag (only flagged
-  people are limited), or every member who is not a lead or admin? The default proposal is the flag,
-  because it changes nothing for the pilot until someone is flagged.
-- A project gets a `viewer` role on its membership, next to owner, lead and member.
-- A restricted person sees: projects where they hold any role, tasks they own or are named on, and
-  nothing else. Leads and admins see all.
-- Every read path needs the same filter. The places that leak project names are the risk: search
-  (local and Jev), notices, the ledger, Home charts, people pages, "Connects to", reminders and the
-  Jev masking dictionary. The full map and plan: `docs/VISIBILITY-PLAN.md`.
-- Tests: a restricted person gets a 404 on a project page, an empty search hit, and no project name in
-  notices or Home.
+Before a deploy with this code: `npm run db:upgrade` on the hosted database (it adds
+`people.restricted` and `project_viewers`).
 
 ### 8.4 The planned batch
 

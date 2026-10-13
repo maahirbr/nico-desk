@@ -104,6 +104,10 @@ clicking a task opens a side panel with its details, actions and history. Leads 
 from Projects (name, what done looks like, date, lead, people with their project role,
 sub-projects or pillars, partner); the project's Settings edits the same fields.
 
+An admin can mark a person "Own projects only" on the Roster. That person sees only the projects they
+own, lead or are a member of, and the projects whose Settings lists them under "Can also view". Leads
+and admins always see everything (`lib/sight.ts`, `lib/visibility.ts`).
+
 ### Statuses
 
 A person picks one of five: **Not started**, **In progress**, **Blocked**, **Done**, **Dropped**. The app

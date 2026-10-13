@@ -16,8 +16,8 @@ import { notify } from './toast';
 
 // The top of a project page: what it is, when it is due, who is on it. Settings edits all of it.
 
-export function ProjectHeader({ project: p, members, names, people, meId, canEdit, today, split }: {
-  project: Project; members: Member[]; names: Record<string, string>; people: Opt[]; meId: string; canEdit: boolean; today: string; split: StatusSplit;
+export function ProjectHeader({ project: p, members, viewers, names, people, meId, canEdit, today, split }: {
+  project: Project; members: Member[]; viewers: string[]; names: Record<string, string>; people: Opt[]; meId: string; canEdit: boolean; today: string; split: StatusSplit;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -81,7 +81,7 @@ export function ProjectHeader({ project: p, members, names, people, meId, canEdi
           <ProjectForm people={people} meId={meId} projectId={p.id} onDone={() => setEditing(false)} initial={{
             name: p.name, kind: p.kind, ownerId: p.ownerId, leadId: p.leadId, goal: p.intro ?? '', eyebrow: p.eyebrow ?? '', phase: p.phase ?? '',
             launchOn: p.launchOn ?? '', targetLabel: label, workstreams: p.kind === 'plan' ? p.pillars.filter((x) => x.key !== 'general').map((x) => x.label) : p.workstreams,
-            members, partnerName: p.partnerName ?? '', partnerPeople: p.partnerPeople,
+            members, partnerName: p.partnerName ?? '', partnerPeople: p.partnerPeople, viewers,
           }} />
         </Modal>
       )}

@@ -425,3 +425,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   permissions headers, and a report-only CSP. Browsing connected meetings is lead and admin only; members paste
   minutes. `.env` and `.env.*` are git-ignored. The RLS revoke on the live database and the unused public Supabase env
   vars are left for the repo owner's yes. Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · Project visibility (HANDOFF.md 8.3).** An admin can mark a person "Own projects only"
+  (`people.restricted`). That person sees projects they own, lead or are a member of, projects that list them under
+  "Can also view" (`project_viewers`), and tasks they own or that are blocked on them. Leads, admins and unrestricted
+  people see everything. Hidden reads as missing (404). Visibility follows the viewed person, so View as tests it.
+  Viewers got their own table because `updateProject` re-inserts members. The Jev masking dictionary keeps the full
+  project list, which masks more, not less. The team-wide week, by-status and ledger API views refuse a restricted
+  person. The open questions took the proposed answers. Rollback: `git revert` the two visibility commits; the
+  `restricted` column and the `project_viewers` table can stay, nothing else reads them.

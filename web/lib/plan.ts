@@ -590,6 +590,22 @@ export async function projectMembers(db: Tx, projectId: string): Promise<Member[
   return rows.map((r) => ({ personId: r.person_id, role: r.project_role }));
 }
 
+// People who may see the project without being on it (lib/sight.ts). Only matters for someone on own projects only.
+export async function projectViewers(db: Tx, projectId: string): Promise<string[]> {
+  const { rows } = await db.query<{ person_id: string }>(
+    `SELECT v.person_id FROM project_viewers v JOIN people p ON p.id = v.person_id WHERE v.project_id = $1 ORDER BY p.display_name`, [projectId]);
+  return rows.map((r) => r.person_id);
+}
+
+// Replaces the viewer list when one is given. Owner, lead and members already see the project, so they are left out.
+async function setViewers(tx: Tx, teamId: string, projectId: string, meId: string, keep: string[], viewers: string[] | undefined) {
+  if (!viewers) return;
+  const ids = [...new Set(viewers)].filter((v) => !keep.includes(v));
+  if (ids.length) await checkPeople(tx, teamId, ids);
+  await tx.query(`DELETE FROM project_viewers WHERE project_id = $1`, [projectId]);
+  for (const v of ids) await tx.query(`INSERT INTO project_viewers (project_id, person_id, added_by) VALUES ($1,$2,$3)`, [projectId, v, meId]);
+}
+
 // The live projects someone is on, as owner, lead or member, with their part in each. Home lists these; archived ones are left out.
 export async function myProjects(db: Tx, teamId: string, personId: string): Promise<{ id: string; name: string; role: string }[]> {
   const { rows } = await db.query<{ id: string; name: string; owner_id: string; lead_id: string | null; project_role: string | null }>(
@@ -625,6 +641,7 @@ export type ProjectInput = {
   name: string; kind: 'tasks' | 'plan'; ownerId: string; leadId?: string | null; goal: string; eyebrow?: string; phase?: string;
   launchOn?: string | null; targetLabel?: string; workstreams: string[]; members: Member[];
   partnerName?: string; partnerPeople?: string[];
+  viewers?: string[]; // left out: unchanged
 };
 
 const LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -684,6 +701,7 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
         JSON.stringify(input.kind === 'tasks' ? c.ws : []), c.label, meId, c.leadId],
     );
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);
+    await setViewers(tx, teamId, id, meId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)], input.viewers);
     await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, after, actor_id, origin, at) VALUES ($1,'project',$2,'_created',$3::jsonb,$4,'app',now())`,
       [newId('evt'), id, JSON.stringify({ name: c.name, kind: input.kind, owner_id: input.ownerId, lead_id: c.leadId, launch_on: input.launchOn || null }), meId]);
   });
@@ -767,6 +785,7 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
     if (stuck.length) throw bad('invalid_body', `Reassign their open tasks before removing them: ${stuck.map((r) => `${r.display_name} (${r.n})`).join(', ')}.`, 'members');
     await tx.query(`DELETE FROM project_members WHERE project_id = $1`, [id]);
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);
+    await setViewers(tx, p.teamId, id, meId, keep, input.viewers);
     // A change of owner or lead is a project event, so the project's update log shows who holds the project and since when.
     const changes: [string, string, string][] = [['owner_id', p.ownerId, input.ownerId], ['lead_id', p.leadId, c.leadId ?? input.ownerId]];
     for (const [field, before, after] of changes) {

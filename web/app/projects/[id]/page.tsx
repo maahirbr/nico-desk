@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireMe } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
-import { pendingProposals, planState, projectMembers, type Project } from '@/lib/plan';
+import { pendingProposals, planState, projectMembers, projectViewers, type Project } from '@/lib/plan';
 import { dueDoneByWeek, lineDates, lineSplit, taskDates, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
@@ -31,7 +31,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   if (p.teamId !== me.team.id) notFound();
   const active = people.filter((x) => x.active).map((x) => ({ id: x.id, name: x.displayName, role: x.role, department: x.department }));
   const opts = active.map((x) => ({ id: x.id, name: x.name }));
-  const members = await projectMembers(d, p.id);
+  const [members, viewers] = await Promise.all([projectMembers(d, p.id), projectViewers(d, p.id)]);
   const now = today();
   // The status bar and the weekly chart read the same work the board below shows: tasks on a task board, lines on a plan board.
   const plan = p.kind === 'plan' ? await planState(d, p.id) : null;
@@ -42,7 +42,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
-      <ProjectHeader project={p} members={members} names={names} people={opts} meId={me.person.id}
+      <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id}
         canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now}
         split={split} />
       <div className="glance-grid glance-one"><DueDoneChart weeks={weeks} /></div>

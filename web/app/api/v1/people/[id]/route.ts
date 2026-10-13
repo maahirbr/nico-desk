@@ -7,6 +7,7 @@ const Body = z.object({
   appRoles: z.array(z.enum(['member', 'lead', 'admin'])).optional(),
   role: z.string().trim().min(2).max(80).optional(),
   department: z.string().trim().min(2).max(60).optional(),
+  restricted: z.boolean().optional(),
 }).strict();
 
 export const PATCH = route<{ id: string }>(async ({ req, params, me, db }) =>

@@ -17,6 +17,7 @@ export type ProjectValues = {
   name: string; kind: 'tasks' | 'plan'; ownerId: string; leadId: string; goal: string; eyebrow: string; phase: string;
   launchOn: string; targetLabel: string; workstreams: string[]; members: { personId: string; role: string }[];
   partnerName: string; partnerPeople: string[];
+  viewers?: string[]; // set when editing: who may see the project without being on it
 };
 
 // What the target date is. Anything else is typed in under Other.
@@ -51,7 +52,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
   const editing = !!projectId;
   const [f, setF] = useState<ProjectValues>(initial ?? {
     name: '', kind: 'tasks', ownerId: meId, leadId: meId, goal: '', eyebrow: '', phase: '', launchOn: '', targetLabel: 'Deadline',
-    workstreams: [], members: [], partnerName: '', partnerPeople: [],
+    workstreams: [], members: [], partnerName: '', partnerPeople: [], viewers: [],
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
         name: f.name, kind: f.kind, ownerId: f.ownerId, leadId, goal: f.goal, eyebrow: f.eyebrow, phase: f.phase, launchOn: f.launchOn || null,
         targetLabel: f.targetLabel, workstreams: f.workstreams, members: f.members.filter((m) => m.personId),
         ...(f.kind === 'plan' ? { partnerName: f.partnerName, partnerPeople: f.partnerPeople } : {}),
+        ...(f.viewers ? { viewers: f.viewers.filter((v) => !taken(v) && !f.members.some((m) => m.personId === v)) } : {}),
       };
       try {
         const p = await api(editing ? `/projects/${projectId}` : '/projects', editing ? 'PATCH' : 'POST', body);
@@ -158,6 +160,26 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
           </div>
         ))}
         {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
+
+        {f.viewers && (
+          <>
+            <span className="pform-sub">Can also view</span>
+            <p className="dim small pform-note">For people set to own projects only on the Roster. They see this project and its tasks, and own nothing in it.</p>
+            {f.viewers.length > 0 && (
+              <div className="chips-input">
+                {f.viewers.map((v) => (
+                  <span key={v} className="chip">{people.find((p) => p.id === v)?.name ?? v}<button type="button" aria-label={`Remove ${people.find((p) => p.id === v)?.name ?? v}`} onClick={() => set('viewers', f.viewers!.filter((x) => x !== v))}>×</button></span>
+                ))}
+              </div>
+            )}
+            {free.some((p) => !f.viewers!.includes(p.id)) && (
+              <Select value="" aria-label="Add a viewer" onChange={(v) => v && set('viewers', [...f.viewers!, v])}>
+                <option value="">+ Add a viewer</option>
+                {free.filter((p) => !f.viewers!.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+            )}
+          </>
+        )}
 
         {f.kind === 'plan' && (
           <>

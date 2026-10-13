@@ -1,4 +1,25 @@
-# Project visibility: the plan (13 Oct, not built)
+# Project visibility: the plan (13 Oct, built the same day)
+
+## As built
+
+The plan below was built on 13 Oct, with these differences:
+
+- The flag is `people.restricted`, not `team_members.restricted`. An admin sets it on the Roster.
+- Viewers are a new `project_viewers(project_id, person_id, added_by)` table, not `project_members.access`.
+  `updateProject` re-inserts members, so a separate table keeps viewer rows safe. The project's Settings
+  has a "Can also view" field.
+- `lib/sight.ts` (`sightOf`, `seesProject`, `seesTask`) and `lib/visibility.ts` (`seenTasks`, `seenProjects`,
+  `taskFor`, `projectFor`) hold the rule. Pages and routes read through them. A test bans `teamTasks` and
+  `teamProjects` in `app/` and `components/`.
+- A task with no project is visible to a restricted person only when they own it, created it or it is
+  blocked on them.
+- An inactive person, or someone not on the team, sees nothing.
+- `maskDictFor` keeps the full project list. It is server-only, so masking more names is the safe side.
+- The week, by-status and ledger API views refuse a restricted person (403). The pages filter instead.
+- Hidden reads as missing: 404 on the API, `notFound()` on pages.
+- The open questions took the proposed answers: the per-person flag, a blocked-on person sees that one
+  task, and a task owner still joins the project.
+
 
 The ask: selected people see only the projects they are on, or were given view rights on. Admins see
 everything. This file maps today's model and the smallest change. Line numbers are from 13 Oct.
