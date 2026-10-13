@@ -34,28 +34,10 @@ const MATCH: Record<Key, (t: Task) => boolean> = {
   movedLate: (t) => t.renegotiations.some((r) => r.kind === 'late'),
   moved: (t) => t.renegotiations.length > 0,
 };
-const COLS: [keyof LedgerRow, string, Key][] = [
-  ['closedAhead', 'Ahead', 'ahead'],
-  ['closedOnTime', 'On time', 'ontime'],
-  ['closedLateFlagged', 'Late, flagged early', 'flagged'],
-  ['closedLateMissed', 'Late, missed', 'missed'],
-  ['openPastDue', 'Open, past due', 'pastdue'],
-  ['silentSlips', 'Slipped silently', 'silent'],
-  ['renegotiatedOpen', 'Moved in time', 'movedOpen'],
-  ['renegotiatedLate', 'Moved late', 'movedLate'],
-];
-
-// The help term for each column header, by the column's filter key.
-const COL_HELP: Record<Key, HelpTerm> = {
-  kept: 'ledger_kept', ahead: 'ahead', ontime: 'on_time', late: 'late', flagged: 'flagged_early', missed: 'missed', pastdue: 'ledger_pastdue',
-  silent: 'slipped_silently', movedOpen: 'moved_in_time', movedLate: 'moved_late', moved: 'moved_date',
-};
-
 const SPLIT_HELP: Record<string, HelpTerm> = { Ahead: 'ahead', 'On time': 'on_time', Late: 'late' };
 
 const closedOn = (t: Task) => (t.closedAt ? istDate(t.closedAt) : null);
 const days = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
-const mondayOf = (d: string) => { const x = new Date(`${d}T00:00:00Z`); const w = x.getUTCDay(); x.setUTCDate(x.getUTCDate() + (w === 0 ? -6 : 1 - w)); return x.toISOString().slice(0, 10); };
 const pct = (n: number, d: number) => (d ? Math.round((100 * n) / d) : null);
 
 function keptOf(ts: Task[]) {
@@ -75,10 +57,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   const [drill, setDrill] = useState<Drill>(null);
   // The drill list's sort comes back the next time the ledger is opened in this browser (components/remember.ts).
   const [kept, keep] = useRemembered('ledger', { drillSort: 'recent' as EndedSort }, (raw) => ({ drillSort: endedSortOf(raw.drillSort) }), ['drillSort']);
-  const weekList = Array.from({ length: weeks }, (_, i) => {
-    const d = new Date(`${from}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i); return d.toISOString().slice(0, 10);
-  }).reverse();
-  const sum = (rs: LedgerRow[], k: keyof LedgerRow) => rs.reduce((n, r) => n + (r[k] as number), 0);
   const show = (title: string, list: Task[]) => list.length && setDrill({ title, tasks: list });
   const N = ({ n, title, list, warn }: { n: number | string; title: string; list: Task[]; warn?: boolean }) =>
     list.length ? <button className={`num-btn${warn ? ' warn' : ''}`} onClick={() => show(title, list)} title="See the tasks">{n}</button> : <span className="num-zero">{n}</span>;
@@ -96,7 +74,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   return (
     <>
       <h1><Help term="on_time_record">On-time ledger</Help></h1>
-      <p className="lede">Kept dates, per person per week. On time means closed by the date first given. Click any number to see the tasks behind it.</p>
+      <p className="lede">Kept dates, per person, over the last 4 weeks. On time means closed by the date first given. Click any number to see the tasks behind it.</p>
 
       <div className="stats">
         <Help term="ledger_kept" host><button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
@@ -231,7 +209,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
       </div>
 
       <details className="breakdown">
-        <summary>Full breakdown <span className="count-badge">definitions, by person, by week</span></summary>
+        <summary>Definitions</summary>
       <div className="card defs">
         <div>
           <h3>Finished</h3>
@@ -252,46 +230,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
           </dl>
         </div>
       </div>
-
-      {weekList.map((w) => {
-        const rs = rows.filter((r) => r.weekStart === w);
-        const wk = tasks.filter((t) => mondayOf(t.firstDueOn) === w);
-        const kw = keptOf(wk);
-        return (
-          <section key={w}>
-            <h2>Week of {fmtDate(w)} <span className="count-badge">{kw.pct === null ? 'n/a' : `${kw.pct}%`} kept</span></h2>
-            {rs.length === 0 ? <div className="card"><p className="empty card-pad">No commitments fell due this week.</p></div> : (
-              <div className="card table-card scroll"><table>
-                <thead>
-                  <tr className="grp"><th />
-                    <th colSpan={4} className="num">Finished</th><th className="num">Open</th><th colSpan={3} className="num">Dates</th>
-                  </tr>
-                  <tr><th>Person</th>{COLS.map(([k, l, m]) => <th key={k} className="num"><Help term={COL_HELP[m]}>{l}</Help></th>)}</tr>
-                </thead>
-                <tbody>
-                  {rs.map((r) => {
-                    const own = wk.filter((t) => t.ownerId === r.personId);
-                    return (
-                      <tr key={r.personId}>
-                        <td><Person name={names[r.personId]} id={r.personId} /></td>
-                        {COLS.map(([k, l, m]) => (
-                          <td key={k} className="num"><N n={r[k] as number} title={`${names[r.personId]}, week of ${fmtDate(w)}: ${l.toLowerCase()}`} list={own.filter(MATCH[m])} warn={m === 'silent' || m === 'pastdue'} /></td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                  <tr className="total">
-                    <td>Team</td>
-                    {COLS.map(([k, l, m]) => (
-                      <td key={k} className="num"><b><N n={sum(rs, k)} title={`Team, week of ${fmtDate(w)}: ${l.toLowerCase()}`} list={wk.filter(MATCH[m])} /></b></td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table></div>
-            )}
-          </section>
-        );
-      })}
 
       </details>
 
