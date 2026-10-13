@@ -65,7 +65,8 @@ export async function getPerson(db: Tx, teamId: string, id: string): Promise<Per
 
 export async function findPersonByEmail(db: Tx, email: string): Promise<{ id: string; active: boolean } | null> {
   const { rows } = await db.query<{ id: string; active: boolean }>(
-    `SELECT id, active FROM people WHERE lower(email) = lower($1)`,
+    `SELECT id, active FROM people WHERE lower(email) = lower($1)
+       OR lower($1) IN (SELECT lower(a) FROM unnest(alt_emails) AS a)`,
     [email],
   );
   return rows[0] ?? null;

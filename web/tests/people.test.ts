@@ -87,3 +87,13 @@ describe('the task address', () => {
     expect(withTask('?task=tsk_1&who=per_a', null)).toBe('?who=per_a');
   });
 });
+
+describe('findPersonByEmail', () => {
+  it('finds a person by any of their sign-in addresses, in any case', async () => {
+    await db.query(`UPDATE people SET alt_emails = ARRAY['ada@partner.example'] WHERE id = $1`, [LEAD]);
+    const { rows } = await db.query<{ email: string }>(`SELECT email FROM people WHERE id = $1`, [LEAD]);
+    expect((await s.findPersonByEmail(db, rows[0].email))?.id).toBe(LEAD);
+    expect((await s.findPersonByEmail(db, 'Ada@Partner.example'))?.id).toBe(LEAD);
+    expect(await s.findPersonByEmail(db, 'someone@partner.example')).toBeNull();
+  });
+});

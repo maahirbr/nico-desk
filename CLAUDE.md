@@ -4,7 +4,7 @@ One place where a Nicobar team runs its week: tasks and owners, projects and wha
 meeting minutes turned into tasks, linked to the company context layer. Piloted with one small
 team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HANDOFF.md` is the brief and the reading list.
 
-**Working on `maahir/mvp` before or after the 12 Oct demo? Read `docs/HANDOFF-12-OCT.md` first:** what changed,
+**The 13 Oct feature batch is planned in `docs/PLAN-13-OCT.md`.** **Working on `maahir/mvp` before or after the 12 Oct demo? Read `docs/HANDOFF-12-OCT.md` first:** what changed,
 the baseline, the feedback and its state, the UI direction, and the work in flight.
 
 ## ARCHITECTURE
@@ -355,6 +355,12 @@ the baseline, the feedback and its state, the UI direction, and the work in flig
   account marks. The hosted database needs `npm run db:upgrade` once before a build with this change is promoted (adds the `update_seen` table; keeps all data).
   Rollback: `git revert -m 1 1bb9df7`. The table can stay.
 
+- 2026-10-13 · Opus 5.5 · One person can sign in from more than one address, at the repo owner's call, for a pilot member
+  who uses both a company and a partner address. `people.alt_emails` holds the extra addresses and `findPersonByEmail`
+  matches either. A partner address still needs `NICO_ALLOWED_EMAILS`. Roster files take an optional `alt_emails` list.
+  The hosted database needs `npm run db:upgrade` once (adds the column; keeps all data). The 13 Oct feature batch is
+  planned in `docs/PLAN-13-OCT.md`. Rollback: `git revert` this commit; the column can stay.
+
 ## VERIFY
 
 ```
@@ -364,7 +370,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `248 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `249 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

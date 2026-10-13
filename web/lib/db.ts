@@ -88,6 +88,8 @@ export async function upgrade(db: Db) {
   await db.exec(UPDATE_SEEN_UPGRADE);
   // 13 Oct: a project can have a lead who is not its owner.
   await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS lead_id text REFERENCES people(id);`);
+  // 13 Oct: one person can sign in from more than one address (a company and a partner address).
+  await db.exec(`ALTER TABLE people ADD COLUMN IF NOT EXISTS alt_emails text[] NOT NULL DEFAULT '{}';`);
 }
 
 // Idempotent: adds the archive columns and lets a notice be of kind reassigned_away. No new table, so no new RLS step.

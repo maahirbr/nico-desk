@@ -21,7 +21,7 @@ type Row = Record<string, any>;
 
 // A local roster overlay, kept out of git (roster.local.json): real names on a local run while the
 // public repo keeps synthetic ones. Keys are fixture person ids.
-export type RosterOverlay = Record<string, { display_name?: string; role?: string; department?: string; email?: string; contact_email?: string; never_remind?: boolean; roles?: ('lead' | 'admin')[]; merged_into?: string }>;
+export type RosterOverlay = Record<string, { display_name?: string; role?: string; department?: string; email?: string; alt_emails?: string[]; contact_email?: string; never_remind?: boolean; roles?: ('lead' | 'admin')[]; merged_into?: string }>;
 
 // The desk owner on a local run ("me" in roster.local.json): sign-in offers them first.
 export function localOwnerId(file: string): string | undefined {
@@ -56,8 +56,8 @@ export async function seed(tx: Tx, dir: string, overlay?: RosterOverlay, local?:
 
   await tx.query(`INSERT INTO teams VALUES ($1, $2, 'run')`, [TEAM_ID, 'Pilot team (synthetic)']);
   for (const p of people) {
-    await tx.query(`INSERT INTO people (id, display_name, role, department, email, contact_email, never_remind) VALUES ($1,$2,$3,$4,$5,$6,$7)`, [
-      p.id, p.display_name, p.role, p.department, p.email, p.contact_email ?? null, !!p.never_remind,
+    await tx.query(`INSERT INTO people (id, display_name, role, department, email, contact_email, never_remind, alt_emails) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [
+      p.id, p.display_name, p.role, p.department, p.email, p.contact_email ?? null, !!p.never_remind, p.alt_emails ?? [],
     ]);
     await tx.query(`INSERT INTO team_members VALUES ($1, $2, 'member')`, [TEAM_ID, p.id]);
     const roles: string[] = p.roles ?? [...(LEADS.includes(p.id) ? ['lead'] : []), ...(ADMINS.includes(p.id) ? ['admin'] : [])];
@@ -130,8 +130,8 @@ async function seedLocalProjects(tx: Tx, local: LocalProjects, people: Row[]): P
   if (local.team_name) await tx.query(`UPDATE teams SET name = $2 WHERE id = $1`, [TEAM_ID, local.team_name]);
   const all = [...people];
   for (const p of local.people ?? []) {
-    await tx.query(`INSERT INTO people (id, display_name, role, department, email, contact_email, never_remind) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [p.id, p.display_name, p.role, p.department, p.email, p.contact_email ?? null, !!p.never_remind]);
+    await tx.query(`INSERT INTO people (id, display_name, role, department, email, contact_email, never_remind, alt_emails) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [p.id, p.display_name, p.role, p.department, p.email, p.contact_email ?? null, !!p.never_remind, p.alt_emails ?? []]);
     await tx.query(`INSERT INTO team_members VALUES ($1, $2, 'member')`, [TEAM_ID, p.id]);
     for (const r of p.roles ?? []) await tx.query(`INSERT INTO team_members VALUES ($1, $2, $3)`, [TEAM_ID, p.id, r]);
     all.push(p);

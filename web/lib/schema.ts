@@ -18,6 +18,7 @@ CREATE TABLE people (
   email         text NOT NULL UNIQUE,
   active        boolean NOT NULL DEFAULT true,
   contact_email text,                          -- where reminders go, if not the sign-in email
+  alt_emails    text[] NOT NULL DEFAULT '{}',  -- other addresses that sign in as this person
   never_remind  boolean NOT NULL DEFAULT false -- e.g. someone who signs off rather than delivers
 );
 
