@@ -12,6 +12,7 @@ import { isTyping } from './keys';
 import { clearRecent, pushRecent, readRecent, writeRecent } from './recent';
 import { useReadOnly } from './readonly';
 import { useViewer } from './viewer';
+import { isRealEnter } from './ime';
 
 // The search bar at the top middle of every page. Results drop down as you type; Enter opens the
 // highlighted one, or the full results page. / or Ctrl/⌘+K jumps here from anywhere.
@@ -179,7 +180,7 @@ export function TopSearch() {
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); armed.current = true; setSel(Math.min(at + 1, rows.length - 1)); }
           if (e.key === 'ArrowUp') { e.preventDefault(); armed.current = true; setSel(Math.max(at - 1, 0)); }
-          if (e.key === 'Enter') {
+          if (isRealEnter(e)) {
             e.preventDefault();
             if (rows[at] && (term || armed.current)) act(rows[at]);
           }

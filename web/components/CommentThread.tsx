@@ -11,6 +11,8 @@ import { useReadOnly } from './readonly';
 import { api } from './task-ui';
 import { useOpenTask } from './taskUrl';
 import { notify } from './toast';
+import { composing } from './ime';
+import { Count } from './LimitNotice';
 
 // Comments on a task or a project. Typing @ or # opens a picker; a pick puts the name in the text and remembers the id,
 // and on send the names become tokens ([[person:ID]]) that the server checks again (lib/comments.ts).
@@ -121,6 +123,7 @@ function Composer({ people, initial, label, resetOnPost, submit, onCancel }: {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (composing(e)) return; // dictation or IME is still choosing the text: Enter, Tab and arrows belong to it
     if (pick) {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setPick(null); return; } // closes the list, not the drawer
       if (found.length) {
@@ -143,6 +146,7 @@ function Composer({ people, initial, label, resetOnPost, submit, onCancel }: {
         onKeyDown={onKeyDown}
         onBlur={() => setTimeout(() => { if (!picking.current) setPick(null); }, 150)}
       />
+      <Count value={text} max={MAX_TYPED} />
       {pick && found.length > 0 && (
         <ul className="cm-pick" id={listId} role="listbox" aria-label={pick.mark === '@' ? 'People' : 'Tasks and projects'}>
           {found.map((c, i) => (

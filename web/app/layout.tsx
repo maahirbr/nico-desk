@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Fraunces, Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans, Inter, Source_Sans_3 } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
@@ -8,6 +8,8 @@ import { Nav, SwitchToOwner } from '@/components/client';
 import { HELP_COOKIE, helpOf } from '@/components/help';
 import { HelpProvider, HelpToggle } from '@/components/HelpMode';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
+import { LimitNotice } from '@/components/LimitNotice';
+import { ServiceWorker } from '@/components/ServiceWorker';
 import { Shortcuts } from '@/components/Shortcuts';
 import { ProjectPeopleProvider } from '@/components/OwnerPicker';
 import { ProfileMenu } from '@/components/ProfileMenu';
@@ -31,7 +33,20 @@ import { today as todayIst } from '@/lib/time';
 import './tokens.css';
 import './globals.css';
 
-export const metadata: Metadata = { title: 'Nico Desk', description: 'Where a Nicobar team runs its week.' };
+export const metadata: Metadata = {
+  title: 'Nico Desk',
+  description: 'Where a Nicobar team runs its week.',
+  // Home-screen install: iOS reads these tags, Android reads app/manifest.ts.
+  appleWebApp: { capable: true, title: 'Nico Desk', statusBarStyle: 'default' },
+  icons: { apple: '/icons/apple-touch-icon.png' },
+};
+// Browser bar colour: skin W canvas, day and night.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f5f2ec' },
+    { media: '(prefers-color-scheme: dark)', color: '#12110f' },
+  ],
+};
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' });
@@ -68,6 +83,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <HelpProvider initial={help} enabled={!!me}>
         {me?.viewingAs && <ViewBanner name={me.person.displayName} role={roleWord(me.person.appRoles)} />}
         <KeyboardDismiss />
+        <ServiceWorker />
+        <LimitNotice />
         <Toaster />
         {me && <Shortcuts />}
         {me ? (

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './chips';
+import { FeedbackDialog } from './FeedbackDialog';
 import { Help } from './HelpMode';
 import { SKINS, SKIN_COOKIE, skinOf, type SkinId } from './skins';
 import { SOUND_COOKIE, play } from './sound';
@@ -25,6 +26,7 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
   const [open, setOpen] = useState(false);
   const [looks, setLooks] = useState(false);
   const [who, setWho] = useState(false);
+  const [feedback, setFeedback] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
 
@@ -143,10 +145,12 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
             </button></Help>
           </div>
           <Link role="menuitem" className="pm-sep" href="/guide" onClick={() => setOpen(false)}>Guide</Link>
+          <button role="menuitem" onClick={() => { setOpen(false); setFeedback(true); }}>Send feedback</button>
           <button role="menuitem" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>
           <button role="menuitem" className="pm-sep" onClick={signOut}>Sign out</button>
         </div>
       )}
+      {feedback && <FeedbackDialog onClose={() => setFeedback(false)} />}
     </div>
   );
 }

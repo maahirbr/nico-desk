@@ -142,6 +142,25 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   `ANTHROPIC_API_KEY`: without it the read returns 503 `model_off`. Tests: `tests/chat.test.ts`, `tests/paste.test.ts`,
   `tests/paste-evals.test.ts`. The 20 synthetic chats are in `evals/paste/`.
 
+### Phone install, dictation and feedback
+
+- **Install on a phone.** `app/manifest.ts` serves `/manifest.webmanifest` (name Nico Desk, standalone, skin W day colours).
+  Icons are in `public/icons/` (192, 512, maskable 512, apple touch 180), made by `scripts/make-icons.mjs`. `layout.tsx`
+  sets `appleWebApp` and a light and dark `themeColor`. `public/sw.js` is a small service worker, registered in
+  production only (`components/ServiceWorker.tsx`). It never touches `/api/`, any non-GET request or another origin, and
+  it caches no page. Only `/_next/static/`, `/icons/`, the manifest and `public/offline.html` are cached (cache-first,
+  versioned name, old caches deleted on activate). A page request goes to the network and falls back to the offline
+  page. The Guide has an "On your phone" section. Test: `tests/pwa.test.ts`.
+- **Dictation check (HANDOFF 8.6).** `components/ime.ts` holds `isRealEnter` (Enter that is not part of an IME
+  composition: `isComposing` or keyCode 229) and `cutBy`. Every Enter-to-submit handler now uses it. `LimitNotice`
+  (mounted in `layout.tsx`) listens for `beforeinput` on any box with a `maxLength` and shows a notice when a paste or
+  dictation is cut. `Count` shows how many characters are left on the long boxes. Test: `tests/ime.test.ts`.
+- **Feedback.** Account menu, Send feedback, opens `FeedbackDialog`: a required note (up to 4000 characters) and a box to
+  save the page path. The `feedback` table (`lib/schema.ts` and `upgrade()`, RLS on) holds the notes. `POST
+  /api/v1/feedback` is open to any signed-in person and refused under View as. `GET /api/v1/feedback` and `PATCH
+  /api/v1/feedback/[id]` (mark read) are admin only. Admins read the notes at `/feedback`, newest first. Nothing is
+  emailed. Test: `tests/feedback.test.ts`.
+
 ### Ledger and reasons
 
 - **Ledger** (More → Ledger): the summary tiles and weekly tables as before, plus a **delivery

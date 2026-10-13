@@ -18,6 +18,7 @@ export const GUIDE_SECTIONS = [
   { id: 'blocked', title: 'When you are blocked' },
   { id: 'leads', title: 'For leads and admins' },
   { id: 'help', title: 'Help mode and shortcuts' },
+  { id: 'phone', title: 'On your phone' },
   { id: 'feedback', title: 'Tell us what is not working' },
 ] as const;
 
@@ -121,9 +122,20 @@ export function GuideView() {
         </dl>
       </section>
 
+      <section id="phone" aria-labelledby="g-phone">
+        <h2 id="g-phone">{title('phone')}</h2>
+        <p>You can put Nico Desk on your home screen. It then opens like an app, with no browser bar.</p>
+        <ul>
+          <li>On an iPhone, open Nico Desk in Safari. Tap Share, then Add to Home Screen.</li>
+          <li>On Android, open Nico Desk in Chrome. Tap the menu, then Install app.</li>
+        </ul>
+        <p>You still need a connection. Nico Desk does not keep your tasks on the phone.</p>
+      </section>
+
       <section id="feedback" aria-labelledby="g-feedback">
         <h2 id="g-feedback">{title('feedback')}</h2>
         <p>Tell the pilot lead what is confusing, missing or wrong. A short note is enough. This team&rsquo;s weeks shape what Nico Desk becomes.</p>
+        <p>Open the account menu with your name. Choose Send feedback and write your note. The admins read it in Nico Desk. It is not sent by email.</p>
       </section>
     </article>
   );

@@ -128,6 +128,9 @@ export const HELP = {
   // Search
   search_filters: 'Filters. Add is:late, is:blocked, is:done or is:mine for status. Add @name for an owner, #project for a project, and due:today or due:week for dates.',
   search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',
+  // Feedback
+  feedback_page: 'About this page. Saves the page address with your note, so the admins know where you were. It keeps no search text and no names.',
+  feedback_read: 'Mark read. Tells the other admins you have seen this note. The writer is not told.',
   search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
 } as const;
 

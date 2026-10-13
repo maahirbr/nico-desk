@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { describeQuick, parseQuickAdd, type Named, type QuickParse } from '@/lib/quickadd';
 import { fmtDate } from '@/lib/time';
 import { focusOnDesktop } from './motion';
+import { isRealEnter } from './ime';
 
 // The quick-add line of the new-task forms: "Send deck to vendor fri @owner #project". It only fills
 // the form's own fields, which stay editable; what it found, or could not match, shows under the line.
@@ -42,7 +43,7 @@ export function QuickAddField({ today, people, projects, hasTitle, apply, focusA
         <input ref={focusOnDesktop} enterKeyHint="go" autoComplete="off" maxLength={300} value={text}
           placeholder={`Send deck to vendor fri @owner${projects ? ' #project' : ''}`}
           onChange={(e) => { setText(e.target.value); setDone(null); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); fill(); } }}
+          onKeyDown={(e) => { if (isRealEnter(e)) { e.preventDefault(); fill(); } }}
           onBlur={() => { if (!hasTitle) fill(); }} />
       </label>
       {(preview.length > 0 || done) && (

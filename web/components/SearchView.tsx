@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DitherArt } from './DitherArt';
 import type { SearchHit } from '@/lib/search';
 import { fmtDate } from '@/lib/time';
+import { isRealEnter } from './ime';
 
 const LABEL: Record<SearchHit['kind'], string> = { project: 'Projects', person: 'People', task: 'Tasks', line: 'Plan lines', comment: 'Comments' };
 
@@ -52,7 +53,7 @@ export function SearchView({ initial }: { initial: string }) {
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); setSel(Math.min(sel + 1, flat.length - 1)); }
           if (e.key === 'ArrowUp') { e.preventDefault(); setSel(Math.max(sel - 1, 0)); }
-          if (e.key === 'Enter' && flat[sel]) router.push(flat[sel].href);
+          if (isRealEnter(e) && flat[sel]) router.push(flat[sel].href);
         }} />
       {hits && hits.length === 0 && <div className="empty-state"><DitherArt field="bands" className="dither-empty" fade /><p>Nothing matches “{q.trim()}”.</p></div>}
       {kinds.map((k) => (

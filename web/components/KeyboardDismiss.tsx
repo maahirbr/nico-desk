@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { isRealEnter } from './ime';
 
 // The mobile keyboard rule: the keyboard closes when the person taps outside a text field,
 // presses return or done, or scrolls. No field may leave it stuck open. One listener set for the
@@ -31,7 +32,7 @@ export function KeyboardDismiss() {
     // Return or Done on a single-line field. A textarea keeps return for a new line.
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as Element | null;
-      if (e.key === 'Enter' && t instanceof HTMLInputElement && TEXT_TYPES.has(t.type)) {
+      if (isRealEnter(e) && t instanceof HTMLInputElement && TEXT_TYPES.has(t.type)) {
         // Let a form submit first, then close the keyboard.
         setTimeout(() => { if (document.activeElement === t) t.blur(); }, 0);
       }

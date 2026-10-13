@@ -22,6 +22,7 @@ import { SlideInd } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
+import { isRealEnter } from './ime';
 
 // A partner plan: lines of work, each with an owner on our side, a partner person, a mode,
 // checkpoints and a status. Rows open for detail. Every change is one call to
@@ -549,7 +550,7 @@ function ReasonRow({ title, label, min, go, busy, onCancel, onGo }: {
           <div className="row">
             <label className="f"><span>{label}</span>
               <input ref={focusOnDesktop} maxLength={280} value={r} onChange={(e) => setR(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && ok) onGo(r.trim()); if (e.key === 'Escape') onCancel(); }} />
+                onKeyDown={(e) => { if (isRealEnter(e) && ok) onGo(r.trim()); if (e.key === 'Escape') onCancel(); }} />
             </label>
             <span className="row" style={{ flex: 'none' }}>
               <button className="btn danger" disabled={!ok || busy} onClick={() => onGo(r.trim())}>{go}</button>

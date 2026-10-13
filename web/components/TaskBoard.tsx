@@ -31,6 +31,8 @@ import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
 import { FreshDot } from './viewer';
 import { playFor } from './sound';
+import { isRealEnter } from './ime';
+import { Count } from './LimitNotice';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
 // table where each task shows what it is about, its owner, date and status. Status changes in the
@@ -323,7 +325,7 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
           <div className="row">
             <label className="f"><span>{p.kind === 'blocked' ? 'Block reason' : 'Reason'}</span>
               <input ref={focusOnDesktop} maxLength={280} value={text} onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && ok) onGo({ text, date, person }); if (e.key === 'Escape') onCancel(); }} />
+                onKeyDown={(e) => { if (isRealEnter(e) && ok) onGo({ text, date, person }); if (e.key === 'Escape') onCancel(); }} />
             </label>
             {p.kind === 'blocked' && (
               <label className="f" style={{ flex: '0 1 220px' }}><span>Waiting on (optional)</span>
@@ -364,7 +366,7 @@ function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, o
       <td colSpan={6}>
         <div className="edit-grid">
           <label className="f wide"><span>Task</span><input value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-          <label className="f wide"><span>What it’s about</span><textarea rows={2} value={f.description} maxLength={600} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
+          <label className="f wide"><span>What it’s about</span><textarea rows={2} value={f.description} maxLength={600} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
           <label className="f"><span>Owner</span>
             <OwnerPicker projectId={t.projectId} value={f.ownerId} people={people} disabled={!canReassign} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
           </label>
@@ -428,7 +430,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     }}>
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-      <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
+      <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
           <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
