@@ -1583,4 +1583,7 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 /* Between Quick Add and the form: a soft rule with a quiet label, not a new section. */
 .form-split { display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs); color: var(--ink-2); font: var(--type-meta); }
 .form-split::after { content: ""; flex: 1; border-top: var(--rule) solid var(--hairline); }
+/* Hint text inside a field reads one step smaller than what is typed, so the label, the hint and the answer read in order.
+   The field itself stays at the input size, so a phone does not zoom in on focus. */
+.f input::placeholder, .f textarea::placeholder { font: var(--type-body); }
 

@@ -105,7 +105,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
         <label className="f"><span>Project Description</span>
           <input maxLength={GOAL_MAX} enterKeyHint="next" autoComplete="off" value={f.goal} placeholder="In one line" onChange={(e) => set('goal', e.target.value)} />
         </label>
-        <label className="f"><span>Category (Optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & Home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
+        <label className="f"><span>Category (optional)</span><input maxLength={120} enterKeyHint="next" autoComplete="off" value={f.eyebrow} placeholder="e.g. House & Home" onChange={(e) => set('eyebrow', e.target.value)} /></label>
       </fieldset>
 
       <fieldset>
@@ -192,7 +192,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       </fieldset>
 
       <fieldset>
-        <legend>Sub-Projects (Optional)</legend>
+        <legend>Sub-Projects (optional)</legend>
         <ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Hampers, Packaging. Press Enter after each" />
       </fieldset>
 

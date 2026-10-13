@@ -448,7 +448,7 @@ Form fields use 16px (`{typography.input}`) so a phone does not zoom in.
 - Dates use tabular figures and tighten to -0.02em.
 - The page title and the wordmark tighten to -0.02em too.
 - Flags are the one place with tracked capitals: uppercase, 10.5px, 0.03em. Section headings stay in sentence case. No eyebrows above headlines.
-- Form field labels, and the headings and titles inside a form, use Title Case: "Project Name", "Project Description", "Category (Optional)", "Sub-Projects (Optional)", "Start a Project" (the PM's call, 13 Oct). Short words stay lower case (a, an, the, and, of, in, on, to, for). Hints, notes, placeholders, options and buttons keep sentence case. The Start a project form follows this today; other forms move over as they are touched.
+- Form field labels, and the headings and titles inside a form, use Title Case: "Project Name", "Project Description", "Start a Project" (the PM's call, 13 Oct). A note in brackets stays lower case: "Category (optional)", "Details (if any)" (14 Oct). Hint text inside a field is one type step below the typed text (`--type-body` against `--type-input`). Short words stay lower case (a, an, the, and, of, in, on, to, for). Hints, notes, placeholders, options and buttons keep sentence case. The Start a project form follows this today; other forms move over as they are touched.
 - Sentence case everywhere else.
 
 ## Layout
