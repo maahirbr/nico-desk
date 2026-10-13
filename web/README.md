@@ -120,11 +120,15 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 ### Connections and search
 
 - **Connections** (opened from Import minutes when a tool is not connected; not in the menu): a lead
-  pastes the team's Granola or Fireflies API key once.
+  pastes a Granola, Fireflies or Fathom API key once. A Fathom key is per user and sees only its
+  owner's own and shared meetings.
   The key is checked against the tool, kept only in `.data/connections.json` (git-ignored, owner-only
-  file), and shown back only as its last four characters. Import minutes then lists that tool's
-  recent meetings to pick from; a meeting already imported into a project is refused. Wispr Flow has
-  no public API (only an MCP connection for AI assistants), so it stays paste-only.
+  file), and shown back only as its last four characters. A key set in the server environment
+  (`GRANOLA_API_KEY`, `FIREFLIES_API_KEY`, `FATHOM_API_KEY`) wins over the file, and the page says so.
+  On Vercel the file does not survive a cold start, so production keys must be env vars. Import
+  minutes then lists that tool's recent meetings to pick from; a meeting already imported into a
+  project is refused. Wispr Flow has no key-based API for apps like this one (its Notetaker has a
+  read-only MCP server for AI assistants, not used here yet), so it stays paste-only.
 - **Search** (sidebar, or Ctrl/⌘+K): projects, tasks, plan lines and people in one list.
 
 ### Ledger and reasons
@@ -170,7 +174,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 | Slice 2: Granola drafts, Monday digest, Friday overdue email | Gated in SPEC.md section 1 |
 | The OKR page's own tokens and components | `~/Code/Nicobar work` is not on this machine. `app/globals.css` uses the same palette as `docs/team-page`, in one block to swap |
 | Sending reminders from the server | Nothing is sent on anyone's behalf without their yes (CLAUDE.md). Drafts open in your own Gmail and you send them |
-| Wispr Flow import | Wispr Flow has no public API, only a read-only MCP connection for AI assistants. Paste the summary instead |
+| Wispr Flow import | Wispr Flow has no key-based API for apps. Its Notetaker has a read-only MCP server for AI assistants, which needs an MCP client with per-user sign-in. Paste the summary instead |
 
 ## Layout
 

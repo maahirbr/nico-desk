@@ -1,4 +1,4 @@
-# Note-taker connections: research (13 Oct, not built)
+# Note-taker connections: research (13 Oct)
 
 Which meeting note-takers and dictation tools a small team can connect for free or near free. Read
 from official docs and pricing pages on 13 Oct 2026. Items marked "unconfirmed" could not be checked
@@ -6,14 +6,22 @@ on an official page.
 
 ## What is built today
 
-- `web/lib/connectors.ts` has two providers, Granola and Fireflies. Both use one team-wide API key,
-  kept in `web/.data/connections.json` (git-ignored) or the env vars `GRANOLA_API_KEY` and
-  `FIREFLIES_API_KEY`. A key is checked by listing the last 7 days of meetings before it is kept.
+- `web/lib/connectors.ts` has three providers: Granola, Fireflies and Fathom. Each uses one API key,
+  kept in `web/.data/connections.json` (git-ignored) or the env vars `GRANOLA_API_KEY`,
+  `FIREFLIES_API_KEY` and `FATHOM_API_KEY`. The env var wins over the file. A key is checked by
+  listing the last 7 days of meetings before it is kept.
 - Granola reads `public-api.granola.ai/v1/notes`. Fireflies reads its GraphQL API and takes
-  `summary.action_items`. Every note becomes proposals that a person accepts.
+  `summary.action_items`. Fathom reads `GET api.fathom.ai/external/v1/meetings` with the `X-Api-Key`
+  header and takes `action_items`, or the summary when there are none. Every note becomes proposals
+  that a person accepts.
 - Saving and removing a key is lead or admin only.
 
 Things to fix before more connections:
+
+Status on 13 Oct: fixes 2, 3 and 4 are done. Fix 2: env vars take precedence and the Connections page
+says when a key comes from the environment. Fix 3: the comments and README now say Wispr Flow has a
+read-only MCP server for its Notetaker. Fix 4: the Fathom card says a key sees only its owner's
+meetings. Fixes 1 and 5 are still open.
 
 1. The code reads Granola through its API with a pasted key. The 8 Oct decision says each note-taker's
    own MCP sign-in. The Granola API needs the Business plan. Record which route is meant in DECISIONS.
@@ -28,7 +36,7 @@ Things to fix before more connections:
 
 | Tool | Free tier | How an app reads notes | Paid plan for that? | Verdict |
 |---|---|---|---|---|
-| Fathom | Unlimited recording, transcripts and summaries | REST API with webhooks and SDKs, plus MCP. Per-user key, 60 calls a minute | Unconfirmed | Strong. Same shape as the current connectors |
+| Fathom | Unlimited recording, transcripts and summaries | REST API with webhooks and SDKs, plus MCP. Per-user key, 60 calls a minute | Docs say API access is on all plans. Whether a free account can make a key is unconfirmed | Built (13 Oct). Same shape as the current connectors |
 | Google Meet and Gemini notes | Part of Workspace Business Standard and up | Meet REST API `conferenceRecords` transcripts and `smartNotes`, then the Doc through Drive or Docs | No extra cost. Starter editions have no transcripts | Strong. No new vendor, Google sign-in exists |
 | Granola | Basic: 30 days of history | REST API and webhooks. Hosted MCP with per-user browser sign-in | API needs Business. Free MCP reads only personal notes, 30 days | Possible. Built, needs a paid seat or an MCP client |
 | Fireflies.ai | Free tier, limits unconfirmed | GraphQL API, webhooks, MCP. Per-user key | API rate limits are listed for Free, so it looks open (unconfirmed) | Possible. Built, but one key sees one person's meetings |
@@ -49,8 +57,12 @@ dictating into nico-desk, nothing needs to be built (handoff section 8.6).
 
 ## Recommended next
 
-1. **Fathom, small.** One more provider branch in `connectors.ts`. First confirm a free account can
-   make an API key.
+1. **Fathom: built (13 Oct).** One more provider branch in `connectors.ts`. A key is per user and sees
+   only its owner's own and shared meetings, so a team-wide view needs one key per person (not built).
+   Still unconfirmed: whether a free account can make a key. The Fathom FAQ says API access is
+   "included on all plans" but does not name the free plan. Try it with a free account before relying
+   on it. Also unconfirmed: the key format (no prefix check is made). The list call has no get-one
+   form, so one meeting is found by paging the list.
 2. **Google Meet and Gemini notes, medium.** Google OAuth with a Meet scope and a Drive or Docs read
    scope (check the Drive scope first). Notes sit in each organiser's Drive, so access is per user.
    Only meetings with notes or transcription turned on have anything to read.
@@ -62,7 +74,7 @@ dictating into nico-desk, nothing needs to be built (handoff section 8.6).
 docs.granola.ai/introduction.md · granola.ai/pricing · docs.fireflies.ai/fundamentals/limits ·
 docs.fireflies.ai/getting-started/mcp-configuration · docs.fireflies.ai/graphql-api/webhooks ·
 docs.wisprflow.ai (remote MCP server article) · wisprflow.ai/pricing · openwhispr.com/pricing ·
-otter.ai/pricing · developers.fathom.ai/api-overview · fathom.ai/pricing · doc.tldv.io ·
+otter.ai/pricing · developers.fathom.ai/api-overview · developers.fathom.ai/quickstart · developers.fathom.ai/api-reference/meetings/list-meetings · developers.fathom.ai/faq · fathom.ai/pricing · doc.tldv.io ·
 read.ai/pricing · developers.google.com/workspace/meet/api/guides/overview ·
 support.google.com/a/answer/12076932 · learn.microsoft.com/en-us/graph/api/calltranscript-get ·
 krisp.ai/pricing · bluedothq.com/pricing · meetjamie.ai/pricing

@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { Help } from './HelpMode';
 
 // Where a lead connects the team's meeting-notes tools. Keys are checked against the tool before
 // they are kept, stored on the server only, and shown back only as their last four characters.
 
-type Status = Record<'granola' | 'fireflies', { connected: boolean; hint: string | null; savedAt: string | null }>;
+type Name = 'granola' | 'fireflies' | 'fathom';
+type State = { connected: boolean; hint: string | null; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
+type Status = Record<Name, State>;
 
 const INFO = {
   granola: {
@@ -18,6 +21,11 @@ const INFO = {
     what: 'Lists your Fireflies meetings and reads each one’s action items, grouped by person.',
     how: ['In Fireflies, open Integrations, then Fireflies API.', 'Copy the API key.', 'Paste it below.'],
   },
+  fathom: {
+    name: 'Fathom',
+    what: 'Lists your Fathom meetings and reads each one’s action items. A Fathom key sees only its owner’s meetings and the ones shared with them.',
+    how: ['In Fathom, open User Settings, then API Access.', 'Generate an API key.', 'Paste it below.'],
+  },
 } as const;
 
 export function Connections({ status: initial, canManage }: { status: Status; canManage: boolean }) {
@@ -25,12 +33,12 @@ export function Connections({ status: initial, canManage }: { status: Status; ca
   return (
     <div className="calm narrow">
       <header className="page-head"><div><h1>Connections</h1><p className="summary">Bring meeting notes in from the tools you already use.</p></div></header>
-      {(['granola', 'fireflies'] as const).map((p) => <Card key={p} p={p} s={status[p]} canManage={canManage} onChange={setStatus} />)}
+      {(['granola', 'fireflies', 'fathom'] as const).map((p) => <Card key={p} p={p} s={status[p]} canManage={canManage} onChange={setStatus} />)}
       <section className="card conn">
         <div className="conn-head"><h2>Wispr Flow</h2><span className="st tone-quiet">Paste only</span></div>
         <p className="small dim" style={{ margin: 0 }}>
-          Wispr Flow doesn’t offer an API for apps like this one; it only connects to AI assistants such as Claude. Copy a meeting’s
-          summary from Wispr Flow and use <b>Import minutes → Paste</b> on any project.
+          Wispr Flow has no key-based API for apps like this one. Its Notetaker connects through a read-only MCP server for AI
+          assistants such as Claude, and this app does not use that yet. Copy a meeting’s summary from Wispr Flow and use <b>Import minutes → Paste</b> on any project.
         </p>
       </section>
       <p className="small dim">Keys are kept on this server only, never shown again in full, and used only to read meetings when someone imports one.</p>
@@ -38,7 +46,7 @@ export function Connections({ status: initial, canManage }: { status: Status; ca
   );
 }
 
-function Card({ p, s, canManage, onChange }: { p: 'granola' | 'fireflies'; s: Status['granola']; canManage: boolean; onChange: (s: Status) => void }) {
+function Card({ p, s, canManage, onChange }: { p: Name; s: State; canManage: boolean; onChange: (s: Status) => void }) {
   const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ err: boolean; text: string } | null>(null);
@@ -61,10 +69,12 @@ function Card({ p, s, canManage, onChange }: { p: 'granola' | 'fireflies'; s: St
     <section className="card conn">
       <div className="conn-head">
         <h2>{info.name}</h2>
-        {s.connected ? <span className="st tone-ok">Connected · key {s.hint}</span> : <span className="st tone-quiet">Not connected</span>}
+        {s.connected ? <span className="st tone-ok">Connected · key {s.hint}{s.source === 'env' && <> · <Help term="conn_from_env">from the server environment</Help></>}</span> : <span className="st tone-quiet">Not connected</span>}
       </div>
       <p className="small dim" style={{ margin: 0 }}>{info.what}</p>
-      {canManage ? (
+      {canManage && s.source === 'env' ? (
+        <p className="small" style={{ margin: 0 }}>This key is set in the server environment (<code>{s.envVar}</code>). To change or remove it, edit that setting where the app is hosted.</p>
+      ) : canManage ? (
         <>
           {!s.connected && <ol className="steps small">{info.how.map((h) => <li key={h}>{h}</li>)}</ol>}
           <div className="row">
