@@ -532,3 +532,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   buttons keep sentence case. The target-date options are stored as the project's label, so "Quarter end" stays as it is,
   which keeps older projects matching. This narrows `DESIGN.md`'s "sentence case everywhere" and answers question 1 in
   `docs/DESIGN-GUIDE.md`. Other forms move over as they are touched. Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · Connects to and the thread map removed, at the PM's call.** The "Connects to" panel is gone from
+  the task drawer, the task page, the project page and the person page, and so are the thread map page (`/map`), its API
+  (`/api/v1/threads/map`, `/api/v1/tasks/[id]/threads`), key `T`, its help terms, its CSS and its tests
+  (`lib/threads.ts`, `lib/threadMap.ts`, `lib/threadLayout.ts`, `ConnectsTo.tsx`, `ThreadMapView.tsx`). Comments with
+  `@` and `#` stay; they never depended on threads. Nothing was stored for threads, so there is no data or schema to undo.
+  Tests drop from 833 to 763. Rollback: `git revert` this commit.

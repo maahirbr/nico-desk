@@ -190,23 +190,6 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   /api/v1/feedback/[id]` (mark read) are admin only. Admins read the notes at `/feedback`, newest first. Nothing is
   emailed. Test: `tests/feedback.test.ts`.
 
-### Thread map
-
-- **Page.** `/map?focus=task:<id>` (also `project:<id>` and `person:<id>`, with `hops=1|2|3` and `view=list`) draws the
-  "Connects to" links as a graph around one item. Key `T` on a task, project or person page opens it, and so does the
-  "Thread map" link in the Connects to block. The address holds the whole view, so it can be shared. A bad address, a
-  hidden item and a missing item all read as not found.
-- **Data.** `lib/threadMap.ts` builds the graph from the same lines as the panel (`linesFor` in `lib/threads.ts`), so they
-  cannot disagree. `assembleGraph` is a plain breadth-first walk with no database: 2 steps by default, 3 at most, about 60
-  items. Items cut by the cap show as "N more not shown". Every item comes from `seenTasks` and `seenProjects`, so a hidden
-  item never appears. `GET /api/v1/threads/map?focus=...&hops=...` goes through `route()`; View as may read it.
-- **Look.** `lib/threadLayout.ts` is deterministic SVG with no graph library: one column per step, task square, project
-  diamond, person circle, token colours only. Labels are cut at 24 characters, and the full text shows on hover or focus.
-  Hover or focus lights the item, its direct links and its path back to the start; the rest fades by opacity only.
-  Tab moves between items, Enter opens, Escape goes back. A Map and List toggle shows the same items as text. Under
-  641px only the list shows, and on touch a first tap lights an item and a second tap opens it.
-- **Not built.** Dragging, zoom, and links from "From", "Links" and plan checkpoints. Test: `tests/thread-map.test.ts`.
-
 ### Team chat
 
 - **Rooms.** One team room for everyone, and one room per project for whoever can see that project (`lib/visibility.ts`).

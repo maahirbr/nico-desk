@@ -12,8 +12,6 @@ import { TaskLinkChips } from '@/components/TaskLinks';
 import { groupLog } from '@/components/logText';
 import { Help } from '@/components/HelpMode';
 import { CopyLink } from '@/components/CopyLink';
-import { ConnectsTo } from '@/components/ConnectsTo';
-import { threadsFor } from '@/lib/threads';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +29,6 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
   if (t.teamId !== me.team.id) notFound();
   if (t.ownerId === me.person.id && !me.viewingAs) await markAssignedSeen(d, me.person.id, t.id);
   const log = await taskLog(d, t.id, undefined, 200);
-  const threads = await threadsFor(d, me, 'task', t.id);
   const isOwner = t.ownerId === me.person.id;
   const mirror = t.readOnly || me.viewingAs; // viewing as someone: show the task, offer no action
   const may = {
@@ -87,7 +84,6 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             </dl>
           </div>
 
-          <div className="card card-pad"><ConnectsTo lines={threads} focus={`task:${t.id}`} /></div>
 
           <div className="card card-pad">
             <p className="section-title">Update log</p>

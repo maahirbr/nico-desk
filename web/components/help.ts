@@ -128,16 +128,11 @@ export const HELP = {
   conn_from_env: 'From the server environment. This key is set where the app is hosted, not in this page. Change it in the hosting settings.',
   conn_meet: 'Google Meet. Read only. The app lists your meetings and reads their notes and transcripts. It cannot change anything, send mail or open your other files. Disconnect ends the link.',
 
-  // Connects to
-  connects_to: 'Connects to. What this item is part of, what it waits on, what waits on it, and where it is mentioned. You see only what you can open.',
   // Jev suggestions
   jev_order: 'Order. By date is the default. Suggested also reads the words of each task. It is a suggestion. Nothing changes on your tasks.',
   jev_health: 'Suggested health. A reading of the last two weeks of updates and comments. It is a suggestion and is not stored. The status above is set by a person.',
   jev_check_drafts: 'Check drafts. Notes how clear each draft is and whether an open task may repeat it. Owner and date are still checked by the app. Nothing is changed.',
   jev_project_guess: 'Suggested project. Picked from the projects you can add to, by the words of the title. It fills in only while the project is empty.',
-  // Thread map
-  thread_map: 'Thread map. The same links as Connects to, drawn as a graph around one item. Each column is one more step away from it.',
-  thread_map_chain: 'Lit chain. Point at an item to light its path back to the start and its direct links. Everything else fades.',
   // Search
   search_filters: 'Filters. Add is:late, is:blocked, is:done or is:mine for status. Add @name for an owner, #project for a project, and due:today or due:week for dates.',
   search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',

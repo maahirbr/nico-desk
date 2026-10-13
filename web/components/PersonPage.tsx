@@ -6,8 +6,6 @@ import type { PersonView } from '@/lib/service';
 import type { OnTimeRecord, PersonProject } from '@/lib/service';
 import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
-import { ConnectsTo } from './ConnectsTo';
-import type { ThreadLine } from '@/lib/threads';
 import { Help } from './HelpMode';
 import { CopyEmail } from './CopyEmail';
 import { EditProfileButton } from './EditProfile';
@@ -24,11 +22,10 @@ import { PersonGlance } from './HomeGlance';
 
 export type PersonLogItem = { id: string; at: string; whoId: string | null; who: string; text: string; taskId: string; task: string };
 
-export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhoto, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record, glance, threads }: {
+export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhoto, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record, glance }: {
   personId: string; email: string; phone: string | null; teamName: string; appRoles: string[]; hasPhoto: boolean; name: string; role: string; department: string; active: boolean; meId: string; isLead: boolean; today: string;
   names: Record<string, string>; projectNames: Record<string, string>; people: Opt[]; workstreamsByProject: Record<string, string[]>;
   projects: PersonProject[]; open: Task[]; waitingOnThem: Task[]; waitingOnOthers: Task[]; recent: PersonLogItem[]; record: OnTimeRecord | null; glance: PersonView['glance'];
-  threads: ThreadLine[];
 }) {
   const [openId, setOpenId] = useOpenTask();
   const mine = personId === meId;
@@ -168,7 +165,6 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
         </section>
       </div>
 
-      <section className="card card-pad cn-card"><ConnectsTo lines={threads} inDrawer focus={`person:${personId}`} /></section>
 
       {openId && (
         <TaskDrawer key={openId} id={openId} meId={meId} isLead={isLead} people={people} today={today} projectNames={projectNames}
