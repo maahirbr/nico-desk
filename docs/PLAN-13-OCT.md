@@ -191,9 +191,38 @@ Also confirmed:
 7. **Who it waits on:** on block, Jev reads the reason and suggests the person the task waits on.
 8. **Suggested links:** Jev suggests related items for "Connects to"; each one is accepted or dismissed.
 
-Build 1 and 2 first, each with an eval on the synthetic fixtures, then 3 and 4, then 5 to 8 (5 and 6 need comments,
-8 needs threads). Report accuracy per use case before any live use. Jev and the other feedback come before the
-security audit; the audit still comes before active use.
+Added by the repo owner (13 Oct): statuses, sorting and project management.
+
+9. **Status nudge:** when someone writes a note or update on a task, Jev judges whether the words mean a different
+   status ("waiting on the vendor" reads as Blocked, "sent it over" as Done) and offers that status. One click accepts.
+10. **Suggested order:** a "Suggested" sort beside due date on Home and project boards. Jev scores each open task's
+    urgency and weight from its title, notes and project. Code combines that score with the due date and with who waits
+    on the task. Nothing is hidden, only reordered.
+11. **Project health:** on each project, Jev suggests On track, At risk or Off track from its tasks, dates and recent
+    updates, with the updates it leaned on. The owner or lead confirms it. Jev also picks the three updates that matter
+    most this week for the project page.
+
+Build order: the Jev client, the synthetic-only guard and the eval harness with 1 (search) and 9 (status nudge) first.
+Then 2 (minutes), 10 (suggested order) and 11 (project health). Then 3 and 4, then 5 to 8 (5 and 6 need comments,
+8 needs threads). Each use case gets an eval on the synthetic fixtures. Report accuracy per use case before any live
+use. Jev and the other feedback come before the security audit; the audit still comes before active use.
+
+The synthetic-only guard (13 Oct, the repo owner's yes to synthetic first): Jev runs only when `NICO_JEV=1`, and never
+against a database set by `DATABASE_URL` unless `NICO_JEV_LIVE=1` is also set. `NICO_JEV_LIVE` waits for the sponsor's yes.
+
+## 12. More visual data
+
+- Project cards: the progress line splits by status: done, in progress, not started, blocked and late, each in its
+  status colour, with the counts written under it. The same bar heads each project page.
+- The project page gets a small weekly chart: tasks done against tasks due, over the last six weeks.
+- The person page reuses the Home charts for that person (this week and on-time rate).
+- On a phone, the Home charts start collapsed, with one tap to open (the repo owner, 13 Oct).
+
+## 13. Guide page
+
+A short page (`/guide`) for the pilot team: what Nico Desk is for, how a week runs in it, the five statuses, the one
+rule (move a date before it passes, and say why), what leads see, help mode and shortcuts. Plain words, one screen per
+idea, no eyebrows. Linked from the account menu and from the first visit to Home.
 
 ## 11. Chat (later)
 
