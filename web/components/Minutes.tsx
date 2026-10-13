@@ -13,9 +13,10 @@ import { SlideInd } from './motion-ui';
 
 type Op = (b: Record<string, unknown>) => Promise<boolean>;
 
-type Source = 'paste' | 'granola' | 'fireflies' | 'wispr';
-type Read = { title: string; date: string; text: string; source?: { provider: 'granola' | 'fireflies'; id: string; link?: string | null } };
-const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', wispr: 'Wispr Flow' };
+type Provider = 'granola' | 'fireflies' | 'fathom';
+type Source = 'paste' | Provider | 'wispr';
+type Read = { title: string; date: string; text: string; source?: { provider: Provider; id: string; link?: string | null } };
+const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom', wispr: 'Wispr Flow' };
 
 export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tasks'; busy: boolean; today: string; onRead: (b: Read) => void }) {
   const [tab, setTab] = useState<Source>('paste');
@@ -43,10 +44,10 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
           </div>
         </div>
       )}
-      {(tab === 'granola' || tab === 'fireflies') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
+      {(tab === 'granola' || tab === 'fireflies' || tab === 'fathom') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
       {tab === 'wispr' && (
         <div className="stack small">
-          <p style={{ margin: 0 }}>Wispr Flow doesn’t offer an API that apps like this one can read. It only connects to AI assistants such as Claude.</p>
+          <p style={{ margin: 0 }}>This app can’t read Wispr Flow directly yet. Its Notetaker connects through a read-only MCP server for AI assistants such as Claude, not through a key.</p>
           <ol className="steps">
             <li>Open the meeting in Wispr Flow.</li>
             <li>Copy the summary, or just its <b>Next steps</b> section.</li>
@@ -60,7 +61,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
 }
 
 // Meetings from a connected source: pick one, and its action items are read like pasted minutes.
-function SourceList({ provider, busy, onRead }: { provider: 'granola' | 'fireflies'; busy: boolean; onRead: (b: Read) => void }) {
+function SourceList({ provider, busy, onRead }: { provider: Provider; busy: boolean; onRead: (b: Read) => void }) {
   const [status, setStatus] = useState<'loading' | 'off' | 'on'>('loading');
   const [days, setDays] = useState(14);
   const [q, setQ] = useState('');

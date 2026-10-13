@@ -10,10 +10,28 @@ import { ApiError, bad } from './errors';
 //
 // Granola:   public API, https://public-api.granola.ai, key made in Granola (Settings, Connectors, API keys).
 // Fireflies: GraphQL API, https://api.fireflies.ai/graphql, key from Fireflies (Integrations, Fireflies API).
-// Wispr Flow has no public API (only a read-only MCP connection for AI tools), so it stays paste-only.
+// Fathom:    REST API, https://api.fathom.ai/external/v1, key from Fathom (User Settings, API Access).
+//            Header X-Api-Key. GET /meetings lists meetings; include_action_items=true and
+//            include_summary=true add action_items[] and default_summary.markdown_formatted.
+//            There is no get-one-meeting call, so one meeting is found by paging the list.
+//            A Fathom key is per user and sees only that user's own and shared meetings.
+//            Docs: https://developers.fathom.ai/quickstart (key, header, base URL),
+//            https://developers.fathom.ai/api-reference/meetings/list-meetings (query and response fields),
+//            https://developers.fathom.ai/api-overview (rate limits, 429 and Retry-After),
+//            https://developers.fathom.ai/faq (key scope).
+// Wispr Flow has no REST API for apps like this one. It has a read-only MCP server for its Notetaker
+// (browser sign-in, no key), which needs an MCP client with per-user sign-in, so for now it stays paste-only.
+//
+// Keys: a key in the server environment (GRANOLA_API_KEY, FIREFLIES_API_KEY, FATHOM_API_KEY) wins over
+// the key file. On Vercel the file sits in a temp folder and does not survive a cold start, so
+// production keys must be env vars.
 
-export type Provider = 'granola' | 'fireflies';
-export const PROVIDERS: Provider[] = ['granola', 'fireflies'];
+export type Provider = 'granola' | 'fireflies' | 'fathom';
+export const PROVIDERS: Provider[] = ['granola', 'fireflies', 'fathom'];
+export const isProvider = (v: unknown): v is Provider => typeof v === 'string' && (PROVIDERS as string[]).includes(v);
+const LABEL: Record<Provider, string> = { granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom' };
+const ENV_VAR: Record<Provider, string> = { granola: 'GRANOLA_API_KEY', fireflies: 'FIREFLIES_API_KEY', fathom: 'FATHOM_API_KEY' };
+const envKey = (p: Provider) => process.env[ENV_VAR[p]]?.trim() || undefined;
 export type MeetingRow = { id: string; title: string; date: string; attendees: string[] };
 export type MeetingNote = { id: string; title: string; date: string; text: string; link: string | null };
 
@@ -30,20 +48,29 @@ function write(s: Store) {
   fs.writeFileSync(file(), JSON.stringify(s, null, 2), { mode: 0o600 });
 }
 
-export function connectionStatus(): Record<Provider, { connected: boolean; hint: string | null; savedAt: string | null }> {
+export type ConnectionState = { connected: boolean; hint: string | null; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
+
+export function connectionStatus(): Record<Provider, ConnectionState> {
   const s = read();
-  const one = (p: Provider) => ({ connected: !!s[p], hint: s[p] ? `…${s[p]!.key.slice(-4)}` : null, savedAt: s[p]?.savedAt ?? null });
-  return { granola: one('granola'), fireflies: one('fireflies') };
+  const one = (p: Provider): ConnectionState => {
+    const env = envKey(p);
+    if (env) return { connected: true, hint: `…${env.slice(-4)}`, savedAt: null, source: 'env', envVar: ENV_VAR[p] };
+    const f = s[p];
+    return { connected: !!f, hint: f ? `…${f.key.slice(-4)}` : null, savedAt: f?.savedAt ?? null, source: f ? 'file' : null, envVar: ENV_VAR[p] };
+  };
+  return { granola: one('granola'), fireflies: one('fireflies'), fathom: one('fathom') };
 }
 
+// The environment wins over the key file (production keys live in env vars).
 function keyFor(p: Provider): string {
-  const k = read()[p]?.key ?? process.env[p === 'granola' ? 'GRANOLA_API_KEY' : 'FIREFLIES_API_KEY'];
-  if (!k) throw bad('not_connected', `${p === 'granola' ? 'Granola' : 'Fireflies'} is not connected. A lead can connect it from Import minutes.`);
+  const k = envKey(p) ?? read()[p]?.key;
+  if (!k) throw bad('not_connected', `${LABEL[p]} is not connected. A lead can connect it from Import minutes.`);
   return k;
 }
 
 export async function saveConnection(p: Provider, key: string, by: string): Promise<void> {
   const k = key.trim();
+  if (envKey(p)) throw new ApiError(409, 'key_from_env', `${LABEL[p]} uses the key set in the server environment (${ENV_VAR[p]}). Change it in the hosting settings.`);
   if (p === 'granola' && !/^grn_[A-Za-z0-9_-]{8,}$/.test(k)) throw bad('invalid_body', 'A Granola key starts with grn_.', 'apiKey');
   if (k.length < 8 || k.length > 400) throw bad('invalid_body', 'That does not look like an API key.', 'apiKey');
   await listMeetings(p, { days: 7 }, k); // proves the key works before it is kept
@@ -64,7 +91,10 @@ async function http(url: string, init: RequestInit, who: string): Promise<any> {
     throw new ApiError(502, 'source_unreachable', `${who} did not answer. Try again in a moment.`);
   }
   if (res.status === 401 || res.status === 403) throw new ApiError(400, 'source_key_rejected', `${who} rejected the API key. Check it, or make a new one.`);
-  if (res.status === 429) throw new ApiError(429, 'rate_limited', `${who} is busy. Wait a minute and try again.`);
+  if (res.status === 429) {
+    const wait = Number(res.headers.get('retry-after'));
+    throw new ApiError(429, 'rate_limited', wait > 0 && wait <= 600 ? `${who} is busy. Wait ${wait} seconds and try again.` : `${who} is busy. Wait a minute and try again.`);
+  }
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(502, 'source_error', `${who} returned an error (${res.status}).`);
   if (data?.errors?.length) {
@@ -90,6 +120,25 @@ export async function listMeetings(p: Provider, opts: { days: number; q?: string
       .filter((n) => !n.deleted_at && (!q || String(n.title ?? '').toLowerCase().includes(q)))
       .map((n) => ({ id: String(n.id), title: n.title || 'Untitled meeting', date: day(n.created_at), attendees: (n.attendees ?? []).map((a: any) => a?.name || a?.email).filter(Boolean) }));
   }
+  if (p === 'fathom') {
+    const q = opts.q?.toLowerCase();
+    const rows: MeetingRow[] = [];
+    let cursor: string | null = null;
+    for (let page = 0; page < FATHOM_MAX_PAGES; page++) {
+      const u = new URL(`${FATHOM_BASE}/meetings`);
+      u.searchParams.set('created_after', since);
+      if (cursor) u.searchParams.set('cursor', cursor);
+      const data = await http(u.toString(), { headers: { 'X-Api-Key': key } }, 'Fathom');
+      for (const m of (data?.items ?? []) as any[]) {
+        const title = String(m.title || m.meeting_title || '');
+        if (q && !title.toLowerCase().includes(q)) continue;
+        rows.push({ id: String(m.recording_id), title: title || 'Untitled meeting', date: day(m.recording_start_time || m.scheduled_start_time || m.created_at), attendees: fathomAttendees(m) });
+      }
+      cursor = data?.next_cursor ?? null;
+      if (!cursor) break;
+    }
+    return rows;
+  }
   const query = `query List($fromDate: DateTime, $keyword: String, $limit: Int) {
     transcripts(fromDate: $fromDate, keyword: $keyword, limit: $limit) { id title date participants }
   }`;
@@ -106,6 +155,29 @@ export async function listMeetings(p: Provider, opts: { days: number; q?: string
 export async function getMeeting(p: Provider, id: string): Promise<MeetingNote> {
   if (!/^[A-Za-z0-9_-]{1,80}$/.test(id)) throw bad('invalid_body', 'Bad meeting id.');
   const key = keyFor(p);
+  if (p === 'fathom') {
+    // No get-one call exists, so page the last year of meetings until the recording id turns up.
+    const since = new Date(Date.now() - 365 * 86400000).toISOString();
+    let cursor: string | null = null;
+    for (let page = 0; page < FATHOM_MAX_PAGES * 2; page++) {
+      const u = new URL(`${FATHOM_BASE}/meetings`);
+      u.searchParams.set('created_after', since);
+      u.searchParams.set('include_action_items', 'true');
+      u.searchParams.set('include_summary', 'true');
+      if (cursor) u.searchParams.set('cursor', cursor);
+      const data = await http(u.toString(), { headers: { 'X-Api-Key': key } }, 'Fathom');
+      const m = ((data?.items ?? []) as any[]).find((x) => String(x.recording_id) === id);
+      if (m) {
+        return {
+          id, title: m.title || m.meeting_title || 'Untitled meeting', date: day(m.recording_start_time || m.scheduled_start_time || m.created_at),
+          text: fathomNextSteps(m.action_items, m.default_summary?.markdown_formatted), link: typeof m.url === 'string' ? m.url : null,
+        };
+      }
+      cursor = data?.next_cursor ?? null;
+      if (!cursor) break;
+    }
+    throw new ApiError(404, 'not_found', 'Fathom has no meeting with that id.');
+  }
   if (p === 'granola') {
     const n = await http(`https://public-api.granola.ai/v1/notes/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${key}` } }, 'Granola');
     return { id, title: n.title || 'Untitled meeting', date: day(n.created_at), text: String(n.summary_markdown || n.summary_text || ''), link: null };
@@ -138,4 +210,27 @@ export function firefliesNextSteps(actionItems: string): string {
     if (task) out.push(who ? `(${who}) ${task}` : task);
   }
   return out.length ? `### Next Steps\n${out.join('\n')}` : '';
+}
+
+const FATHOM_BASE = 'https://api.fathom.ai/external/v1';
+const FATHOM_MAX_PAGES = 4; // the list pages by cursor; four pages is far more than a week of one person's calls
+
+function fathomAttendees(m: any): string[] {
+  return ((m?.calendar_invitees ?? []) as any[]).map((a) => a?.name || a?.email).filter(Boolean).slice(0, 6);
+}
+
+// Fathom gives action items as objects: { description, completed, assignee: { name, email } }.
+// Open ones become "(Name) task" lines. A meeting with none falls back to its summary, which the
+// minutes reader scans for a next-steps section. Nothing is a task until a person accepts it.
+export function fathomNextSteps(actionItems: unknown, summaryMarkdown?: unknown): string {
+  const out: string[] = [];
+  for (const a of Array.isArray(actionItems) ? actionItems : []) {
+    if (!a || a.completed) continue;
+    const task = String(a.description ?? '').replace(/\s+/g, ' ').trim();
+    if (!task) continue;
+    const who = String(a.assignee?.name ?? '').replace(/[()\n]/g, ' ').trim();
+    out.push(who ? `(${who}) ${task}` : task);
+  }
+  if (out.length) return `### Next Steps\n${out.join('\n')}`;
+  return typeof summaryMarkdown === 'string' ? summaryMarkdown.trim() : '';
 }

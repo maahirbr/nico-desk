@@ -100,7 +100,7 @@ export function countdown(today: string, launch: string): { months: number; days
 // ---------- meeting minutes ----------
 
 // The "Next Steps" section of a meeting summary, or the whole text if there is none.
-// Granola and Fireflies also call it "Action items" or "To-dos", as a heading or in bold.
+// Granola, Fireflies and Fathom also call it "Action items" or "To-dos", as a heading or in bold.
 export function nextStepsOf(text: string): string {
   const head = /(?:^|\n)\s*(?:#+\s*|\*\*)?(?:next steps|action items|to-?dos|follow-?ups)(?:\*\*)?:?\s*\n([\s\S]*?)(?=\n\s*#+\s|$)/i;
   const m = text.match(head);
