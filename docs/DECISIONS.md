@@ -574,3 +574,11 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   Quick Add opens the same review, so status and date changes from a chat still work. The mic uses the browser's own
   speech service (Web Speech API), which in Chrome sends the audio to Google to turn into text; it is hidden where the
   browser has none, and nothing is recorded or kept by the app. Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · Quick Add takes several tasks at once, at the PM's call.** One Quick Add can hold up to ten
+  tasks, typed or said ("Sam, can you schedule the review by Friday? And then Kabir, can you get back to the vendor by
+  Monday"). One task fills the form as before; several open a list of cards to check, each with Add and Skip, and Add
+  all. Each card goes through the normal task route, so the project-people rule, View as and the log all hold. The model
+  answers a list; the rules split on lines, list markers, sentence ends and joining words, and read a name spoken to
+  ("Sam, can you ...") and "I need to ..." as the owner. The label reads "Quick Add", without "(Optional)".
+  Rollback: `git revert` this commit.

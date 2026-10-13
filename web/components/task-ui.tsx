@@ -32,6 +32,8 @@ import { TASK_CHANGED, useUndo } from './undo';
 import { TaskLink } from './TaskLink';
 import { FreshDot, useViewer } from './viewer';
 import { PasteChat } from './PasteChat';
+import { TaskDrafts } from './TaskDrafts';
+import type { SentenceRead } from '@/lib/sentence';
 import { Count } from './LimitNotice';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
@@ -671,6 +673,8 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     setF(next);
     return notes;
   }
+  const [many, setMany] = useState<SentenceRead[] | null>(null); // several tasks from one Quick Add
+  if (many) return <TaskDrafts drafts={many} people={people} projects={projects} projectId={startProject || undefined} today={today} onBack={() => setMany(null)} onDone={onDone} />;
   if (pasting !== null) return <PasteChat people={people} projects={projects} today={today} startText={pasting} onBack={() => setPasting(null)} onDone={onDone} />;
   return (
     <form className="stack" onSubmit={async (e) => {
@@ -682,7 +686,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         router.refresh(); onDone();
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
-      <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onChat={readOnly ? undefined : setPasting} />
+      <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onChat={readOnly ? undefined : setPasting} onMany={setMany} />
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} onBlur={guessProject} /></label>
       <label className="f"><span>Details (Optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">

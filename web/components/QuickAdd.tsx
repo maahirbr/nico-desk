@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { parseChat } from '@/lib/chat';
 import type { Named, QuickParse } from '@/lib/quickadd';
+import type { SentenceRead } from '@/lib/sentence';
 import { fmtDate } from '@/lib/time';
 import { focusOnDesktop } from './motion';
 import { isRealEnter } from './ime';
@@ -29,9 +30,9 @@ export function looksLikeChat(text: string): boolean {
   return parseChat(text).messages.filter((m) => m.sender).length >= 2;
 }
 
-export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, onChat }: {
+export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, onChat, onMany }: {
   today: string; people: Named[]; projects?: Named[]; hasTitle: boolean;
-  apply: (p: QuickParse) => string[]; focusAfter: () => void; onChat?: (text: string) => void;
+  apply: (p: QuickParse) => string[]; focusAfter: () => void; onChat?: (text: string) => void; onMany?: (tasks: SentenceRead[]) => void;
 }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -50,14 +51,18 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       const res = await fetch('/api/v1/tasks/read-sentence', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: line }) });
       const r = await res.json().catch(() => null);
       if (!res.ok || !r) { setDone(r?.error?.message ?? 'Could not read that. Fill in the fields below.'); return; }
-      const owner = r.ownerId ? people.find((p) => p.id === r.ownerId) : undefined;
-      const project = r.projectId && projects ? projects.find((p) => p.id === r.projectId) : undefined;
-      const notes = [...(r.notes ?? []), ...apply({
-        title: r.title ?? '', dueOn: r.dueOn ?? null, dueText: null,
+      const tasks: SentenceRead[] = Array.isArray(r.tasks) ? r.tasks : [];
+      if (tasks.length > 1 && onMany) { setText(''); onMany(tasks); return; }
+      if (!tasks.length) { setDone('Could not find a task in that. Fill in the fields below.'); return; }
+      const one = tasks[0];
+      const owner = one.ownerId ? people.find((p) => p.id === one.ownerId) : undefined;
+      const project = one.projectId && projects ? projects.find((p) => p.id === one.projectId) : undefined;
+      const notes = [...(one.notes ?? []), ...apply({
+        title: one.title ?? '', dueOn: one.dueOn ?? null, dueText: null,
         owner: owner ? { word: owner.name, status: 'matched', item: owner } : null,
         project: project ? { word: project.name, status: 'matched', item: project } : null,
       })];
-      const got = [owner ? `owner ${owner.name}` : null, r.dueOn ? `due ${fmtDate(r.dueOn)}` : null, project ? `project ${project.name}` : null].filter(Boolean);
+      const got = [owner ? `owner ${owner.name}` : null, one.dueOn ? `due ${fmtDate(one.dueOn)}` : null, project ? `project ${project.name}` : null].filter(Boolean);
       setDone([got.length ? `Filled in the task, ${got.join(', ')}. Check it below, then Add task.` : 'Filled in the task name. Pick the rest below.', ...notes].join(' '));
       setText('');
       focusAfter();
@@ -110,7 +115,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       </div>
       <p className="hint" aria-live="polite" style={{ margin: 0 }}>
         {done ?? (listening ? 'Say what needs doing, who does it and by when. Tap the mic again to stop.'
-          : `Type it the way you'd say it, and it fills in the task below.${onChat ? ' You can also paste a WhatsApp chat.' : ''}`)}
+          : `Type or say it the way you'd tell someone. Several tasks at once work too.${onChat ? ' You can also paste a WhatsApp chat.' : ''}`)}
       </p>
     </>
   );

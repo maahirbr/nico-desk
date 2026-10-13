@@ -14,7 +14,7 @@ import { POST as readRoute } from '../app/api/v1/tasks/read-sentence/route';
 import { COOKIE, signSession, signView, VIEW_COOKIE, type Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import type { Ask } from '../lib/paste';
-import { readSentenceRules } from '../lib/sentence';
+import { readSentenceRules, readTasksRules, splitTasks } from '../lib/sentence';
 import { readSentence } from '../lib/sentenceRead';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
@@ -64,6 +64,30 @@ describe('the plain rules', () => {
   });
 });
 
+describe('several tasks at once', () => {
+  it('splits on sentence ends, "and then" and a name spoken to (today is a Friday, so Friday is next week)', () => {
+    const r = readTasksRules('Kabir can you schedule the Autumn landing page review by Friday? And then Ananya, can you get back to the vendor by Monday?', ctx);
+    expect(r).toEqual([
+      expect.objectContaining({ title: 'Schedule the Autumn landing page review', ownerId: 'k', dueOn: '2026-10-16', projectId: 'l' }),
+      expect.objectContaining({ title: 'Get back to the vendor', ownerId: 'a', dueOn: '2026-10-12' }),
+    ]);
+  });
+
+  it('splits "and also" lists, lines and numbered lists, and reads "I need to" as the writer\'s own', () => {
+    const r = readTasksRules('ask Kabir to send the files by Monday, and also remind Ananya to check totals tomorrow, and I need to book the studio', { ...ctx, people: [...people] });
+    expect(r.map((x) => [x.title, x.ownerId])).toEqual([['Send the files', 'k'], ['Check totals', 'a'], ['Book the studio', 'm']]);
+    expect(splitTasks('1. Kabir to share the margin\n2. Ananya to call the vendor', people)).toEqual(['Kabir to share the margin', 'Ananya to call the vendor']);
+  });
+
+  it('keeps one task whole when "and then" does not start a new one', () => {
+    expect(splitTasks('send the deck and then the prices to Kabir by Friday', people)).toHaveLength(1);
+  });
+
+  it('stops at ten', () => {
+    expect(splitTasks(Array.from({ length: 14 }, (_, i) => `Kabir to call vendor ${i + 1}`).join('\n'), people)).toHaveLength(10);
+  });
+});
+
 describe('telling a chat from a sentence', () => {
   it('needs several lines with senders', () => {
     expect(looksLikeChat('[09/10/26, 9:41 AM] Kabir Sethi: sent it\n[09/10/26, 9:42 AM] Meera Iyer: thanks')).toBe(true);
@@ -83,7 +107,8 @@ describe('the server reader', () => {
 
   it('uses the rules when the model is off', async () => {
     const r = await readSentence(db, await meAs(LEAD), 'ask Kabir to send me the deck by Monday', { today: AS_OF });
-    expect(r).toMatchObject({ via: 'rules', ownerId: BO, dueOn: '2026-10-12', title: 'Send the deck to Meera' });
+    expect(r.via).toBe('rules');
+    expect(r.tasks).toEqual([expect.objectContaining({ ownerId: BO, dueOn: '2026-10-12', title: 'Send the deck to Meera' })]);
   });
 
   it('sends the model labels, not names, and maps its answer back', async () => {
@@ -93,21 +118,33 @@ describe('the server reader', () => {
       const writer = /The writer is (Person \d+)/.exec(user)![1];
       const owner = /(Person \d+)/.exec(user.split('<said>')[1])![1]; // the name in the sentence, as its label
       const proj = /Projects:\n- (Project \d+)/.exec(user)![1];
-      return JSON.stringify({ title: `Send the deck to ${writer}`, owner, due: '2026-10-12', project: proj });
+      return JSON.stringify([{ title: `Send the deck to ${writer}`, owner, due: '2026-10-12', project: proj }]);
     };
     const r = await readSentence(db, await meAs(LEAD), 'ask Kabir Sethi to send me the deck by Monday', { ask, today: AS_OF });
     expect(sent).not.toMatch(/Kabir|Meera|Sethi|Iyer/);
     expect(r.via).toBe('model');
-    expect(r.title).toBe('Send the deck to Meera Iyer');
-    expect(r.ownerId).toBe(BO);
-    expect(r.dueOn).toBe('2026-10-12');
-    expect(r.projectId).toBeTruthy();
+    expect(r.tasks).toHaveLength(1);
+    expect(r.tasks[0].title).toBe('Send the deck to Meera Iyer');
+    expect(r.tasks[0].ownerId).toBe(BO);
+    expect(r.tasks[0].dueOn).toBe('2026-10-12');
+    expect(r.tasks[0].projectId).toBeTruthy();
+  });
+
+  it('takes several tasks from the model in one answer', async () => {
+    const two: Ask = async ({ user }) => {
+      const labels = [...user.split('<said>')[1].matchAll(/Person \d+/g)].map((m) => m[0]);
+      return JSON.stringify([{ title: 'Schedule the review', owner: labels[0], due: '2026-10-09', project: null }, { title: 'Call the vendor', owner: labels[1], due: '2026-10-12', project: null }]);
+    };
+    const r = await readSentence(db, await meAs(LEAD), 'Kabir Sethi, can you schedule the review by Friday? And Ananya Rao, call the vendor by Monday.', { ask: two, today: AS_OF });
+    expect(r.tasks.map((t) => t.title)).toEqual(['Schedule the review', 'Call the vendor']);
+    expect(r.tasks[0].ownerId).toBe(BO);
   });
 
   it('drops a past date and an unknown owner, and falls back to the rules on a bad answer', async () => {
-    const odd: Ask = async () => JSON.stringify({ title: 'Call the vendor', owner: 'Person 99', due: '2020-01-01', project: 'Project 99' });
-    expect(await readSentence(db, await meAs(LEAD), 'call the vendor', { ask: odd, today: AS_OF }))
-      .toMatchObject({ via: 'model', ownerId: null, dueOn: null, projectId: null });
+    const odd: Ask = async () => JSON.stringify([{ title: 'Call the vendor', owner: 'Person 99', due: '2020-01-01', project: 'Project 99' }]);
+    const r = await readSentence(db, await meAs(LEAD), 'call the vendor', { ask: odd, today: AS_OF });
+    expect(r.via).toBe('model');
+    expect(r.tasks[0]).toMatchObject({ ownerId: null, dueOn: null, projectId: null });
     const junk: Ask = async () => 'no idea';
     expect((await readSentence(db, await meAs(LEAD), 'ask Kabir to call the vendor', { ask: junk, today: AS_OF })).via).toBe('rules');
   });

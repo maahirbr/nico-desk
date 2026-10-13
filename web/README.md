@@ -167,7 +167,10 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   / get NAME to", "NAME needs to", "send me", "for PROJECT", weekdays, "tomorrow", "end of week", "next week", "eod").
   Nothing is written and the sentence is not stored. The mic button types what is said through the browser's own
   speech service (Chrome, Edge, Safari; hidden where the browser has none) and reads it when the person stops. A phone's
-  keyboard dictation works too. Tests: `tests/sentence.test.ts`.
+  keyboard dictation works too. Several tasks at once ("Sam, can you ... by Friday? And then Kabir, can you ...") open a
+  list of cards (`components/TaskDrafts.tsx`), each with Add and Skip, and Add all; up to ten at a time. The rules split
+  on lines, list markers, sentence ends and "and also / and then / also / then" when what follows starts a new task.
+  Tests: `tests/sentence.test.ts`.
 - **Paste a chat** (paste a WhatsApp chat into Quick Add on New task; not shown under View as): the chat goes to the
   review screen below, where an exported `.txt` file can also be picked. `lib/chat.ts` reads iOS, Android (12 or 24 hour) and plain lines into messages and drops
   system lines. Before the text goes to Claude, `lib/redact.ts` masks it: roster names and addresses, project names,

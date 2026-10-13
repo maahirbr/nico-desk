@@ -30,6 +30,8 @@ import { useRemembered } from './remember';
 import { TaskLink } from './TaskLink';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
+import { TaskDrafts } from './TaskDrafts';
+import type { SentenceRead } from '@/lib/sentence';
 import { FreshDot } from './viewer';
 import { playFor } from './sound';
 import { isRealEnter } from './ime';
@@ -429,6 +431,8 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     setF(next);
     return notes;
   }
+  const [many, setMany] = useState<SentenceRead[] | null>(null); // several tasks from one Quick Add, all in this project
+  if (many) return <div className="card add-form"><TaskDrafts drafts={many} people={people} projectId={projectId} today={today} onBack={() => setMany(null)} onDone={() => { setMany(null); onDone(); }} /></div>;
   return (
     <form className="card add-form" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError(null);
@@ -439,7 +443,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
         setF(blank); router.refresh(); onDone();
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     }}>
-      <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
+      <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>Details (Optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
