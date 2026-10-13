@@ -97,11 +97,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const may = (t: Task) => !readOnly && !t.readOnly && (t.ownerId === meId || isLead);
   const open = tasks.filter((t) => t.statusCategory === 'open');
   const tiles = [
-    { key: 'open', label: 'Open', n: open.length, match: (t: Task) => t.statusCategory === 'open' },
-    { key: 'doing', label: 'In progress', n: open.filter((t) => statusKey(t) === 'doing').length, match: (t: Task) => t.statusCategory === 'open' && statusKey(t) === 'doing' },
-    { key: 'at_risk', label: 'At risk', n: open.filter((t) => flagOf(t, today)?.key === 'at_risk').length, match: (t: Task) => flagOf(t, today)?.key === 'at_risk', warn: true },
-    { key: 'overdue', label: 'Late', n: tasks.filter((t) => t.overdue).length, match: (t: Task) => t.overdue, warn: true },
-    { key: 'done', label: 'Done', n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
+    { key: 'open', label: 'Open', help: 'tile_open' as const, n: open.length, match: (t: Task) => t.statusCategory === 'open' },
+    { key: 'doing', label: 'In progress', help: 'status_doing' as const, n: open.filter((t) => statusKey(t) === 'doing').length, match: (t: Task) => t.statusCategory === 'open' && statusKey(t) === 'doing' },
+    { key: 'at_risk', label: 'At risk', help: 'at_risk' as const, n: open.filter((t) => flagOf(t, today)?.key === 'at_risk').length, match: (t: Task) => flagOf(t, today)?.key === 'at_risk', warn: true },
+    { key: 'overdue', label: 'Late', help: 'late' as const, n: tasks.filter((t) => t.overdue).length, match: (t: Task) => t.overdue, warn: true },
+    { key: 'done', label: 'Done', help: 'status_done' as const, n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
   ];
   const inWs = (t: Task, k: string) => k === 'All' || (k === '__none' ? !t.workstream : t.workstream === k);
   const visible = tasks.filter((t) => (!who || t.ownerId === who) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)));
@@ -163,7 +163,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
             {t.dateMoves > 0 && t.statusCategory === 'open' && (
               <div>
-                <span className="pushed">pushed {t.dateMoves}×</span>
+                <Help term="pushed"><span className="pushed">pushed {t.dateMoves}×</span></Help>
                 {t.renegotiations.map((r) => <span key={r.at} className="trail" title={r.reason ?? undefined}>{fmtDate(r.from)}</span>)}
               </div>
             )}
@@ -209,10 +209,12 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     <>
       <div className="stats tiles">
         {tiles.map((x) => (
-          <button key={x.key} className={`card stat${x.warn && x.n ? ' warn' : ''}`} aria-pressed={tile === x.key}
-            title={tile === x.key ? 'Clear this filter' : 'Show only these'} onClick={() => setTile(tile === x.key ? null : x.key)}>
-            <div className="stat-n">{x.n}</div><div className="stat-l">{x.label}</div>
-          </button>
+          <Help key={x.key} term={x.help} host>
+            <button className={`card stat${x.warn && x.n ? ' warn' : ''}`} aria-pressed={tile === x.key}
+              title={tile === x.key ? 'Clear this filter' : 'Show only these'} onClick={() => setTile(tile === x.key ? null : x.key)}>
+              <div className="stat-n">{x.n}</div><div className="stat-l">{x.label}</div>
+            </button>
+          </Help>
         ))}
       </div>
 

@@ -7,6 +7,8 @@ import { endedSortOf } from '@/lib/remember';
 import { fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { PersonLink } from './chips';
+import type { HelpTerm } from './help';
+import { Help } from './HelpMode';
 import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
@@ -17,6 +19,8 @@ import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
+
+const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', week: 'group_this_week', later: 'group_later' };
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
@@ -59,8 +63,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <div>
           <h1>{greeting}</h1>
           <p className="summary">
-            {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text">{overdue} late</span></>}</> : 'Nothing open'}
-            {waiting.length > 0 && <> · {waiting.length} waiting on you</>}
+            {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text"><Help term="overdue">{overdue} late</Help></span></>}</> : 'Nothing open'}
+            {waiting.length > 0 && <> · {waiting.length} <Help term="waiting_on_you">waiting on you</Help></>}
             <span className="dim"> · {fmtDate(today)}</span>
           </p>
         </div>
@@ -83,7 +87,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {groups.map((g) => (
         <section key={g.key} className="group">
-          <h2 className={g.key === 'late' ? 'late-text' : ''}>{g.label} <span className="n">{g.items.length}</span></h2>
+          <h2 className={g.key === 'late' ? 'late-text' : ''}><Help term={HEAD[g.key]}>{g.label}</Help> <span className="n">{g.items.length}</span></h2>
           <Stagger id="home" className="tlist">
             {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign={isLead} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </Stagger>
@@ -92,7 +96,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {myProjects.length > 0 && (
         <section className="group">
-          <h2>Your projects <span className="n">{myProjects.length}</span></h2>
+          <h2><Help term="your_projects">Your projects</Help> <span className="n">{myProjects.length}</span></h2>
           <div className="my-projects">
             {myProjects.map((p) => (
               <Link key={p.id} href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b><span className="dim">{p.role}</span></Link>
@@ -104,9 +108,9 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       {done.length > 0 && (
         <section className="group">
           <div className="list-head">
-            <button className="log-toggle small-toggle" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
+            <Help term="done_this_week" host><button className="log-toggle small-toggle" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
               <span aria-hidden>{showDone ? '▾' : '▸'}</span> Done this week <span className="count-badge">{done.length}</span>
-            </button>
+            </button></Help>
             {showDone && done.length > 1 && <SortPick value={doneSort} onChange={setDoneSort} />}
           </div>
           {showDone && <div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
@@ -116,9 +120,9 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       {dropped.length > 0 && (
         <section className="group">
           <div className="list-head">
-            <button className="log-toggle small-toggle" aria-expanded={showDropped} onClick={() => setShowDropped(!showDropped)}>
+            <Help term="status_dropped" host><button className="log-toggle small-toggle" aria-expanded={showDropped} onClick={() => setShowDropped(!showDropped)}>
               <span aria-hidden>{showDropped ? '▾' : '▸'}</span> Dropped <span className="count-badge">{dropped.length}</span>
-            </button>
+            </button></Help>
             {showDropped && dropped.length > 1 && <SortPick value={droppedSort} onChange={setDroppedSort} />}
           </div>
           {showDropped && <div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}

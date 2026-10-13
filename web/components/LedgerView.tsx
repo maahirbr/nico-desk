@@ -8,6 +8,7 @@ import { endedSortOf } from '@/lib/remember';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, Person, PersonLink } from './chips';
+import type { HelpTerm } from './help';
 import { Help } from './HelpMode';
 import { SortPick } from './SortPick';
 import { motion } from 'motion/react';
@@ -43,6 +44,14 @@ const COLS: [keyof LedgerRow, string, Key][] = [
   ['renegotiatedOpen', 'Moved in time', 'movedOpen'],
   ['renegotiatedLate', 'Moved late', 'movedLate'],
 ];
+
+// The help term for each column header, by the column's filter key.
+const COL_HELP: Record<Key, HelpTerm> = {
+  kept: 'ledger_kept', ahead: 'ahead', ontime: 'on_time', late: 'late', flagged: 'flagged_early', missed: 'missed', pastdue: 'ledger_pastdue',
+  silent: 'slipped_silently', movedOpen: 'moved_in_time', movedLate: 'moved_late', moved: 'moved_date',
+};
+
+const SPLIT_HELP: Record<string, HelpTerm> = { Ahead: 'ahead', 'On time': 'on_time', Late: 'late' };
 
 const closedOn = (t: Task) => (t.closedAt ? istDate(t.closedAt) : null);
 const days = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
@@ -107,7 +116,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         </button></Help>
       </div>
 
-      <h2>Delivery habits <span className="count-badge">{period}</span></h2>
+      <h2><Help term="delivery_habits">Delivery habits</Help> <span className="count-badge">{period}</span></h2>
       <p className="sub" style={{ marginTop: -6 }}>{seeAll ? 'One card per person, in name order. Arrows compare with the same length of time before.' : 'Your own habits. Leads see the whole team.'}</p>
       {!people.some((p) => tasks.some((t) => t.ownerId === p.id) || openNow.some((t) => t.ownerId === p.id)) && <p className="empty">No one has tasks in this period.</p>}
       <div className="habit-grid">
@@ -145,8 +154,10 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
               {closed > 0 && (
                 <div className="split" role="group" aria-label="Ahead, on time, late">
                   {[['Ahead', a, 'ok'], ['On time', o, 'done'], ['Late', l, 'late']].map(([label, list, tone]) => (list as Task[]).length ? (
-                    <button key={label as string} className={`tone-${tone as string}`} style={{ flexGrow: (list as Task[]).length }} title={`${label}: ${(list as Task[]).length}`}
-                      onClick={() => show(`${p.name}: ${(label as string).toLowerCase()}`, list as Task[])}><span>{label as string} {(list as Task[]).length}</span></button>
+                    <Help key={label as string} term={SPLIT_HELP[label as string]} host>
+                      <button className={`tone-${tone as string}`} style={{ flexGrow: (list as Task[]).length }} title={`${label}: ${(list as Task[]).length}`}
+                        onClick={() => show(`${p.name}: ${(label as string).toLowerCase()}`, list as Task[])}><span>{label as string} {(list as Task[]).length}</span></button>
+                    </Help>
                   ) : null)}
                 </div>
               )}
@@ -171,7 +182,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         })}
       </div>
 
-      <h2>Needs attention <span className="count-badge">{attention.length}</span></h2>
+      <h2><Help term="needs_attention">Needs attention</Help> <span className="count-badge">{attention.length}</span></h2>
       {attention.length === 0 ? <div className="card"><p className="empty card-pad">Nothing is late, slipped or blocked in this view.</p></div> : (
         <div className="card attn">
           <ol className="attn-list">
@@ -255,7 +266,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
                   <tr className="grp"><th />
                     <th colSpan={4} className="num">Finished</th><th className="num">Open</th><th colSpan={3} className="num">Dates</th>
                   </tr>
-                  <tr><th>Person</th>{COLS.map(([k, l]) => <th key={k} className="num">{l}</th>)}</tr>
+                  <tr><th>Person</th>{COLS.map(([k, l, m]) => <th key={k} className="num"><Help term={COL_HELP[m]}>{l}</Help></th>)}</tr>
                 </thead>
                 <tbody>
                   {rs.map((r) => {

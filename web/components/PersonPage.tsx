@@ -5,6 +5,7 @@ import type { Task } from '@/lib/derive';
 import type { OnTimeRecord, PersonProject } from '@/lib/service';
 import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
+import { Help } from './HelpMode';
 import { useOpenTask } from './taskUrl';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
 import { Stagger } from './motion-ui';
@@ -53,13 +54,13 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
 
       {record && (
         <section className="card card-pad">
-          <p className="section-title">On-time record, last 4 weeks</p>
+          <p className="section-title"><Help term="on_time_record">On-time record, last 4 weeks</Help></p>
           <div className="stats tiles">
-            <div className="card stat"><div className="stat-n">{record.ahead}</div><div className="stat-l">Done ahead</div></div>
-            <div className="card stat"><div className="stat-n">{record.onTime}</div><div className="stat-l">Done on time</div></div>
-            <div className={`card stat${record.late ? ' warn' : ''}`}><div className="stat-n">{record.late}</div><div className="stat-l">Done late</div></div>
-            <div className={`card stat${record.openPastDue ? ' warn' : ''}`}><div className="stat-n">{record.openPastDue}</div><div className="stat-l">Open and past due</div></div>
-            <div className="card stat"><div className="stat-n">{record.renegotiated}</div><div className="stat-l">Date moves</div></div>
+            <div className="card stat"><div className="stat-n">{record.ahead}</div><div className="stat-l"><Help term="done_ahead">Done ahead</Help></div></div>
+            <div className="card stat"><div className="stat-n">{record.onTime}</div><div className="stat-l"><Help term="done_on_time">Done on time</Help></div></div>
+            <div className={`card stat${record.late ? ' warn' : ''}`}><div className="stat-n">{record.late}</div><div className="stat-l"><Help term="done_late">Done late</Help></div></div>
+            <div className={`card stat${record.openPastDue ? ' warn' : ''}`}><div className="stat-n">{record.openPastDue}</div><div className="stat-l"><Help term="open_past_due">Open and past due</Help></div></div>
+            <div className="card stat"><div className="stat-n">{record.renegotiated}</div><div className="stat-l"><Help term="date_moves">Date moves</Help></div></div>
           </div>
           <p className="small dim">Judged against the first date given. <Link className="rlink" href={`/ledger?person=${personId}`}>See the ledger for {mine ? 'you' : first}</Link></p>
         </section>
@@ -82,7 +83,7 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
 
       <div className="pg-grid">
         <section className="card card-pad">
-          <p className="section-title">Waiting on {mine ? 'you' : first}</p>
+          <p className="section-title"><Help term="blocked_on">Waiting on</Help> {mine ? 'you' : first}</p>
           {waitingOnThem.length === 0 ? <p className="small dim">No one is waiting on {mine ? 'you' : first}.</p> : (
             <ul className="pg-list">
               {waitingOnThem.map((t) => (
@@ -98,7 +99,7 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
           )}
         </section>
         <section className="card card-pad">
-          <p className="section-title">{mine ? 'You are' : `${first} is`} waiting on others</p>
+          <p className="section-title">{mine ? 'You are' : `${first} is`} <Help term="blocked_on">waiting on</Help> others</p>
           {waitingOnOthers.length === 0 ? <p className="small dim">Not waiting on anyone.</p> : (
             <ul className="pg-list">
               {waitingOnOthers.map((t) => (
@@ -131,7 +132,7 @@ export function PersonPage({ personId, name, role, department, active, meId, isL
           )}
         </section>
         <section className="card card-pad">
-          <p className="section-title">Recent updates</p>
+          <p className="section-title"><Help term="recent_updates">Recent updates</Help></p>
           {recent.length === 0 ? <p className="small dim">No updates yet.</p> : (
             <ul className="pg-list">
               {recent.map((e) => (

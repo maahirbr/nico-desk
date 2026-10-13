@@ -12,6 +12,7 @@ import {
 import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
 import { DateField } from './DateField';
+import { Help } from './HelpMode';
 import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
@@ -45,7 +46,7 @@ function Stamp({ on, due, block }: { on: string; due: string | null; block?: boo
 }
 
 const Pushed = ({ n, was }: { n: number; was: string | null }) =>
-  n ? <span className="pushed" title={`Date moved later ${n} ${n === 1 ? 'time' : 'times'}`}>pushed {n}×{was ? ` · was ${fmtDate(was)}` : ''}</span> : null;
+  n ? <Help term="pushed"><span className="pushed" title={`Date moved later ${n} ${n === 1 ? 'time' : 'times'}`}>pushed {n}×{was ? ` · was ${fmtDate(was)}` : ''}</span></Help> : null;
 
 // The short confirmation for each kind of change. Anything not listed stays quiet.
 function doneText(b: Record<string, unknown>): string | null {
@@ -215,12 +216,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             </button>
           </td>
           <td className="owner-td" data-label="Owner">
-            {l.ownerId ? <PersonLink id={l.ownerId} className="person-cell"><Avatar name={ownerName(l)} />{ownerName(l)}</PersonLink> :<span className="tbn">Pending</span>}
+            {l.ownerId ? <PersonLink id={l.ownerId} className="person-cell"><Avatar name={ownerName(l)} />{ownerName(l)}</PersonLink> :<Help term="plan_pending"><span className="tbn">Pending</span></Help>}
             {l.ownerWith && <div className="who-with">with {l.ownerWith}</div>}
           </td>
           <td className="owner-td" data-label={partner}>
-            {l.partner ? <div className="pt-name">{l.partner}</div> : <span className="tbn">Pending</span>}
-            <span className={`mode${l.mode === 'hands-on' ? '' : ' coach'}`}>{l.mode === 'hands-on' ? 'Hands-on' : 'Coaching'}</span>
+            {l.partner ? <div className="pt-name">{l.partner}</div> : <Help term="plan_pending"><span className="tbn">Pending</span></Help>}
+            <Help term={l.mode === 'hands-on' ? 'plan_hands_on' : 'plan_coaching'}><span className={`mode${l.mode === 'hands-on' ? '' : ' coach'}`}>{l.mode === 'hands-on' ? 'Hands-on' : 'Coaching'}</span></Help>
           </td>
           <td className="by" data-label="Due">
             {l.status === 'Done'
@@ -259,7 +260,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             <td colSpan={8}>
               <div className="detail-grid">
                 <div>
-                  {l.doneDef && <div className="d-block"><div className="d-label">Done looks like</div><p>{l.doneDef}</p></div>}
+                  {l.doneDef && <div className="d-block"><div className="d-label"><Help term="plan_done_looks_like">Done looks like</Help></div><p>{l.doneDef}</p></div>}
                   {l.note && <div className="d-block"><div className="d-label">Note</div><p className="what-note">{l.note}</p></div>}
                   {!l.doneDef && !l.note && <p className="dim small">No detail yet. Use ✎ to add what done looks like.</p>}
                 </div>
@@ -268,7 +269,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                 </div>
                 <div>
                   {cps.length > 0 ? (
-                    <div className="d-block"><div className="d-label">Checkpoints</div>
+                    <div className="d-block"><div className="d-label"><Help term="plan_checkpoints">Checkpoints</Help></div>
                       <ul className="ms">
                         {sortedCheckpoints(l).map((c) => (
                           <li key={c.id} className={`${c.done ? 'ticked' : ''}${next?.cpId === c.id && l.status !== 'Done' ? ' next' : ''}${!c.done && c.dueOn && c.dueOn < today ? ' late' : ''}`}>
@@ -288,7 +289,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
               </div>
               {actionsFor(l.id).length > 0 && (
                 <div className="d-block" style={{ marginTop: 14 }}>
-                  <div className="d-label">Actions from meetings</div>
+                  <div className="d-label"><Help term="plan_actions">Actions from meetings</Help></div>
                   <ActionList list={actionsFor(l.id)} busy={busy} today={today} op={op} />
                 </div>
               )}
@@ -307,7 +308,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           <tr>
             <th aria-label="Done" /><th>#</th><th>What</th>
             <th>Our owner</th>
-            <th>{partner}</th><th>Due date</th><th>Status</th><th aria-label="Actions" />
+            <th>{partner}</th><th>Due date</th><th><Help term="plan_status">Status</Help></th><th aria-label="Actions" />
           </tr>
         </thead>
         <tbody>{ls.length ? ls.map(lineRow) : <tr><td colSpan={8} className="empty-cell">{empty}</td></tr>}</tbody>
@@ -336,11 +337,14 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     <div className="plan-board calm">
       <div className="progress-line">
         <div className="pbar" aria-hidden><span style={{ width: `${pct}%` }} /></div>
-        <span><b>{counts.done}</b> of {lines.length} lines done · <b>{counts.open}</b> open{counts.late > 0 && <span className="late-text"> · <b>{counts.late}</b> overdue</span>}</span>
+        <span><b>{counts.done}</b> of {lines.length} lines done · <b>{counts.open}</b> open{counts.late > 0 && <span className="late-text"> · <b>{counts.late}</b> <Help term="overdue">overdue</Help></span>}</span>
       </div>
 
       <nav className="tabs" aria-label="Plan sections">
-        {TABS.map(([k, label]) => <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-plan" className="tab-ind" />}{label}</button>)}
+        {TABS.map(([k, label]) => {
+          const btn = <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-plan" className="tab-ind" />}{label}</button>;
+          return k === 'asks' ? <Help key={k} term="plan_asks" host>{btn}</Help> : btn;
+        })}
       </nav>
 
       {(error || note) && <p className={error ? 'err banner' : 'ok banner'} role={error ? 'alert' : 'status'}>{error ?? note}</p>}
@@ -362,8 +366,8 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
               <option value="">All lines</option>{TILES.map((t) => <option key={t.key} value={t.key}>{t.label}{t.sub ? ` (${t.sub})` : ''}</option>)}
             </Select>
             {multi && <span className="seg" role="group" aria-label="Order lines">
-              <button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By sub-project</button>
-              <button aria-pressed={view === 'date'} onClick={() => setView('date')}>By date</button>
+              <Help term="plan_by_subproject" host><button aria-pressed={view === 'pillar'} onClick={() => setView('pillar')}>By sub-project</button></Help>
+              <Help term="plan_by_date" host><button aria-pressed={view === 'date'} onClick={() => setView('date')}>By date</button></Help>
             </span>}
             {filtered && <button className="act" onClick={() => { setQ(''); setWho(null); setTile(null); setPillar('All'); }}>Clear</button>}
             <span className="toolbar-end">
@@ -381,9 +385,11 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           </div>
 
           {!readOnly && state.proposals.length > 0 && !reviewing && (
-            <button className="notice-bar" onClick={() => setReviewing(true)}>
-              <b>{state.proposals.length} proposed {state.proposals.length === 1 ? 'action' : 'actions'}</b> from meeting minutes are waiting for review <span className="act">Review</span>
-            </button>
+            <Help term="proposals" host>
+              <button className="notice-bar" onClick={() => setReviewing(true)}>
+                <b>{state.proposals.length} proposed {state.proposals.length === 1 ? 'action' : 'actions'}</b> from meeting minutes are waiting for review <span className="act">Review</span>
+              </button>
+            </Help>
           )}
           {!readOnly && reviewing && state.proposals.length > 0 && <Inbox mode="plan" proposals={state.proposals} lines={lines} busy={busy} today={today} op={op} />}
 
@@ -431,7 +437,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                         <span className="ask-title">{a.short}</span>
                         {a.dueOn ? (a.done && a.doneOn ? <span className="ask-pill done"><Stamp on={a.doneOn} due={a.dueOn} /></span>
                           : <span className={`ask-pill${late ? ' late' : ''}`}>Due {fmtDate(a.dueOn)}{a.done ? '' : ` · ${dueWords(a.dueOn, today)}`}</span>)
-                          : a.checkpoints.length === 0 && <span className="ask-pill quiet">Ongoing</span>}
+                          : a.checkpoints.length === 0 && <Help term="plan_ongoing" host><span className="ask-pill quiet">Ongoing</span></Help>}
                       </span>
                       <span className="ask-text">{a.text}</span>
                       {a.checkpoints.length > 0 && (
@@ -467,7 +473,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
             )}
           </section>
           <section className="card panel">
-            <h2>Parked, by choice</h2>
+            <h2><Help term="plan_parked">Parked, by choice</Help></h2>
             {state.parked.length === 0 ? <p className="empty">Nothing parked.</p> : <ul className="parked-list">{state.parked.map((p) => <li key={p}>{p}</li>)}</ul>}
           </section>
         </div>
@@ -679,7 +685,7 @@ function TwoWeeks({ project, state, names, today }: { project: Project; state: P
     <>
       <p className="sub">Checkpoints due by {fmtDate(horizon)}, plus anything already late.</p>
       <div className="tw-summary">
-        {late > 0 && <span className="tw-chip late">{late} overdue</span>}
+        {late > 0 && <span className="tw-chip late">{late} <Help term="overdue">overdue</Help></span>}
         <span className="tw-chip">{list.length - late} coming up</span>
         <span className="tw-chip quiet">across {new Set(list.map((i) => i.who)).size} owners</span>
       </div>

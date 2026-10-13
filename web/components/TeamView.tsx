@@ -7,6 +7,7 @@ import { oneOf } from '@/lib/remember';
 import { personCounts } from '@/lib/planUtil';
 import { addDays, fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
+import { Help } from './HelpMode';
 import { useOpenTask } from './taskUrl';
 import { useRemembered, useRememberedParam } from './remember';
 import { Select } from './Select';
@@ -72,8 +73,8 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           <Link className="iconbtn" href={href({ week: addDays(weekStart, 7) })} aria-label="Next week">›</Link>
         </span>
         <span className="seg" role="group" aria-label="View">
-          <Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link>
-          <Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link>
+          <Help term="team_by_person" host><Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link></Help>
+          <Help term="team_by_status" host><Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link></Help>
         </span>
         <Select value={project} aria-label="Project" onChange={setProject}>
           <option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -101,11 +102,11 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
               <PersonLink id={p.id} className="person-cell"><Avatar name={p.name} />{p.name}</PersonLink><span className="dim role">{p.role}</span>
               <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} late</span>}</span>
             </h2>
-            {overdueN.length > 0 && <><h3 className="next-h late-text">Late</h3><Stagger id="team" className="tlist">{overdueN.map((t) => row(t))}</Stagger></>}
-            {week.length > 0 && <><h3 className="next-h">{weekStart === thisWeek ? 'This week' : 'That week'}</h3><Stagger id="team" className="tlist">{week.map((t) => row(t))}</Stagger></>}
+            {overdueN.length > 0 && <><h3 className="next-h late-text"><Help term="late">Late</Help></h3><Stagger id="team" className="tlist">{overdueN.map((t) => row(t))}</Stagger></>}
+            {week.length > 0 && <><h3 className="next-h"><Help term="group_this_week">{weekStart === thisWeek ? 'This week' : 'That week'}</Help></h3><Stagger id="team" className="tlist">{week.map((t) => row(t))}</Stagger></>}
             {soon.length > 0 && (
               <>
-                <h3 className="next-h">Coming up</h3>
+                <h3 className="next-h"><Help term="coming_up">Coming up</Help></h3>
                 <Stagger id="team" className="tlist">{soonShown.map((t) => row(t))}</Stagger>
                 {soon.length > SOON && (
                   <button className="mini-btn next-more" onClick={() => setMore({ ...more, [p.id]: !more[p.id] })}>
@@ -121,7 +122,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         if (!items.length) return null;
         return (
           <section key={k} className="group">
-            <h2><span className={`st st-status tone-${STATUS[k].tone}`}>{STATUS[k].word}</span> <span className="n">{items.length}</span></h2>
+            <h2><span className={`st st-status tone-${STATUS[k].tone}`}><Help term={`status_${k}`}>{STATUS[k].word}</Help></span> <span className="n">{items.length}</span></h2>
             <Stagger id="team" className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</Stagger>
           </section>
         );

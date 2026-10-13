@@ -5,6 +5,8 @@ import { projectCounts, projectMembers, teamProjects } from '@/lib/plan';
 import { countdown } from '@/lib/planUtil';
 import { fmtDate, today } from '@/lib/time';
 import { Avatar } from '@/components/chips';
+import type { HelpTerm } from '@/components/help';
+import { Help } from '@/components/HelpMode';
 import { NewProjectButton } from '@/components/ProjectForm';
 import { Stagger } from '@/components/motion-ui';
 
@@ -19,8 +21,8 @@ export default async function Projects() {
   const live = projects.filter((p) => !p.archivedAt).sort(bySoonest);
   const archived = projects.filter((p) => p.archivedAt).sort(bySoonest); // closed projects: out of the main list, still readable
   const members = Object.fromEntries(await Promise.all(projects.map(async (p) => [p.id, await projectMembers(d, p.id)] as const)));
-  const STATUS: Record<string, { word: string; tone: string }> = {
-    on_track: { word: 'On track', tone: 'ok' }, at_risk: { word: 'At risk', tone: 'risk' }, off_track: { word: 'Off track', tone: 'late' },
+  const STATUS: Record<string, { word: string; tone: string; help: HelpTerm }> = {
+    on_track: { word: 'On track', tone: 'ok', help: 'project_on_track' }, at_risk: { word: 'At risk', tone: 'risk', help: 'project_at_risk' }, off_track: { word: 'Off track', tone: 'late', help: 'project_off_track' },
   };
   const card = (p: (typeof projects)[number]) => {
     const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
@@ -32,16 +34,16 @@ export default async function Projects() {
       <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
         <div className="pcard-top">
           <h2 className="pcard-name">{p.name}</h2>
-          {p.archivedAt ? <span className="st st-status tone-idle">Archived</span> : <span className={`st st-status tone-${st.tone}`}>{st.word}</span>}
+          {p.archivedAt ? <Help term="project_archived" host><span className="st st-status tone-idle">Archived</span></Help> : <Help term={st.help} host><span className={`st st-status tone-${st.tone}`}>{st.word}</span></Help>}
         </div>
         <div className="kind-tag">
-          <span className="kind-word">{p.kind === 'plan' ? `Partner · ${p.partnerName ?? 'partner'}` : 'Internal'}</span>
+          <Help term={p.kind === 'plan' ? 'project_partner' : 'project_internal'} host><span className="kind-word">{p.kind === 'plan' ? `Partner · ${p.partnerName ?? 'partner'}` : 'Internal'}</span></Help>
           {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
         </div>
         {p.intro && <p className="pcard-goal">{p.intro}</p>}
         <div className="pcard-progress">
-          <span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span>
-          <span className="small"><b>{c.done}</b> done · <b>{c.open}</b> open{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>
+          <Help term="project_progress" host><span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span></Help>
+          <span className="small"><Help term="project_progress" host><span><b>{c.done}</b> done · <b>{c.open}</b> open</span></Help>{c.overdue > 0 && <span className="late-text"> · {c.overdue} <Help term="overdue" host><span>overdue</span></Help></span>}</span>
         </div>
         <div className="pcard-foot">
           <span className="avs" title={team.map((id) => names[id]).join(', ')}>
@@ -69,7 +71,7 @@ export default async function Projects() {
       </Stagger>
       {archived.length > 0 && (
         <details className="archived-group">
-          <summary>Archived <span className="count-badge">{archived.length}</span></summary>
+          <summary><Help term="project_archived" host><span>Archived</span></Help> <span className="count-badge">{archived.length}</span></summary>
           <div className="pcards">{archived.map(card)}</div>
         </details>
       )}
