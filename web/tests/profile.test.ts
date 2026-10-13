@@ -101,6 +101,18 @@ describe('photo upload', () => {
     expect((await s.getPhoto(db, TEAM_ID, ME))?.bytes.length).toBe(64);
     expect((await put(webp(200 * 1024), 'image/webp')).status).toBe(200); // exactly the limit passes
   });
+  it('refuses an oversized chunked body that sends no content-length, without reading it all', async () => {
+    signIn(ME);
+    let pulled = 0;
+    const chunk = webp(64 * 1024);
+    const body = new ReadableStream<Uint8Array>({
+      pull(c) { pulled++; if (pulled > 50) c.close(); else c.enqueue(chunk); },
+    });
+    const req = new Request('http://localhost/api/v1/me/photo', { method: 'PUT', headers: { ...hdr, 'content-type': 'image/webp' }, body, duplex: 'half' } as RequestInit);
+    const r = await photoPut(req, { params: Promise.resolve({}) });
+    expect(r.status).toBe(413);
+    expect(pulled).toBeLessThan(10);
+  });
   it('refuses other types, a wrong claim and an empty body with 4xx', async () => {
     signIn(ME);
     const gif = new Uint8Array([...'GIF89a'].map((c) => c.charCodeAt(0)).concat(new Array(60).fill(0)));

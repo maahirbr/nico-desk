@@ -334,3 +334,14 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   Plan-board tiles and the line-status picker stay unwrapped, since the custom Select flattens its options to strings.
   `web/tests/help.test.ts` requires the covered list to match HELP exactly, so a new term needs a test line. Not checked:
   the first-tap-explains behaviour on a phone. Rollback: `git revert -m 1 09fbed7`.
+- 2026-10-13 · Sonnet 5.5 · People get a phone number and a photo (workstream 3 of `docs/PLAN-13-OCT.md`), merged by Opus 5.5.
+  An upload is cropped to a 256px square in the browser and stored under 200 KB in `person_photos` (bytea, RLS on, no
+  policies). It is served only to signed-in members of the same team, with a private cache and an ETag. Google sign-in
+  saves the picture address (https only) to `people.photo_url`, so the OAuth scope now includes `profile`. An upload wins
+  over the Google photo, and initials are the last fallback. Phone is optional: digits, spaces, plus and hyphen, 7 to 20
+  characters. Edit profile shows only on your own page, and every write is refused under View as. At merge, Opus fixed a
+  finding from the commit security review: the upload route read the whole body before checking its size, so a chunked
+  upload with no length header was buffered in full. It now reads in chunks and refuses at 200 KB. Not checked in a
+  browser: the crop, the WebP encode and its JPEG fallback, 375px, day and night. The hosted database needs
+  `npm run db:upgrade` once before a build with this change is promoted (adds two columns and the table; keeps all data).
+  Rollback: `git revert -m 1 b26e162`. The columns and table can stay.
