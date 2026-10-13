@@ -96,7 +96,22 @@ export async function upgrade(db: Db) {
   await db.exec(VISIBILITY_UPGRADE);
   // 13 Oct: comments with @ and #, and a notice kind for a mention.
   await db.exec(COMMENTS_UPGRADE);
+  // 13 Oct: pilot feedback from inside the app.
+  await db.exec(FEEDBACK_UPGRADE);
 }
+
+// Idempotent: the feedback table (RLS on, no policies, like every other table). The same SQL as lib/schema.ts.
+export const FEEDBACK_UPGRADE = `
+  CREATE TABLE IF NOT EXISTS feedback (
+    id          text PRIMARY KEY,
+    person_id   text NOT NULL REFERENCES people(id),
+    path        text,
+    body        text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 4000),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    read_at     timestamptz
+  );
+  CREATE INDEX IF NOT EXISTS feedback_created ON feedback (created_at DESC);
+  ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: the two comment tables (RLS on, no policies) and a notices table that can hold a mention (no task, a comment).
 export const COMMENTS_UPGRADE = `

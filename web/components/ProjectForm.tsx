@@ -7,6 +7,7 @@ import { focusOnDesktop } from './motion';
 import { Select } from './Select';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
+import { composing, isRealEnter } from './ime';
 
 // Starting a project, or changing one later. What a project needs before it starts: a name,
 // an owner (who may also lead it), and a date; a one-line description helps. Only the people added
@@ -39,7 +40,7 @@ function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChang
         <span key={v} className="chip">{v}<button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(value.filter((x) => x !== v))}>×</button></span>
       ))}
       <input value={draft} enterKeyHint="done" autoComplete="off" placeholder={value.length ? 'Add another' : placeholder} onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(); } if (e.key === 'Backspace' && !draft && value.length) onChange(value.slice(0, -1)); }}
+        onKeyDown={(e) => { if (isRealEnter(e) || (e.key === ',' && !composing(e))) { e.preventDefault(); add(); } if (e.key === 'Backspace' && !draft && value.length) onChange(value.slice(0, -1)); }}
         onBlur={add} />
     </div>
   );

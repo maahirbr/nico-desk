@@ -160,6 +160,19 @@ CREATE TABLE comments (
 CREATE INDEX comments_subject ON comments (subject_kind, subject_id, created_at);
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
+-- Pilot feedback sent from inside the app. Any person writes a note, only an admin reads the list. Nothing is emailed.
+-- path is an in-app path (no query string), kept only when the person ticked "about this page".
+CREATE TABLE feedback (
+  id          text PRIMARY KEY,
+  person_id   text NOT NULL REFERENCES people(id),
+  path        text,
+  body        text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 4000),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  read_at     timestamptz
+);
+CREATE INDEX feedback_created ON feedback (created_at DESC);
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE comment_refs (
   comment_id  text NOT NULL REFERENCES comments(id),
   ref_kind    text NOT NULL CHECK (ref_kind IN ('person','task','project')),

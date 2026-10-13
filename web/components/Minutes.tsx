@@ -8,6 +8,7 @@ import { DateField } from './DateField';
 import { Help } from './HelpMode';
 import { Select } from './Select';
 import { SlideInd } from './motion-ui';
+import { isRealEnter } from './ime';
 
 // Meeting minutes in, proposals out: nothing changes until a person accepts each one.
 
@@ -94,7 +95,7 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
     <div className="stack">
       <div className="row">
         <input type="search" className="search" placeholder={`Search ${NAME[provider]} meetings`} value={q} aria-label="Search meetings"
-          onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') load(days, q); }} />
+          onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (isRealEnter(e)) load(days, q); }} />
         <Select value={String(days)} aria-label="How far back" onChange={(v) => { setDays(Number(v)); load(Number(v), q); }}>
           <option value={7}>Last 7 days</option><option value={14}>Last 14 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option>
         </Select>

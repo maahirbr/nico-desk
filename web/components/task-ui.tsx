@@ -32,6 +32,7 @@ import { TASK_CHANGED, useUndo } from './undo';
 import { TaskLink } from './TaskLink';
 import { FreshDot, useViewer } from './viewer';
 import { PasteChat } from './PasteChat';
+import { Count } from './LimitNotice';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -444,8 +445,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               ? <textarea className="drawer-title" rows={2} value={edit.title} maxLength={200} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Task" />
               : <h2 className="drawer-title static">{t.title}</h2>}
             {canEdit && open
-              ? <textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="What this task is about. A line or two."
-                  onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" />
+              ? <><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="What this task is about. A line or two."
+                  onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" /><Count value={edit.description} max={600} /></>
               : t.description && <p className="drawer-desc static">{t.description}</p>}
 
             {open ? (
@@ -483,6 +484,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
                 <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'}</span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
+                  <Count value={form.text} max={280} />
                 </label>
                 {mode === 'blocked' && (
                   <label className="f"><span>Waiting on someone in the team? (optional)</span>
@@ -664,7 +666,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       {!readOnly && <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="act" onClick={() => setPasting(true)}>Paste a chat</button></div>}
       <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-      <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /></label>
+      <label className="f"><span>What it’s about (optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>Owner</span>
           <OwnerPicker key={f.projectId} projectId={f.projectId || null} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />

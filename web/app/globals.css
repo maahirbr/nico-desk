@@ -1547,3 +1547,13 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .cn-more { font: var(--type-meta); color: var(--primary); background: none; border: 0; padding: 0; cursor: pointer; min-height: var(--touch-min); text-align: left; }
 .cn-more:hover { text-decoration: underline; }
 @media (max-width: 520px) { .cn-group { grid-template-columns: minmax(0, 1fr); gap: var(--space-xxs); } }
+
+/* Feedback: the admin list and the checkbox row in the dialog. */
+.fb-about { display: flex; align-items: center; gap: var(--space-xs); font: var(--type-small); color: var(--ink-2); cursor: pointer; min-height: 44px; }
+.fb-about input { width: 18px; height: 18px; flex: none; margin: 0; }
+.fb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.fb-list .fb-item { margin: 0; }
+.fb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+.fb-state { margin-left: auto; }
+.fb-body { margin: var(--space-xs) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fb-item.is-read .fb-body { color: var(--ink-2); }
