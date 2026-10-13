@@ -136,6 +136,26 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   moving a date. Starting (Not started to In progress), clearing a block and marking done are one
   click, each with an optional note. Plan lines follow the same rule.
 
+## Hosting
+
+- `lib/db.ts` picks the database:
+  - `DATABASE_URL` set: postgres-js through `lib/pgRemote.ts` (Supabase transaction pooler). `npm run db:remote`
+    (`scripts/db-remote.ts`) drops, reseeds and turns RLS on with no policies. `npm run db:upgrade` runs the
+    idempotent `upgrade()` in `lib/db.ts`: it adds columns and tables and keeps all data.
+  - Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last.
+  - Unset locally: PGlite in `web/.data/`.
+- `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come
+  from env or are derived (`lib/secret.ts`). `.env.example` lists every variable.
+- Vercel project `nico-desk`, root `web`, serves https://nico-desk.vercel.app from Supabase project `nico-desk`
+  (Mumbai). `DATABASE_URL` is set for production only, so previews still use PGlite.
+- The live site holds the real pilot, loaded by `NICO_ROSTER=pilot/roster.local.json npm run db:remote` from the
+  git-ignored `web/pilot/` (`drop_samples` in its `projects.local.json` leaves the fixtures out).
+- Crons (`vercel.json`): a daily job at 09:00 IST calls `/api/v1/jobs/reminders` (in-app due and overdue notices
+  only, needs `CRON_SECRET`). The weekly reseed is off. `/api/cron/reseed` (`lib/reseed.ts`) still exists and never
+  wipes a database without the fixture marker task.
+- Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its
+  ask columns are not in the Supabase schema.
+
 ## What is not built, and why
 
 | Not built | Why |
@@ -145,7 +165,6 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 | The OKR page's own tokens and components | `~/Code/Nicobar work` is not on this machine. `app/globals.css` uses the same palette as `docs/team-page`, in one block to swap |
 | Sending reminders from the server | Nothing is sent on anyone's behalf without their yes (CLAUDE.md). Drafts open in your own Gmail and you send them |
 | Wispr Flow import | Wispr Flow has no public API, only a read-only MCP connection for AI assistants. Paste the summary instead |
-| A hosted Postgres | Not chosen yet (OQ8). Local runs use PGlite, Postgres compiled to WASM in this process. The schema in `lib/schema.ts` is plain Postgres |
 
 ## Layout
 

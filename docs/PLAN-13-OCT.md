@@ -17,7 +17,7 @@ Dates that shape the order: first review Wed 14 Oct, second team starts Mon 19 O
   the sponsor says yes, recorded in DECISIONS. Until then, search gets stronger with local methods only.
 - Chat is a later phase. Comments use tables that chat can reuse.
 
-## Defaults taken (say if any is wrong)
+## Defaults taken (confirmed 13 Oct)
 
 - One appearance setting, System / Light / Dark, applies to every skin. It is not stored per skin.
 - Sounds start off. The person turns them on in the account menu.
@@ -205,3 +205,12 @@ whether it earns a place next to Google Chat.
 2. Mentions: in-app notice by default. The comment box has an "Urgent: also email" option, which opens a Gmail draft
    to the person mentioned, from the writer's own address. The app never sends.
 3. The thread map (key `T`): next batch. "Connects to" lists ship first and show whether people follow links at all.
+4. The defaults above are confirmed by the repo owner (13 Oct).
+
+## Before active use
+
+A partner teammate, 13 Oct: run a security audit on the deployment, and tighten the database with row level
+security, before the app goes into active use. Today every table has RLS on with no policies, and the app reads
+through the Supabase pooler as one role, so the app's own rules in `lib/service.ts` are the only guard. The audit
+covers sign-in, sessions, the API routes, env and secrets on Vercel, and the Supabase project settings. It runs
+after workstreams 1 to 4 merge, and its findings are fixed before the pilot team is told to rely on the app.

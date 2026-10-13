@@ -34,7 +34,7 @@ does about it; changes that reach the people involved. Function first, then poli
 | Skins | Six skins in `tokens.css` (`[data-skin]`), picked from the account menu, kept in the `nd_skin` cookie. Warm (`w`) is the default. |
 | Brand | `web/public/brand/`: `nicobar-wordmark.svg` (the NICOBAR wordmark, `fill="currentColor"`) and `nicobar-mark-white.png` (the stacked fish and waves mark, white on transparent). Both from the public nicobar.com site. |
 | Rules | `web/lib/service.ts` holds every rule. Pages and `web/app/api/v1/` both call it. |
-| Map of the repo | `CLAUDE.md`: ARCHITECTURE, CONSTRAINTS, DECISIONS, VERIFY. Read CONSTRAINTS before any commit: the repo is public. |
+| Map of the repo | `CLAUDE.md`: ARCHITECTURE, CONSTRAINTS, the rules that still bind, VERIFY. The full decisions log is `docs/DECISIONS.md`. Read CONSTRAINTS before any commit: the repo is public. |
 | Requirements | `SPEC.md`, `INTENT.md`, `docs/LOCAL-DESK-SPEC.md`, `docs/USE-CASES-8-OCT.md` |
 
 ## 3. What changed on `maahir/mvp` since the PM's baseline
@@ -143,5 +143,5 @@ Waiting on the repo owner: the real emails for six roster people, and the name o
 
 ## 8. Before you push
 
-Run VERIFY from `CLAUDE.md`. Push and deploy only with the repo owner's yes. Add a DECISIONS line
+Run VERIFY from `CLAUDE.md`. Push and deploy only with the repo owner's yes. Add an entry at the bottom of `docs/DECISIONS.md`
 (date, model, why) for any decision a later reader would ask about.
