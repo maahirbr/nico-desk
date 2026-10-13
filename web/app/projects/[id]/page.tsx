@@ -7,6 +7,7 @@ import { pendingProposals, planState, projectMembers, projectViewers, type Proje
 import { dueDoneByWeek, lineDates, lineSplit, taskDates, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
+import { meetingAgenda } from '@/lib/meetings';
 import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
@@ -15,6 +16,7 @@ import { ConnectsTo } from '@/components/ConnectsTo';
 import { threadsFor } from '@/lib/threads';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
+import { MeetingSection } from '@/components/MeetingSection';
 import { DueDoneChart } from '@/components/ProjectVisuals';
 import { TaskBoard } from '@/components/TaskBoard';
 
@@ -51,6 +53,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <div className="glance-grid glance-one"><DueDoneChart weeks={weeks} /></div>
       {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
+      <MeetingSection projectId={p.id} kind={p.kind === 'plan' ? 'plan' : 'tasks'}
+        rhythm={{ meetEvery: p.meetEvery, meetDay: p.meetDay, meetNext: p.meetNext, meetLast: p.meetLast }}
+        agenda={await meetingAgenda(d, me, p.id, now)}
+        canRun={p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin} today={now} />
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
       ) : (

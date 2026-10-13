@@ -96,7 +96,16 @@ export async function upgrade(db: Db) {
   await db.exec(VISIBILITY_UPGRADE);
   // 13 Oct: comments with @ and #, and a notice kind for a mention.
   await db.exec(COMMENTS_UPGRADE);
+  // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
+  await db.exec(MEETINGS_UPGRADE);
 }
+
+// Idempotent: four columns on projects for the meeting rhythm. No new table, so no new RLS step.
+export const MEETINGS_UPGRADE = `
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_every text CHECK (meet_every IN ('weekly','fortnightly','monthly','as_needed'));
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_day smallint CHECK (meet_day BETWEEN 1 AND 7);
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_next date;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS meet_last date;`;
 
 // Idempotent: the two comment tables (RLS on, no policies) and a notices table that can hold a mention (no task, a comment).
 export const COMMENTS_UPGRADE = `

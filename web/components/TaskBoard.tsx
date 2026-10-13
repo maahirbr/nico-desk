@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { DitherArt } from './DitherArt';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { Person, PersonLink } from './chips';
 import { TaskLinkChips } from './TaskLinks';
+import { IMPORT_EVENT } from './MeetingSection';
 import { useOpenTask } from './taskUrl';
 import { DateField } from './DateField';
 import { Help } from './HelpMode';
@@ -79,6 +80,16 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const setWs = (v: string) => keep('ws', v);
   const setClosedSort = (v: EndedSort) => keep('closedSort', v);
   const [importOpen, setImportOpen] = useState(false);
+  // The Meeting section's "Write the minutes" opens the import panel below and brings it into view.
+  useEffect(() => {
+    const open = () => {
+      setImportOpen(true);
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      requestAnimationFrame(() => document.querySelector('.imp-panel')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }));
+    };
+    window.addEventListener(IMPORT_EVENT, open);
+    return () => window.removeEventListener(IMPORT_EVENT, open);
+  }, []);
   const [addOpen, setAddOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);

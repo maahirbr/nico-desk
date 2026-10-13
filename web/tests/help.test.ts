@@ -19,7 +19,7 @@ describe('help text', () => {
       'proposals', 'proposal_sure', 'proposal_unsure',
       'done_ahead', 'done_on_time', 'done_late', 'open_past_due', 'date_moves', 'recent_updates',
       'delivery_habits', 'needs_attention', 'moved_late',
-      'search_filters', 'search_commands', 'search_recent',
+      'search_filters', 'search_commands', 'search_recent', 'meeting_rhythm', 'meeting_agenda', 'meeting_held',
       'waiting_done', 'plan_done_looks_like', 'plan_actions', 'plan_by_subproject', 'plan_by_date', 'proposal_accept_sure',
       'paste_review', 'paste_masked',
       'conn_from_env',

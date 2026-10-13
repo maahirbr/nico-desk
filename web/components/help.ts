@@ -129,6 +129,10 @@ export const HELP = {
   search_filters: 'Filters. Add is:late, is:blocked, is:done or is:mine for status. Add @name for an owner, #project for a project, and due:today or due:week for dates.',
   search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',
   search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
+  // Meetings
+  meeting_rhythm: 'Meeting rhythm. How often this project meets, and the next date. As needed has no automatic date. The project owner, its lead, a team lead or an admin can change it.',
+  meeting_agenda: 'Agenda. The app builds it from the board. It lists what is late, blocked or at risk, what is due before the next meeting, open asks, and what changed since the last meeting.',
+  meeting_held: 'Meeting held. Records today as the last meeting and moves the next date on. You can do it once a day.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;

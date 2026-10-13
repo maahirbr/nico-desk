@@ -900,6 +900,33 @@ table.board td.title { width: 48%; }
 .avs .av + .av { margin-left: calc(var(--space-xxs) * -1); }
 .pcard-date { display: flex; flex-direction: column; align-items: flex-end; font: var(--type-meta); font-feature-settings: var(--features-date); }
 .pcard-date span { font: var(--type-small); }
+/* Meeting: the rhythm, the next date and the agenda on a project page. No motion of its own. */
+.pcard-meets { font: var(--type-small); color: var(--ink-2); margin: 0; font-feature-settings: var(--features-date); }
+.meet { margin-bottom: var(--space-md); }
+.meet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); flex-wrap: wrap; }
+.meet-title .section-title { margin-bottom: var(--space-xxs); }
+.meet-line { margin: 0; font: var(--type-body); font-feature-settings: var(--features-date); }
+.meet-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.meet-form { margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); display: flex; flex-direction: column; gap: var(--space-sm); }
+.meet-form .row > label.f { min-width: 160px; }
+.meet-form-actions { justify-content: flex-end; }
+.meet-agenda { margin-top: var(--space-md); padding-top: var(--space-sm); border-top: var(--rule) solid var(--hairline); }
+.meet-agenda > summary { cursor: pointer; font: var(--type-state); color: var(--ink-2); padding: var(--space-xs) 0; }
+.meet-sec { margin-top: var(--space-sm); }
+.meet-sec h4 { font: var(--type-state); color: var(--ink-2); margin: 0 0 var(--space-xxs); }
+.meet-list { list-style: none; margin: 0; padding: 0; }
+.meet-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); font: var(--type-meta); }
+.meet-row:first-child { border-top: 0; }
+.meet-link, .meet-text { min-width: 0; overflow-wrap: anywhere; color: var(--ink); text-decoration: none; }
+.meet-link:hover { text-decoration: underline; }
+.meet-note { flex: none; font: var(--type-small); text-align: right; font-feature-settings: var(--features-date); }
+@media (max-width: 520px) {
+  .meet-head { flex-direction: column; }
+  .meet-row { flex-direction: column; gap: 0; }
+  .meet-note { text-align: left; }
+  .meet-form .row > label.f { min-width: 0; flex: 1 1 100%; }
+  .meet-actions .btn { flex: 1 1 auto; }
+}
 
 /* import sources */
 .imp-tabs { margin: var(--space-sm) 0 var(--space-xs); }

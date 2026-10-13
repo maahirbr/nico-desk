@@ -5,6 +5,7 @@ import { projectMembers, projectSplits } from '@/lib/plan';
 import { seenProjects } from '@/lib/visibility';
 import { countdown } from '@/lib/planUtil';
 import { emptySplit } from '@/lib/progress';
+import { meetsWords } from '@/lib/meetDates';
 import { fmtDate, today } from '@/lib/time';
 import { Avatar } from '@/components/chips';
 import type { HelpTerm } from '@/components/help';
@@ -32,6 +33,7 @@ export default async function Projects() {
     const cd = p.launchOn ? countdown(t, p.launchOn) : null;
     const team = [...new Set([p.ownerId, p.leadId, ...(members[p.id] ?? []).map((m) => m.personId)])];
     const st = STATUS[p.status];
+    const meets = p.archivedAt ? null : meetsWords(p, t); // "Meets Thu, next 16 Oct"
     return (
       <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
         <div className="pcard-top">
@@ -43,6 +45,7 @@ export default async function Projects() {
           {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
         </div>
         {p.intro && <p className="pcard-goal">{p.intro}</p>}
+        {meets && <p className="pcard-meets">{meets}</p>}
         <div className="pcard-progress">
           <Help term="project_progress" host><StatusBar split={split} what={p.kind === 'plan' ? 'plan lines' : 'tasks'} viewKey="projects-bars" /></Help>
         </div>

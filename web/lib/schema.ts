@@ -67,6 +67,11 @@ CREATE TABLE projects (
   created_by     text REFERENCES people(id),
   archived_at    timestamptz,                  -- set when the project is closed; null while it is live
   archived_by    text REFERENCES people(id),
+  -- meeting rhythm (13 Oct): how often the project meets, the weekday, the next and the last meeting
+  meet_every     text CHECK (meet_every IN ('weekly','fortnightly','monthly','as_needed')),
+  meet_day       smallint CHECK (meet_day BETWEEN 1 AND 7),  -- ISO weekday, 1 Monday to 7 Sunday
+  meet_next      date,
+  meet_last      date,
   UNIQUE (team_id, name)
 );
 

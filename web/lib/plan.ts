@@ -15,6 +15,7 @@ import {
 
 
 export type Pill = { label: string; value: string };
+export type MeetEvery = 'weekly' | 'fortnightly' | 'monthly' | 'as_needed';
 export type Cadence = { day?: string; time?: string; what?: string; detail?: string; until?: string };
 
 export type Project = {
@@ -25,6 +26,7 @@ export type Project = {
   pills: Pill[]; pillars: { key: string; label: string }[]; partnerName: string | null; partnerPeople: string[]; cadence: Cadence[];
   workstreams: string[]; targetLabel: string | null; createdBy: string | null;
   archivedAt: string | null; archivedBy: string | null; // set while the project is closed
+  meetEvery: MeetEvery | null; meetDay: number | null; meetNext: string | null; meetLast: string | null; // the meeting rhythm (lib/meetings.ts)
 };
 
 type ProjectRow = {
@@ -32,6 +34,7 @@ type ProjectRow = {
   kind: Project['kind']; eyebrow: string | null; phase: string | null; intro: string | null; launch_on: string | null;
   pills: Pill[]; pillars: Project['pillars']; partner_name: string | null; partner_people: string[]; cadence: Cadence[];
   workstreams: string[]; target_label: string | null; created_by: string | null; archived_at: string | null; archived_by: string | null;
+  meet_every: MeetEvery | null; meet_day: number | null; meet_next: string | null; meet_last: string | null;
 };
 
 const toProject = (r: ProjectRow): Project => ({
@@ -40,6 +43,7 @@ const toProject = (r: ProjectRow): Project => ({
   pillars: r.pillars ?? [], partnerName: r.partner_name, partnerPeople: r.partner_people ?? [], cadence: r.cadence ?? [],
   workstreams: r.workstreams ?? [], targetLabel: r.target_label, createdBy: r.created_by,
   archivedAt: r.archived_at, archivedBy: r.archived_by,
+  meetEvery: r.meet_every ?? null, meetDay: r.meet_day ?? null, meetNext: r.meet_next ?? null, meetLast: r.meet_last ?? null,
 });
 
 export async function teamProjects(db: Tx, teamId: string): Promise<Project[]> {

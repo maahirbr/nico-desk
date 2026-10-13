@@ -3,7 +3,7 @@
 All data here is synthetic. The names, projects, tasks and Sheet ids are invented. Nothing comes from a real company. Emails use `example.test`, a reserved name.
 
 The files match `docs/DATA-MODEL.md`: `people.json`, `projects.json`, `tasks.json`, `events.json`.
-`plan.json` holds the project-page details and one partner plan for the web app (`web/lib/seed.ts`); its free-text owner fields may name a person id (`per_bo`), which the seed swaps for that person's name.
+`plan.json` holds the project-page details and one partner plan for the web app (`web/lib/seed.ts`); its free-text owner fields may name a person id (`per_bo`), which the seed swaps for that person's name. A project or the plan project may carry `meet_every`, `meet_day` (1 Monday to 7 Sunday), `meet_next` and `meet_last`; the seed shifts the two dates by whole weeks with the rest.
 `events.json` is the full history. Replaying it gives exactly the rows in `tasks.json` and `projects.json`.
 
 ## Six weeks and a seed-time shift
