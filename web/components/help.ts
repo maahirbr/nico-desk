@@ -125,6 +125,9 @@ export const HELP = {
 
   // Connects to
   connects_to: 'Connects to. What this item is part of, what it waits on, what waits on it, and where it is mentioned. You see only what you can open.',
+  // Thread map
+  thread_map: 'Thread map. The same links as Connects to, drawn as a graph around one item. Each column is one more step away from it.',
+  thread_map_chain: 'Lit chain. Point at an item to light its path back to the start and its direct links. Everything else fades.',
   // Search
   search_filters: 'Filters. Add is:late, is:blocked, is:done or is:mine for status. Add @name for an owner, #project for a project, and due:today or due:week for dates.',
   search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',

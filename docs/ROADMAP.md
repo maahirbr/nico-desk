@@ -28,6 +28,7 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
 - **Comments.** Comments on tasks and projects, with `@person` and `#task` links.
 - **Real links.** Every task, project and person opens in a new tab on a middle click. Filters live in the URL.
 - **Connects to.** Every task, project and person shows what it is part of, waits on and is mentioned in.
+- **Thread map.** Key `T` draws the Connects to links as a graph around one item. Point at an item to light its chain.
 - **Stronger local search.** Typos, filters such as `is:late` and `@name`, and commands in Cmd+K.
 - **Paste to tasks.** Paste a WhatsApp chat or upload its export, and the app proposes tasks and updates.
   Nothing changes until the person approves. The read step needs the model key on the server.
@@ -45,7 +46,6 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
 ## Next (week of 19 Oct, when the second team starts)
 
 - Google Meet notes as a source of minutes. This needs a new Google sign-in permission, so it waits for a yes.
-- The thread map, a graph of how items connect.
 - Team chat.
 
 ## The pilot rollout (Phase 1)

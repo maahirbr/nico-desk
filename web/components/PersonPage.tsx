@@ -168,7 +168,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
         </section>
       </div>
 
-      <section className="card card-pad cn-card"><ConnectsTo lines={threads} inDrawer /></section>
+      <section className="card card-pad cn-card"><ConnectsTo lines={threads} inDrawer focus={`person:${personId}`} /></section>
 
       {openId && (
         <TaskDrawer key={openId} id={openId} meId={meId} isLead={isLead} people={people} today={today} projectNames={projectNames}

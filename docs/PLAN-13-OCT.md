@@ -131,7 +131,7 @@ Port that idea, in nico-desk's own look.
 - Show a "Connects to" list in the task drawer, on the project page and on the person page. At most five lines, then
   "Show all".
 - Clicking a line opens that item. In the drawer it swaps the drawer, with Back.
-- Later (not this batch): the thread map, a graph view on key `T`, where hovering an item lights its chain.
+- Built after the "Connects to" lists: the thread map, a graph view on key `T`, where hovering an item lights its chain.
 - Tests: one per relation, on fixtures.
 
 ## 7. Sounds and pings
@@ -245,7 +245,7 @@ whether it earns a place next to Google Chat.
    record. A lead or admin also sees the team row.
 2. Mentions: in-app notice by default. The comment box has an "Urgent: also email" option, which opens a Gmail draft
    to the person mentioned, from the writer's own address. The app never sends.
-3. The thread map (key `T`): next batch. "Connects to" lists ship first and show whether people follow links at all.
+3. The thread map (key `T`): built after the "Connects to" lists, from the same links (13 Oct).
 4. The defaults above are confirmed by the repo owner (13 Oct).
 
 ## Before active use

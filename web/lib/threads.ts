@@ -41,7 +41,7 @@ const personLine = (rel: ThreadRel, id: string, names: Record<string, string>, s
   rel, title: names[id] ?? 'Unknown', who: null, sub, href: `/people/${id}`, kind: 'person', id,
 });
 
-type Seen = { tasks: Map<string, Task>; projects: Map<string, Project> };
+export type Seen = { tasks: Map<string, Task>; projects: Map<string, Project> };
 
 // Comments that mention this item with @ or #, one line for each task or project they were written on, newest first.
 // A comment on something the reader cannot see is left out whole. So is a comment on the item itself.
@@ -71,12 +71,28 @@ async function mentionedIn(db: Tx, refKind: ThreadKind, id: string, seen: Seen, 
   return out;
 }
 
-export async function threadsFor(db: Tx, me: Me, kind: ThreadKind, id: string): Promise<ThreadLine[]> {
+// What one viewer may see, loaded once. The map walks many items on one of these, so it reads the team once.
+export type ThreadWorld = {
+  seen: Seen;
+  names: Record<string, string>;
+  open: Task[];
+  projects: Project[];
+  people: { id: string }[];
+};
+
+export async function threadWorld(db: Tx, me: Me, today?: string): Promise<ThreadWorld> {
   const sight = await sightFor(db, me);
-  const [tasks, projects, people] = await Promise.all([seenTasks(db, me, undefined, sight), seenProjects(db, me, sight), listPeople(db, me.team.id)]);
+  const [tasks, projects, people] = await Promise.all([seenTasks(db, me, today, sight), seenProjects(db, me, sight), listPeople(db, me.team.id)]);
   const seen: Seen = { tasks: new Map(tasks.map((t) => [t.id, t])), projects: new Map(projects.map((p) => [p.id, p])) };
   const names = Object.fromEntries(people.map((p) => [p.id, p.displayName])) as Record<string, string>;
-  const open = tasks.filter((t) => t.statusCategory === 'open');
+  return { seen, names, open: tasks.filter((t) => t.statusCategory === 'open'), projects, people };
+}
+
+// The one place the "Connects to" rules live. The panel reads these lines as they are. The thread map (lib/threadMap.ts)
+// turns the same lines into edges, so the two cannot disagree. `itemsOnly` leaves out the lines that open no item
+// (links, minutes, checkpoints), which the map does not draw and does not need a query for.
+export async function linesFor(db: Tx, world: ThreadWorld, kind: ThreadKind, id: string, itemsOnly = false): Promise<ThreadLine[]> {
+  const { seen, names, open, projects, people } = world;
   const lines: ThreadLine[] = [];
 
   if (kind === 'task') {
@@ -86,9 +102,9 @@ export async function threadsFor(db: Tx, me: Me, kind: ThreadKind, id: string): 
     if (project) lines.push(projectLine('Part of', project, t.workstream));
     if (t.blocked?.onId && names[t.blocked.onId]) lines.push(personLine('Waits on', t.blocked.onId, names, t.blocked.ask));
     for (const w of open.filter((x) => x.id !== t.id && x.blocked?.onId === t.ownerId).sort(byDue)) lines.push(taskLine('Waiting on it', w, names));
-    if (t.origin === 'granola') lines.push({ rel: 'From', title: 'Meeting minutes', who: null, sub: null, href: null, kind: 'minutes', id: null });
+    if (!itemsOnly && t.origin === 'granola') lines.push({ rel: 'From', title: 'Meeting minutes', who: null, sub: null, href: null, kind: 'minutes', id: null });
     lines.push(...await mentionedIn(db, 'task', t.id, seen, names));
-    for (const l of t.links) lines.push({ rel: 'Links', title: linkText(l), who: null, sub: hostOf(l.url) || null, href: l.url, kind: 'link', id: l.id, external: true });
+    if (!itemsOnly) for (const l of t.links) lines.push({ rel: 'Links', title: linkText(l), who: null, sub: hostOf(l.url) || null, href: l.url, kind: 'link', id: l.id, external: true });
     return lines;
   }
 
@@ -100,7 +116,7 @@ export async function threadsFor(db: Tx, me: Me, kind: ThreadKind, id: string): 
     const members = await projectMembers(db, p.id);
     const shown = new Set([p.ownerId, p.leadId]);
     for (const m of members) if (!shown.has(m.personId)) { shown.add(m.personId); lines.push(personLine('People', m.personId, names, m.role)); }
-    if (p.kind === 'plan') {
+    if (!itemsOnly && p.kind === 'plan') {
       const { rows } = await db.query<{ label: string; due_on: string | null; what: string }>(
         `SELECT c.label, c.due_on, l.what FROM plan_checkpoints c JOIN plan_lines l ON l.id = c.line_id
          WHERE l.project_id = $1 AND NOT l.removed AND NOT c.done ORDER BY c.due_on NULLS LAST, l.num, c.position LIMIT 30`, [p.id]);
@@ -115,4 +131,8 @@ export async function threadsFor(db: Tx, me: Me, kind: ThreadKind, id: string): 
   for (const t of open.filter((x) => x.blocked?.onId === id && x.ownerId !== id).sort(byDue)) lines.push(taskLine('Waiting on them', t, names));
   lines.push(...await mentionedIn(db, 'person', id, seen, names));
   return lines;
+}
+
+export async function threadsFor(db: Tx, me: Me, kind: ThreadKind, id: string): Promise<ThreadLine[]> {
+  return linesFor(db, await threadWorld(db, me), kind, id);
 }
