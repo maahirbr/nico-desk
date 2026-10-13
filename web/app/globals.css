@@ -1586,5 +1586,7 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 /* Typed text 16px, the label 14px, the hint inside the field 13px: the answer, then the question, then the hint.
    The field itself stays at the input size, so a phone does not zoom in on focus. */
 .f input::placeholder, .f textarea::placeholder { font: var(--type-small); }
-.say-label > span { font: var(--type-label); color: var(--ink-2); }
+/* Quick Add and Fill It In Yourself are the two headings of the new task card, so both read bold, in full ink. */
+.say-label > span { font: var(--type-label); font-weight: 600; color: var(--ink); }
+.form-split > span { font: var(--type-label); font-weight: 600; color: var(--ink); }
 
