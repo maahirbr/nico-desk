@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import type { PasteProposal, PasteRead, StatusWord } from '@/lib/paste';
 import { statusFields, type UndoField } from '@/lib/undo';
@@ -38,17 +38,21 @@ const edit0 = (p: PasteProposal): Edit => ({
   projectId: p.kind === 'new' ? p.projectId ?? '' : '', status: p.kind === 'update' ? p.status ?? '' : '', reason: p.kind === 'update' ? p.reason : '', text: p.kind === 'note' ? p.text : '',
 });
 
-export function PasteChat({ people, projects, today, onBack, onDone }: { people: Opt[]; projects?: Opt[]; today: string; onBack: () => void; onDone: () => void }) {
+export function PasteChat({ people, projects, today, onBack, onDone, startText = '' }: { people: Opt[]; projects?: Opt[]; today: string; onBack: () => void; onDone: () => void; startText?: string }) {
   const router = useRouter();
   const undo = useUndo();
   const file = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(startText);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [read, setRead] = useState<PasteRead | null>(null);
   const [rows, setRows] = useState<Record<string, Row>>({});
   const [versions, setVersions] = useState<Record<string, number>>({}); // the newest version of a task this review has written
   const who = (id: string | null) => people.find((x) => x.id === id)?.name ?? null;
+
+  // A chat pasted into Quick Add arrives here as startText and is read straight away.
+  const started = useRef(false);
+  useEffect(() => { if (startText && !started.current) { started.current = true; void go(); } }); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function go() {
     setBusy(true); setErr(null);

@@ -159,8 +159,17 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   the better fit. A notes Doc owned by another organizer may not open with these scopes, and the transcript is read
   instead. Not yet checked against a live Google account.
 - **Search** (sidebar, or Ctrl/⌘+K): projects, tasks, plan lines and people in one list.
-- **Paste a chat** (New task, then "Paste a chat"; not shown under View as): paste a WhatsApp chat or pick an
-  exported `.txt` file. `lib/chat.ts` reads iOS, Android (12 or 24 hour) and plain lines into messages and drops
+- **Quick Add** (the first line of New task and of a board's Add task): type or say a sentence such as "ask Sam to send
+  me the design files by Monday for Autumn landing page", and it fills in the task name, owner, due date and project for
+  the person to check before Add task. `POST /api/v1/tasks/read-sentence` (`lib/sentenceRead.ts`) asks Claude when
+  `ANTHROPIC_API_KEY` is set, masked like the chat read below, and checks the answer against the roster and the
+  projects the person can see. With no key, or a bad answer, the plain rules in `lib/sentence.ts` read it ("ask / remind
+  / get NAME to", "NAME needs to", "send me", "for PROJECT", weekdays, "tomorrow", "end of week", "next week", "eod").
+  Nothing is written and the sentence is not stored. The mic button types what is said through the browser's own
+  speech service (Chrome, Edge, Safari; hidden where the browser has none) and reads it when the person stops. A phone's
+  keyboard dictation works too. Tests: `tests/sentence.test.ts`.
+- **Paste a chat** (paste a WhatsApp chat into Quick Add on New task; not shown under View as): the chat goes to the
+  review screen below, where an exported `.txt` file can also be picked. `lib/chat.ts` reads iOS, Android (12 or 24 hour) and plain lines into messages and drops
   system lines. Before the text goes to Claude, `lib/redact.ts` masks it: roster names and addresses, project names,
   phone numbers, links, amounts. A sender who is not on the roster becomes "an outside person". Claude may only point at
   the tasks and projects the signed-in person can see, and it reads the chat as data, never as instructions. Each answer

@@ -80,7 +80,7 @@ const SYSTEM = [
 ].join('\n');
 
 // The same call as the minutes reader in lib/plan.ts: the Anthropic Messages API, the same key and model.
-async function defaultAsk({ system, user }: { system: string; user: string }): Promise<string> {
+export async function defaultAsk({ system, user }: { system: string; user: string }): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new ApiError(503, 'model_off', 'Reading a chat needs the model, and it is not switched on here.');
   let res: Response;

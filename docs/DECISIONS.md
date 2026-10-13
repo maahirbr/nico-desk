@@ -564,3 +564,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   use Title Case for labels (New Task, Due Date, Sub-Project, Note (Optional)), following the form-label rule in
   `DESIGN.md`. "What it's about (optional)" becomes "Details (Optional)" with the hint "Anything the owner should know".
   "Due date (kept as the first date)" on the board form is now "Due Date". Rollback: `git revert` this commit.
+
+- **2026-10-13 · Opus 5.5 · Quick Add reads a sentence, takes a pasted chat, and listens, at the PM's call.** A person
+  types or says what needs doing the way they would tell someone ("ask Sam to send me the design files by Monday for
+  Autumn landing page"), and the form fills in the task name, owner, due date and project to check before Add task.
+  With `ANTHROPIC_API_KEY` set the sentence goes to Claude masked (`lib/redact.ts`, as Paste a chat does) and the answer
+  is checked against the roster and the projects the person can see; otherwise, or on a bad answer, plain rules read it
+  (`lib/sentence.ts`). Nothing is written or stored. The separate "Paste a chat" button is gone: a chat pasted into
+  Quick Add opens the same review, so status and date changes from a chat still work. The mic uses the browser's own
+  speech service (Web Speech API), which in Chrome sends the audio to Google to turn into text; it is hidden where the
+  browser has none, and nothing is recorded or kept by the app. Rollback: `git revert` this commit.

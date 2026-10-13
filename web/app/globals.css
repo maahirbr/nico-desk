@@ -1572,3 +1572,12 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .fb-state { margin-left: auto; }
 .fb-body { margin: var(--space-xs) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .fb-item.is-read .fb-body { color: var(--ink-2); }
+
+/* Quick Add (components/QuickAdd.tsx): the line, the mic and Fill in on one row. The mic's on state is colour only. */
+.say-row { display: flex; gap: var(--space-xs); align-items: stretch; }
+.say-row input { flex: 1 1 auto; min-width: 0; }
+.say-row .btn { flex: none; }
+.say-mic { display: inline-flex; align-items: center; justify-content: center; padding-left: var(--space-sm); padding-right: var(--space-sm); }
+.say-mic.on { color: var(--late); border-color: var(--late); }
+@media (max-width: 480px) { .say-row { flex-wrap: wrap; } .say-row input { flex-basis: 100%; } }
+

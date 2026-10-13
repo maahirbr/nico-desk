@@ -633,7 +633,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     dueOn: '', note: '', workstream: defaultWs, projectId: startProject });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [pasting, setPasting] = useState(false); // "Paste a chat": proposals from a team chat, in place of this form
+  const [pasting, setPasting] = useState<string | null>(null); // a chat pasted into Quick Add: its proposals, in place of this form
   const readOnly = useReadOnly();
   const workstreams = wsByProject ? wsByProject[f.projectId] ?? [] : fixedWs;
 
@@ -671,7 +671,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
     setF(next);
     return notes;
   }
-  if (pasting) return <PasteChat people={people} projects={projects} today={today} onBack={() => setPasting(false)} onDone={onDone} />;
+  if (pasting !== null) return <PasteChat people={people} projects={projects} today={today} startText={pasting} onBack={() => setPasting(null)} onDone={onDone} />;
   return (
     <form className="stack" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr(null);
@@ -682,8 +682,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
         router.refresh(); onDone();
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
-      {!readOnly && <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="act" onClick={() => setPasting(true)}>Paste a chat</button></div>}
-      <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} />
+      <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onChat={readOnly ? undefined : setPasting} />
       <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="Short name, e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} onBlur={guessProject} /></label>
       <label className="f"><span>Details (Optional)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
