@@ -172,16 +172,28 @@ Read the live TypeSafe docs (`docs.typesafe.ai/llms.txt`) before building. The k
 (`TYPESAFE_API_KEY`), server side. A flag `NICO_JEV=1` turns it on. It stays off in production until the sponsor
 says yes and a DECISIONS line records it.
 
-Candidates, best first:
+Use cases confirmed by the repo owner (13 Oct). Every one is a suggestion the person confirms, never an automatic change.
 
-1. **Search rerank:** local search finds 30 candidates, Jev orders them by meaning.
+First build:
+
+1. **Search by meaning:** local search finds about 30 candidates, Jev orders them by meaning.
 2. **Minutes to tasks:** code splits the transcript into sentences. Jev judges which are commitments and picks the owner
    from the project's people. This replaces the rule-based draft step, checked against `evals/meetings/`.
-3. **Quick add with no `#`:** Jev picks the most likely project, shown as a suggestion the person confirms.
-4. **Duplicate check:** before create, Jev says whether the new task matches an open one.
-5. **Early warning:** Jev flags a note or comment that mentions a delay, and suggests moving the date before it is late.
+3. **Quick add picks project:** with no `#`, Jev suggests the most likely project.
+4. **Duplicate check:** before create, Jev says whether the new task matches an open one. The same check runs on assets:
+   a sheet, deck, doc or artifact link added to a task or project is checked against links already in the app, by URL
+   first in code, then by title and context with Jev.
 
-Build 1 and 2 first, each with an eval on the synthetic fixtures. Report accuracy before any live use.
+Also confirmed:
+
+5. **Early warning:** a note or comment that mentions a delay gets a flag and a "move the date?" prompt.
+6. **Comment to task:** a comment that asks someone to do something gets "make this a task?", owner picked.
+7. **Who it waits on:** on block, Jev reads the reason and suggests the person the task waits on.
+8. **Suggested links:** Jev suggests related items for "Connects to"; each one is accepted or dismissed.
+
+Build 1 and 2 first, each with an eval on the synthetic fixtures, then 3 and 4, then 5 to 8 (5 and 6 need comments,
+8 needs threads). Report accuracy per use case before any live use. Jev and the other feedback come before the
+security audit; the audit still comes before active use.
 
 ## 11. Chat (later)
 
