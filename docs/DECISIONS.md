@@ -641,3 +641,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   meeting routes, `lib/comments.ts`, the comment routes, `comments`, `comment_refs`, the `meet_*` columns), so data on the
   live database is kept and either can come back. "Updates for you" and "Waiting on you" do not read comments or meetings
   and are unchanged. Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · Ledger definitions rewritten, and project people on a grid, at the PM's call.** The
+  definitions read in three short groups (Finished, Still open, Date changes), one line each, so they can be scanned at a
+  glance; the meaning of each word is unchanged. A project's people now sit on an even grid (three columns on a wide
+  screen, two on a phone), so each row lines up under the one above, and a long role wraps instead of being cut off.
+  Rollback: `git revert` this commit.

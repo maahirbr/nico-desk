@@ -754,13 +754,17 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .head-side { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
 .head-side .summary { margin: 0; }
 .phead-goal { color: var(--ink-2); margin: var(--space-xs) 0 0; max-width: 70ch; }
-.phead-team { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); margin-top: var(--space-md); }
+/* The project's people on an even grid, so each row lines up under the one above (the PM's call, 14 Oct). */
+.phead-team { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-sm) var(--space-lg); margin-top: var(--space-md); align-items: start; }
+@media (max-width: 600px) { .phead-team { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); } }
 .phead-sides { display: grid; grid-template-columns: max-content 1fr; align-items: center; gap: var(--space-sm) var(--space-lg); margin-top: var(--space-md); }
 .phead-sides .phead-team { margin-top: 0; }
 .phead-sides .side-name { font: var(--type-state); font-weight: 600; color: var(--ink-2); }
 @media (max-width: 600px) { .phead-sides { grid-template-columns: 1fr; gap: var(--space-xs); } .phead-sides .phead-team + .side-name { margin-top: var(--space-sm); } }
 .tm { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-small); line-height: 1.25; }
-.tm > span:last-child { display: flex; flex-direction: column; }
+.tm { min-width: 0; }
+.tm > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.tm > span:last-child > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tm b { font-weight: 600; }
 
 /* tabs */
@@ -1022,7 +1026,7 @@ table.board td.title { width: 48%; }
 .habit-grid .card { margin-top: 0; }
 .habit { padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--space-sm); }
 .defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); padding: var(--card-pad); margin-bottom: var(--space-lg); }
-.defs h3 { margin: 0 0 var(--space-xs); font: var(--type-small); color: var(--ink-3); }
+.defs h3 { margin: 0 0 var(--space-xs); font: var(--type-label); font-weight: 600; color: var(--ink); }
 .defs dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-xxs) var(--space-md); margin: 0; font: var(--type-meta); }
 .defs dt { color: var(--ink); }
 .defs dt.sub-def { padding-left: var(--space-md); color: var(--ink-2); }

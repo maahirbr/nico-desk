@@ -214,23 +214,29 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         <div>
           <h3>Finished</h3>
           <dl>
-            <dt><Help term="ahead">Ahead</Help></dt><dd>Closed before the date first given.</dd>
-            <dt><Help term="on_time">On time</Help></dt><dd>Closed on the date first given.</dd>
-            <dt><Help term="late">Late</Help></dt><dd>Closed after the date first given, even if the date was moved and the new one was met. Two kinds:</dd>
-            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>The owner moved the date on or before the date first given.</dd>
-            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>The date passed before any move was logged.</dd>
+            <dt><Help term="ahead">Ahead</Help></dt><dd>Done before the first date.</dd>
+            <dt><Help term="on_time">On time</Help></dt><dd>Done on the first date.</dd>
+            <dt><Help term="late">Late</Help></dt><dd>Done after the first date, even if the date was moved.</dd>
+            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>Late, but the date was moved before it passed.</dd>
+            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>Late, and the date passed with no move.</dd>
           </dl>
         </div>
         <div>
-          <h3>Open</h3>
+          <h3>Still open</h3>
           <dl>
-            <dt>Open</dt><dd>Not closed or dropped yet. Past due means today is after its current date.</dd>
-            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Open and past due, or a date moved after the old one had passed, or closed after the current date. Target 0.</dd>
-            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>A new date logged on or before the date it replaced. Moved late means logged after.</dd>
+            <dt>Open</dt><dd>Not done or dropped yet.</dd>
+            <dt>Past due</dt><dd>Open, and today is after its date.</dd>
+            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Went past its date with no new date set first. Target: 0.</dd>
+          </dl>
+        </div>
+        <div>
+          <h3>Date changes</h3>
+          <dl>
+            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>New date set before the old one passed.</dd>
+            <dt><Help term="moved_late">Moved late</Help></dt><dd>New date set after the old one passed.</dd>
           </dl>
         </div>
       </div>
-
       </details>
 
       {drill && <DrillPanel drill={drill} names={names} projectNames={projectNames} today={today} by={kept.drillSort} setBy={(v) => keep('drillSort', v)} onClose={() => setDrill(null)} />}
