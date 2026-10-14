@@ -7,15 +7,12 @@ import { pendingProposals, planState, projectMembers, projectViewers, type Proje
 import { lineSplit, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
-import { meetingAgenda } from '@/lib/meetings';
 import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
-import { CommentThread } from '@/components/CommentThread';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
 import { ProjectHealth } from '@/components/ProjectHealth';
-import { MeetingSection } from '@/components/MeetingSection';
 import { TaskBoard } from '@/components/TaskBoard';
 
 export const dynamic = 'force-dynamic';
@@ -68,15 +65,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           }))}
         />
       )}
-      {/* The PM's layout keeps the header, the counts and the board together at the top. The meeting and the lead's
-          health line come after the board. */}
-      <MeetingSection projectId={p.id} kind={p.kind === 'plan' ? 'plan' : 'tasks'}
-        rhythm={{ meetEvery: p.meetEvery, meetDay: p.meetDay, meetNext: p.meetNext, meetLast: p.meetLast }}
-        agenda={await meetingAgenda(d, me, p.id, now)}
-        canRun={p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin} today={now} />
+      {/* The PM's layout: the header, the counts and the board at the top, then the update log and completed tasks.
+          The meeting box, its agenda and comments are off project pages (the PM's call, 14 Oct). */}
       {/* A suggestion for the lead, drawn only while Jev is on. It is not stored and sets no status. */}
       {!p.archivedAt && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin) && <ProjectHealth projectId={p.id} late={split.late} blocked={split.blocked} />}
-      <CommentThread subjectKind="project" subjectId={p.id} subjectTitle={p.name} people={opts} drawer={p.kind !== 'plan'} />
       </ReadOnlyProvider>
     </>
   );

@@ -159,52 +159,9 @@ describe('filters', () => {
 });
 
 describe('comment text', () => {
-  it('finds a comment and opens the task it is on', async () => {
-    const lead = await meAs(LEAD);
-    const { comment } = await addComment(db, lead, 'task', seenTask, 'The quokka sample needs another pass');
-    const hit = (await all('quokka')).find((h) => h.kind === 'comment')!;
-    expect(hit).toMatchObject({ id: comment.id, href: `/tasks/${seenTask}` });
-    expect(hit.title).toContain('quokka');
-    expect(hit.sub).toMatch(/ on /);
-  });
-
-  it('opens a project for a comment on a project', async () => {
-    await addComment(db, await meAs(LEAD), 'project', 'prj_shoot', 'Wombat budget agreed');
-    const hit = (await all('wombat')).find((h) => h.kind === 'comment')!;
-    expect(hit.href).toBe('/projects/prj_shoot');
-  });
-
-  it('finds a comment despite a typo, needs every word, and drops a deleted one', async () => {
-    const lead = await meAs(LEAD);
-    const { comment } = await addComment(db, lead, 'task', seenTask, 'Platypus keeper called back');
-    expect((await all('platypuss')).some((h) => h.id === comment.id)).toBe(true);
-    expect((await all('platypus giraffe')).some((h) => h.id === comment.id)).toBe(false);
-    await deleteComment(db, lead, comment.id);
-    expect((await all('platypus')).some((h) => h.kind === 'comment')).toBe(false);
-  });
-
-  it('writes a mention as the name, never as the stored token', async () => {
-    const name = await first(BO);
-    await addComment(db, await meAs(LEAD), 'task', seenTask, `Ask [[person:${BO}]] about the ibex order`);
-    const hit = (await all('ibex')).find((h) => h.kind === 'comment')!;
-    expect(hit.title).not.toContain('[[');
-    expect(hit.title.toLowerCase()).toContain(name);
-  });
-
-  it('applies the task filters to a comment through the task it is on', async () => {
-    await addComment(db, await meAs(LEAD), 'task', seenTask, 'Capybara note on the shoot');
-    const task = (await s.teamTasks(db, TEAM_ID, AS_OF)).find((t) => t.id === seenTask)!;
-    const status = statusOf(task);
-    expect((await all(`capybara is:${status}`)).some((h) => h.kind === 'comment')).toBe(true);
-    const other = status === 'done' ? 'todo' : 'done';
-    expect((await all(`capybara is:${other}`)).some((h) => h.kind === 'comment')).toBe(false);
-    expect((await all('capybara @' + (await first(DEE)))).some((h) => h.kind === 'comment')).toBe(true);
-  });
-
-  it('keeps comments out of the candidates that Jev reads', async () => {
-    await addComment(db, await meAs(LEAD), 'task', seenTask, 'Okapi note on the shoot');
-    expect((await search(db, TEAM_ID, SEE_ALL, 'okapi', AS_OF)).some((h) => h.kind === 'comment')).toBe(true);
-    expect((await searchCandidates(db, TEAM_ID, SEE_ALL, 'okapi', AS_OF)).some((c) => c.hit.kind === 'comment')).toBe(false);
+  it('is not searched any more: comments are off for V1 (14 Oct)', async () => {
+    await addComment(db, await meAs(LEAD), 'task', seenTask, 'The quokka sample needs another pass');
+    expect((await all('quokka')).some((h) => h.kind === 'comment')).toBe(false);
   });
 });
 
@@ -213,30 +170,6 @@ describe('the reader\'s sight', () => {
     const sight = await sightOf(db, TEAM_ID, DEE);
     expect(sight.all).toBe(false);
     expect((await as(DEE, 'tier')).some((h) => h.id === HIDDEN || h.id === hiddenTask)).toBe(false);
-  });
-
-  it('never returns a comment on a hidden task or project', async () => {
-    const lead = await meAs(LEAD);
-    const t = await addComment(db, lead, 'task', hiddenTask, 'Narwhal plan for the tier pilot');
-    const p = await addComment(db, lead, 'project', HIDDEN, 'Narwhal budget for the pilot');
-    const seen = await all('narwhal');
-    expect(seen.filter((h) => h.kind === 'comment').map((h) => h.id).sort()).toEqual([t.comment.id, p.comment.id].sort());
-    expect((await as(DEE, 'narwhal')).filter((h) => h.kind === 'comment')).toEqual([]);
-    expect((await as(DEE, 'narwhal is:todo')).length).toBe(0);
-    expect((await as(DEE, `narwhal #tier`)).length).toBe(0);
-  });
-
-  it('does not leak a hidden item through the words of a visible comment', async () => {
-    const hidden = (await s.teamTasks(db, TEAM_ID, AS_OF)).find((t) => t.id === hiddenTask)!;
-    await addComment(db, await meAs(LEAD), 'task', seenTask, `Check [[task:${hiddenTask}]] and [[project:${HIDDEN}]] with the yak group`);
-    const hits = await as(DEE, 'yak');
-    const c = hits.find((h) => h.kind === 'comment')!;
-    expect(c).toBeTruthy(); // the comment is on a task DEE sees
-    expect(c.title).not.toContain(hidden.title);
-    expect(c.title).not.toContain('[[');
-    // a search for the hidden title does not reach it through the comment
-    expect((await as(DEE, hidden.title.split(' ').slice(0, 3).join(' '))).filter((h) => h.kind === 'comment' && h.id === c.id)).toEqual([]);
-    expect(JSON.stringify(hits)).not.toContain(hiddenTask);
   });
 
   it('never returns a hidden task, project, plan line or their words through a filter', async () => {
@@ -259,9 +192,7 @@ describe('the reader\'s sight', () => {
     expect(await as(DEE, '#nosuchproject')).toEqual(await as(DEE, '#tier'));
   });
 
-  it('shows a restricted person their own comments and their own filtered tasks', async () => {
-    await addComment(db, await meAs(DEE), 'task', seenTask, 'Gecko check done');
-    expect((await as(DEE, 'gecko')).some((h) => h.kind === 'comment' && h.href === `/tasks/${seenTask}`)).toBe(true);
+  it('shows a restricted person their own filtered tasks', async () => {
     expect(taskIds(await as(DEE, 'is:mine')).length).toBeGreaterThan(0);
   });
 });

@@ -25,15 +25,12 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
   extra people who may view it.
 - **Help.** A help mode explains every screen, and `/guide` covers the basics.
 - **Skins.** Several looks, with System, Light or Dark.
-- **Comments.** Comments on tasks and projects, with `@person` and `#task` links.
 - **Real links.** Every task, project and person opens in a new tab on a middle click. Filters live in the URL.
 - **Stronger local search.** Typos, filters such as `is:late` and `@name`, and commands in Cmd+K.
 - **Paste to tasks.** Paste a WhatsApp chat or upload its export, and the app proposes tasks and updates.
   Nothing changes until the person approves. The read step needs the model key on the server.
 - **Fathom.** A lead can read meetings from Fathom, as with Granola and Fireflies.
-- **Sounds and motion.** Sounds are off by default. A motion pass covers rows, status changes and new comments.
-- **Meeting rhythm.** Each project can set how often it meets and on which day. The project page shows the next
-  date and an agenda built from late, blocked and open items. A lead marks the meeting held.
+- **Sounds and motion.** Sounds are off by default. A motion pass covers rows and status changes.
 - **Install on phone.** The app installs to a phone home screen. Phone dictation works in every text box, and
   `/guide` says how to use it.
 - **Feedback.** Send feedback from the account menu. An admin reads it on one page.
@@ -86,7 +83,7 @@ Nine projects and meetings, each set up as one project:
 | Set up a project and add members | Projects, roles, who sees what | A setup check-list for a new lead |
 | Meet on a rhythm | Rhythm and next date per project, an agenda from late, blocked and open items | Nothing for the pilot |
 | Run the agenda and action items | Minutes from paste, Granola, Fireflies, Fathom, Google Meet notes | A "run the meeting" view |
-| Members update their own tasks | Five status words, comments, Home, install on phone, dictation | Nothing for the pilot |
+| Members update their own tasks | Five status words, Home, install on phone, dictation | Nothing for the pilot |
 | No WhatsApp reminders | Reminders open as Gmail drafts, paste a chat to tasks | A "still needed?" check before a nudge |
 | No spreadsheets | Task and plan boards, the ledger | An export for the monthly review, if leads ask |
 | A senior-team group as members | Members one by one | A saved group to add in one step |

@@ -633,3 +633,11 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   an admin can grant admin from the app; you cannot remove your own. The Roster's intro line is gone while who-sees-what
   is rethought. The hosted database needs `npm run db:upgrade` (adds `feedback_replies` and `people.replies_feedback`).
   Rollback: `git revert` this commit; the table and column can stay.
+
+- **2026-10-14 · Opus 5.5 · Meeting box, agenda and comments off for V1, at the PM's call.** Project pages keep the
+  header, counts, board, update log and completed tasks. The meeting box (rhythm, Meeting held, Write the minutes) and its
+  agenda are gone from them, and so are comments: on project pages, in the task drawer, the "Mentioned you" card on Home,
+  and comment results in search. Import minutes on the board stays. The code and tables stay (`lib/meetings.ts`, the
+  meeting routes, `lib/comments.ts`, the comment routes, `comments`, `comment_refs`, the `meet_*` columns), so data on the
+  live database is kept and either can come back. "Updates for you" and "Waiting on you" do not read comments or meetings
+  and are unchanged. Rollback: `git revert` this commit.

@@ -9,7 +9,6 @@ import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flag
 import type { LogLine } from '@/lib/service';
 import { fmtDate, fmtStamp } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
-import { CommentThread } from './CommentThread';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
 import { StatusNudge } from './StatusNudge';
 import { LINKS_PER_TASK } from '@/lib/links';
@@ -612,9 +611,6 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 ))}
               </ol>
             )}
-
-
-            <CommentThread subjectKind="task" subjectId={t.id} subjectTitle={t.title} people={people} drawer onPosted={can && !readOnly ? offerFromNote : undefined} />
           </>
         )}
       </motion.aside>

@@ -30,7 +30,8 @@ const stem = (w: string) => { const r = w.replace(/(ing|ed|es|s)$/, ''); return 
 
 // `meId` is the reader, for is:mine. Comments are searched here only; the candidates Jev reads (below) leave them out.
 export async function search(db: Tx, teamId: string, sight: Sight, q: string, today = todayIst(), meId = ''): Promise<SearchHit[]> {
-  return (await gather(db, teamId, sight, q, today, 'strict', meId, true)).slice(0, 60).map((c) => c.hit);
+  // Comments are off for V1 (14 Oct), so search no longer reads them.
+  return (await gather(db, teamId, sight, q, today, 'strict', meId, false)).slice(0, 60).map((c) => c.hit);
 }
 
 // Up to `max` candidates for Jev to re-rank: every item that matches all the words, then items that match some
