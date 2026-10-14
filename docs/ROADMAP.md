@@ -24,7 +24,7 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
 - **Who sees what.** An admin can set a person to see only their own projects. A project can list
   extra people who may view it.
 - **Help.** A help mode explains every screen, and `/guide` covers the basics.
-- **Skins.** Several looks, with System, Light or Dark.
+- **Skins.** Two looks, Warm and Cool, each in Light or Dark. Warm and Light are the default.
 - **Real links.** Every task, project and person opens in a new tab on a middle click. Filters live in the URL.
 - **Stronger local search.** Typos, filters such as `is:late` and `@name`, and commands in Cmd+K.
 - **Paste to tasks.** Paste a WhatsApp chat or upload its export, and the app proposes tasks and updates.
