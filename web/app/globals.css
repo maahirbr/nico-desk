@@ -1002,6 +1002,15 @@ table.board td.title { width: 48%; }
 .help-tip p { margin: 0; }
 .help-tip .help-note { margin-top: var(--space-xxs); }
 @media (max-width: 860px) { .help-toggle { position: static; flex: none; margin-left: var(--space-xs); } }
+/* Feedback in the top bar, left of the help button: the same pill as ?, with a label on a wide screen and the icon alone on a narrow one. */
+.top-feedback { position: absolute; right: calc(var(--page-pad) + var(--button-height) + var(--space-xs)); height: var(--button-height); display: inline-flex; align-items: center; gap: var(--space-xs);
+  padding: 0 var(--space-sm); font: var(--type-button); color: var(--ink); text-decoration: none; background: var(--canvas); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-pill);
+  transition: background var(--dur-state) var(--ease); }
+.top-feedback:hover, .top-feedback[aria-current="page"] { background: var(--sunk); }
+.top-feedback svg { width: var(--icon-size); height: var(--icon-size); }
+@media (max-width: 1180px) { .top-feedback { width: var(--button-height); padding: 0; justify-content: center; } .top-feedback-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+@media (min-width: 861px) and (max-width: 1180px) { .topbar { padding-left: calc(var(--page-pad) + 2 * var(--button-height) + var(--space-md)); padding-right: calc(var(--page-pad) + 2 * var(--button-height) + var(--space-md)); } }
+@media (max-width: 860px) { .top-feedback { position: static; flex: none; margin-left: var(--space-xs); } }
 
 /* ledger: clickable numbers, delivery habits, drill-down */
 .num-btn { font: inherit; font-variant-numeric: tabular-nums; background: none; border: 0; padding: var(--rule) var(--space-xxs); margin: calc(var(--rule) * -1) calc(var(--space-xxs) * -1); border-radius: var(--radius-control); cursor: pointer;

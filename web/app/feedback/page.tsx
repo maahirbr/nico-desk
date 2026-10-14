@@ -17,7 +17,7 @@ export default async function Feedback() {
   return (
     <>
       <h1>Feedback</h1>
-      <p className="lede">You are one of the first people using Nico Desk, and we want to hear how it is going. Everyone on the team can read the notes.</p>
+      <p className="lede">You're one of the first users of Nico Desk, and we'd love to hear your thoughts. Everyone on the team can read the notes.</p>
       <FeedbackForm />
       <section>
           <h2>From the team <span className="count-badge">{rows.length === 0 ? 'none yet' : unread === 0 ? 'all read' : `${unread} not read`}</span></h2>

@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { currentMe } from '@/lib/auth';
 import { isLeadOrAdmin } from '@/lib/roles';
-import { Nav, SwitchToOwner } from '@/components/client';
+import { FeedbackLink, Nav, SwitchToOwner } from '@/components/client';
 import { HELP_COOKIE, helpOf } from '@/components/help';
 import { HelpProvider, HelpToggle } from '@/components/HelpMode';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
@@ -108,7 +108,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme} initialSound={sound}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
+            <main className="main"><div className="topbar"><TopSearch /><FeedbackLink /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ViewerProvider>
           </PhotoProvider>

@@ -136,7 +136,7 @@ export function GuideView() {
       <section id="feedback" aria-labelledby="g-feedback">
         <h2 id="g-feedback">{title('feedback')}</h2>
         <p>Tell the pilot lead what is confusing, missing or wrong. A short note is enough. This team&rsquo;s weeks shape what Nico Desk becomes.</p>
-        <p>Open Feedback in the sidebar, under More, and write what is working well and what is not. Everyone on the team can read the notes. Nothing is sent by email.</p>
+        <p>Press Feedback at the top right, next to the help button, and write what is working well and what is not. Everyone on the team can read the notes. Nothing is sent by email.</p>
       </section>
     </article>
   );

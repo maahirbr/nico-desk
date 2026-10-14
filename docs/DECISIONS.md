@@ -614,3 +614,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   own note, once per person. Both tables have RLS on and come through `upgrade()`. The hosted database needs
   `npm run db:upgrade` once before a build with this change is promoted. Rollback: `git revert` this commit; the two
   tables can stay, nothing else reads them.
+
+- **2026-10-14 · Opus 5.5 · Feedback moves to the top bar, at the PM's call.** A "Feedback" button sits left of the help
+  button on every page (the icon alone below 1180px and on phones), and Feedback leaves More, so there is one place for
+  it. The page line reads "You're one of the first users of Nico Desk, and we'd love to hear your thoughts."
+  Rollback: `git revert` this commit.

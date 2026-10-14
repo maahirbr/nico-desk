@@ -78,7 +78,7 @@ export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: bo
   const readOnly = useReadOnly();
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
   const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
-  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ...(isAdmin ? [['/admin', 'Roster']] : []), ['/feedback', 'Feedback']];
+  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ...(isAdmin ? [['/admin', 'Roster']] : [])];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
@@ -454,3 +454,15 @@ export function PersonControls({ id, active, roles, self, email, restricted }: {
     </span>
   );
 }
+
+// Feedback sits in the top bar, left of the help button, so it is one click from every page (the PM's call, 14 Oct).
+// On a narrow screen it shows the speech-bubble icon only; the label stays for screen readers.
+export function FeedbackLink() {
+  const path = usePathname();
+  return (
+    <Link href="/feedback" className="top-feedback" aria-current={path === '/feedback' ? 'page' : undefined} title="Feedback">
+      <Icon d={ICON['/feedback']} /><span className="top-feedback-label">Feedback</span>
+    </Link>
+  );
+}
+
