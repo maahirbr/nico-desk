@@ -80,10 +80,21 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       const all = Array.from(e.results).map((x) => x[0]?.transcript ?? '').join(' ').replace(/\s+/g, ' ').trim();
       said.current = all; setText(all);
     };
-    r.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') setDone('The browser blocked the microphone. Allow it in the address bar, or type instead.'); };
+    // Each failure says what to do, since "blocked" covers several different causes.
+    r.onerror = (e) => {
+      const say: Record<string, string> = {
+        'not-allowed': 'The microphone is blocked. Allow it from the icon left of the address bar, then reload. On a Mac, also turn on your browser under System Settings, Privacy & Security, Microphone.',
+        'service-not-allowed': 'This browser cannot turn speech into text (Brave and Arc often cannot). Try Chrome or Safari, or type instead.',
+        network: 'Speech to text needs the internet, because the browser sends it to its speech service. Check your connection and try again.',
+        'audio-capture': 'No microphone was found. Check one is connected and chosen in your sound settings.',
+        'no-speech': 'Nothing was heard. Tap the mic and try again, a little closer.',
+        'language-not-supported': 'This browser cannot take English (India) speech. Try Chrome, or type instead.',
+      };
+      if (e.error !== 'aborted') setDone(say[e.error] ?? `The microphone stopped (${e.error}). Try again, or type instead.`);
+    };
     r.onend = () => { setListening(false); rec.current = null; if (said.current) void fill(said.current); };
     rec.current = r; setDone(null); setListening(true);
-    try { r.start(); } catch { setListening(false); rec.current = null; }
+    try { r.start(); } catch { setListening(false); rec.current = null; setDone('The microphone could not start. Reload the page and try again, or type instead.'); }
   }
 
   return (
