@@ -177,6 +177,23 @@ CREATE TABLE feedback (
 );
 CREATE INDEX feedback_created ON feedback (created_at DESC);
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+-- 14 Oct: up to three screenshots on a note (shrunk in the browser, under 600 KB each), and "Me too" from teammates.
+CREATE TABLE feedback_images (
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  n           smallint NOT NULL CHECK (n BETWEEN 1 AND 3),
+  bytes       bytea NOT NULL,
+  mime        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (feedback_id, n)
+);
+ALTER TABLE feedback_images ENABLE ROW LEVEL SECURITY;
+CREATE TABLE feedback_votes (
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  person_id   text NOT NULL REFERENCES people(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (feedback_id, person_id)
+);
+ALTER TABLE feedback_votes ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE comment_refs (
   comment_id  text NOT NULL REFERENCES comments(id),

@@ -98,6 +98,8 @@ export async function upgrade(db: Db) {
   await db.exec(COMMENTS_UPGRADE);
   // 13 Oct: pilot feedback from inside the app.
   await db.exec(FEEDBACK_UPGRADE);
+  // 14 Oct: screenshots on a feedback note, and "Me too".
+  await db.exec(FEEDBACK_EXTRAS_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
@@ -145,6 +147,25 @@ export const CHAT_UPGRADE = `
   CREATE INDEX IF NOT EXISTS chat_task_links_task ON chat_task_links (task_id);
   ALTER TABLE chat_task_links ENABLE ROW LEVEL SECURITY;
   ALTER TABLE notices ADD COLUMN IF NOT EXISTS message_id text REFERENCES chat_messages(id);`;
+
+// Idempotent: screenshots on a note and "Me too" (RLS on, no policies). The same SQL as lib/schema.ts.
+export const FEEDBACK_EXTRAS_UPGRADE = `
+CREATE TABLE IF NOT EXISTS feedback_images (
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  n           smallint NOT NULL CHECK (n BETWEEN 1 AND 3),
+  bytes       bytea NOT NULL,
+  mime        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (feedback_id, n)
+);
+ALTER TABLE feedback_images ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS feedback_votes (
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  person_id   text NOT NULL REFERENCES people(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (feedback_id, person_id)
+);
+ALTER TABLE feedback_votes ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: the feedback table (RLS on, no policies, like every other table). The same SQL as lib/schema.ts.
 export const FEEDBACK_UPGRADE = `

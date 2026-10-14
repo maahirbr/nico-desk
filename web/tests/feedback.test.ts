@@ -18,6 +18,9 @@ import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
 import { GET as listRoute, POST as sendRoute } from '../app/api/v1/feedback/route';
 import { PATCH as readRoute } from '../app/api/v1/feedback/[id]/route';
+import { POST as imageRoute } from '../app/api/v1/feedback/[id]/images/route';
+import { GET as getImageRoute } from '../app/api/v1/feedback/[id]/images/[n]/route';
+import { DELETE as unvoteRoute, POST as voteRoute } from '../app/api/v1/feedback/[id]/vote/route';
 
 const ADMIN = 'per_fay'; // fixtures: admin only
 let db: Db;
@@ -137,9 +140,76 @@ describe('reading feedback', () => {
   });
 });
 
+const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 1, 2, 3]);
+const upload = (id: string, bytes: Uint8Array, type = 'image/png') => imageRoute(
+  new Request(`http://localhost/api/v1/feedback/${id}/images`, { method: 'POST', headers: { origin: 'http://localhost', host: 'localhost', 'content-type': type }, body: bytes as BodyInit }),
+  { params: Promise.resolve({ id }) });
+const getImage = (id: string, n: string) => getImageRoute(new Request(`http://localhost/api/v1/feedback/${id}/images/${n}`), { params: Promise.resolve({ id, n }) });
+const voteReq = (method: string) => new Request('http://localhost/api/v1/feedback/x/vote', { method, headers: { origin: 'http://localhost', host: 'localhost' } });
+const vote = (id: string) => voteRoute(voteReq('POST'), { params: Promise.resolve({ id }) });
+const unvote = (id: string) => unvoteRoute(voteReq('DELETE'), { params: Promise.resolve({ id }) });
+const noteId = async () => (await db.query<{ id: string }>('SELECT id FROM feedback ORDER BY created_at DESC LIMIT 1')).rows[0].id;
+
+describe('screenshots on a note', () => {
+  it('lets the writer add up to three, checks the type, and any teammate can open them', async () => {
+    const m = await member();
+    signIn(m.id);
+    await send({ body: 'the button is cut off' });
+    const id = await noteId();
+    expect((await upload(id, PNG)).status).toBe(200);
+    expect((await upload(id, new Uint8Array([1, 2, 3, 4]))).status).toBe(415); // not an image
+    expect((await upload(id, PNG, 'image/jpeg')).status).toBe(415); // says jpeg, is png
+    expect((await upload(id, PNG)).status).toBe(200);
+    expect((await upload(id, PNG)).status).toBe(200);
+    expect((await upload(id, PNG)).status).toBe(400); // a fourth
+    signIn(ADMIN);
+    const img = await getImage(id, '2');
+    expect(img.status).toBe(200);
+    expect(img.headers.get('content-type')).toBe('image/png');
+    expect(img.headers.get('cache-control')).toContain('private');
+    expect((await getImage(id, '4')).status).toBe(404);
+    expect((await (await list()).json())[0].images).toBe(3);
+  });
+
+  it('refuses a picture on someone else\'s note, one over the size cap, and any write under View as', async () => {
+    const m = await member();
+    signIn(m.id);
+    await send({ body: 'mine' });
+    const id = await noteId();
+    signIn(ADMIN);
+    expect((await upload(id, PNG)).status).toBe(403);
+    signIn(m.id);
+    const big = new Uint8Array(600 * 1024 + 1); big.set(PNG);
+    expect((await upload(id, big)).status).toBe(413);
+    signIn(ADMIN, signView(ADMIN, m.id));
+    expect((await upload(id, PNG)).status).toBe(403);
+    expect((await db.query('SELECT 1 FROM feedback_images')).rows).toHaveLength(0);
+  });
+});
+
+describe('Me too', () => {
+  it('counts each teammate once, can be taken back, and is never on your own note', async () => {
+    const m = await member();
+    signIn(m.id);
+    await send({ body: 'dates are hard to pick on a phone' });
+    const id = await noteId();
+    expect((await vote(id)).status).toBe(400); // own note
+    signIn(ADMIN);
+    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true });
+    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true }); // twice is still once
+    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: true });
+    signIn(m.id);
+    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: false });
+    signIn(ADMIN);
+    expect(await (await unvote(id)).json()).toEqual({ votes: 0, mine: false });
+    signIn(ADMIN, signView(ADMIN, 'per_ada'));
+    expect((await vote(id)).status).toBe(403); // View as writes nothing
+  });
+});
+
 describe('the upgrade', () => {
   it('adds the table with RLS on to an older database, and runs again safely', async () => {
-    await db.exec('DROP TABLE feedback');
+    await db.exec('DROP TABLE feedback_votes, feedback_images, feedback');
     await upgrade(db);
     await upgrade(db);
     await db.exec(FEEDBACK_UPGRADE);

@@ -606,3 +606,11 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   reads every note, whatever their role, so the team sees what others raised. Only an admin marks a note read, and a read
   note stays on the list. The page a note is about is now picked from the main screens, since the box no longer sits on
   the page in question. Rollback: `git revert` this commit; `listFeedback` would then need its admin check back.
+
+- **2026-10-14 · Opus 5.5 · Feedback gets screenshots and "Me too", at the PM's call.** A note holds one thought and up
+  to three screenshots, pasted, dropped or picked, shrunk in the browser to under 600 KB and kept in the database
+  (`feedback_images`, like `person_photos`: no new service, works on previews). Only the writer adds pictures; any
+  teammate sees them. "Me too" (`feedback_votes`) lets teammates back a note instead of writing it again; never on your
+  own note, once per person. Both tables have RLS on and come through `upgrade()`. The hosted database needs
+  `npm run db:upgrade` once before a build with this change is promoted. Rollback: `git revert` this commit; the two
+  tables can stay, nothing else reads them.

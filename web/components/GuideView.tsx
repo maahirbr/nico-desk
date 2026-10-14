@@ -19,7 +19,7 @@ export const GUIDE_SECTIONS = [
   { id: 'leads', title: 'For leads and admins' },
   { id: 'help', title: 'Help mode and shortcuts' },
   { id: 'phone', title: 'On your phone' },
-  { id: 'feedback', title: 'Tell us what is not working' },
+  { id: 'feedback', title: 'Tell us how it is going' },
 ] as const;
 
 const title = (id: (typeof GUIDE_SECTIONS)[number]['id']) => GUIDE_SECTIONS.find((s) => s.id === id)!.title;
@@ -136,7 +136,7 @@ export function GuideView() {
       <section id="feedback" aria-labelledby="g-feedback">
         <h2 id="g-feedback">{title('feedback')}</h2>
         <p>Tell the pilot lead what is confusing, missing or wrong. A short note is enough. This team&rsquo;s weeks shape what Nico Desk becomes.</p>
-        <p>Open Feedback in the sidebar, under More, and write your note. The admins read it in Nico Desk. It is not sent by email.</p>
+        <p>Open Feedback in the sidebar, under More, and write what is working well and what is not. Everyone on the team can read the notes. Nothing is sent by email.</p>
       </section>
     </article>
   );

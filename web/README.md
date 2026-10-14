@@ -199,7 +199,12 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 - **Feedback.** The Feedback tab (sidebar, under More) is open to everyone. It has a box to write a note (up to 4000
   characters) with an optional pick of the screen it is about, and below it every note from the team, newest first, with
   the writer's name and the date and time. Everyone on the team reads every note, whatever their role. An admin can mark
-  a note read; others then see "Read by an admin". A read note stays on the list. The `feedback` table (`lib/schema.ts`
+  a note read; others then see "Read by an admin". A read note stays on the list. One thought per note. A note can carry up to three
+  screenshots, pasted into the box, dropped on the card or picked with "+ Add screenshot"; the browser shrinks each to at
+  most 1600px and under 600 KB (`components/shrinkImage.ts`) before upload, and `feedback_images` keeps them (bytea, RLS
+  on). Only the writer adds them, the server checks the first bytes, and any teammate opens them
+  (`/api/v1/feedback/[id]/images/[n]`, private cache). "Me too" (`feedback_votes`) backs a teammate's note once per
+  person, never your own, and shows the count. The `feedback` table (`lib/schema.ts`
   and `upgrade()`, RLS on) holds the notes. `POST` and `GET /api/v1/feedback` are open to anyone signed in on the team,
   `PATCH /api/v1/feedback/[id]` (mark read) is admin only, and View as refuses every write. Nothing is emailed.
   Test: `tests/feedback.test.ts`.
