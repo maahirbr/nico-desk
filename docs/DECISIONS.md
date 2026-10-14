@@ -641,3 +641,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   meeting routes, `lib/comments.ts`, the comment routes, `comments`, `comment_refs`, the `meet_*` columns), so data on the
   live database is kept and either can come back. "Updates for you" and "Waiting on you" do not read comments or meetings
   and are unchanged. Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · Mic allowed for this site, and a new project loads its people.** The `Permissions-Policy`
+  header said `microphone=()`, which blocked the Quick Add mic in every browser even when the person allowed it. It is
+  now `microphone=(self)`: this site only, camera and location stay blocked. A new project opened with `router.push`
+  kept the layout's old project-people map, so its Owner list was empty until a reload. `ProjectForm` now refreshes
+  after the push. Rollback: `git revert` this commit.

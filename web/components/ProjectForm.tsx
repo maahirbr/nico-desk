@@ -87,7 +87,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
         const p = await api(editing ? `/projects/${projectId}` : '/projects', editing ? 'PATCH' : 'POST', body);
         notify(editing ? 'Project saved' : 'Project started');
         onDone();
-        if (editing) router.refresh(); else router.push(`/projects/${p.id}`);
+        if (editing) router.refresh(); else { router.push(`/projects/${p.id}`); router.refresh(); }
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <fieldset>
