@@ -98,7 +98,7 @@ export async function upgrade(db: Db) {
   await db.exec(COMMENTS_UPGRADE);
   // 13 Oct: pilot feedback from inside the app.
   await db.exec(FEEDBACK_UPGRADE);
-  // 14 Oct: screenshots on a feedback note, and "Me too".
+  // 14 Oct: screenshots on a feedback note, and "+1".
   await db.exec(FEEDBACK_EXTRAS_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
@@ -148,7 +148,7 @@ export const CHAT_UPGRADE = `
   ALTER TABLE chat_task_links ENABLE ROW LEVEL SECURITY;
   ALTER TABLE notices ADD COLUMN IF NOT EXISTS message_id text REFERENCES chat_messages(id);`;
 
-// Idempotent: screenshots on a note and "Me too" (RLS on, no policies). The same SQL as lib/schema.ts.
+// Idempotent: screenshots on a note, "+1", replies, and who may reply (RLS on, no policies). The same SQL as lib/schema.ts.
 export const FEEDBACK_EXTRAS_UPGRADE = `
 CREATE TABLE IF NOT EXISTS feedback_images (
   feedback_id text NOT NULL REFERENCES feedback(id),
@@ -165,7 +165,18 @@ CREATE TABLE IF NOT EXISTS feedback_votes (
   created_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (feedback_id, person_id)
 );
-ALTER TABLE feedback_votes ENABLE ROW LEVEL SECURITY;`;
+ALTER TABLE feedback_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE people ADD COLUMN IF NOT EXISTS replies_feedback boolean NOT NULL DEFAULT false;
+CREATE TABLE IF NOT EXISTS feedback_replies (
+  id          text PRIMARY KEY,
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  author_id   text NOT NULL REFERENCES people(id),
+  body        text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 2000),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  seen_at     timestamptz                     -- when the note's writer saw it on Home or the Feedback page
+);
+CREATE INDEX IF NOT EXISTS feedback_replies_note ON feedback_replies (feedback_id, created_at);
+ALTER TABLE feedback_replies ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: the feedback table (RLS on, no policies, like every other table). The same SQL as lib/schema.ts.
 export const FEEDBACK_UPGRADE = `

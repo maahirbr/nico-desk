@@ -5,13 +5,16 @@ import { assertNotViewing } from './http';
 import { newId, sniffImage } from './service';
 
 // Pilot feedback from inside the app (13 Oct). Anyone signed in can send a note, and everyone on the team reads every
-// note (14 Oct). Only an admin marks one read; a read note stays. A note can carry up to three screenshots, and
-// teammates can press "Me too" on it. Nothing is emailed.
+// note (14 Oct). Notes pile up: nothing marks them read or removes them. A note can carry up to three screenshots, and
+// teammates can press "+1" on it. Only people with replies_feedback (set on the Roster) reply; everyone reads the replies,
+// and the writer sees new ones on Home. Nothing is emailed.
 
 export const FEEDBACK_MAX = 4000;
 const PATH_MAX = 300;
 
-export type FeedbackView = { id: string; personId: string; personName: string; path: string | null; body: string; createdAt: string; readAt: string | null; images: number; votes: number; mine: boolean };
+export type FeedbackReply = { id: string; authorName: string; body: string; createdAt: string };
+export type FeedbackView = { id: string; personId: string; personName: string; path: string | null; body: string; createdAt: string; images: number; votes: number; mine: boolean; replies: FeedbackReply[] };
+export const REPLY_MAX = 2000;
 
 export const FEEDBACK_IMAGE_MAX = 600 * 1024; // the browser shrinks a screenshot well under this
 export const FEEDBACK_IMAGES = 3;
@@ -34,17 +37,13 @@ export async function sendFeedback(db: Db, me: Me, input: { body: string; path?:
   return { id };
 }
 
-type Row = { id: string; person_id: string; person_name: string; path: string | null; body: string; created_at: string; read_at: string | null; images: number; votes: number; mine: boolean };
+type Row = { id: string; person_id: string; person_name: string; path: string | null; body: string; created_at: string; images: number; votes: number; mine: boolean };
 
-function mustBeAdmin(me: Me) {
-  // Judged on the person being shown, so an admin who is viewing as a member sees what that member would: a refusal.
-  if (!me.person.appRoles.includes('admin')) throw forbidden('Only an admin can read feedback.');
-}
 
 // Everyone on the team reads every note, whatever their role (the PM's call, 14 Oct). Marking a note read stays with admins.
 export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
   const { rows } = await db.query<Row>(
-    `SELECT f.id, f.person_id, p.display_name AS person_name, f.path, f.body, f.created_at, f.read_at,
+    `SELECT f.id, f.person_id, p.display_name AS person_name, f.path, f.body, f.created_at,
             (SELECT count(*)::int FROM feedback_images i WHERE i.feedback_id = f.id) AS images,
             (SELECT count(*)::int FROM feedback_votes v WHERE v.feedback_id = f.id) AS votes,
             EXISTS (SELECT 1 FROM feedback_votes v WHERE v.feedback_id = f.id AND v.person_id = $2) AS mine
@@ -53,21 +52,20 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
       ORDER BY f.created_at DESC, f.id DESC`,
     [me.team.id, me.person.id],
   );
-  return rows.map((r) => ({ id: r.id, personId: r.person_id, personName: r.person_name, path: r.path, body: r.body, createdAt: r.created_at, readAt: r.read_at, images: r.images, votes: r.votes, mine: r.mine }));
+  const replies = await db.query<{ id: string; feedback_id: string; author_name: string; body: string; created_at: string }>(
+    `SELECT r.id, r.feedback_id, p.display_name AS author_name, r.body, r.created_at
+       FROM feedback_replies r JOIN people p ON p.id = r.author_id JOIN feedback f ON f.id = r.feedback_id
+      WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1)
+      ORDER BY r.created_at, r.id`, [me.team.id]);
+  const byNote = new Map<string, FeedbackReply[]>();
+  for (const r of replies.rows) {
+    const list = byNote.get(r.feedback_id) ?? [];
+    list.push({ id: r.id, authorName: r.author_name, body: r.body, createdAt: r.created_at });
+    byNote.set(r.feedback_id, list);
+  }
+  return rows.map((r) => ({ id: r.id, personId: r.person_id, personName: r.person_name, path: r.path, body: r.body, createdAt: r.created_at, images: r.images, votes: r.votes, mine: r.mine, replies: byNote.get(r.id) ?? [] }));
 }
 
-export async function markFeedbackRead(db: Db, me: Me, id: string): Promise<{ id: string; readAt: string }> {
-  assertNotViewing(me);
-  mustBeAdmin(me);
-  const { rows } = await db.query<{ read_at: string }>(
-    `UPDATE feedback SET read_at = COALESCE(read_at, now())
-      WHERE id = $1 AND person_id IN (SELECT person_id FROM team_members WHERE team_id = $2)
-      RETURNING read_at`,
-    [id, me.team.id],
-  );
-  if (!rows[0]) throw notFound('No such note.');
-  return { id, readAt: rows[0].read_at };
-}
 
 // A note on this team, or 404. Notes from other teams read as missing.
 async function noteOnTeam(db: Db, me: Me, id: string): Promise<{ person_id: string }> {
@@ -100,7 +98,7 @@ export async function getFeedbackImage(db: Db, me: Me, id: string, n: number): P
   return rows[0] ? { bytes: new Uint8Array(rows[0].bytes), mime: rows[0].mime } : null;
 }
 
-// "Me too": on or off, once per person, never on your own note.
+// "+1": on or off, once per person, never on your own note.
 export async function voteFeedback(db: Db, me: Me, id: string, on: boolean): Promise<{ votes: number; mine: boolean }> {
   assertNotViewing(me);
   const note = await noteOnTeam(db, me, id);
@@ -109,5 +107,40 @@ export async function voteFeedback(db: Db, me: Me, id: string, on: boolean): Pro
   else await db.query(`DELETE FROM feedback_votes WHERE feedback_id = $1 AND person_id = $2`, [id, me.person.id]);
   const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM feedback_votes WHERE feedback_id = $1`, [id]);
   return { votes: rows[0].n, mine: on };
+}
+
+// A reply to a note, only from someone the Roster lets reply. A reply on your own note counts as seen at once.
+export async function replyFeedback(db: Db, me: Me, id: string, text: string): Promise<{ id: string }> {
+  assertNotViewing(me);
+  if (!me.person.repliesFeedback) throw forbidden('Only the people building Nico Desk reply to feedback.');
+  const note = await noteOnTeam(db, me, id);
+  const body = text.trim();
+  if (!body) throw bad('invalid_body', 'Write a reply first.', 'body');
+  if (body.length > REPLY_MAX) throw bad('invalid_body', `A reply holds ${REPLY_MAX} characters. This one has ${body.length}.`, 'body');
+  const rid = newId('fbr');
+  await db.query(`INSERT INTO feedback_replies (id, feedback_id, author_id, body, seen_at) VALUES ($1,$2,$3,$4,$5)`,
+    [rid, id, me.person.id, body, note.person_id === me.person.id ? new Date().toISOString() : null]);
+  return { id: rid };
+}
+
+// Replies to my notes that I have not seen yet, newest first: the "Replies to your feedback" card on Home.
+export type NewReply = { id: string; authorName: string; body: string; createdAt: string; note: string };
+export async function newRepliesForMe(db: Db, me: Me): Promise<NewReply[]> {
+  const { rows } = await db.query<{ id: string; author_name: string; body: string; created_at: string; note: string }>(
+    `SELECT r.id, p.display_name AS author_name, r.body, r.created_at, f.body AS note
+       FROM feedback_replies r JOIN feedback f ON f.id = r.feedback_id JOIN people p ON p.id = r.author_id
+      WHERE f.person_id = $1 AND r.seen_at IS NULL AND r.author_id <> $1
+      ORDER BY r.created_at DESC LIMIT 20`, [me.person.id]);
+  return rows.map((r) => ({ id: r.id, authorName: r.author_name, body: r.body, createdAt: r.created_at, note: r.note }));
+}
+
+// Marks replies to my own notes seen: all of them, or the ones given. Nothing is written under View as.
+export async function markRepliesSeen(db: Db, me: Me, ids?: string[]): Promise<{ ok: true }> {
+  assertNotViewing(me);
+  await db.query(
+    `UPDATE feedback_replies r SET seen_at = now()
+       FROM feedback f WHERE f.id = r.feedback_id AND f.person_id = $1 AND r.seen_at IS NULL ${ids ? 'AND r.id = ANY($2)' : ''}`,
+    ids ? [me.person.id, ids] : [me.person.id]);
+  return { ok: true };
 }
 

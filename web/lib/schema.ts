@@ -22,7 +22,8 @@ CREATE TABLE people (
   never_remind  boolean NOT NULL DEFAULT false, -- e.g. someone who signs off rather than delivers
   photo_url     text,                          -- the Google sign-in photo; an uploaded one (person_photos) wins
   phone         text CHECK (phone ~ '^[0-9 +-]{7,20}$'),  -- optional; shown only to people on the same team
-  restricted    boolean NOT NULL DEFAULT false   -- sees only the projects they are on or may view (lib/sight.ts); leads and admins see all
+  restricted    boolean NOT NULL DEFAULT false,  -- sees only the projects they are on or may view (lib/sight.ts); leads and admins see all
+  replies_feedback boolean NOT NULL DEFAULT false -- may reply to feedback notes; an admin sets it on the Roster for the people building the app
 );
 
 -- An uploaded profile photo: a 256px square the browser made, stored here so no storage service is needed.
@@ -177,7 +178,7 @@ CREATE TABLE feedback (
 );
 CREATE INDEX feedback_created ON feedback (created_at DESC);
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
--- 14 Oct: up to three screenshots on a note (shrunk in the browser, under 600 KB each), and "Me too" from teammates.
+-- 14 Oct: up to three screenshots on a note (shrunk in the browser, under 600 KB each), and "+1" from teammates.
 CREATE TABLE feedback_images (
   feedback_id text NOT NULL REFERENCES feedback(id),
   n           smallint NOT NULL CHECK (n BETWEEN 1 AND 3),
@@ -194,6 +195,17 @@ CREATE TABLE feedback_votes (
   PRIMARY KEY (feedback_id, person_id)
 );
 ALTER TABLE feedback_votes ENABLE ROW LEVEL SECURITY;
+-- 14 Oct: replies to a note, only from people with people.replies_feedback. Everyone reads them; the writer sees new ones on Home.
+CREATE TABLE feedback_replies (
+  id          text PRIMARY KEY,
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  author_id   text NOT NULL REFERENCES people(id),
+  body        text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 2000),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  seen_at     timestamptz                     -- when the note's writer saw it on Home or the Feedback page
+);
+CREATE INDEX feedback_replies_note ON feedback_replies (feedback_id, created_at);
+ALTER TABLE feedback_replies ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE comment_refs (
   comment_id  text NOT NULL REFERENCES comments(id),

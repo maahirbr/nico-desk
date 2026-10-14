@@ -134,7 +134,6 @@ export const HELP = {
   search_commands: 'Commands. Actions that already exist in the app, such as New task or Go to Team. Press Enter to run the one that is lit.',
   // Feedback
   feedback_page: 'Page. Which screen your note is about, if it is about one. Pick it from the list, or leave it.',
-  feedback_read: 'Mark read. Shows everyone an admin has seen this note. The note stays on the list.',
   search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
   // Meetings
   meeting_rhythm: 'Meeting rhythm. How often this project meets, and the next date. As needed has no automatic date. The project owner, its lead, a team lead or an admin can change it.',

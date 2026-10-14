@@ -12,7 +12,7 @@ import { notify } from './toast';
 import { shrinkImage } from './shrinkImage';
 
 // The writing box at the top of the Feedback tab, for everyone signed in. One thought per note, so teammates can back it
-// with "Me too". Up to three screenshots: pasted into the box, dropped on the card, or picked with "Add screenshot". They
+// with "+1". Up to three screenshots: pasted into the box, dropped on the card, or picked with "Add screenshot". They
 // are shrunk in the browser and uploaded after the note is saved. Nothing is emailed. The page it is about is a pick
 // from the main screens (optional), so it records no query string.
 export const FEEDBACK_LIMIT = 4000;
@@ -82,7 +82,7 @@ export function FeedbackForm() {
           onKeyDown={(e) => { if (isRealEnter(e) && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }} />
         <Count value={text} max={FEEDBACK_LIMIT} />
       </label>
-      <p className="hint" style={{ margin: 0 }}>One thought per note, so others can back it with Me too.</p>
+      <p className="hint" style={{ margin: 0 }}>One thought per note, so others can +1 it.</p>
       <div className="fb-shots">
         {shots.map((x, i) => (
           <span key={x.url} className="fb-shot">

@@ -19,6 +19,7 @@ export type Person = {
   active: boolean;
   appRoles: AppRole[];
   restricted: boolean; // sees only their own projects and the ones they may view (lib/sight.ts)
+  repliesFeedback: boolean; // may reply to feedback notes (set on the Roster)
 };
 export type AppRole = 'member' | 'lead' | 'admin';
 
@@ -40,12 +41,12 @@ function needReason(reason: unknown, field = 'reason'): string {
 
 // ---------- people and roles ----------
 
-type PersonRow = { id: string; display_name: string; role: string; department: string; email: string; active: boolean; app_roles: AppRole[] | null; restricted?: boolean };
+type PersonRow = { id: string; display_name: string; role: string; department: string; email: string; active: boolean; app_roles: AppRole[] | null; restricted?: boolean; replies_feedback?: boolean };
 
 function toPerson(r: PersonRow): Person {
   return {
     id: r.id, displayName: r.display_name, role: r.role, department: r.department, email: r.email, active: r.active,
-    appRoles: r.app_roles ?? [], restricted: r.restricted ?? false,
+    appRoles: r.app_roles ?? [], restricted: r.restricted ?? false, repliesFeedback: r.replies_feedback ?? false,
   };
 }
 
@@ -722,7 +723,7 @@ export async function addPerson(
 }
 
 export async function patchPerson(
-  db: Db, meId: string, teamId: string, personId: string, input: { active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean },
+  db: Db, meId: string, teamId: string, personId: string, input: { active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean; repliesFeedback?: boolean },
 ): Promise<Person> {
   await db.transaction(async (tx) => {
     await requireAdmin(tx, teamId, meId);
@@ -734,6 +735,7 @@ export async function patchPerson(
     if (input.role !== undefined) await tx.query(`UPDATE people SET role = $2 WHERE id = $1`, [personId, input.role.trim()]);
     if (input.department !== undefined) await tx.query(`UPDATE people SET department = $2 WHERE id = $1`, [personId, input.department.trim()]);
     if (input.restricted !== undefined) await tx.query(`UPDATE people SET restricted = $2 WHERE id = $1`, [personId, input.restricted]);
+    if (input.repliesFeedback !== undefined) await tx.query(`UPDATE people SET replies_feedback = $2 WHERE id = $1`, [personId, input.repliesFeedback]);
     if (input.appRoles) {
       await tx.query(`DELETE FROM team_members WHERE team_id = $1 AND person_id = $2`, [teamId, personId]);
       for (const r of new Set<AppRole>(['member', ...input.appRoles])) {

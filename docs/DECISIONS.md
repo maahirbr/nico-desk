@@ -619,3 +619,17 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   button on every page (the icon alone below 1180px and on phones), and Feedback leaves More, so there is one place for
   it. The page line reads "You're one of the first users of Nico Desk, and we'd love to hear your thoughts."
   Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · "Me too" is now "+1", at the PM's call.** The button on a teammate's note reads "+1" (pressed:
+  "✓ +1"), and the form hint reads "One thought per note, so others can +1 it." The page line on Feedback sits on two lines,
+  one sentence each. Replies to feedback wait for later. Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · Feedback replies, no mark read, and a Roster for everyone, at the PM's call.** Notes pile up:
+  "Mark read" and its route are gone (the `read_at` column stays, unused). Replies come only from people with
+  `people.replies_feedback`, a Roster switch an admin turns on for the people building the app; no names are in the code.
+  Everyone reads replies under each note. The writer sees new replies on Home ("Replies to your feedback"), cleared by
+  opening Feedback or Mark seen (`feedback_replies.seen_at`). The Roster is in everyone's sidebar; only admins see the
+  buttons that change it and the add form, and the service still refuses anyone else. The Roster gains "Make admin" so
+  an admin can grant admin from the app; you cannot remove your own. The Roster's intro line is gone while who-sees-what
+  is rethought. The hosted database needs `npm run db:upgrade` (adds `feedback_replies` and `people.replies_feedback`).
+  Rollback: `git revert` this commit; the table and column can stay.

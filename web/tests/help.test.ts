@@ -23,7 +23,7 @@ describe('help text', () => {
       'waiting_done', 'plan_done_looks_like', 'plan_actions', 'plan_by_subproject', 'plan_by_date', 'proposal_accept_sure',
       'paste_review', 'paste_masked',
       'conn_from_env', 'conn_meet',
-      'feedback_page', 'feedback_read',
+      'feedback_page',
       'jev_order', 'jev_health', 'jev_check_drafts', 'jev_project_guess',
     ];
     expect([...COVERED].sort()).toEqual([...HELP_TERMS].sort());

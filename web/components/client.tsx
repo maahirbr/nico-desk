@@ -78,7 +78,7 @@ export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: bo
   const readOnly = useReadOnly();
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
   const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
-  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ...(isAdmin ? [['/admin', 'Roster']] : [])];
+  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster']];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
@@ -435,7 +435,7 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   );
 }
 
-export function PersonControls({ id, active, roles, self, email, restricted }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; restricted: boolean }) {
+export function PersonControls({ id, active, roles, self, email, restricted, repliesFeedback }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; restricted: boolean; repliesFeedback: boolean }) {
   const { busy, error, run } = useSubmit();
   const toggle = (r: string) => (roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r]).filter((x) => x !== 'member');
   return (
@@ -446,8 +446,14 @@ export function PersonControls({ id, active, roles, self, email, restricted }: {
       <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('lead') })}>
         {roles.includes('lead') ? 'Remove lead' : 'Make lead'}
       </button>
+      <button className="act" disabled={busy || self} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('admin') })}>
+        {roles.includes('admin') ? 'Remove admin' : 'Make admin'}
+      </button>
       <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { restricted: !restricted })}>
         {restricted ? 'See all projects' : 'Own projects only'}
+      </button>
+      <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { repliesFeedback: !repliesFeedback })}>
+        {repliesFeedback ? 'Stop feedback replies' : 'Can reply to feedback'}
       </button>
       {active && <CopyInvite email={email} />}
       <Err e={error} />

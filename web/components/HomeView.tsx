@@ -15,6 +15,7 @@ import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
 import { MentionsCard } from './MentionsCard';
+import { FeedbackRepliesCard, type HomeReply } from './FeedbackRepliesCard';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { NewNotices } from './NewNotices';
 import { UpdatesCard } from './UpdatesCard';
@@ -29,9 +30,9 @@ const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', wee
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, mentions, waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, mentions, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; mentions: Mention[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; mentions: Mention[]; feedbackReplies?: HomeReply[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
 }) {
@@ -106,6 +107,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 
       <MentionsCard items={mentions} />
+      <FeedbackRepliesCard items={feedbackReplies} />
 
       <MovedAwayCard items={movedAway} />
 

@@ -6,6 +6,7 @@ import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
 import { listMentions } from '@/lib/comments';
+import { newRepliesForMe } from '@/lib/feedback';
 import { HomeView } from '@/components/HomeView';
 
 export const dynamic = 'force-dynamic';
@@ -20,9 +21,9 @@ export default async function Home() {
   const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
-  const [mine, notices, all, projects, onProjects, mentions] = await Promise.all([
+  const [mine, notices, all, projects, onProjects, mentions, replies] = await Promise.all([
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
-    myProjects(d, me.team.id, me.person.id), listMentions(d, me),
+    myProjects(d, me.team.id, me.person.id), listMentions(d, me), newRepliesForMe(d, me),
   ]);
   const weekStart = mondayOf(t);
   const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart).sort(latestEndedFirst);
@@ -48,6 +49,7 @@ export default async function Home() {
       noticeIds={notices.map((n) => n.id)}
       movedAway={movedAway}
       mentions={mentions}
+      feedbackReplies={replies.map((r) => ({ id: r.id, authorName: r.authorName, snippet: r.body.length > 140 ? `${r.body.slice(0, 137)}...` : r.body, note: r.note.length > 60 ? `${r.note.slice(0, 57)}...` : r.note }))}
       waiting={mine.blockedOnMe}
       done={doneThisWeek}
       dropped={dropped}
