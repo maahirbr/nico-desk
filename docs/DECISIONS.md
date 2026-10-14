@@ -599,3 +599,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
 - **2026-10-14 · Opus 5.5 · "(optional)" and "(if any)" are lower case, at the PM's call.** Wherever they appear, even
   inside a Title Case label ("Category (optional)", "Details (if any)"). Other notes in brackets are not covered by this
   rule ("Warm (Default)" keeps its capital). `DESIGN.md` Typography holds the rule. Rollback: `git revert` this commit.
+
+- **2026-10-14 · Opus 5.5 · Feedback lives on the Feedback tab, open to everyone, at the PM's call.** "Send feedback"
+  leaves the account menu, where it was hard to find, and the Feedback tab is now in everyone's sidebar under More.
+  The tab has the writing box at the top and the team's notes below, newest first, with name, date and time. Everyone
+  reads every note, whatever their role, so the team sees what others raised. Only an admin marks a note read, and a read
+  note stays on the list. The page a note is about is now picked from the main screens, since the box no longer sits on
+  the page in question. Rollback: `git revert` this commit; `listFeedback` would then need its admin check back.

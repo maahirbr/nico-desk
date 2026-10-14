@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Pilot feedback from inside the app (13 Oct): any signed-in person writes a note, only an admin reads or marks it,
+// Pilot feedback from inside the app (13 Oct): any signed-in person writes a note, everyone on the team reads it (14 Oct), only an admin marks it read,
 // View as is refused, and the table comes to an older database through upgrade(). Real route handlers, signed sessions.
 
 const state = vi.hoisted(() => ({ jar: {} as Record<string, string>, testDb: null as unknown }));
@@ -94,13 +94,13 @@ describe('sending feedback', () => {
 });
 
 describe('reading feedback', () => {
-  it('refuses a member the list and the mark read, and an admin gets the list newest first with who and when', async () => {
+  it('gives a member the whole team\'s list but not the mark read, and lists newest first with who and when', async () => {
     const m = await member();
     signIn(m.id);
     await send({ body: 'first', path: '/me' });
     await new Promise((r) => setTimeout(r, 5));
     await send({ body: 'second' });
-    expect((await list()).status).toBe(403);
+    expect((await list()).status).toBe(200); // everyone on the team reads every note
     const id = (await db.query<{ id: string }>(`SELECT id FROM feedback WHERE body = 'first'`)).rows[0].id;
     expect((await markRead(id)).status).toBe(403);
 
@@ -124,13 +124,13 @@ describe('reading feedback', () => {
     expect((await markRead('fbk_missing')).status).toBe(404);
   });
 
-  it('refuses an admin who is viewing as a member the list and the mark read', async () => {
+  it('lets an admin viewing as a member read the list, and refuses the mark read', async () => {
     const m = await member();
     signIn(m.id);
     await send({ body: 'a note' });
     const id = (await db.query<{ id: string }>('SELECT id FROM feedback')).rows[0].id;
     signIn(ADMIN, signView(ADMIN, m.id));
-    expect((await list()).status).toBe(403); // the view shows what a member sees
+    expect((await list()).status).toBe(200); // the view shows what a member sees: the list
     const res = await markRead(id);
     expect(res.status).toBe(403);
     expect((await db.query('SELECT 1 FROM feedback WHERE read_at IS NOT NULL')).rows).toHaveLength(0);

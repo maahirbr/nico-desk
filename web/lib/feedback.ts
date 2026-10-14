@@ -37,8 +37,8 @@ function mustBeAdmin(me: Me) {
   if (!me.person.appRoles.includes('admin')) throw forbidden('Only an admin can read feedback.');
 }
 
+// Everyone on the team reads every note, whatever their role (the PM's call, 14 Oct). Marking a note read stays with admins.
 export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
-  mustBeAdmin(me);
   const { rows } = await db.query<Row>(
     `SELECT f.id, f.person_id, p.display_name AS person_name, f.path, f.body, f.created_at, f.read_at
        FROM feedback f JOIN people p ON p.id = f.person_id

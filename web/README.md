@@ -196,11 +196,13 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   composition: `isComposing` or keyCode 229) and `cutBy`. Every Enter-to-submit handler now uses it. `LimitNotice`
   (mounted in `layout.tsx`) listens for `beforeinput` on any box with a `maxLength` and shows a notice when a paste or
   dictation is cut. `Count` shows how many characters are left on the long boxes. Test: `tests/ime.test.ts`.
-- **Feedback.** Account menu, Send feedback, opens `FeedbackDialog`: a required note (up to 4000 characters) and a box to
-  save the page path. The `feedback` table (`lib/schema.ts` and `upgrade()`, RLS on) holds the notes. `POST
-  /api/v1/feedback` is open to any signed-in person and refused under View as. `GET /api/v1/feedback` and `PATCH
-  /api/v1/feedback/[id]` (mark read) are admin only. Admins read the notes at `/feedback`, newest first. Nothing is
-  emailed. Test: `tests/feedback.test.ts`.
+- **Feedback.** The Feedback tab (sidebar, under More) is open to everyone. It has a box to write a note (up to 4000
+  characters) with an optional pick of the screen it is about, and below it every note from the team, newest first, with
+  the writer's name and the date and time. Everyone on the team reads every note, whatever their role. An admin can mark
+  a note read; others then see "Read by an admin". A read note stays on the list. The `feedback` table (`lib/schema.ts`
+  and `upgrade()`, RLS on) holds the notes. `POST` and `GET /api/v1/feedback` are open to anyone signed in on the team,
+  `PATCH /api/v1/feedback/[id]` (mark read) is admin only, and View as refuses every write. Nothing is emailed.
+  Test: `tests/feedback.test.ts`.
 
 
 ### Ledger and reasons
