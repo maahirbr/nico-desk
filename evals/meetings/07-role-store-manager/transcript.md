@@ -1,25 +1,25 @@
 # Hollowmere team sync
 Meeting date: 2026-10-19 (Monday)
-Present: Alder Finch, Sorrel Pike, Tamsin Quill, Orrin Vale, Bexley Marsh
+Present: Arjun Nair, Ishaan Bhatt, Meera Iyer, Kabir Sethi, Ananya Rao
 
-Alder Finch: Eastgate had a complaint about the fitting room curtain. The store manager needs to replace it.
+Arjun Nair: Eastgate had a complaint about the fitting room curtain. The store manager needs to replace it.
 
-Sorrel Pike: Agreed. The store manager should also reorder the hangers, we are nearly out.
+Ishaan Bhatt: Agreed. The store manager should also reorder the hangers, we are nearly out.
 
-Tamsin Quill: Is there a date for either of those?
+Meera Iyer: Is there a date for either of those?
 
-Alder Finch: Before the weekend rush would be sensible, but that is the store manager's call.
+Arjun Nair: Before the weekend rush would be sensible, but that is the store manager's call.
 
-Bexley Marsh: Honestly, that curtain was ugly from day one.
+Ananya Rao: Honestly, that curtain was ugly from day one.
 
-Orrin Vale: Someone from retail should test the loyalty sign-up screen on the shop tablet.
+Kabir Sethi: Someone from retail should test the loyalty sign-up screen on the shop tablet.
 
-Sorrel Pike: I will send the weekend rota to Alder on 21 October.
+Ishaan Bhatt: I will send the weekend rota to Arjun on 21 October.
 
-Tamsin Quill: The curtain complaint came through the website form, so it is on record in the inbox.
+Meera Iyer: The curtain complaint came through the website form, so it is on record in the inbox.
 
-Sorrel Pike: The Eastgate team has been short staffed this month, which is probably why it slipped.
+Ishaan Bhatt: The Eastgate team has been short staffed this month, which is probably why it slipped.
 
-Alder Finch: They have two new starters arriving in November, so that should help.
+Arjun Nair: They have two new starters arriving in November, so that should help.
 
-Tamsin Quill: I would pay good money to see Alder fit a curtain.
+Meera Iyer: I would pay good money to see Arjun fit a curtain.

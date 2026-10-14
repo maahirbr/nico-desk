@@ -3,6 +3,7 @@
 All data here is synthetic. The names, projects, tasks and Sheet ids are invented. Nothing comes from a real company. Emails use `example.test`, a reserved name.
 
 The files match `docs/DATA-MODEL.md`: `people.json`, `projects.json`, `tasks.json`, `events.json`.
+`plan.json` holds the project-page details and one partner plan for the web app (`web/lib/seed.ts`); its free-text owner fields may name a person id (`per_bo`), which the seed swaps for that person's name.
 `events.json` is the full history. Replaying it gives exactly the rows in `tasks.json` and `projects.json`.
 
 ## The four weeks

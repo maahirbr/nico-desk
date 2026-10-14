@@ -1,0 +1,145 @@
+{
+  "note": "Synthetic project-page data: header details for each project, and one partner plan. Invented names and dates only.",
+  "project_meta": {
+    "prj_landing": {
+      "eyebrow": "Digital · Web · Autumn range",
+      "phase": "Build",
+      "launch_on": "2026-10-30",
+      "pills": [{ "label": "Launch", "value": "30 Oct 2026" }, { "label": "Phase", "value": "Build" }]
+    },
+    "prj_shoot": {
+      "eyebrow": "Brand · Campaign · Festive",
+      "phase": "Pre-production",
+      "launch_on": "2026-11-12",
+      "pills": [{ "label": "Shoot", "value": "12 Nov 2026" }, { "label": "Phase", "value": "Pre-production" }]
+    },
+    "prj_tiers": {
+      "eyebrow": "Retention · Loyalty",
+      "phase": "Pilot",
+      "launch_on": "2026-11-02",
+      "pills": [{ "label": "Pilot start", "value": "2 Nov 2026" }, { "label": "Phase", "value": "Pilot" }]
+    }
+  },
+  "plan_project": {
+    "id": "prj_studio",
+    "name": "Loomworks studio plan",
+    "department": "Digital",
+    "owner_id": "per_ada",
+    "status": "on_track",
+    "status_note": "Plan agreed in principle. Two owners still to name.",
+    "status_at": "2026-10-01T05:00:00Z",
+    "kind": "plan",
+    "eyebrow": "Loomworks studio for the pilot team · OND 2026",
+    "phase": "Draft for agreement",
+    "intro": "What the studio helps us build this quarter, who owns each line on our side, and the checkpoints we hold each other to.\nThe studio coaches; we own the work.",
+    "launch_on": "2026-12-31",
+    "pills": [{ "label": "Quarter", "value": "Oct to Dec 2026" }, { "label": "Review", "value": "Fortnightly" }],
+    "pillars": [
+      { "key": "foundations", "label": "Foundations" },
+      { "key": "people", "label": "People and capability" },
+      { "key": "usecases", "label": "Use cases and growth" }
+    ],
+    "partner_name": "Loomworks",
+    "partner_people": ["Leela", "Rohan", "Tanvi"],
+    "cadence": [
+      { "day": "Mon", "time": "10:00", "what": "Weekly working session", "detail": "Line owners bring blockers; the studio brings drafts.", "until": "19 Dec" },
+      { "day": "Alt Thu", "time": "16:00", "what": "Fortnightly review", "detail": "Checkpoints due in the fortnight, ticked or moved with a reason.", "until": "18 Dec" },
+      { "day": "Monthly", "what": "Steering note", "detail": "One page to the sponsor: what moved, what slipped, what we need." }
+    ]
+  },
+  "lines": [
+    {
+      "id": "ln_01", "num": 1, "pillar": "foundations", "what": "Context files for every team",
+      "done_def": "Each team has a one-page context file the studio and new joiners can read in ten minutes.",
+      "owner_id": "per_ada", "owner_with": "Team leads", "partner": "Leela", "partner_role": "Drafts the template and reviews the first three files.",
+      "mode": "coaching", "status": "In progress",
+      "checkpoints": [
+        { "id": "cp_01a", "label": "Template agreed", "due_on": "2026-10-03", "done": true, "done_on": "2026-10-02" },
+        { "id": "cp_01b", "label": "First three teams drafted", "due_on": "2026-10-14", "orig_due_on": "2026-10-10", "push_count": 1 },
+        { "id": "cp_01c", "label": "All teams filed", "due_on": "2026-10-31" }
+      ]
+    },
+    {
+      "id": "ln_02", "num": 2, "pillar": "foundations", "what": "Shared task tracker",
+      "done_def": "One tracker every team uses for owners, dates and status, with an update log.",
+      "owner_id": "per_bo", "owner_with": "", "partner": "Rohan", "partner_role": "Sets up the board and trains two champions.",
+      "mode": "hands-on", "status": "In progress", "due_on": "2026-10-08",
+      "note": "Waiting on access to the team's old sheet."
+    },
+    {
+      "id": "ln_03", "num": 3, "pillar": "foundations", "what": "Data clean-up for the product catalogue",
+      "done_def": "Product attributes complete for the autumn range.",
+      "owner_id": null, "owner_with": "", "partner": "", "partner_role": "",
+      "mode": "coaching", "status": "Not started", "by_label": "Through OND"
+    },
+    {
+      "id": "ln_04", "num": 4, "pillar": "people", "what": "Two in-house champions",
+      "done_def": "Two people can run the weekly session without the studio.",
+      "owner_id": "per_fay", "owner_with": "per_bo, per_cy", "partner": "Tanvi", "partner_role": "Runs four coaching sessions, then shadows.",
+      "mode": "coaching", "status": "Not started",
+      "checkpoints": [
+        { "id": "cp_04a", "label": "Champions named", "due_on": "2026-10-12" },
+        { "id": "cp_04b", "label": "First solo session", "due_on": "2026-11-20" }
+      ]
+    },
+    {
+      "id": "ln_05", "num": 5, "pillar": "people", "what": "Hiring pipeline for a data analyst",
+      "done_def": "Shortlist of three, with one case exercise each.",
+      "owner_id": "per_cy", "owner_with": "", "partner": "Leela", "partner_role": "Writes the case exercise.",
+      "mode": "coaching", "status": "Blocked", "due_on": "2026-10-20",
+      "note": "Blocked: role budget not signed off yet."
+    },
+    {
+      "id": "ln_06", "num": 6, "pillar": "usecases", "what": "Store stock questions answered in chat",
+      "done_def": "Store staff can ask for stock by size and get an answer from the catalogue.",
+      "owner_id": "per_eli", "owner_with": "per_dee", "partner": "Rohan", "partner_role": "Builds the first version with us.",
+      "mode": "hands-on", "status": "In progress",
+      "checkpoints": [
+        { "id": "cp_06a", "label": "Questions collected from two stores", "due_on": "2026-10-06", "done": true, "done_on": "2026-10-07" },
+        { "id": "cp_06b", "label": "First version tested in one store", "due_on": "2026-10-21" }
+      ]
+    },
+    {
+      "id": "ln_07", "num": 7, "pillar": "usecases", "what": "Newsletter drafting help",
+      "done_def": "The retention team drafts a newsletter in half the time.",
+      "owner_id": "per_fay", "owner_with": "", "partner": "", "partner_role": "",
+      "mode": "coaching", "status": "Done", "due_on": "2026-10-02", "completed_on": "2026-10-01"
+    },
+    {
+      "id": "ln_08", "num": 8, "pillar": "usecases", "what": "Weekly sales readout",
+      "done_def": "A one-page readout every Monday, drafted automatically and checked by a person.",
+      "owner_id": "per_dee", "owner_with": "", "partner": "Tanvi", "partner_role": "Designs the readout with us.",
+      "mode": "coaching", "status": "Not started", "due_on": "2026-11-09"
+    }
+  ],
+  "removed_lines": [
+    {
+      "id": "ln_09", "num": 9, "pillar": "usecases", "what": "Chatbot on the website",
+      "done_def": "", "owner_id": null, "partner": "", "mode": "coaching", "status": "Not started",
+      "removed_by": "per_ada", "removed_at": "2026-10-01T06:00:00Z", "remove_reason": "Parked until the catalogue data is clean."
+    }
+  ],
+  "asks": [
+    { "id": "ask_1", "short": "Access to the old sheets", "text": "Read access to the two team sheets the tracker replaces.", "owner_name": "", "due_on": "2026-10-07", "done": true, "done_on": "2026-10-06" },
+    { "id": "ask_2", "short": "Store visit", "text": "A half day in one store to hear staff questions first hand.", "owner_name": "", "due_on": "2026-10-16" },
+    { "id": "ask_3", "short": "Questions before each review", "text": "Line owners send their questions the day before each fortnightly review.", "owner_name": "",
+      "checkpoints": [{ "label": "Review 1", "date": "2026-10-15" }, { "label": "Review 2", "date": "2026-10-29" }] }
+  ],
+  "parked": [
+    "A chatbot on the public website, until the catalogue is clean.",
+    "Recording meetings, until everyone recorded agrees and a retention rule is written.",
+    "Rebuilding the OKR tracker. We read what it produces."
+  ],
+  "actions": [
+    { "id": "act_1", "line_id": "ln_02", "owner_name": "per_bo", "task": "Send the studio the column list from the old sheet", "due_on": "2026-10-10",
+      "source": { "title": "Weekly working session", "date": "2026-10-05" } },
+    { "id": "act_2", "line_id": null, "owner_name": "Rohan", "task": "Share the board template with the pilot team", "due_on": "2026-10-13",
+      "source": { "title": "Weekly working session", "date": "2026-10-05" } }
+  ],
+  "activity": [
+    { "at": "2026-10-01T06:00:00Z", "actor_id": "per_ada", "summary": "removed line 9 (Chatbot on the website): Parked until the catalogue data is clean." },
+    { "at": "2026-10-02T09:00:00Z", "actor_id": "per_ada", "summary": "ticked “Template agreed” on line 1 (Context files for every team) (1 day early)" },
+    { "at": "2026-10-07T11:00:00Z", "actor_id": "per_eli", "summary": "ticked “Questions collected from two stores” on line 6 (1 day late)" },
+    { "at": "2026-10-08T08:30:00Z", "actor_id": "per_ada", "summary": "edited line 1: pushed “First three teams drafted”, 10 Oct → 14 Oct. Reason: Two team leads were on leave this week." }
+  ]
+}

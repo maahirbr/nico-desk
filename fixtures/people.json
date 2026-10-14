@@ -1,44 +1,44 @@
 [
   {
     "id": "per_ada",
-    "display_name": "Tamsin Quill",
+    "display_name": "Meera Iyer",
     "role": "Digital lead",
     "department": "Digital",
-    "email": "tamsin@example.test"
+    "email": "meera@example.test"
   },
   {
     "id": "per_bo",
-    "display_name": "Orrin Vale",
+    "display_name": "Kabir Sethi",
     "role": "Web producer",
     "department": "Digital",
-    "email": "orrin@example.test"
+    "email": "kabir@example.test"
   },
   {
     "id": "per_cy",
-    "display_name": "Bexley Marsh",
+    "display_name": "Ananya Rao",
     "role": "Brand lead",
     "department": "Brand",
-    "email": "bexley@example.test"
+    "email": "ananya@example.test"
   },
   {
     "id": "per_dee",
-    "display_name": "Sorrel Pike",
+    "display_name": "Ishaan Bhatt",
     "role": "Designer",
     "department": "Retail",
-    "email": "sorrel@example.test"
+    "email": "ishaan@example.test"
   },
   {
     "id": "per_eli",
-    "display_name": "Alder Finch",
+    "display_name": "Arjun Nair",
     "role": "Retail lead",
     "department": "Retail",
-    "email": "alder@example.test"
+    "email": "arjun@example.test"
   },
   {
     "id": "per_fay",
-    "display_name": "Wren Calloway",
+    "display_name": "Priya Menon",
     "role": "Retention lead",
     "department": "Retention",
-    "email": "wren@example.test"
+    "email": "priya@example.test"
   }
 ]

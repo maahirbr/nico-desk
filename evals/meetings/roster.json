@@ -3,32 +3,32 @@
   "people": [
     {
       "id": "per_ada",
-      "name": "Tamsin Quill",
+      "name": "Meera Iyer",
       "department": "Digital"
     },
     {
       "id": "per_bo",
-      "name": "Orrin Vale",
+      "name": "Kabir Sethi",
       "department": "Digital"
     },
     {
       "id": "per_cy",
-      "name": "Bexley Marsh",
+      "name": "Ananya Rao",
       "department": "Brand"
     },
     {
       "id": "per_eli",
-      "name": "Alder Finch",
+      "name": "Arjun Nair",
       "department": "Retail"
     },
     {
       "id": "per_dee",
-      "name": "Sorrel Pike",
+      "name": "Ishaan Bhatt",
       "department": "Retail"
     },
     {
       "id": "per_fay",
-      "name": "Wren Calloway",
+      "name": "Priya Menon",
       "department": "Retention"
     }
   ]

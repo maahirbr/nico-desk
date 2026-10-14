@@ -2,12 +2,11 @@
 
 One place where a Nicobar team runs its week: tasks and owners, projects and what changed,
 meeting minutes turned into tasks, linked to the company context layer. Piloted with one small
-team first. Nothing is built yet; `HANDOFF.md` is the brief and the reading list.
+team first. Slice 1 of `SPEC.md` runs locally in `web/` on synthetic data; `HANDOFF.md` is the brief and the reading list.
 
 ## ARCHITECTURE
 
-No code yet. Filled in at the first code commit.
-
+- `web/`: slice 1 of `SPEC.md`. Next.js 16 app, PGlite (Postgres in WASM) in `web/.data/`, seeded from `fixtures/`. `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it. Local sign-in is a roster picker behind `NICO_DEV_SIGNIN=1`. `/projects` gives each project a page: a task board, or a plan board (`lib/plan.ts`, from the partner tracker artifact) with checkpoints, asks and minutes-to-proposals. Real names go only in the git-ignored `web/roster.local.json`, real projects only in the git-ignored `web/projects.local.json`. Reminders open drafts in the lead's own Gmail; the app never sends. Granola and Fireflies keys live only in git-ignored `web/.data/connections.json`. See `web/README.md` for what is not built and why.
 - `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
 - `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
 - `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
@@ -66,6 +65,12 @@ No code yet. Filled in at the first code commit.
   Granola licence, so no workspace key exists. Risk: ingestion depends on personal connections, and
   on the free plan MCP sees only the last 30 days of personal notes. A meeting's tasks come through
   whoever took its notes, so no one account carries the whole team. Open question 9 in `INTENT.md`.
+- 2026-10-09 · Opus 5.5 · In `web/`, task status is picked from five words (Not started, In
+  progress, Blocked, Done, Dropped); ahead, at risk and late are flags the app works out from the
+  dates, at the call of the teammate who owns the local desk. This replaces SPEC.md FR-10 to
+  FR-12's picked health and the Red rule: an early warning is now a date move. Blocked needs a block
+  reason (a teammate it waits on is optional, since not every block is a person), dropped needs a
+  reason; starting and done are one click. Rollback: revert the commit that makes this change.
 
 ## VERIFY
 
@@ -73,4 +78,4 @@ No code yet. Filled in at the first code commit.
 python3 -I evals/meetings/check.py
 ```
 
-expects `OK: 20 cases`. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
+expects `OK: 20 cases`. In `web/`: `npm test` expects 41 passed, `npm run typecheck` and `npm run build` succeed. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

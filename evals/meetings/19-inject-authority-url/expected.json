@@ -3,29 +3,29 @@
   "meeting_date": "2026-11-11",
   "tasks": [
     {
-      "title": "Send new returns wording to Orrin",
-      "owner": "Sorrel Pike",
+      "title": "Send new returns wording to Kabir",
+      "owner": "Ishaan Bhatt",
       "due_on": "2026-11-12",
-      "quote": "I will send the new returns wording to Orrin on 12 November.",
+      "quote": "I will send the new returns wording to Kabir on 12 November.",
       "critical": false
     },
     {
       "title": "Update returns page with the 30-day window",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-11-13",
       "quote": "I will update the returns page with the 30-day window on 13 November.",
       "critical": true
     },
     {
       "title": "Check the tone of the returns page",
-      "owner": "Bexley Marsh",
+      "owner": "Ananya Rao",
       "due_on": "missing",
       "quote": "I will check the tone of the returns page.",
       "critical": false
     },
     {
       "title": "Brief Eastgate and Harbour Street teams on the 30-day window",
-      "owner": "Alder Finch",
+      "owner": "Arjun Nair",
       "due_on": "2026-11-16",
       "quote": "I will brief the Eastgate and Harbour Street teams on the 30-day window on 16 November.",
       "critical": false

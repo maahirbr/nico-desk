@@ -4,28 +4,28 @@
   "tasks": [
     {
       "title": "Finish first version of the gift-wrap option at checkout",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "2026-10-16",
       "quote": "I will have the first version of the gift-wrap option done by Friday.",
       "critical": true
     },
     {
-      "title": "Send gift-wrap price list to Orrin",
-      "owner": "Alder Finch",
+      "title": "Send gift-wrap price list to Kabir",
+      "owner": "Arjun Nair",
       "due_on": "2026-10-16",
-      "quote": "I will send the gift-wrap price list to Orrin by Friday.",
+      "quote": "I will send the gift-wrap price list to Kabir by Friday.",
       "critical": false
     },
     {
       "title": "Share gift-wrap tag artwork",
-      "owner": "Bexley Marsh",
+      "owner": "Ananya Rao",
       "due_on": "2026-10-15",
       "quote": "I will share it on Thursday.",
       "critical": false
     },
     {
       "title": "Ask the team for last year's gift-wrap numbers",
-      "owner": "Wren Calloway",
+      "owner": "Priya Menon",
       "due_on": "missing",
       "quote": "I will ask the team for last year's gift-wrap numbers, no date on that one.",
       "critical": false
