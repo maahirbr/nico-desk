@@ -1615,4 +1615,4 @@ a.rlink:hover { color: var(--primary); text-decoration: underline; text-underlin
 .fb-replies { list-style: none; margin: var(--space-sm) 0 0; padding: 0 0 0 var(--space-md); border-left: var(--rule) solid var(--line-strong); display: grid; gap: var(--space-sm); }
 .fb-reply-open { margin-top: var(--space-xs); }
 .fb-reply-form { margin-top: var(--space-sm); }
-
+.remind-find { display: block; margin: 0 0 var(--space-md); }

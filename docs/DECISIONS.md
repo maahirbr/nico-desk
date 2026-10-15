@@ -665,3 +665,7 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   only admins see every project, a task with no project that someone else made disappears for its old owner once it is
   given to another person. Their "Moved off your plate" notice now still shows on Home, with the task's title only and
   no link; every other notice on a task they cannot see is still dropped. Rollback: `git revert` this commit.
+
+- **2026-10-15 · Opus 5.5 · A search box on Reminders, at the PM's call (14 Oct).** Above the drafts, when there is more
+  than one, a "Find a person" box narrows them by name; Escape or "Clear search" brings them all back. Nothing else on
+  the page changes. Rollback: `git revert` this commit.

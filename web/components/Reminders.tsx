@@ -56,6 +56,20 @@ function Card({ d }: { d: ReminderDraft }) {
   );
 }
 
+// A search box over the drafts, so a lead can find one person's reminder quickly (the PM's call, 14 Oct).
 export function ReminderCards({ drafts }: { drafts: ReminderDraft[] }) {
-  return <div className="remind-list">{drafts.map((d) => <Card key={d.personId} d={d} />)}</div>;
+  const [q, setQ] = useState('');
+  const needle = q.trim().toLowerCase();
+  const shown = needle ? drafts.filter((d) => d.name.toLowerCase().includes(needle)) : drafts;
+  return (
+    <>
+      {drafts.length > 1 && (
+        <input className="find-person remind-find" type="search" value={q} placeholder="Find a person" aria-label="Find a person by name"
+          onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
+      )}
+      {shown.length === 0
+        ? <div className="empty-state"><p>No one matches &ldquo;{q.trim()}&rdquo;.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>
+        : <div className="remind-list">{shown.map((d) => <Card key={d.personId} d={d} />)}</div>}
+    </>
+  );
 }
