@@ -31,11 +31,16 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
   useEffect(() => {
     if (!open) { setLooks(false); setWho(false); return; }
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); btn.current?.focus(); } };
+    // Escape closes the innermost layer first: an open flyout, then the menu.
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (looks || who) { setLooks(false); setWho(false); return; }
+      setOpen(false); btn.current?.focus();
+    };
     document.addEventListener('pointerdown', away);
     window.addEventListener('keydown', esc);
     return () => { document.removeEventListener('pointerdown', away); window.removeEventListener('keydown', esc); };
-  }, [open]);
+  }, [open, looks, who]);
 
   const pick = (id: SkinId) => {
     const next = skinOf(id);

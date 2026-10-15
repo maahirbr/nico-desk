@@ -34,6 +34,7 @@ import { PasteChat } from './PasteChat';
 import { TaskDrafts } from './TaskDrafts';
 import type { SentenceRead } from '@/lib/sentence';
 import { Count } from './LimitNotice';
+import { Fold, FoldChev } from './Fold';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
@@ -599,9 +600,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             </div>
 
             <button className="log-toggle small-toggle" aria-expanded={showLog} onClick={() => setShowLog(!showLog)}>
-              <span aria-hidden>{showLog ? '▾' : '▸'}</span> History <span className="count-badge">{entries.length}</span>
+              <FoldChev /> History <span className="count-badge">{entries.length}</span>
             </button>
-            {showLog && (
+            <Fold open={showLog}>
               <ol className="log">
                 {entries.map((e) => (
                   <li key={e.key}>
@@ -610,7 +611,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                   </li>
                 ))}
               </ol>
-            )}
+            </Fold>
           </>
         )}
       </motion.aside>

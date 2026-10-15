@@ -486,7 +486,7 @@ A pill means a status, a choice of date or the search field. Nothing else is a c
 
 ## Motion
 
-Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with three named exceptions: a status chip eases its colour, and a tick and the Home trend line draw their strokes. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
+Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with these named exceptions: a status chip eases its colour; a tick, the Home trend line and the ledger ring draw their strokes; a fold opens its height; and the focus ring fades in its colour. The curve is the settle curve `--ease`, `cubic-bezier(.2, .8, .2, 1)`: quick out of the gate, a long soft landing. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
 
 1. **A line arrives.** A committed or asked line fades in and rises 8px, 180ms, ease-out. It happens on the page where the line lands.
 2. **A date moves.** The old date strikes through over 160ms, then the new date slides in from 6px below, 200ms. The struck date stays.
@@ -509,6 +509,13 @@ Other motion is not a gesture. It is the screen keeping up with the user.
 - **A dithered picture is shown.** Only in empty states, the 404 and error pages, the sign-in screen and the people page header. It is an ordered dither (`web/lib/dither.ts`) in `--dither-ink`, a thin tint of the skin accent. It never sits under text and is hidden from screen readers. In empty states and on the 404 and error pages it fades in by rows, once, from the top: each row is its own path and starts `--dither-spread` times its depth (0 to 120ms) after the first, fading over `--dur-dither` (160ms), so the picture is done within 280ms, by opacity only. The sign-in screen and the people header stay still.
 - **A new comment arrives.** A comment you post rises in 8px and fades in over 180ms (the `.arrive` class, `--dur-arrive`). A comment already in the thread when the page opens does not move.
 - **A mention chip is picked.** When you pick a person, task or project with @ or #, a chip for it appears under the comment box and pops in from a scale of `--pop-scale-from` (0.8) with a fade, over `--dur-pop` (140ms). No overshoot. Chips already there when you edit a comment show at once.
+- **Clickable text is hovered.** A text link or text button gets no underline. A faint accent tint (`--link-tint`, 12% of the accent) with `--radius-flag` corners fades in behind it over `--dur-hover` (150ms), by opacity only. The text turns the accent and reads a touch bolder from a hairline stroke (`--link-stroke`), so nothing reflows. Keyboard focus shows the same look. On touch screens there is no hover state.
+- **A control is pressed.** A button scales to `--press-scale` (0.96) and a card to `--press-scale-card` (0.98) while it is held.
+- **A focus ring appears.** The ring fades in its colour over `--dur-hover` (150ms), a named exception.
+- **A fold opens.** A fold-out list (Done this week, Dropped, Completed tasks, Update log, History, Removed lines) opens its height on grid rows from `0fr` to `1fr` and fades in over `--dur-fold` (240ms), a named exception. Its chevron is a drawn arrow that turns 90 degrees by transform. A closed fold is inert, so it takes no tab stop. It closes the same way.
+- **A checkpoint or ask is ticked.** The tick draws itself in the box, the same as a task (`--dur-tick`).
+- **A link or invite is copied.** The button says "Copied" for about 1.6 seconds, and a tick draws itself before the word over `--dur-tick`.
+- **The ledger ring draws in.** Beside the kept share on the ledger, a small ring draws its arc to the share (`stroke-dashoffset`, a named exception) over `--dur-slide` (200ms), once per session. Reduced motion and a repeat visit show it at once.
 - **The status icon morphs.** When a status changes, the ring stays, the old glyph shrinks to half size and fades out while the new glyph pops in from a scale of 0.5, both over `--dur-glyph` (120ms). A tick draws its stroke as it arrives (`--dur-tick`). It does not run on first render.
 - **A confirmation appears.** A small bar at the foot of the screen fades in over `--dur-toast` (160ms), stays for `--dwell-confirm`, then fades out. It has `aria-live="polite"`. At most three show at once.
 - **Sounds.** Off until a person turns on Sounds in the account menu (the `nd_sound` cookie). Three Web Audio tones, no files, each under 200ms and quiet: a soft ping for a new notice, a light tick for Done, a low tone for a refused action. None plays on page load. Reduced motion does not mute them, only the switch does (`components/sound.ts`).
@@ -576,7 +583,7 @@ Check every screen against this list before showing it. An element that breaks a
 5. **Few sizes.** Per screen, at most one date size, one title size and three text sizes.
 
 ### Colour
-6. **One accent, plain meanings.** Terracotta is dates, the main button and you. Red is Late and the Blocked chip. Amber is At risk. The other status chips take their one fill each. Nothing else takes a colour. No gradients, no glows.
+6. **One accent, plain meanings.** Terracotta is dates, the main button and you. Red is Late and the Blocked chip. Amber is At risk. The other status chips take their one fill each. Nothing else takes a colour. No gradients, no glows. The faint tint behind hovered clickable text (see Motion) is a fill, not a glow.
 
 ### Material
 7. **One shadow per card,** and only on cards. Lines never get a shadow or a box.
@@ -646,7 +653,7 @@ Two skins are offered, at the PM's call (13 Oct): Warm and Cool. Each comes in L
 | Id | Name in the menu | Was | Type | Accent (day / night) | Shape |
 |---|---|---|---|---|---|
 | w | Warm (Default) | NicoWarm | Inter, Fraunces titles | `#b3522c` / `#e07b4f` | 8px controls, 12px cards, warm paper, dark sidebar |
-| m | Cool | NicoOS | System font stack, no download | `#0062cc` / `#64a8ff` | 10px controls, 18px cards, 7px pills, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
+| m | Cool | NicoOS | Geist and Geist Mono through `next/font/google`, the system face as the fallback | `#0062cc` / `#64a8ff` | 10px controls, 18px cards, 7px pills, grey window with white cards, translucent source-list sidebar (solid where blur is not supported), segmented pickers, Apple green and teal for done and ahead |
 
 The token blocks for the retired skins (a NicoPlain, b NicoCalm, c NicoSoft, i NicoNote) are still in `tokens.css` but are not offered. The base `:root` values (once NicoPlain) stay, since W and M override them.
 

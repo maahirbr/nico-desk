@@ -36,6 +36,7 @@ import { FreshDot } from './viewer';
 import { playFor } from './sound';
 import { isRealEnter } from './ime';
 import { Count } from './LimitNotice';
+import { Fold, FoldChev } from './Fold';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
 // table where each task shows what it is about, its owner, date and status. Status changes in the
@@ -281,20 +282,20 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             <>
               <div className="list-head" style={{ marginTop: 22 }}>
                 <button className="log-toggle small-toggle" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
-                  <span aria-hidden>{doneOpen ? '▾' : '▸'}</span> Completed tasks <span className="count-badge">{closedRows.length}</span>
+                  <FoldChev /> Completed tasks <span className="count-badge">{closedRows.length}</span>
                 </button>
                 {doneOpen && closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
               </div>
-              {doneOpen && table(closedRows, '')}
+              <Fold open={doneOpen}>{table(closedRows, '')}</Fold>
             </>
           )}
         </div>
       </div>
 
       <button className="log-toggle" aria-expanded={logOpen} onClick={() => setLogOpen(!logOpen)}>
-        <span aria-hidden>{logOpen ? '▾' : '▸'}</span> Update log <span className="count-badge">{log.length}</span>
+        <FoldChev /> Update log <span className="count-badge">{log.length}</span>
       </button>
-      {logOpen && (
+      <Fold open={logOpen}>
         <div className="card card-pad">
           {log.length === 0 ? <p className="empty">No updates logged yet.</p> : (
             <ol className="log">
@@ -307,7 +308,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             </ol>
           )}
         </div>
-      )}
+      </Fold>
 
       {openId && (
         <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList}

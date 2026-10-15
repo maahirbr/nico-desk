@@ -13,7 +13,7 @@ import { Help } from './HelpMode';
 import { SortPick } from './SortPick';
 import { motion } from 'motion/react';
 import { drawerMotion } from './motion';
-import { CountUp } from './motion-ui';
+import { CountUp, KeptRing } from './motion-ui';
 import { useRemembered } from './remember';
 
 // The on-time ledger. Judged against the date first given (INTENT.md principle 1). Every number
@@ -84,7 +84,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
 
       <div className="stats">
         <Help term="ledger_kept" host><button className="card stat" onClick={() => show(`Kept on the first date, ${period}`, tasks.filter(MATCH.kept))}>
-          <div className="stat-n">{kAll.pct === null ? 'n/a' : <><CountUp id="ledger-kept" value={kAll.pct} />%</>}</div><div className="stat-l">Kept on the first date, {period}</div>
+          <div className="stat-n">{kAll.pct === null ? 'n/a' : <><KeptRing id="ledger-kept" pct={kAll.pct} /><CountUp id="ledger-kept" value={kAll.pct} />%</>}</div><div className="stat-l">Kept on the first date, {period}</div>
         </button></Help>
         <Help term="ledger_closed_ok" host><button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
           <div className="stat-n"><CountUp id="ledger-closed-ok" value={tasks.filter(MATCH.kept).length} /></div><div className="stat-l">Closed on time or ahead</div>

@@ -23,6 +23,7 @@ import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
+import { Fold, FoldChev } from './Fold';
 
 const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', week: 'group_this_week', later: 'group_later' };
 
@@ -161,11 +162,11 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section className="group">
           <div className="list-head">
             <Help term="done_this_week" host><button className="log-toggle small-toggle" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
-              <span aria-hidden>{showDone ? '▾' : '▸'}</span> Done this week <span className="count-badge">{done.length}</span>
+              <FoldChev /> Done this week <span className="count-badge">{done.length}</span>
             </button></Help>
             {showDone && done.length > 1 && <SortPick value={doneSort} onChange={setDoneSort} />}
           </div>
-          {showDone && <div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
+          <Fold open={showDone}><div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
         </section>
       )}
 
@@ -173,11 +174,11 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section className="group">
           <div className="list-head">
             <Help term="status_dropped" host><button className="log-toggle small-toggle" aria-expanded={showDropped} onClick={() => setShowDropped(!showDropped)}>
-              <span aria-hidden>{showDropped ? '▾' : '▸'}</span> Dropped <span className="count-badge">{dropped.length}</span>
+              <FoldChev /> Dropped <span className="count-badge">{dropped.length}</span>
             </button></Help>
             {showDropped && dropped.length > 1 && <SortPick value={droppedSort} onChange={setDroppedSort} />}
           </div>
-          {showDropped && <div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div>}
+          <Fold open={showDropped}><div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
         </section>
       )}
 

@@ -47,7 +47,8 @@ describe('durations are tokens and stay under 300ms', () => {
 
 describe('only transform and opacity move', () => {
   const keyframes = [...globals.matchAll(/@keyframes\s+([\w-]+)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g)].map((m) => ({ name: m[1], body: m[2] }));
-  const ALLOWED = new Set(['opacity', 'transform', 'stroke-dashoffset']);
+  // outline-color is the focus ring fade, a named exception in DESIGN.md Motion.
+  const ALLOWED = new Set(['opacity', 'transform', 'stroke-dashoffset', 'outline-color']);
   // The edge fade on scrolling tab rows is driven by scroll position, not by time (animation-timeline), and has no duration.
   const SCROLL_DRIVEN = new Set(['fade-l-in', 'fade-r-out']);
 

@@ -675,3 +675,14 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   now `microphone=(self)`: this site only, camera and location stay blocked. A new project opened with `router.push`
   kept the layout's old project-people map, so its Owner list was empty until a reload. `ProjectForm` now refreshes
   after the push. Rollback: `git revert` this commit.
+
+- **2026-10-16 · Opus 5.5 · Clickable text gets a soft tint, motion settles, and Cool uses Geist.** The repo owner asked
+  for hovered text with no underline, for better motion and structure taken from the handoff design system of another of
+  their projects (they approved the borrowing), and for more drawn SVG motion. A text link or text button now fades in a
+  faint accent tint behind it and turns the accent with a hairline stroke, so nothing reflows. A glow was asked for, but
+  DESIGN.md bans glows, and the repo owner picked the tint instead. From the handoff: the settle curve for `--ease`, press
+  scales of 0.96 for buttons and 0.98 for cards, a focus ring that fades in, fold-outs that open on grid rows and go inert
+  when closed, and Escape in the account menu that closes an open flyout before the menu. New drawn motion: a tick in
+  plan checkpoints and asks, a tick after Copy link and Copy invite, and a ring beside the ledger's kept share. Each new
+  stroke or height move is a named exception in DESIGN.md Motion. Cool now uses Geist and Geist Mono, which `layout.tsx`
+  already loaded, in place of the system face. Rollback: `git revert` this commit.

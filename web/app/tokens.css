@@ -135,9 +135,13 @@
   --shadow-1: 0 1px 2px rgb(17 19 23 / 0.05), 0 6px 20px rgb(17 19 23 / 0.06);
   --scrim: rgb(17 19 23 / 0.4);
 
-  /* Motion: transform and opacity only, with named exceptions: a status chip eases its colour,
-     and a tick and the Home trend line draw their strokes. Nothing loops. Nothing runs past 300ms except the first-load stagger. */
-  --ease: ease-out;
+  /* Motion: transform and opacity only, with named exceptions: a status chip eases its colour, a tick, a
+     checkpoint and the Home trend line draw their strokes, a fold opens its height and the focus ring fades its
+     colour. Nothing loops. Nothing runs past 300ms except the first-load stagger. --ease is the settle curve:
+     quick out of the gate, a long soft landing. */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --dur-hover: 150ms;
+  --dur-fold: 240ms;
   --dur-arrive: 180ms;
   --dur-strike: 160ms;
   --dur-slide: 200ms;
@@ -149,7 +153,8 @@
   --panel-shift: 32px;
   --slide: 6px;
   --state-scale-from: 0.96;
-  --press-scale: 0.98;
+  --press-scale: 0.96;
+  --press-scale-card: 0.98;
   --page-shift: 4px;
   --dur-page: 160ms;
   --dur-tab: 160ms;
@@ -170,6 +175,9 @@
   --check-tick: var(--on-primary);
   /* Dithered pictures (empty states, sign-in, people header): the accent, thinned into the page. Decoration only. */
   --dither-ink: color-mix(in srgb, var(--primary) 30%, var(--surface));
+  /* Clickable text on hover: a soft accent tint behind it and a hair of extra weight (globals.css, Clickable text). */
+  --link-tint: color-mix(in srgb, var(--primary) 12%, transparent);
+  --link-stroke: 0.35px;
   /* How long the confirmation stays. A wait, not a movement, so reduced motion keeps it. */
   --dwell-confirm: 4s;
 }
@@ -534,6 +542,10 @@
     --dur-dither: 0ms;
     --dither-spread: 0ms;
     --dur-glyph: 0ms;
+    --dur-hover: 0ms;
+    --dur-fold: 0ms;
+    --press-scale: 1;
+    --press-scale-card: 1;
   }
 }
 
@@ -744,8 +756,9 @@
    to solid under prefers-reduced-transparency. Every text pair is checked against the worst thing that can sit behind
    the glass (see the report in the commit message), not only against the base colour. */
 :root[data-skin="m"] {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Geist, loaded in layout.tsx through next/font/google, with the system face as the fallback. */
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
   --font-date: var(--font-sans);
   --type-date-xl: 600 28px/1.05 var(--font-sans);
   --type-date-lg: 600 21px/1.05 var(--font-sans);

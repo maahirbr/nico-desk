@@ -33,3 +33,17 @@ export function CountUp({ value, id }: { value: number; id: string }) {
 export function SlideInd({ group, className }: { group: string; className: string }) {
   return <motion.span layoutId={group} className={className} aria-hidden {...indicatorMotion()} />;
 }
+
+// The ring beside the ledger's kept share: an arc of the share, drawn once per session (.ring-in in globals.css).
+// The server writes the class so a hard load draws it with no flash. Reduced motion shows the arc at once.
+export function KeptRing({ pct, id }: { pct: number; id: string }) {
+  const first = useFirstView(`ring:${id}`);
+  const draw = typeof window === 'undefined' ? true : first;
+  return (
+    <svg className={`kept-ring${draw ? ' ring-in' : ''}`} viewBox="0 0 36 36" aria-hidden suppressHydrationWarning>
+      <circle className="kept-track" cx="18" cy="18" r="15" />
+      <circle className="kept-arc" cx="18" cy="18" r="15" pathLength={100} strokeDasharray={`${pct} 100`}
+        style={{ '--ring-from': pct } as React.CSSProperties} />
+    </svg>
+  );
+}

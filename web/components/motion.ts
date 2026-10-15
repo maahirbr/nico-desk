@@ -51,6 +51,8 @@ export function useClosing(onClose: () => void): [boolean, () => void] {
 // Shared presets for the `motion` package (Select, date picker). Each returns props to spread on a
 // `motion.*` element. Under reduced motion they return no animation at all. Nothing runs over 0.3s.
 const OFF = { initial: false as const, transition: { duration: 0 } };
+// The settle curve, the same as --ease in tokens.css: quick out of the gate, a long soft landing.
+const EASE_OUT = [0.2, 0.8, 0.2, 1] as [number, number, number, number];
 
 // A bottom sheet or drawer rising from the edge.
 export function sheetMotion() {
@@ -72,7 +74,7 @@ export function popoverMotion(origin: string) {
   if (reduced()) return { ...OFF, style: { transformOrigin: origin }, exit: { opacity: 0, transition: { duration: 0 } } };
   return {
     initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96, transition: { duration: 0.1 } },
-    transition: { duration: 0.14, ease: [0.2, 0, 0, 1] as [number, number, number, number] }, style: { transformOrigin: origin },
+    transition: { duration: 0.14, ease: EASE_OUT }, style: { transformOrigin: origin },
   };
 }
 
@@ -81,7 +83,7 @@ export function fadeShift(index = 0) {
   if (reduced()) return OFF;
   return {
     initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.16, delay: Math.min(index, 6) * 0.03, ease: [0.2, 0, 0, 1] as [number, number, number, number] },
+    transition: { duration: 0.16, delay: Math.min(index, 6) * 0.03, ease: EASE_OUT },
   };
 }
 
@@ -94,8 +96,6 @@ export function focusOnDesktop(el: HTMLElement | null) {
 // ---------- motion pass (workstream 4) ----------
 // Every value below stays under 0.3s, except the first-load stagger, which is CSS (globals.css .stagger).
 // Each preset returns nothing that moves under reduced motion.
-
-const EASE_OUT = [0.2, 0, 0, 1] as [number, number, number, number];
 
 // A side drawer springing in from the right. Pass `closing` to send it back out.
 // Spread on a `motion.aside`.

@@ -14,6 +14,7 @@ import { playFor } from './sound';
 import { SlideInd } from './motion-ui';
 import { StatusNudge } from './StatusNudge';
 import { moveWithWords, type StatusKey } from './task-ui';
+import { FoldChev } from './Fold';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
 
@@ -88,7 +89,7 @@ export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: bo
     <nav className="nav" aria-label="Views">
       {main.map(link)}
       <button className="nav-more" aria-expanded={moreOpen} onClick={() => setMoreOpen(!moreOpen)}>
-        <Icon d={ICON.more} />More<span className="chev-r" aria-hidden>{moreOpen ? '▾' : '▸'}</span>
+        <Icon d={ICON.more} />More<span className="chev-r"><FoldChev /></span>
       </button>
       <div className={`nav-sub${moreOpen ? ' open' : ''}`}>{more.map(link)}</div>
       {!readOnly && <Link className="nav-new" href="/tasks/new" aria-current={path === '/tasks/new' ? 'page' : undefined}>+ New task</Link>}

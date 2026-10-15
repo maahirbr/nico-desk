@@ -18,12 +18,13 @@ import { ImportPanel, Inbox } from './Minutes';
 import { arrivals, focusOnDesktop } from './motion';
 import { MotionRow, MovedDate, StateSelect } from './rowmotion';
 import { Select } from './Select';
-import { Modal } from './task-ui';
+import { CheckTick, Modal } from './task-ui';
 import { SlideInd } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { notify } from './toast';
 import { useReadOnly } from './readonly';
 import { isRealEnter } from './ime';
+import { Fold, FoldChev } from './Fold';
 
 // A partner plan: lines of work, each with an owner on our side, a partner person, a mode,
 // checkpoints and a status. Rows open for detail. Every change is one call to
@@ -219,7 +220,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           <td className="num">{l.num}</td>
           <td className="what">
             <button className="row-open" aria-expanded={open} onClick={toggle}>
-              <span className="chev" aria-hidden>{open ? '▾' : '▸'}</span>
+              <span className="chev"><FoldChev /></span>
               <span className="what-title">{l.what}{nAct > 0 && <span className="act-chip">{nAct} {nAct === 1 ? 'action' : 'actions'}</span>}</span>
             </button>
           </td>
@@ -281,8 +282,8 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                       <ul className="ms">
                         {sortedCheckpoints(l).map((c) => (
                           <li key={c.id} className={`${c.done ? 'ticked' : ''}${next?.cpId === c.id && l.status !== 'Done' ? ' next' : ''}${!c.done && c.dueOn && c.dueOn < today ? ' late' : ''}`}>
-                            <input type="checkbox" checked={c.done} disabled={busy} aria-label={`Tick checkpoint ${c.label}`}
-                              onChange={(e) => op({ op: 'tickCheckpoint', lineId: l.id, cpId: c.id, done: e.target.checked })} />
+                            <span className="trow-check"><input type="checkbox" checked={c.done} disabled={busy} aria-label={`Tick checkpoint ${c.label}`}
+                              onChange={(e) => op({ op: 'tickCheckpoint', lineId: l.id, cpId: c.id, done: e.target.checked })} /><CheckTick /></span>
                             <span>
                               <span className="ms-date">{c.dueOn ? fmtDate(c.dueOn) : 'No date'} </span><span className="ms-label">{c.label}</span>
                               {c.done && c.doneOn && <span className="ms-stamp"><Stamp on={c.doneOn} due={c.origDueOn ?? c.dueOn} /></span>}
@@ -408,9 +409,9 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
           {state.removed.length > 0 && (
             <section className="group">
               <button className="log-toggle small-toggle" aria-expanded={removedOpen} onClick={() => setRemovedOpen(!removedOpen)}>
-                <span aria-hidden>{removedOpen ? '▾' : '▸'}</span> Removed lines <span className="count-badge">{state.removed.length}</span>
+                <FoldChev /> Removed lines <span className="count-badge">{state.removed.length}</span>
               </button>
-              {removedOpen && (
+              <Fold open={removedOpen}>
                 <div className="removed-list">
                   {state.removed.map((l) => (
                     <div key={l.id} className="card removed-row">
@@ -422,7 +423,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                     </div>
                   ))}
                 </div>
-              )}
+              </Fold>
             </section>
           )}
         </>
@@ -439,7 +440,7 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
                 const late = !a.done && !!a.dueOn && a.dueOn < today;
                 return (
                   <label key={a.id} className={`ask-card${a.done ? ' ticked' : ''}`}>
-                    <input type="checkbox" checked={a.done} disabled={busy} onChange={(e) => op({ op: 'tickAsk', askId: a.id, done: e.target.checked })} />
+                    <span className="trow-check"><input type="checkbox" checked={a.done} disabled={busy} onChange={(e) => op({ op: 'tickAsk', askId: a.id, done: e.target.checked })} /><CheckTick /></span>
                     <span className="ask-body">
                       <span className="ask-head">
                         <span className="ask-title">{a.short}</span>

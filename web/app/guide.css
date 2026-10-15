@@ -45,7 +45,7 @@
 /* ---------- Home: the first-visit note ---------- */
 .guide-note { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); margin: 0 0 var(--space-md); padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
   background: var(--sunk); border-radius: var(--radius-control); font: var(--type-meta); color: var(--ink); }
-.guide-note a { color: var(--primary); text-decoration: underline; text-underline-offset: var(--space-xxs); }
+.guide-note a { color: var(--primary); }
 .guide-note-x { flex: none; display: grid; place-items: center; width: var(--button-height); height: var(--button-height); padding: 0; background: none; border: 0; border-radius: var(--radius-control); color: var(--ink-2); cursor: pointer;
   transition: background var(--dur-state) var(--ease), transform var(--dur-state) var(--ease); }
 .guide-note-x:hover { background: var(--pill); color: var(--ink); }
