@@ -58,7 +58,12 @@ async function meAs(id: string): Promise<Me> {
 }
 
 const base = { name: 'Gift wrap drive', kind: 'tasks' as const, ownerId: OWNER, goal: '', workstreams: [], members: [] };
-const mk = (over: Partial<typeof base> = {}) => createProject(db, LEAD, TEAM_ID, { ...base, ...over });
+// 15 Oct: only an admin sees every project, so the team lead is given view of each one made here.
+const mk = async (over: Partial<typeof base> = {}) => {
+  const p = await createProject(db, LEAD, TEAM_ID, { ...base, ...over });
+  await db.query(`INSERT INTO project_viewers (project_id, person_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [p.id, LEAD]);
+  return p;
+};
 const rhythmOf = async (id: string): Promise<Rhythm> => {
   const p = await getProject(db, id);
   return { meetEvery: p.meetEvery, meetDay: p.meetDay, meetNext: p.meetNext, meetLast: p.meetLast };
@@ -477,6 +482,8 @@ describe('the routes', () => {
     expect((await rhythmRoute(req(`/api/v1/projects/${p.id}/meeting`, 'PUT', { every: 'daily' }), params(p.id))).status).toBe(400);
     expect((await rhythmRoute(req(`/api/v1/projects/${p.id}/meeting`, 'PUT', { every: 'weekly', day: 8 }), params(p.id))).status).toBe(400);
     state.jar = { [COOKIE]: signSession(OTHER) };
+    expect((await rhythmRoute(req(`/api/v1/projects/${p.id}/meeting`, 'PUT', { every: 'weekly' }), params(p.id))).status).toBe(404); // cannot see it
+    await db.query(`INSERT INTO project_viewers (project_id, person_id) VALUES ($1, $2)`, [p.id, OTHER]); // sees it, may not run it
     expect((await rhythmRoute(req(`/api/v1/projects/${p.id}/meeting`, 'PUT', { every: 'weekly' }), params(p.id))).status).toBe(403);
     expect((await heldRoute(req(`/api/v1/projects/${p.id}/meeting/held`, 'POST', {}), params(p.id))).status).toBe(403);
     expect((await rhythmOf(p.id)).meetEvery).toBeNull();

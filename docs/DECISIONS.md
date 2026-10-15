@@ -647,3 +647,16 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   glance; the meaning of each word is unchanged. A project's people now sit on an even grid (three columns on a wide
   screen, two on a phone), so each row lines up under the one above, and a long role wraps instead of being cut off.
   Rollback: `git revert` this commit.
+
+- **2026-10-15 · Opus 5.5 · Only admins see every project; the ledger by role, at the PM's call.** Who sees a project:
+  an admin sees all of them. Everyone else, leads included, sees the projects they own, lead, are on or were added to
+  as a viewer (project Settings, Viewers), and outside those only tasks they own, that wait on them, or that they
+  created with no project. `people.restricted` is no longer read and its Roster switch is gone; the column stays.
+  The Ledger: a lead or an admin sees everyone's record in full, whatever the project (a task outside their projects
+  shows, but is not a link). A member sees their own record and the full record of the people they work with now
+  (anyone on a live project they own, lead or are on, and anyone a task of theirs waits on or who waits on them).
+  Every task counts in those numbers; one the member may not see reaches the browser stripped of its title, words,
+  project and reasons, and shows as "N more in projects you are not on". A person page's on-time record follows the
+  same rule. Feedback: an admin can always reply, as can anyone with "replies to feedback". Unchanged: anyone creates
+  tasks and projects, every people list holds the whole roster, and anyone on a project can paste minutes into it.
+  No schema change. Shared with the team as the doc "Nico Desk: who sees what". Rollback: `git revert` this commit.

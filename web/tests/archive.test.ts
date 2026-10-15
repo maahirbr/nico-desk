@@ -126,8 +126,9 @@ describe('archiving a project', () => {
 describe('telling the previous owner a task moved away', () => {
   const unread = async (id: string) => (await s.listNotices(db, id, true)).filter((n) => n.kind === 'reassigned_away');
 
+  // The old owner made the task, so they still see it once it moves (15 Oct: only an admin sees every task).
   it('leaves an in-app notice for the old owner, and none for the new one', async () => {
-    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo' });
+    const t = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo' });
     await s.editTask(db, LEAD, t.id, { version: t.version, ownerId: 'per_cy' });
     const gone = await unread('per_bo');
     expect(gone).toHaveLength(1);
@@ -143,7 +144,7 @@ describe('telling the previous owner a task moved away', () => {
   });
 
   it('does not notify when the owner stays the same, and the notice can be marked read', async () => {
-    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo' });
+    const t = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo' });
     const e = await s.editTask(db, LEAD, t.id, { version: t.version, title: 'A new title' });
     expect(await unread('per_bo')).toHaveLength(0);
     await s.editTask(db, LEAD, t.id, { version: e.version, ownerId: 'per_cy' });

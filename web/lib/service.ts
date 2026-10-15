@@ -4,7 +4,7 @@ import { ApiError, bad, forbidden, notFound } from './errors';
 import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { isLeadOrAdmin } from './roles';
-import { seesProject, seesTask, seesTaskRow, sightOf, type Sight } from './sight';
+import { seesProject, seesTask, seesTaskRow, sightOf, workingWith, type Sight } from './sight';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
@@ -929,14 +929,16 @@ export type PersonView = {
 };
 
 // What one teammate is doing, drawn only from what a teammate can already read: team tasks and their logs, and
-// project membership. The on-time record follows the ledger's rule: leads and admins see everyone, a member sees only their own.
+// project membership. The on-time record follows the ledger's rule (lib/visibility.ts ledgerFor): leads and admins see
+// everyone's, a member their own and that of the people they work with. It is numbers only, so it counts every task.
 export async function personView(db: Db, teamId: string, meId: string, personId: string, today = todayIst(), weeks = 4): Promise<PersonView> {
   const person = await getPerson(db, teamId, personId);
   if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
   const viewerRoles = await rolesIn(db, teamId, meId);
-  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles);
+  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles) || (await workingWith(db, teamId, meId)).has(personId);
   const sight = await sightOf(db, teamId, meId);
-  const tasks = (await teamTasks(db, teamId, today)).filter((t) => seesTask(sight, t));
+  const everything = await teamTasks(db, teamId, today);
+  const tasks = everything.filter((t) => seesTask(sight, t));
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
   const open = tasks.filter((t) => t.statusCategory === 'open');
   const [proj, rec, ph] = await Promise.all([
@@ -965,7 +967,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     const to = mondayOf(today);
     const from = addDays(to, -7 * (weeks - 1));
     const sum: OnTimeRecord = { from, to, ahead: 0, onTime: 0, late: 0, openPastDue: 0, renegotiated: 0 };
-    for (const r of ledgerOf(tasks, from, to, personId)) {
+    for (const r of ledgerOf(everything, from, to, personId)) {
       sum.ahead += r.closedAhead; sum.onTime += r.closedOnTime; sum.late += r.closedLate;
       sum.openPastDue += r.openPastDue; sum.renegotiated += r.renegotiatedOpen + r.renegotiatedLate;
     }
@@ -979,7 +981,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
     recent: rec.rows.filter((r) => seesTaskRow(sight, r)).map(({ project_id, owner_id, created_by, blocked_on_id, ...line }) => line),
     record,
-    glance: mayRecord ? { week: weekSplit(tasks, personId, today), trend: onTimeTrend(tasks, personId, today) } : null,
+    glance: mayRecord ? { week: weekSplit(everything, personId, today), trend: onTimeTrend(everything, personId, today) } : null,
     phone: ph.rows[0]?.phone ?? null,
     teamName: ph.rows[0]?.team_name ?? '',
     hasPhoto: ph.rows[0]?.has_photo ?? false,

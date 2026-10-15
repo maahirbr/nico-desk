@@ -21,8 +21,8 @@ export default async function Admin() {
               <td><Person name={p.displayName} id={p.id} /></td>
               <td data-label="Title">{p.role}</td>
               <td data-label="Email" className="mono small">{p.email}</td>
-              <td data-label="Access" className="small"><span style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</span>{p.active && p.repliesFeedback ? ' · replies to feedback' : ''}{p.active && p.restricted ? ' · own projects only' : ''}</td>
-              {isAdmin && <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} email={p.email} restricted={p.restricted} repliesFeedback={p.repliesFeedback} />}</td>}
+              <td data-label="Access" className="small"><span style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</span>{p.active && p.repliesFeedback ? ' · replies to feedback' : ''}</td>
+              {isAdmin && <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} email={p.email} repliesFeedback={p.repliesFeedback} />}</td>}
             </tr>
           ))}
         </tbody>

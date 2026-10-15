@@ -435,7 +435,7 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   );
 }
 
-export function PersonControls({ id, active, roles, self, email, restricted, repliesFeedback }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; restricted: boolean; repliesFeedback: boolean }) {
+export function PersonControls({ id, active, roles, self, email, repliesFeedback }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; repliesFeedback: boolean }) {
   const { busy, error, run } = useSubmit();
   const toggle = (r: string) => (roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r]).filter((x) => x !== 'member');
   return (
@@ -448,9 +448,6 @@ export function PersonControls({ id, active, roles, self, email, restricted, rep
       </button>
       <button className="act" disabled={busy || self} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('admin') })}>
         {roles.includes('admin') ? 'Remove admin' : 'Make admin'}
-      </button>
-      <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { restricted: !restricted })}>
-        {restricted ? 'See all projects' : 'Own projects only'}
       </button>
       <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { repliesFeedback: !repliesFeedback })}>
         {repliesFeedback ? 'Stop feedback replies' : 'Can reply to feedback'}

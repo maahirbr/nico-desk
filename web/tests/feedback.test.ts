@@ -192,14 +192,12 @@ const meAs = async (id: string) => {
 };
 
 describe('replies', () => {
-  it('only people the Roster lets reply can reply; everyone reads replies; the writer sees new ones until seen', async () => {
+  it('an admin, or someone the Roster lets reply, can reply; everyone reads replies; the writer sees new ones until seen', async () => {
     const m = await member();
     signIn(m.id);
     await send({ body: 'the date picker is small on a phone' });
     const id = await noteId();
-    signIn(ADMIN);
-    expect((await replyReq(id, { body: 'looking into it' })).status).toBe(403); // admin, but not switched on
-    await s.patchPerson(db, ADMIN, TEAM_ID, ADMIN, { repliesFeedback: true });
+    signIn(ADMIN); // an admin replies without the Roster switch (15 Oct)
     expect((await replyReq(id, { body: 'Fixed in today\'s update, thanks!' })).status).toBe(200);
     expect((await replyReq(id, { body: '   ' })).status).toBe(400);
 
@@ -213,6 +211,10 @@ describe('replies', () => {
     signIn(m.id);
     expect((await seenReq()).status).toBe(200);
     expect(await newRepliesForMe(db, await meAs(m.id))).toEqual([]);
+
+    await s.patchPerson(db, ADMIN, TEAM_ID, 'per_ada', { repliesFeedback: true }); // not an admin, but switched on
+    signIn('per_ada');
+    expect((await replyReq(id, { body: 'me as well' })).status).toBe(200);
   });
 
   it('counts a reply on your own note as seen, refuses replies and seen marks under View as, and only an admin sets the switch', async () => {

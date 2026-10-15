@@ -28,7 +28,12 @@ const HIDDEN = 'prj_tiers'; // Loyalty tier pilot
 let db: Db;
 
 beforeAll(() => { process.env.NICO_TODAY = AS_OF; process.env.NICO_SESSION_SECRET = 'paste-test-secret'; delete process.env.DATABASE_URL; });
-beforeEach(async () => { db = await openDb(); state.testDb = db; state.jar = {}; });
+// 15 Oct: only an admin sees every project. These tests read LEAD and BO as seeing the whole board, so both are
+// given view of every fixture project; DEE stays tied to their own project only.
+beforeEach(async () => {
+  db = await openDb(); state.testDb = db; state.jar = {};
+  await db.query(`INSERT INTO project_viewers (project_id, person_id) SELECT p.id, v.id FROM projects p, (VALUES ($1), ($2)) AS v(id) ON CONFLICT DO NOTHING`, [LEAD, BO]);
+});
 
 async function meAs(id: string): Promise<Me> {
   const person = (await s.listPeople(db, TEAM_ID)).find((p) => p.id === id)!;
@@ -247,7 +252,7 @@ describe('apply', () => {
   });
 
   it('sets each status word through the service and returns the task as it was', async () => {
-    const lead = await meAs(LEAD);
+    const lead = await meAs('per_fay'); // the admin: this task has no project, so only an admin sees it besides its people
     const id = await taskIn('Plan weekend store roster'); // todo, owner per_eli
     let t = await s.getTask(db, id);
     let r = await applyProposal(db, lead, upd(id, t.version, { status: 'In progress' }));

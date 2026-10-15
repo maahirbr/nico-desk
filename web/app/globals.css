@@ -1052,6 +1052,7 @@ tr.grp th { border-bottom: 0; padding-bottom: 0; color: var(--ink-3); }
 .drill-name { font-weight: 600; text-decoration: none; }
 .drill-name:hover { color: var(--primary); }
 .drill-desc { color: var(--ink-2); margin-top: var(--space-xxs); }
+.drill-elsewhere { margin-top: var(--space-md); }
 .trail-list { list-style: none; padding: 0; margin: var(--space-sm) 0 0; display: flex; flex-direction: column; gap: var(--space-xs); font: var(--type-small); }
 .trail-list li { position: relative; padding-left: var(--space-md); }
 .trail-list .dot { position: absolute; left: 0; top: var(--space-xs); width: var(--space-xs); height: var(--space-xs); border-radius: var(--radius-full); background: var(--line-strong); }

@@ -18,6 +18,7 @@ import { SEE_ALL, sightOf } from '../lib/sight';
 const AS_OF = '2026-10-09';
 const LEAD = 'per_ada';
 const BO = 'per_bo';
+const ADMIN = 'per_fay'; // the one fixture admin: sees every project (15 Oct)
 const DEE = 'per_dee'; // restricted in these tests; no tie to the loyalty tier pilot
 const HIDDEN = 'prj_tiers';
 let db: Db;
@@ -38,7 +39,7 @@ async function meAs(id: string): Promise<Me> {
   return { person, realPerson: person, viewingAs: false, team: { id: TEAM_ID, name: 'Team', teamType: 'department' } };
 }
 const as = async (id: string, q: string): Promise<SearchHit[]> => search(db, TEAM_ID, await sightOf(db, TEAM_ID, id), q, AS_OF, id);
-const all = (q: string, me = LEAD) => as(me, q);
+const all = (q: string, me = ADMIN) => as(me, q);
 const taskIds = (hits: SearchHit[]) => hits.filter((h) => h.kind === 'task').map((h) => h.id).sort();
 const first = async (id: string) => (await s.listPeople(db, TEAM_ID)).find((p) => p.id === id)!.displayName.split(' ')[0].toLowerCase();
 
@@ -160,7 +161,7 @@ describe('filters', () => {
 
 describe('comment text', () => {
   it('is not searched any more: comments are off for V1 (14 Oct)', async () => {
-    await addComment(db, await meAs(LEAD), 'task', seenTask, 'The quokka sample needs another pass');
+    await addComment(db, await meAs(ADMIN), 'task', seenTask, 'The quokka sample needs another pass');
     expect((await all('quokka')).some((h) => h.kind === 'comment')).toBe(false);
   });
 });

@@ -6,10 +6,12 @@ import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
+import { workingWith } from '../lib/sight';
 import { TASK_PARAM, withTask } from '../components/taskUrl';
 
 const AS_OF = '2026-10-09';
 const LEAD = 'per_ada';
+const ADMIN = 'per_fay';
 let db: Db;
 
 beforeAll(() => { process.env.NICO_TODAY = AS_OF; });
@@ -35,7 +37,7 @@ describe('personView', () => {
   it('lists a person\'s open tasks, their projects, and nothing owned by others', async () => {
     const tasks = await s.teamTasks(db, TEAM_ID, AS_OF);
     const owner = tasks.find((t) => t.statusCategory === 'open')!.ownerId;
-    const v = await s.personView(db, TEAM_ID, LEAD, owner, AS_OF);
+    const v = await s.personView(db, TEAM_ID, ADMIN, owner, AS_OF); // only an admin sees every task (15 Oct)
     expect(v.person.id).toBe(owner);
     expect(v.open.length).toBe(tasks.filter((t) => t.statusCategory === 'open' && t.ownerId === owner).length);
     expect(v.open.every((t) => t.ownerId === owner && t.statusCategory === 'open')).toBe(true);
@@ -59,10 +61,16 @@ describe('personView', () => {
     expect(onA.waitingOnThem.map((x) => x.id)).not.toContain(t.id);
   });
 
-  it('shows the on-time record to a lead, an admin and the person, and to no other member', async () => {
-    const [a, b] = await plainMembers();
+  it('shows the on-time record to a lead, an admin, the person and the people they work with, and to no other member', async () => {
+    const members = await plainMembers();
+    const a = members[0];
+    const near = await workingWith(db, TEAM_ID, a.id);
+    const b = members.find((m) => m.id !== a.id && !near.has(m.id))!;
+    const c = members.find((m) => m.id !== a.id && near.has(m.id))!;
+    expect(b && c).toBeTruthy();
     expect((await s.personView(db, TEAM_ID, LEAD, a.id, AS_OF)).record).not.toBeNull();
     expect((await s.personView(db, TEAM_ID, a.id, a.id, AS_OF)).record).not.toBeNull();
+    expect((await s.personView(db, TEAM_ID, c.id, a.id, AS_OF)).record).not.toBeNull();
     expect((await s.personView(db, TEAM_ID, b.id, a.id, AS_OF)).record).toBeNull();
     const admin = (await s.listPeople(db, TEAM_ID)).find((p) => p.appRoles.includes('admin'))!;
     expect((await s.personView(db, TEAM_ID, admin.id, a.id, AS_OF)).record).not.toBeNull();

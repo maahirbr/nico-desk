@@ -3,8 +3,9 @@ import type { Tx } from './db';
 import { forbidden, notFound } from './errors';
 import { sameTeam } from './http';
 import { getProject, teamProjects, type Project } from './plan';
-import { getTask, teamTasks } from './service';
-import { seesProject, seesTask, sightOf, type Sight } from './sight';
+import { isLeadOrAdmin } from './roles';
+import { getTask, ledgerOf, ledgerTasksOf, teamTasks, type LedgerRow } from './service';
+import { seesProject, seesTask, sightOf, workingWith, type Sight } from './sight';
 import type { Task } from './derive';
 
 // What pages and routes read through: the team's tasks and projects as this viewer may see them (lib/sight.ts).
@@ -46,4 +47,46 @@ export async function assertSeesProject(db: Tx, me: Me, id: string | null | unde
 // Their pages filter instead.
 export async function assertSeesAll(db: Tx, me: Me): Promise<void> {
   if (!(await sightFor(db, me)).all) throw forbidden('You see only your own projects.');
+}
+
+// ---------- the ledger (15 Oct, the PM's call; docs/DECISIONS.md) ----------
+// A lead or an admin reads everyone's record in full, whatever the project. A member reads their own and that of the
+// people they work with now. Every task of those people counts, so the numbers are whole; a task the member may not
+// see arrives stripped (no title, words, project or reasons) and is counted, never opened.
+
+// A task kept for its numbers only: dates, outcome and flags stay; what it is and why it moved go.
+export const countOnly = (t: Task): Task => ({
+  ...t, title: '', description: null, note: null, projectId: null, workstream: null, health: null, priority: null, links: [],
+  renegotiations: t.renegotiations.map((r) => ({ ...r, reason: null })),
+  blocked: t.blocked && { ...t.blocked, ask: '' },
+});
+
+export type LedgerData = {
+  all: boolean; people: Set<string> | null; rows: LedgerRow[]; tasks: Task[]; prev: Task[]; openNow: Task[]; waitingOn: Task[];
+  countOnly: string[]; // stripped: a member may not open these
+  noLink: string[];    // shown in full to a lead or admin, but outside the projects they may open
+};
+
+export async function ledgerFor(db: Tx, me: Me, w: { from: string; to: string; prevFrom: string; prevTo: string; personId?: string; today?: string }): Promise<LedgerData> {
+  const [sight, team] = await Promise.all([sightFor(db, me), teamTasks(db, me.team.id, w.today)]);
+  const all = isLeadOrAdmin(me.person.appRoles);
+  const people = all ? null : await workingWith(db, me.team.id, me.person.id);
+  const inScope = (id: string | null | undefined) => !!id && (!people || people.has(id));
+  const personId = w.personId && inScope(w.personId) ? w.personId : undefined;
+  const scoped = team.filter((t) => inScope(t.ownerId));
+  const unseen = new Set<string>();
+  const shape = (ts: Task[]) => ts.map((t) => {
+    if (seesTask(sight, t)) return t;
+    unseen.add(t.id);
+    return all ? t : countOnly(t);
+  });
+  const data = {
+    rows: ledgerOf(scoped, w.from, w.to, personId),
+    tasks: shape(ledgerTasksOf(scoped, w.from, w.to, personId)),
+    prev: shape(ledgerTasksOf(scoped, w.prevFrom, w.prevTo, personId)),
+    openNow: shape(scoped.filter((t) => t.statusCategory === 'open' && (!personId || t.ownerId === personId))),
+    // Open tasks waiting on someone in view, for their "others waiting on them" count.
+    waitingOn: shape(team.filter((t) => t.statusCategory === 'open' && inScope(t.blocked?.onId))),
+  };
+  return { all, people, ...data, countOnly: all ? [] : [...unseen], noLink: all ? [...unseen] : [] };
 }
