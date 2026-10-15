@@ -8,7 +8,8 @@ import { useReadOnly } from './readonly';
 // "Moved off your plate": tasks that were yours and went to someone else. It is an in-app notice only, nothing is
 // sent anywhere. Dismiss marks the notice read. While an admin views as this person, the line shows but cannot be dismissed.
 
-export type MovedAway = { noticeId: string; taskId: string; title: string; toName: string | null };
+// canOpen is false when the task now sits outside what this person sees: the title shows, with no link (15 Oct).
+export type MovedAway = { noticeId: string; taskId: string; title: string; toName: string | null; canOpen: boolean };
 
 export function MovedAwayCard({ items }: { items: MovedAway[] }) {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function MovedAwayCard({ items }: { items: MovedAway[] }) {
       {shown.map((i) => (
         <div key={i.noticeId} className="callout-row moved-row">
           <span className="moved-text">
-            <Link className="rlink" href={`/tasks/${i.taskId}`}>{i.title}</Link>
+            {i.canOpen ? <Link className="rlink" href={`/tasks/${i.taskId}`}>{i.title}</Link> : <b>{i.title}</b>}
             {i.toName ? ` now belongs to ${i.toName}.` : ' was given to someone else.'}
           </span>
           {!readOnly && <button className="mini-btn" onClick={() => dismiss(i.noticeId)}>Dismiss</button>}

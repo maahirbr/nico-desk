@@ -647,7 +647,7 @@ export function ledgerOf(all: Task[], from: string, to: string, personId?: strin
 
 // ---------- notices and reminders (FR-36 to FR-39) ----------
 
-export type Notice = { id: string; taskId: string; taskTitle: string; kind: string; forDate: string; createdAt: string; readAt: string | null };
+export type Notice = { id: string; taskId: string; taskTitle: string; kind: string; forDate: string; createdAt: string; readAt: string | null; canOpen: boolean };
 
 export async function listNotices(db: Db, meId: string, unreadOnly = false): Promise<Notice[]> {
   type Row = Notice & { team_id: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null };
@@ -659,12 +659,15 @@ export async function listNotices(db: Db, meId: string, unreadOnly = false): Pro
      ORDER BY n.read_at IS NOT NULL, n.created_at DESC LIMIT 100`,
     [meId, unreadOnly],
   );
-  // A task moved away from a restricted person (reassigned_away) can sit in a project they no longer see.
+  // A notice on a task this person cannot see is dropped, with one exception (15 Oct, the PM's call): "moved off your
+  // plate" still tells them a task that was theirs went to someone else, by its title only, with nothing to open.
   const sights = new Map<string, Sight>();
   for (const r of rows) if (!sights.has(r.team_id)) sights.set(r.team_id, await sightOf(db, r.team_id, meId));
-  return rows.filter((r) => seesTaskRow(sights.get(r.team_id)!, r)).map((r) => ({
-    id: r.id, taskId: r.taskId, taskTitle: r.taskTitle, kind: r.kind, forDate: r.forDate, createdAt: r.createdAt, readAt: r.readAt,
-  }));
+  return rows.flatMap((r) => {
+    const canOpen = seesTaskRow(sights.get(r.team_id)!, r);
+    if (!canOpen && r.kind !== 'reassigned_away') return [];
+    return [{ id: r.id, taskId: r.taskId, taskTitle: r.taskTitle, kind: r.kind, forDate: r.forDate, createdAt: r.createdAt, readAt: r.readAt, canOpen }];
+  });
 }
 
 export async function markNoticeRead(db: Db, meId: string, id: string): Promise<void> {

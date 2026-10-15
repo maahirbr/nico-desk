@@ -660,3 +660,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   same rule. Feedback: an admin can always reply, as can anyone with "replies to feedback". Unchanged: anyone creates
   tasks and projects, every people list holds the whole roster, and anyone on a project can paste minutes into it.
   No schema change. Shared with the team as the doc "Nico Desk: who sees what". Rollback: `git revert` this commit.
+
+- **2026-10-15 · Opus 5.5 · "Moved off your plate" still shows when the task leaves your sight, at the PM's call.** Since
+  only admins see every project, a task with no project that someone else made disappears for its old owner once it is
+  given to another person. Their "Moved off your plate" notice now still shows on Home, with the task's title only and
+  no link; every other notice on a task they cannot see is still dropped. Rollback: `git revert` this commit.

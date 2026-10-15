@@ -32,7 +32,7 @@ export default async function Home() {
   // Tasks that were mine and went to someone else (an in-app notice, nothing is sent outside the app).
   const ownerNow = new Map(all.map((x) => [x.id, x.ownerId]));
   const movedAway = notices.filter((n) => n.kind === 'reassigned_away').map((n) => ({
-    noticeId: n.id, taskId: n.taskId, title: n.taskTitle, toName: names[ownerNow.get(n.taskId) ?? ''] ?? null,
+    noticeId: n.id, taskId: n.taskId, title: n.taskTitle, toName: names[ownerNow.get(n.taskId) ?? ''] ?? null, canOpen: n.canOpen,
   }));
   return (
     <HomeView
