@@ -109,10 +109,13 @@ export async function voteFeedback(db: Db, me: Me, id: string, on: boolean): Pro
   return { votes: rows[0].n, mine: on };
 }
 
-// A reply to a note, only from someone the Roster lets reply. A reply on your own note counts as seen at once.
+// Who may reply to feedback: an admin, or someone the Roster lets reply (15 Oct). The page uses the same test.
+export const mayReplyFeedback = (p: { appRoles: string[]; repliesFeedback: boolean }) => p.repliesFeedback || p.appRoles.includes('admin');
+
+// A reply to a note, only from someone who may reply. A reply on your own note counts as seen at once.
 export async function replyFeedback(db: Db, me: Me, id: string, text: string): Promise<{ id: string }> {
   assertNotViewing(me);
-  if (!me.person.repliesFeedback) throw forbidden('Only the people building Nico Desk reply to feedback.');
+  if (!mayReplyFeedback(me.person)) throw forbidden('Only an admin or the people building Nico Desk reply to feedback.');
   const note = await noteOnTeam(db, me, id);
   const body = text.trim();
   if (!body) throw bad('invalid_body', 'Write a reply first.', 'body');

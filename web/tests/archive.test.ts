@@ -126,14 +126,23 @@ describe('archiving a project', () => {
 describe('telling the previous owner a task moved away', () => {
   const unread = async (id: string) => (await s.listNotices(db, id, true)).filter((n) => n.kind === 'reassigned_away');
 
+  // The old owner made the task, so they still see it once it moves (15 Oct: only an admin sees every task).
   it('leaves an in-app notice for the old owner, and none for the new one', async () => {
-    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo' });
+    const t = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo' });
     await s.editTask(db, LEAD, t.id, { version: t.version, ownerId: 'per_cy' });
     const gone = await unread('per_bo');
     expect(gone).toHaveLength(1);
-    expect(gone[0].taskId).toBe(t.id);
+    expect(gone[0]).toMatchObject({ taskId: t.id, canOpen: true });
     expect(await unread('per_cy')).toHaveLength(0);
     expect((await s.listNotices(db, 'per_cy', true)).map((n) => n.kind)).toContain('assigned');
+  });
+
+  it('still tells the old owner when the task leaves their sight: the title, nothing to open (15 Oct)', async () => {
+    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo' }); // no project, made by the lead
+    await s.editTask(db, LEAD, t.id, { version: t.version, ownerId: 'per_cy' });
+    const [n] = await unread('per_bo');
+    expect(n).toMatchObject({ taskId: t.id, taskTitle: t.title, canOpen: false });
+    expect((await s.listNotices(db, 'per_bo')).filter((x) => x.kind !== 'reassigned_away' && x.taskId === t.id)).toEqual([]);
   });
 
   it('does not notify someone who hands their own task on', async () => {
@@ -143,7 +152,7 @@ describe('telling the previous owner a task moved away', () => {
   });
 
   it('does not notify when the owner stays the same, and the notice can be marked read', async () => {
-    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo' });
+    const t = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo' });
     const e = await s.editTask(db, LEAD, t.id, { version: t.version, title: 'A new title' });
     expect(await unread('per_bo')).toHaveLength(0);
     await s.editTask(db, LEAD, t.id, { version: e.version, ownerId: 'per_cy' });

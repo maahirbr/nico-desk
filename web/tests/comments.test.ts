@@ -15,8 +15,8 @@ import { seenTasks } from '../lib/visibility';
 
 const AS_OF = '2026-10-09';
 const LEAD = 'per_ada';
-const DEE = 'per_dee'; // restricted in these tests
-const CY = 'per_cy'; // unrestricted
+const DEE = 'per_dee'; // a member with no tie to HIDDEN
+const CY = 'per_cy'; // a member who may view both projects (beforeEach)
 const HIDDEN = 'prj_tiers'; // DEE has no tie to it (see tests/visibility.test.ts)
 let db: Db;
 let hiddenTask: string;
@@ -32,6 +32,9 @@ beforeEach(async () => {
   const mine = (await seenTasks(db, await meAs(DEE))).find((t) => t.projectId)!;
   seenTask = mine.id;
   seenProject = mine.projectId!;
+  // 15 Oct: only an admin sees every project, so LEAD and CY are given view of the two projects these tests use.
+  for (const pr of [HIDDEN, seenProject]) for (const id of [LEAD, CY])
+    await db.query(`INSERT INTO project_viewers (project_id, person_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [pr, id]);
 });
 
 async function meAs(id: string, viewingAs = false): Promise<Me> {
@@ -203,7 +206,7 @@ describe('mention notices', () => {
     await editComment(db, lead, comment.id, `One [[person:${CY}]] two [[person:${DEE}]]`); // DEE cannot see it: not told
     expect(await told(CY)).toBe(1);
     expect(await told(DEE)).toBe(0);
-    const other = (await s.listPeople(db, TEAM_ID)).find((p) => p.active && ![LEAD, CY, DEE].includes(p.id))!;
+    const other = (await s.listPeople(db, TEAM_ID)).find((p) => p.active && p.appRoles.includes('admin'))!; // sees every task
     await editComment(db, lead, comment.id, `One [[person:${CY}]] two [[person:${other.id}]]`);
     expect(await told(CY)).toBe(1);
     expect(await told(other.id)).toBe(1);

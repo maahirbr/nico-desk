@@ -50,10 +50,16 @@ const FIN_SHOWN = 5;
 
 type Drill = { title: string; tasks: Task[] } | null;
 
-export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow, waitingOn, people, names, projectNames, seeAll }: {
+// countOnly: tasks a member may not open, stripped on the server; they count in every number and show in no list.
+// noLink: tasks a lead or admin reads in full here but cannot open, being outside their projects.
+export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow, waitingOn, countOnly, noLink, people, names, projectNames, seeAll }: {
   weeks: number; from: string; to: string; today: string; rows: LedgerRow[]; tasks: Task[]; prev: Task[]; openNow: Task[]; waitingOn: Task[];
+  countOnly: string[]; noLink: string[];
   people: { id: string; name: string; role: string }[]; names: Record<string, string>; projectNames: Record<string, string>; seeAll: boolean;
 }) {
+  const hidden = new Set(countOnly);
+  const plain = new Set(noLink);
+  const shown = (t: Task) => !hidden.has(t.id);
   const [drill, setDrill] = useState<Drill>(null);
   // The drill list's sort comes back the next time the ledger is opened in this browser (components/remember.ts).
   const [kept, keep] = useRemembered('ledger', { drillSort: 'recent' as EndedSort }, (raw) => ({ drillSort: endedSortOf(raw.drillSort) }), ['drillSort']);
@@ -68,7 +74,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   const keptDone = tasks.filter(MATCH.kept);
   const closed = tasks.filter((t) => t.outcome);
   // Blocked tasks come from the open list, so a block shows even when its first date is outside the window.
-  const attention = attentionList([...tasks, ...openNow.filter((t) => t.blocked)], names, today);
+  const attention = attentionList([...tasks, ...openNow.filter((t) => t.blocked)].filter(shown), names, today);
   const byId = new Map([...tasks, ...openNow].map((t) => [t.id, t]));
 
   return (
@@ -95,7 +101,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
       </div>
 
       <h2><Help term="delivery_habits">Delivery habits</Help> <span className="count-badge">{period}</span></h2>
-      <p className="sub" style={{ marginTop: -6 }}>{seeAll ? 'One card per person, in name order. Arrows compare with the same length of time before.' : 'Your own habits. Leads see the whole team.'}</p>
+      <p className="sub" style={{ marginTop: -6 }}>{seeAll ? 'One card per person, in name order. Arrows compare with the same length of time before.' : 'You and the people you work with now. Work from projects you are not on is counted, not shown.'}</p>
       {!people.some((p) => tasks.some((t) => t.ownerId === p.id) || openNow.some((t) => t.ownerId === p.id)) && <p className="empty">No one has tasks in this period.</p>}
       <div className="habit-grid">
         {people.map((p) => {
@@ -167,10 +173,10 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
             {attention.slice(0, ATTN_SHOWN).map((a) => (
               <li key={a.taskId} className="attn-item">
                 <div className="attn-top">
-                  <Link href={`/tasks/${a.taskId}`} className="drill-name">{a.title}</Link>
+                  <TaskName id={a.taskId} title={a.title} plain={plain} />
                   <span className={`attn-late${a.daysLate > 0 ? ' late-text' : ' dim'}`}>{a.daysLate > 0 ? `${a.daysLate} day${a.daysLate === 1 ? '' : 's'} late` : `Due ${fmtDate(a.dueOn)}`}</span>
                 </div>
-                <div className="small dim"><PersonLink id={a.ownerId}>{a.ownerName}</PersonLink>{a.projectId && <> · <Link className="rlink" href={`/projects/${a.projectId}`}>{projectNames[a.projectId]}</Link></>}</div>
+                <div className="small dim"><PersonLink id={a.ownerId}>{a.ownerName}</PersonLink>{a.projectId && <> · <ProjectName id={a.projectId} name={projectNames[a.projectId]} plain={plain.has(a.taskId)} /></>}</div>
                 <div className="attn-why"><span className="attn-k">Why</span><span className={a.whySource === 'none' ? 'late-text' : ''}>{a.whySource === 'move' ? `“${a.why}”` : a.why}</span></div>
                 <div className="attn-step"><span className="attn-k">Next</span>
                   <span>{a.step.text}{seeAll && a.remindPersonId &&<Link href={`/reminders#remind-${a.remindPersonId}`} className="attn-link">Draft a reminder</Link>}</span>
@@ -196,9 +202,9 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
             </p>
             {lateDone.length > 0 && (
               <ul className="fin-list">
-                {[...lateDone].sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)).slice(0, FIN_SHOWN).map((t) => (
+                {lateDone.filter(shown).sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)).slice(0, FIN_SHOWN).map((t) => (
                   <li key={t.id}>
-                    <Link href={`/tasks/${t.id}`} className="drill-name">{t.title}</Link>
+                    <TaskName id={t.id} title={t.title} plain={plain} />
                     <span className="small dim"> · <PersonLink id={t.ownerId}>{names[t.ownerId]}</PersonLink> · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? <Help term="flagged_early">flagged early</Help> : <Help term="missed">missed</Help>}</span>
                   </li>
                 ))}
@@ -214,37 +220,44 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         <div>
           <h3>Finished</h3>
           <dl>
-            <dt><Help term="ahead">Ahead</Help></dt><dd>Closed before the date first given.</dd>
-            <dt><Help term="on_time">On time</Help></dt><dd>Closed on the date first given.</dd>
-            <dt><Help term="late">Late</Help></dt><dd>Closed after the date first given, even if the date was moved and the new one was met. Two kinds:</dd>
-            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>The owner moved the date on or before the date first given.</dd>
-            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>The date passed before any move was logged.</dd>
+            <dt><Help term="ahead">Ahead</Help></dt><dd>Done before the first date.</dd>
+            <dt><Help term="on_time">On time</Help></dt><dd>Done on the first date.</dd>
+            <dt><Help term="late">Late</Help></dt><dd>Done after the first date, even if the date was moved.</dd>
+            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>Late, but the date was moved before it passed.</dd>
+            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>Late, and the date passed with no move.</dd>
           </dl>
         </div>
         <div>
-          <h3>Open</h3>
+          <h3>Still open</h3>
           <dl>
-            <dt>Open</dt><dd>Not closed or dropped yet. Past due means today is after its current date.</dd>
-            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Open and past due, or a date moved after the old one had passed, or closed after the current date. Target 0.</dd>
-            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>A new date logged on or before the date it replaced. Moved late means logged after.</dd>
+            <dt>Open</dt><dd>Not done or dropped yet.</dd>
+            <dt>Past due</dt><dd>Open, and today is after its date.</dd>
+            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Went past its date with no new date set first. Target: 0.</dd>
+          </dl>
+        </div>
+        <div>
+          <h3>Date changes</h3>
+          <dl>
+            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>New date set before the old one passed.</dd>
+            <dt><Help term="moved_late">Moved late</Help></dt><dd>New date set after the old one passed.</dd>
           </dl>
         </div>
       </div>
-
       </details>
 
-      {drill && <DrillPanel drill={drill} names={names} projectNames={projectNames} today={today} by={kept.drillSort} setBy={(v) => keep('drillSort', v)} onClose={() => setDrill(null)} />}
+      {drill && <DrillPanel drill={drill} hidden={hidden} plain={plain} names={names} projectNames={projectNames} today={today} by={kept.drillSort} setBy={(v) => keep('drillSort', v)} onClose={() => setDrill(null)} />}
     </>
   );
 }
 
 // The tasks behind a number: first date, each move with its reason, and how it ended.
-function DrillPanel({ drill, names, projectNames, today, by, setBy, onClose }: {
-  drill: NonNullable<Drill>; names: Record<string, string>; projectNames: Record<string, string>; today: string;
+function DrillPanel({ drill, hidden, plain, names, projectNames, today, by, setBy, onClose }: {
+  drill: NonNullable<Drill>; hidden: Set<string>; plain: Set<string>; names: Record<string, string>; projectNames: Record<string, string>; today: string;
   by: EndedSort; setBy: (v: EndedSort) => void; onClose: () => void;
 }) {
   // The ledger judges on-time against the first date, so its date sort uses that one.
-  const tasks = sortEnded(drill.tasks, by, 'firstDueOn');
+  const tasks = sortEnded(drill.tasks.filter((t) => !hidden.has(t.id)), by, 'firstDueOn');
+  const elsewhere = drill.tasks.length - tasks.length;
   const anyEnded = drill.tasks.some((t) => t.endedAt);
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -264,10 +277,10 @@ function DrillPanel({ drill, names, projectNames, today, by, setBy, onClose }: {
               : { text: t.overdue ? `Open, ${days(t.dueOn, today)} days past due` : `Open, due ${fmtDate(t.dueOn)}`, rel: null, done: false };
             return (
               <li key={t.id} className="drill-item">
-                <Link href={`/tasks/${t.id}`} className="drill-name">{t.title}</Link>
+                <TaskName id={t.id} title={t.title} plain={plain} />
                 <div className="small dim">
                   <PersonLink id={t.ownerId}>{names[t.ownerId]}</PersonLink>
-                  {t.projectId && <> · <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId]}</Link></>}
+                  {t.projectId && <> · <ProjectName id={t.projectId} name={projectNames[t.projectId]} plain={plain.has(t.id)} /></>}
                   {t.workstream && <> · {t.workstream}</>}
                 </div>
                 {t.description && <div className="small drill-desc">{t.description}</div>}
@@ -289,7 +302,17 @@ function DrillPanel({ drill, names, projectNames, today, by, setBy, onClose }: {
             );
           })}
         </ol>
+        {elsewhere > 0 && <p className="small dim drill-elsewhere">{elsewhere} more in projects you are not on. They count in the numbers; only the people on those projects see what they are and why.</p>}
       </motion.aside>
     </div>
   );
+}
+
+// A task's name: a link, or plain words when the viewer reads it here but may not open it.
+function TaskName({ id, title, plain }: { id: string; title: string; plain: Set<string> }) {
+  return plain.has(id) ? <span className="drill-name">{title}</span> : <Link href={`/tasks/${id}`} className="drill-name">{title}</Link>;
+}
+
+function ProjectName({ id, name, plain }: { id: string; name?: string; plain: boolean }) {
+  return plain ? <span>{name}</span> : <Link className="rlink" href={`/projects/${id}`}>{name}</Link>;
 }

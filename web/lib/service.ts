@@ -4,7 +4,7 @@ import { ApiError, bad, forbidden, notFound } from './errors';
 import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { isLeadOrAdmin } from './roles';
-import { seesProject, seesTask, seesTaskRow, sightOf, type Sight } from './sight';
+import { seesProject, seesTask, seesTaskRow, sightOf, workingWith, type Sight } from './sight';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
@@ -647,7 +647,7 @@ export function ledgerOf(all: Task[], from: string, to: string, personId?: strin
 
 // ---------- notices and reminders (FR-36 to FR-39) ----------
 
-export type Notice = { id: string; taskId: string; taskTitle: string; kind: string; forDate: string; createdAt: string; readAt: string | null };
+export type Notice = { id: string; taskId: string; taskTitle: string; kind: string; forDate: string; createdAt: string; readAt: string | null; canOpen: boolean };
 
 export async function listNotices(db: Db, meId: string, unreadOnly = false): Promise<Notice[]> {
   type Row = Notice & { team_id: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null };
@@ -659,12 +659,15 @@ export async function listNotices(db: Db, meId: string, unreadOnly = false): Pro
      ORDER BY n.read_at IS NOT NULL, n.created_at DESC LIMIT 100`,
     [meId, unreadOnly],
   );
-  // A task moved away from a restricted person (reassigned_away) can sit in a project they no longer see.
+  // A notice on a task this person cannot see is dropped, with one exception (15 Oct, the PM's call): "moved off your
+  // plate" still tells them a task that was theirs went to someone else, by its title only, with nothing to open.
   const sights = new Map<string, Sight>();
   for (const r of rows) if (!sights.has(r.team_id)) sights.set(r.team_id, await sightOf(db, r.team_id, meId));
-  return rows.filter((r) => seesTaskRow(sights.get(r.team_id)!, r)).map((r) => ({
-    id: r.id, taskId: r.taskId, taskTitle: r.taskTitle, kind: r.kind, forDate: r.forDate, createdAt: r.createdAt, readAt: r.readAt,
-  }));
+  return rows.flatMap((r) => {
+    const canOpen = seesTaskRow(sights.get(r.team_id)!, r);
+    if (!canOpen && r.kind !== 'reassigned_away') return [];
+    return [{ id: r.id, taskId: r.taskId, taskTitle: r.taskTitle, kind: r.kind, forDate: r.forDate, createdAt: r.createdAt, readAt: r.readAt, canOpen }];
+  });
 }
 
 export async function markNoticeRead(db: Db, meId: string, id: string): Promise<void> {
@@ -929,14 +932,16 @@ export type PersonView = {
 };
 
 // What one teammate is doing, drawn only from what a teammate can already read: team tasks and their logs, and
-// project membership. The on-time record follows the ledger's rule: leads and admins see everyone, a member sees only their own.
+// project membership. The on-time record follows the ledger's rule (lib/visibility.ts ledgerFor): leads and admins see
+// everyone's, a member their own and that of the people they work with. It is numbers only, so it counts every task.
 export async function personView(db: Db, teamId: string, meId: string, personId: string, today = todayIst(), weeks = 4): Promise<PersonView> {
   const person = await getPerson(db, teamId, personId);
   if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
   const viewerRoles = await rolesIn(db, teamId, meId);
-  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles);
+  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles) || (await workingWith(db, teamId, meId)).has(personId);
   const sight = await sightOf(db, teamId, meId);
-  const tasks = (await teamTasks(db, teamId, today)).filter((t) => seesTask(sight, t));
+  const everything = await teamTasks(db, teamId, today);
+  const tasks = everything.filter((t) => seesTask(sight, t));
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
   const open = tasks.filter((t) => t.statusCategory === 'open');
   const [proj, rec, ph] = await Promise.all([
@@ -965,7 +970,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     const to = mondayOf(today);
     const from = addDays(to, -7 * (weeks - 1));
     const sum: OnTimeRecord = { from, to, ahead: 0, onTime: 0, late: 0, openPastDue: 0, renegotiated: 0 };
-    for (const r of ledgerOf(tasks, from, to, personId)) {
+    for (const r of ledgerOf(everything, from, to, personId)) {
       sum.ahead += r.closedAhead; sum.onTime += r.closedOnTime; sum.late += r.closedLate;
       sum.openPastDue += r.openPastDue; sum.renegotiated += r.renegotiatedOpen + r.renegotiatedLate;
     }
@@ -979,7 +984,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     waitingOnOthers: open.filter((t) => t.ownerId === personId && t.blocked?.onId && t.blocked.onId !== personId).sort(byDue),
     recent: rec.rows.filter((r) => seesTaskRow(sight, r)).map(({ project_id, owner_id, created_by, blocked_on_id, ...line }) => line),
     record,
-    glance: mayRecord ? { week: weekSplit(tasks, personId, today), trend: onTimeTrend(tasks, personId, today) } : null,
+    glance: mayRecord ? { week: weekSplit(everything, personId, today), trend: onTimeTrend(everything, personId, today) } : null,
     phone: ph.rows[0]?.phone ?? null,
     teamName: ph.rows[0]?.team_name ?? '',
     hasPhoto: ph.rows[0]?.has_photo ?? false,

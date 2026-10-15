@@ -1,5 +1,5 @@
 import { requireMe } from '@/lib/auth';
-import { listFeedback } from '@/lib/feedback';
+import { listFeedback, mayReplyFeedback } from '@/lib/feedback';
 import { db } from '@/lib/db';
 import { fmtStamp } from '@/lib/time';
 import { FeedbackForm } from '@/components/FeedbackForm';
@@ -20,7 +20,7 @@ export default async function Feedback() {
       <FeedbackForm />
       <section>
         <h2>From the team <span className="count-badge">{rows.length === 0 ? 'none yet' : rows.length === 1 ? '1 note' : `${rows.length} notes`}</span></h2>
-        <FeedbackList meId={me.person.id} canReply={me.person.repliesFeedback && !me.viewingAs}
+        <FeedbackList meId={me.person.id} canReply={mayReplyFeedback(me.person) && !me.viewingAs}
           rows={rows.map((r) => ({ id: r.id, personId: r.personId, personName: r.personName, stamp: fmtStamp(r.createdAt), path: r.path, body: r.body, images: r.images, votes: r.votes, mine: r.mine,
             replies: r.replies.map((x) => ({ id: x.id, authorName: x.authorName, body: x.body, stamp: fmtStamp(x.createdAt) })) }))} />
       </section>
