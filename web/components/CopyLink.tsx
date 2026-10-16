@@ -6,7 +6,7 @@ import { useReadOnly } from './readonly';
 import { notify } from './toast';
 
 // After a copy the button says "Copied" for a moment, and a tick draws itself in front of the word (.copy-tick).
-function useCopied(): [boolean, () => void] {
+export function useCopied(): [boolean, () => void] {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
@@ -16,8 +16,13 @@ function useCopied(): [boolean, () => void] {
   return [copied, () => setCopied(true)];
 }
 
+// A tick that draws once (stroke-dashoffset), beside a word that says what just happened.
+export function DoneTick() {
+  return <svg className="copy-tick" viewBox="0 0 12 12" aria-hidden><path d="M2.9 6.3l2.2 2.2 4-4.6" pathLength={1} /></svg>;
+}
+
 function Copied() {
-  return <><svg className="copy-tick" viewBox="0 0 12 12" aria-hidden><path d="M2.9 6.3l2.2 2.2 4-4.6" pathLength={1} /></svg>Copied</>;
+  return <><DoneTick />Copied</>;
 }
 
 // Copies the address of a task, person or project page, with a toast to say so. It writes nothing to the

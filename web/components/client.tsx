@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
-import { CopyInvite } from './CopyLink';
+import { CopyInvite, DoneTick } from './CopyLink';
 import { DateField } from './DateField';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
@@ -438,20 +438,29 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
 
 export function PersonControls({ id, active, roles, self, email, repliesFeedback }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; repliesFeedback: boolean }) {
   const { busy, error, run } = useSubmit();
+  // The button whose change just landed draws a tick before its new label, for as long as "Copied" shows.
+  const [done, setDone] = useState('');
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(() => setDone(''), 1600);
+    return () => clearTimeout(t);
+  }, [done]);
+  const act = async (key: string, body: unknown) => { if (await run(`/people/${id}`, 'PATCH', body)) setDone(key); };
+  const tick = (key: string) => done === key && <DoneTick />;
   const toggle = (r: string) => (roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r]).filter((x) => x !== 'member');
   return (
     <span className="row" style={{ gap: 12 }}>
-      <button className="act" disabled={busy || self} onClick={() => run(`/people/${id}`, 'PATCH', { active: !active })}>
-        {active ? 'Mark inactive' : 'Mark active'}
+      <button className="act" disabled={busy || self} onClick={() => act('active', { active: !active })}>
+        {tick('active')}{active ? 'Mark inactive' : 'Mark active'}
       </button>
-      <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('lead') })}>
-        {roles.includes('lead') ? 'Remove lead' : 'Make lead'}
+      <button className="act" disabled={busy} onClick={() => act('lead', { appRoles: toggle('lead') })}>
+        {tick('lead')}{roles.includes('lead') ? 'Remove lead' : 'Make lead'}
       </button>
-      <button className="act" disabled={busy || self} onClick={() => run(`/people/${id}`, 'PATCH', { appRoles: toggle('admin') })}>
-        {roles.includes('admin') ? 'Remove admin' : 'Make admin'}
+      <button className="act" disabled={busy || self} onClick={() => act('admin', { appRoles: toggle('admin') })}>
+        {tick('admin')}{roles.includes('admin') ? 'Remove admin' : 'Make admin'}
       </button>
-      <button className="act" disabled={busy} onClick={() => run(`/people/${id}`, 'PATCH', { repliesFeedback: !repliesFeedback })}>
-        {repliesFeedback ? 'Stop feedback replies' : 'Can reply to feedback'}
+      <button className="act" disabled={busy} onClick={() => act('replies', { repliesFeedback: !repliesFeedback })}>
+        {tick('replies')}{repliesFeedback ? 'Stop feedback replies' : 'Can reply to feedback'}
       </button>
       {active && <CopyInvite email={email} />}
       <Err e={error} />

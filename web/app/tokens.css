@@ -176,8 +176,8 @@
   /* Dithered pictures (empty states, sign-in, people header): the accent, thinned into the page. Decoration only. */
   --dither-ink: color-mix(in srgb, var(--primary) 30%, var(--surface));
   /* Clickable text on hover: a soft accent tint behind it and a hair of extra weight (globals.css, Clickable text). */
-  --link-tint: color-mix(in srgb, var(--primary) 12%, transparent);
-  --link-stroke: 0.35px;
+  --link-tint: color-mix(in srgb, var(--primary) 20%, transparent);
+  --link-stroke: 0.5px;
   /* How long the confirmation stays. A wait, not a movement, so reduced motion keeps it. */
   --dwell-confirm: 4s;
 }
@@ -915,10 +915,7 @@
   :root[data-skin="m"] .side { margin: 10px 0 10px 10px; top: 10px; height: calc(100vh - 20px); border-radius: 22px;
     box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring); }
   :root[data-skin="m"] body[data-viewing] .side { top: calc(var(--banner-h) + 10px); height: calc(100vh - var(--banner-h) - 20px); }
-  :root[data-skin="m"] .main { margin: 10px 10px 10px 10px; border-radius: 22px; min-height: calc(100vh - 20px); }
-  :root[data-skin="m"] .topbar { margin: 8px 10px 0; top: 10px; border-radius: 16px;
-    box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 4px 16px rgb(0 0 0 / 0.06); }
-  :root[data-skin="m"] body[data-viewing] .topbar { top: calc(var(--banner-h) + 10px); }
+  :root[data-skin="m"] .main { margin: 10px 10px 10px 10px; border-radius: 22px; }
 }
 
 /* Source list: icons take the accent, the selected row is a soft tint, two levels at most */
@@ -961,6 +958,40 @@
   :root[data-skin="m"] .side { background: var(--bar); }
   :root[data-skin="m"] .topbar { background: var(--bar); }
 }
+
+/* The top edge (from Tare's handoff). On a wide screen the page sheet is its own scroll area, with no bounce, so
+   it keeps its rounded corners. The top bar is an opaque cap in the sheet colour, so no row peeks above or round
+   the bar. The bar itself is the pill drawn by ::before, lined up with the page's own column (--pill-l, --pill-r,
+   and --pill-w where the page uses the calm column). Content fades
+   out over up to 16px as it goes under the cap (::after, scaled by --cap-fade from components/MainScroll.tsx). */
+@media (min-width: 861px) {
+  :root[data-skin="m"] { --cap-h: calc(var(--bar-height) + 16px); }
+  :root[data-skin="m"] .shell { height: 100vh; min-height: 0; }
+  :root[data-skin="m"] body[data-viewing] .shell { height: calc(100vh - var(--banner-h)); }
+  :root[data-skin="m"] .main { height: calc(100vh - 20px); overflow-y: auto; overscroll-behavior: none; scrollbar-width: thin; scroll-padding-top: var(--cap-h); }
+  :root[data-skin="m"] body[data-viewing] .main { height: calc(100vh - var(--banner-h) - 20px); }
+  :root[data-skin="m"] .topbar, :root[data-skin="m"] body[data-viewing] .topbar {
+    --pill-l: calc((100% - min(100%, var(--page-max))) / 2 + var(--page-pad));
+    --pill-r: calc(100% - var(--pill-l) - min(100% - 2 * var(--pill-l), var(--pill-w, 100vw)));
+    top: 0; margin: 0; min-height: var(--cap-h); padding: 8px calc(var(--pill-r) + var(--space-sm)) 8px calc(var(--pill-l) + var(--space-sm));
+    border-radius: 0; box-shadow: none;
+    background: var(--canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-skin="m"] .main:has(.page > .calm) > .topbar { --pill-w: var(--calm-max); }
+  :root[data-skin="m"] .main:has(.page > .calm.narrow) > .topbar { --pill-w: var(--calm-narrow); }
+  :root[data-skin="m"] .topbar::before { content: ""; position: absolute; z-index: -1; inset: 8px var(--pill-r) 8px var(--pill-l); border-radius: 16px; background: var(--bar-glass);
+    box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 4px 16px rgb(0 0 0 / 0.06); }
+  :root[data-skin="m"] .topbar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 16px; pointer-events: none;
+    background: linear-gradient(var(--canvas), transparent); transform-origin: top; transform: scaleY(var(--cap-fade, 0)); }
+  :root[data-skin="m"] .help-toggle { right: calc(var(--pill-r) + var(--space-sm)); }
+  :root[data-skin="m"] .top-feedback { right: calc(var(--pill-r) + var(--space-sm) + var(--button-height) + var(--space-xs)); }
+  :root[data-skin="m"] .page { padding-top: calc(var(--space-xl) - 8px); }
+  :root[data-skin="m"] :is(table.sticky-head thead th, .group > h2) { top: var(--cap-h); }
+}
+@media (min-width: 861px) and (max-width: 1180px) {
+  :root[data-skin="m"] .topbar, :root[data-skin="m"] body[data-viewing] .topbar {
+    padding-left: calc(var(--pill-l) + 2 * var(--button-height) + var(--space-md)); padding-right: calc(var(--pill-r) + 2 * var(--button-height) + var(--space-md)); }
+}
+@media (min-width: 861px) and (prefers-reduced-transparency: reduce) { :root[data-skin="m"] .topbar::before { background: var(--bar); } }
 
 /* Menus highlight in the accent colour, as native menus do */
 :root[data-skin="m"] :is(.sel-opt, .menu > *, .st-opt, .st-act) { border-radius: 8px; }

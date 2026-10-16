@@ -9,6 +9,7 @@ import { HELP_COOKIE, helpOf } from '@/components/help';
 import { HelpProvider, HelpToggle } from '@/components/HelpMode';
 import { KeyboardDismiss } from '@/components/KeyboardDismiss';
 import { LimitNotice } from '@/components/LimitNotice';
+import { MainScroll } from '@/components/MainScroll';
 import { ServiceWorker } from '@/components/ServiceWorker';
 import { Shortcuts } from '@/components/Shortcuts';
 import { ProjectPeopleProvider } from '@/components/OwnerPicker';
@@ -94,6 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <JevProvider on={jevOn()}>
           <PhotoProvider photos={photos}>
           <ViewerProvider meId={me.person.id} isLead={isLeadOrAdmin(me.person.appRoles)} today={todayIst()} fresh={fresh}>
+          <MainScroll />
           <div className="shell">
             <aside className="side">
               <Link className="mark" href="/me">

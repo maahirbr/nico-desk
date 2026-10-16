@@ -686,3 +686,14 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   plan checkpoints and asks, a tick after Copy link and Copy invite, and a ring beside the ledger's kept share. Each new
   stroke or height move is a named exception in DESIGN.md Motion. Cool now uses Geist and Geist Mono, which `layout.tsx`
   already loaded, in place of the system face. Rollback: `git revert` this commit.
+
+- **2026-10-16 · Opus 5.5 · Cool's top edge from the Tare handoff, a Roster tick and folds that scroll into view.** The
+  repo owner sent a Roster screenshot: on Cool at desktop width, rows peeked above the floating top bar and around its
+  corners, and the bar was wider than the cards below it. They picked the handoff's top edge and a bar that matches the
+  cards. A literal mask on the scroll area would also clip the modals, drawers and search dropdown, which render inside
+  it, so the top bar is an opaque cap instead: the page sheet scrolls on its own, the cap is in the sheet colour, and the
+  glass pill inside it lines up with the page's column. Content fades out over up to 16px under the cap
+  (`components/MainScroll.tsx`), and a new page starts at the top. The cost: on Cool at desktop width, Back and Forward no
+  longer bring back the scroll position, and content no longer blurs under the bar. Also asked for: a drawn tick after a
+  Roster role change, a fold that scrolls into view when it opens, and a stronger hover tint (20% of the accent).
+  Warm and the phone layout do not change. Rollback: `git revert` this commit.
