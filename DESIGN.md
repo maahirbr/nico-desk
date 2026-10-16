@@ -486,7 +486,7 @@ A pill means a status, a choice of date or the search field. Nothing else is a c
 
 ## Motion
 
-Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with these named exceptions: a status chip eases its colour; a tick, the Home trend line and the ledger ring draw their strokes; a fold opens its height; and the focus ring fades in its colour. The curve is the settle curve `--ease`, `cubic-bezier(.2, .8, .2, 1)`: quick out of the gate, a long soft landing. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
+Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with these named exceptions: a status chip eases its colour; a tick, the Home trend line, the ledger ring, the line icons, an empty state's mark and the sign-in wordmark draw their strokes; a fold opens its height; and the focus ring fades in its colour. The curve is the settle curve `--ease`, `cubic-bezier(.2, .8, .2, 1)`: quick out of the gate, a long soft landing. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
 
 1. **A line arrives.** A committed or asked line fades in and rises 8px, 180ms, ease-out. It happens on the page where the line lands.
 2. **A date moves.** The old date strikes through over 160ms, then the new date slides in from 6px below, 200ms. The struck date stays.
@@ -517,6 +517,9 @@ Other motion is not a gesture. It is the screen keeping up with the user.
 - **A link or invite is copied.** The button says "Copied" for about 1.6 seconds, and a tick draws itself before the word over `--dur-tick`.
 - **A Roster role changes.** After Mark inactive, Make lead, Make admin or the feedback replies switch is saved, the same tick draws itself before the button's new words for about 1.6 seconds.
 - **The ledger ring draws in.** Beside the kept share on the ledger, a small ring draws its arc to the share (`stroke-dashoffset`, a named exception) over `--dur-slide` (200ms), once per session. Reduced motion and a repeat visit show it at once.
+- **A line icon is hovered.** The sidebar icons, Feedback and the help button redraw their stroke over `--dur-slide` (200ms) when the pointer comes onto them. Only on a device with hover. The help button is a drawn question mark, not a typed one.
+- **An empty state shows.** Where an empty state has no picture, the page's own icon (search for no match, the calendar for nothing due, the speech bubble for no feedback) draws itself above the words over `--dur-fold` (240ms).
+- **The sign-in page loads.** The Nicobar wordmark draws its letters' outlines over `--dur-fold`, and the filled letters fade in from 120ms, done by 280ms.
 - **The status icon morphs.** When a status changes, the ring stays, the old glyph shrinks to half size and fades out while the new glyph pops in from a scale of 0.5, both over `--dur-glyph` (120ms). A tick draws its stroke as it arrives (`--dur-tick`). It does not run on first render.
 - **A confirmation appears.** A small bar at the foot of the screen fades in over `--dur-toast` (160ms), stays for `--dwell-confirm`, then fades out. It has `aria-live="polite"`. At most three show at once.
 - **Sounds.** Off until a person turns on Sounds in the account menu (the `nd_sound` cookie). Three Web Audio tones, no files, each under 200ms and quiet: a soft ping for a new notice, a light tick for Done, a low tone for a refused action. None plays on page load. Reduced motion does not mute them, only the switch does (`components/sound.ts`).

@@ -697,3 +697,11 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   longer bring back the scroll position, and content no longer blurs under the bar. Also asked for: a drawn tick after a
   Roster role change, a fold that scrolls into view when it opens, and a stronger hover tint (20% of the accent).
   Warm and the phone layout do not change. Rollback: `git revert` this commit.
+
+- **2026-10-16 · Opus 5.5 · Line icons redraw on hover, empty states and the sign-in wordmark draw in.** The repo owner
+  asked for more drawn SVG motion, including on hover over Feedback and the help button. The sidebar and top bar icons
+  move to `components/icons.tsx` with a pathLength of 1, so one `tick-draw` keyframe redraws any of them. The help
+  button's typed "?" becomes a drawn one. Empty states with no picture get the page's own icon, drawn in. The sign-in
+  wordmark is inline (`components/Wordmark.tsx`) so its letters can draw, then fill, within 300ms. There is no notice
+  bell and no on-time bar on Team, so neither was added. All of it stops under reduced motion.
+  Rollback: `git revert` this commit.

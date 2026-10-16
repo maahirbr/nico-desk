@@ -6,6 +6,7 @@ import { useReadOnly } from './readonly';
 import { api } from './task-ui';
 import { PAGES } from './FeedbackForm';
 import { notify } from './toast';
+import { EmptyMark, ICON } from './icons';
 
 // The team's notes, for everyone, piling up newest first. Screenshots show as small pictures that open full size. "+1"
 // backs a teammate's note; the writer sees the count. Replies show under each note for everyone; only people the Roster
@@ -38,7 +39,7 @@ export function FeedbackList({ rows, canReply, meId }: { rows: FeedbackRow[]; ca
     try { const out = await api(`/feedback/${r.id}/vote`, cur.mine ? 'DELETE' : 'POST'); setVote((v) => ({ ...v, [r.id]: out })); }
     catch (e) { setVote((v) => ({ ...v, [r.id]: cur })); notify((e as Error).message); }
   }
-  if (rows.length === 0) return <div className="empty-state"><p>No feedback yet.</p></div>;
+  if (rows.length === 0) return <div className="empty-state"><EmptyMark d={ICON['/feedback']} /><p>No feedback yet.</p></div>;
   return (
     <ul className="fb-list">
       {rows.map((r) => (

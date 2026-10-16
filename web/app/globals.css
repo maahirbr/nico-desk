@@ -302,10 +302,13 @@ textarea { resize: vertical; min-height: 4.5em; width: 100%; }
 
 /* ---------- sign in ---------- */
 .signin-brand { margin-bottom: var(--space-lg); display: flex; align-items: center; gap: var(--space-sm); }
-.signin-logo { display: block; width: 132px; aspect-ratio: 414 / 63; background: var(--ink);
-  -webkit-mask: url(/brand/nicobar-wordmark.svg) center / contain no-repeat; mask: url(/brand/nicobar-wordmark.svg) center / contain no-repeat; }
+.signin-logo { display: block; width: 132px; height: auto; color: var(--ink); overflow: visible; }
+/* The wordmark draws its letters' outlines, then the filled letters fade in, on the first load (a named exception in DESIGN.md). */
+.wm-line path { stroke-width: 1; stroke-dasharray: 1; animation: tick-draw var(--dur-fold) var(--ease) both; }
+.wm-fill { animation: wm-fill var(--dur-tick) var(--ease) var(--dur-state) both; }
+@keyframes wm-fill { from { opacity: 0; } to { opacity: 1; } }
 .signin-logo + .mark-name { padding-left: var(--space-sm); border-left: var(--rule) solid var(--line-strong); color: var(--ink-2); }
-@media (forced-colors: active) { .signin-logo { background: CanvasText; forced-color-adjust: none; } }
+@media (forced-colors: active) { .signin-logo { color: CanvasText; } }
 .signin h1 { margin-bottom: var(--space-md); }
 .signin-brand .mark-name { font: var(--type-heading); }
 .signin ul { list-style: none; padding: 0; margin: 0; }
@@ -1162,6 +1165,15 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .st-tick { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .state-set .st-tick { animation: tick-draw var(--dur-tick) var(--ease) both; }
 @keyframes tick-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* Line icons (components/icons.tsx) redraw their stroke when the pointer comes onto their control, and an
+   empty state's mark draws in once. Both are strokes, like the tick (named exception in DESIGN.md). */
+.ico path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+@media (hover: hover) {
+  .nav a:hover .ico path, .nav-more:hover .ico path, .top-feedback:hover .ico path, .help-toggle:hover .ico path { animation: tick-draw var(--dur-slide) var(--ease) both; }
+}
+.help-toggle .ico { width: var(--icon-size); height: var(--icon-size); stroke-width: 2.2; }
+.empty-mark { display: block; width: 28px; height: 28px; margin: 0 auto var(--space-sm); color: var(--ink-3); stroke-width: 1.5; }
+.empty-mark path { animation: tick-draw var(--dur-fold) var(--ease) both; }
 /* The ring beside the ledger's kept share (components/motion-ui.tsx KeptRing). The arc draws on its stroke, a named exception. */
 .kept-ring { width: 0.8em; height: 0.8em; margin-right: var(--space-xs); vertical-align: -0.05em; transform: rotate(-90deg); color: var(--primary); }
 .kept-ring circle { fill: none; stroke: currentColor; stroke-width: 4; }
@@ -1346,7 +1358,7 @@ button.stat[aria-pressed="true"] .kept-ring { color: var(--canvas); }
 
 @media (prefers-reduced-motion: reduce) {
   .dither-fade path, .st-glyph-out, .st-morph .st-glyph, .st-morph .st-tick, .cm-chip-new { animation: none; }
-  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot, .sbar-in > span, .ring-in .kept-arc, .copy-tick path, :focus-visible { animation: none; }
+  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot, .sbar-in > span, .ring-in .kept-arc, .copy-tick path, .ico path, .nav a:hover .ico path, .nav-more:hover .ico path, .top-feedback:hover .ico path, .help-toggle:hover .ico path, .empty-mark path, .wm-line path, .wm-fill, :focus-visible { animation: none; }
   .btn:active, .pill:active, .mini-btn:active, button.stat:active, .nav .nav-new:active, .st-pick:active, .status-picker button:active,
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
   * { transition-duration: 0ms !important; }

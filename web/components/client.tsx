@@ -7,6 +7,7 @@ import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
 import { CopyInvite, DoneTick } from './CopyLink';
 import { DateField } from './DateField';
+import { ICON, Icon } from './icons';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { Select } from './Select';
@@ -55,24 +56,6 @@ function useSubmit() {
 const Err = ({ e }: { e: string | null }) => (e ? <p className="err" role="alert">{e}</p> : null);
 
 // ---------- frame ----------
-
-const ICON: Record<string, React.ReactNode> = {
-  '/me': <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" />,
-  '/team': <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />,
-  '/search': <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.35-4.35" />,
-  more: <path d="M5 12h.01M12 12h.01M19 12h.01" />,
-  '/week': <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />,
-  '/status': <path d="M4 6h16M4 12h10M4 18h6" />,
-  '/ledger': <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
-  '/reminders': <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />,
-  '/projects': <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />,
-  '/feedback': <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />,
-  '/admin': <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />,
-};
-
-const Icon = ({ d }: { d: React.ReactNode }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>
-);
 
 export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: boolean }) {
   const path = usePathname();

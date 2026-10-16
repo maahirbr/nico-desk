@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { HELP_COOKIE, helpText, type HelpTerm } from './help';
 import { isTyping } from './keys';
 import { popoverMotion } from './motion';
+import { ICON, Icon } from './icons';
 
 // Help mode. One cookie (nd_help) says on or off, and layout.tsx reads it so the server HTML already
 // carries the state. When on, <Help term="late">Late</Help> shows a dotted underline and a tooltip
@@ -50,7 +51,7 @@ export function HelpProvider({ initial, enabled, children }: { initial: boolean;
 export function HelpToggle() {
   const { on, toggle } = useContext(HelpCtx);
   return (
-    <button type="button" className="help-toggle" aria-pressed={on} aria-label="Help mode" title="Help mode (?)" onClick={toggle}>?</button>
+    <button type="button" className="help-toggle" aria-pressed={on} aria-label="Help mode" title="Help mode (?)" onClick={toggle}><Icon d={ICON.help} /></button>
   );
 }
 

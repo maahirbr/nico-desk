@@ -13,6 +13,7 @@ import { useRemembered, useRememberedParam, useUrlText } from './remember';
 import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
+import { EmptyMark, ICON } from './icons';
 
 type Person = { id: string; name: string; role: string };
 
@@ -86,11 +87,11 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
       </div>
 
-      {needle && people.filter(found).length === 0 && <div className="empty-state"><p>No one matches “{q.trim()}”.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>}
+      {needle && people.filter(found).length === 0 && <div className="empty-state"><EmptyMark d={ICON['/search']} /><p>No one matches “{q.trim()}”.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>}
       {view === 'person' && shownPeople.length === 0 && (needle ? people.filter(found).length > 0 : true) && (
-        <div className="empty-state"><p>{needle ? 'No tasks for that search.' : 'Nothing open or coming up.'}</p>{needle ? <button className="btn ghost" onClick={() => setQ('')}>Clear search</button> : <Link className="btn" href="/tasks/new">Add a task</Link>}</div>
+        <div className="empty-state"><EmptyMark d={ICON[needle ? '/search' : '/status']} /><p>{needle ? 'No tasks for that search.' : 'Nothing open or coming up.'}</p>{needle ? <button className="btn ghost" onClick={() => setQ('')}>Clear search</button> : <Link className="btn" href="/tasks/new">Add a task</Link>}</div>
       )}
-      {!needle && view === 'status' && list.length === 0 && <div className="empty-state"><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
+      {!needle && view === 'status' && list.length === 0 && <div className="empty-state"><EmptyMark d={ICON['/week']} /><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
 
       {view === 'person' ? shownPeople.map((p) => {
         const o = list.filter((t) => t.ownerId === p.id && t.statusCategory === 'open');

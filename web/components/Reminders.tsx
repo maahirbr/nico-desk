@@ -5,6 +5,7 @@ import type { ReminderDraft } from '@/lib/reminders';
 import { Avatar, PersonLink } from './chips';
 import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
+import { EmptyMark, ICON } from './icons';
 
 // Each draft opens in the lead's own Gmail (or mail app) with the text filled in. The lead
 // reads it and presses Send there; this page only records that a reminder went out.
@@ -68,7 +69,7 @@ export function ReminderCards({ drafts }: { drafts: ReminderDraft[] }) {
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
       )}
       {shown.length === 0
-        ? <div className="empty-state"><p>No one matches &ldquo;{q.trim()}&rdquo;.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>
+        ? <div className="empty-state"><EmptyMark d={ICON['/search']} /><p>No one matches &ldquo;{q.trim()}&rdquo;.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>
         : <div className="remind-list">{shown.map((d) => <Card key={d.personId} d={d} />)}</div>}
     </>
   );
