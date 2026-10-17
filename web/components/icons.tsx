@@ -1,4 +1,4 @@
-// The line icons of the sidebar and the top bar. Each path has a pathLength of 1, so the stroke can redraw
+// The line icons of the sidebar and the top bar. Each stroke has a pathLength of 1, so the stroke can redraw
 // itself on hover and an empty state's mark can draw in (stroke-dashoffset, a named exception in DESIGN.md).
 export const ICON: Record<string, string> = {
   '/me': 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z',
@@ -17,7 +17,9 @@ export const ICON: Record<string, string> = {
 
 export const Icon = ({ d, className = 'ico' }: { d: string; className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d={d} pathLength={1} />
+    {/* One path per stroke: the dash restarts on each stroke of a path, so a short stroke inside a shared
+        pathLength would finish early and the icon would look rushed. */}
+    {d.split(/(?=M)/).map((part, i) => <path key={i} d={part} pathLength={1} />)}
   </svg>
 );
 

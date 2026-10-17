@@ -712,3 +712,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   exception to the 300ms rule for stroke draws only. The motion test caps `--dur-draw*` at 500ms and keeps 300ms for
   every other token. Reduced motion still sets both to 0ms.
   Rollback: `git revert` this commit.
+- **2026-10-18 · Opus 5.5 · A line icon draws one path per stroke.** The repo owner found the Team, Ledger and Roster
+  icons rushed and odd on hover. Each icon was one path of several strokes with one shared pathLength, and the dash
+  restarts on each stroke, so every stroke started together and a short one finished early. `Icon` now splits the
+  path at each move, so every stroke draws over the full `--dur-draw`.
+  Rollback: `git revert` this commit.
