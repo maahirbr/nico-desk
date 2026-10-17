@@ -304,8 +304,8 @@ textarea { resize: vertical; min-height: 4.5em; width: 100%; }
 .signin-brand { margin-bottom: var(--space-lg); display: flex; align-items: center; gap: var(--space-sm); }
 .signin-logo { display: block; width: 132px; height: auto; color: var(--ink); overflow: visible; }
 /* The wordmark draws its letters' outlines, then the filled letters fade in, on the first load (a named exception in DESIGN.md). */
-.wm-line path { stroke-width: 1; stroke-dasharray: 1; animation: tick-draw var(--dur-fold) var(--ease) both; }
-.wm-fill { animation: wm-fill var(--dur-tick) var(--ease) var(--dur-state) both; }
+.wm-line path { stroke-width: 1; stroke-dasharray: 1; animation: tick-draw var(--dur-draw) var(--ease-draw) both; }
+.wm-fill { animation: wm-fill calc(var(--dur-draw) / 2) var(--ease) calc(var(--dur-draw) / 2) both; }
 @keyframes wm-fill { from { opacity: 0; } to { opacity: 1; } }
 .signin-logo + .mark-name { padding-left: var(--space-sm); border-left: var(--rule) solid var(--line-strong); color: var(--ink-2); }
 @media (forced-colors: active) { .signin-logo { color: CanvasText; } }
@@ -1160,32 +1160,32 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 @keyframes glyph-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.5); } }
 .st-glyph-out { transform-box: fill-box; transform-origin: center; animation: glyph-out var(--dur-glyph) var(--ease) both; pointer-events: none; }
 .st-morph .st-glyph { animation: glyph-in var(--dur-glyph) var(--ease) both; }
-.st-morph .st-tick { animation: tick-draw var(--dur-tick) var(--ease) both; }
+.st-morph .st-tick { animation: tick-draw var(--dur-draw-tick) var(--ease-draw) both; }
 /* The done tick draws itself when a status changes to Done. It is a stroke, not a transform, and short. */
 .st-tick { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.state-set .st-tick { animation: tick-draw var(--dur-tick) var(--ease) both; }
+.state-set .st-tick { animation: tick-draw var(--dur-draw-tick) var(--ease-draw) both; }
 @keyframes tick-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 /* Line icons (components/icons.tsx) redraw their stroke when the pointer comes onto their control, and an
    empty state's mark draws in once. Both are strokes, like the tick (named exception in DESIGN.md). */
 .ico path { stroke-dasharray: 1; stroke-dashoffset: 0; }
 @media (hover: hover) {
-  .nav a:hover .ico path, .nav-more:hover .ico path, .top-feedback:hover .ico path, .help-toggle:hover .ico path { animation: tick-draw var(--dur-slide) var(--ease) both; }
+  .nav a:hover .ico path, .nav-more:hover .ico path, .top-feedback:hover .ico path, .help-toggle:hover .ico path { animation: tick-draw var(--dur-draw) var(--ease-draw) both; }
 }
 .help-toggle .ico { width: var(--icon-size); height: var(--icon-size); stroke-width: 2.2; }
 .empty-mark { display: block; width: 28px; height: 28px; margin: 0 auto var(--space-sm); color: var(--ink-3); stroke-width: 1.5; }
-.empty-mark path { animation: tick-draw var(--dur-fold) var(--ease) both; }
+.empty-mark path { animation: tick-draw var(--dur-draw) var(--ease-draw) both; }
 /* The ring beside the ledger's kept share (components/motion-ui.tsx KeptRing). The arc draws on its stroke, a named exception. */
 .kept-ring { width: 0.8em; height: 0.8em; margin-right: var(--space-xs); vertical-align: -0.05em; transform: rotate(-90deg); color: var(--primary); }
 .kept-ring circle { fill: none; stroke: currentColor; stroke-width: 4; }
 .kept-track { opacity: .18; }
 .kept-arc { stroke-linecap: round; }
-.ring-in .kept-arc { animation: ring-draw var(--dur-slide) var(--ease) both; }
+.ring-in .kept-arc { animation: ring-draw var(--dur-draw) var(--ease-draw) both; }
 @keyframes ring-draw { from { stroke-dashoffset: var(--ring-from); } to { stroke-dashoffset: 0; } }
 button.stat[aria-pressed="true"] .kept-ring { color: var(--canvas); }
 /* The tick in a Copy link or Copy invite button after a copy (components/CopyLink.tsx). */
 .copy-tick { width: 1em; height: 1em; margin-right: var(--space-xxs); vertical-align: -0.125em; flex: none; }
 .copy-tick path { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
-  stroke-dasharray: 1; animation: tick-draw var(--dur-tick) var(--ease) both; }
+  stroke-dasharray: 1; animation: tick-draw var(--dur-draw-tick) var(--ease-draw) both; }
 
 /* ---------- a checkbox on a task row: a box in CSS, and a tick that draws when it is checked ---------- */
 .trow-check { position: relative; }
@@ -1198,7 +1198,7 @@ button.stat[aria-pressed="true"] .kept-ring { color: var(--canvas); }
 .trow-check input:disabled { cursor: default; }
 .check-tick { position: absolute; left: 50%; top: 50%; width: var(--check-size); height: var(--check-size); transform: translate(-50%, -50%); pointer-events: none; }
 .check-tick path { fill: none; stroke: var(--check-tick); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
-  stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--dur-tick) var(--ease); }
+  stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--dur-draw-tick) var(--ease-draw); }
 .trow-check input:checked ~ .check-tick path { stroke-dashoffset: 0; }
 
 /* ---------- lists that rise in on first load, and panels that cross-fade when a tab changes ---------- */
@@ -1549,8 +1549,8 @@ a.rlink { color: inherit; text-decoration: none; }
 @keyframes glance-dot { from { opacity: 0; } to { opacity: 1; } }
 /* Draws in once per tab. The line is a stroke, so it uses stroke-dashoffset, like the tick (named exception in DESIGN.md). */
 .glance-in .glance-split > span, .glance-in .glance-fill { animation: glance-bar var(--dur-slide) var(--ease) both; }
-.glance-in .gl-line { animation: glance-line var(--dur-slide) var(--ease) both; }
-.glance-in .gl-dot { animation: glance-dot var(--dur-slide) var(--ease) both; }
+.glance-in .gl-line { animation: glance-line var(--dur-draw) var(--ease-draw) both; }
+.glance-in .gl-dot { animation: glance-dot var(--dur-draw) var(--ease-draw) both; }
 /* The Home strip starts shut on a phone until the person has used the toggle (data-choice="auto"): CSS decides, so there is no flash. */
 .glance-caret::before { content: '▾'; }
 .glance[data-choice="closed"] .glance-caret::before { content: '▸'; }

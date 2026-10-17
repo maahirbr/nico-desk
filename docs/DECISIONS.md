@@ -705,3 +705,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   wordmark is inline (`components/Wordmark.tsx`) so its letters can draw, then fill, within 300ms. There is no notice
   bell and no on-time bar on Team, so neither was added. All of it stops under reduced motion.
   Rollback: `git revert` this commit.
+- **2026-10-17 · Opus 5.5 · Stroke draws slow down so they read as drawn.** The repo owner found the line draws too
+  fast: at 160 to 240ms on the settle curve, a stroke looked like a flicker. Every stroke draw now runs on its own even
+  curve `--ease-draw`, a tick over `--dur-draw-tick` (320ms) and a longer line (line icons on hover, empty-state marks,
+  the sign-in wordmark, the Home trend line and dot, the ledger ring) over `--dur-draw` (480ms). This is a named
+  exception to the 300ms rule for stroke draws only. The motion test caps `--dur-draw*` at 500ms and keeps 300ms for
+  every other token. Reduced motion still sets both to 0ms.
+  Rollback: `git revert` this commit.

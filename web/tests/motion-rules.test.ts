@@ -26,8 +26,9 @@ describe('durations are tokens and stay under 300ms', () => {
     const names = new Set(durations.map((d) => d.name));
     for (const n of ['--dur-arrive', '--dur-pop', '--dur-dither', '--dur-glyph', '--dither-spread', '--dur-stagger']) expect(names.has(n)).toBe(true);
   });
-  it('keeps every duration token at 300ms or less', () => {
-    for (const d of durations) expect(d.ms, d.name).toBeLessThanOrEqual(MAX_MS);
+  it('keeps every duration token at 300ms or less, and a stroke draw at 500ms or less', () => {
+    // Stroke draws run slower so a line reads as drawn (the repo owner's call, 17 Oct).
+    for (const d of durations) expect(d.ms, d.name).toBeLessThanOrEqual(d.name.startsWith('--dur-draw') ? 500 : MAX_MS);
   });
   it('finishes a dither picture within 300ms: the last row starts late, then runs its own duration', () => {
     const v = (n: string) => durations.find((d) => d.name === n && d.ms > 0)!.ms;

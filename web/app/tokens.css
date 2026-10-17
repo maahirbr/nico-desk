@@ -159,6 +159,12 @@
   --dur-page: 160ms;
   --dur-tab: 160ms;
   --dur-tick: 160ms;
+  /* A stroke that draws itself: a tick after a click, and the longer lines (line icons, empty-state marks, the
+     wordmark, the Home trend line, the ledger ring). Slower than other moves and on an even curve, so the line
+     reads as drawn and not as a flicker (the repo owner's call, 17 Oct). */
+  --dur-draw-tick: 320ms;
+  --dur-draw: 480ms;
+  --ease-draw: cubic-bezier(.45, 0, .2, 1);
   --dur-stagger: 200ms;
   --stagger-step: 30ms;
   --stagger-rise: 6px;
@@ -536,6 +542,8 @@
     --dur-page: 0ms;
     --dur-tab: 0ms;
     --dur-tick: 0ms;
+    --dur-draw-tick: 0ms;
+    --dur-draw: 0ms;
     --dur-stagger: 0ms;
     --stagger-step: 0ms;
     --dur-pop: 0ms;

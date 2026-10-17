@@ -486,7 +486,7 @@ A pill means a status, a choice of date or the search field. Nothing else is a c
 
 ## Motion
 
-Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with these named exceptions: a status chip eases its colour; a tick, the Home trend line, the ledger ring, the line icons, an empty state's mark and the sign-in wordmark draw their strokes; a fold opens its height; and the focus ring fades in its colour. The curve is the settle curve `--ease`, `cubic-bezier(.2, .8, .2, 1)`: quick out of the gate, a long soft landing. Nothing runs past 300ms except the first-load stagger. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
+Three gestures, plus the small moves listed after them. Each shows a cause. Transform and opacity only, with these named exceptions: a status chip eases its colour; a tick, the Home trend line, the ledger ring, the line icons, an empty state's mark and the sign-in wordmark draw their strokes; a fold opens its height; and the focus ring fades in its colour. The curve is the settle curve `--ease`, `cubic-bezier(.2, .8, .2, 1)`: quick out of the gate, a long soft landing. Nothing runs past 300ms except the first-load stagger and the stroke draws. A stroke draws on its own even curve `--ease-draw`: a tick after a click over `--dur-draw-tick` (320ms), a longer line over `--dur-draw` (480ms), so it reads as drawn and not as a flicker. All of it drops to an instant change under `prefers-reduced-motion: reduce`.
 
 1. **A line arrives.** A committed or asked line fades in and rises 8px, 180ms, ease-out. It happens on the page where the line lands.
 2. **A date moves.** The old date strikes through over 160ms, then the new date slides in from 6px below, 200ms. The struck date stays.
@@ -501,8 +501,8 @@ Other motion is not a gesture. It is the screen keeping up with the user.
 - **A panel opens.** A drawer springs in from 32px to the side and a dialog from 12px below with a scale from 0.98, both in under 300ms (`drawerMotion`, `modalMotion`). They close the same way, faster. A menu scales from the control that opened it.
 - **A list loads.** The first time a list is shown in a browser tab, its rows rise `--stagger-rise` (6px) and fade over `--dur-stagger` (200ms), 30ms apart, the delay capped at the eighth row. It never replays for a row added later. This is the one motion allowed to run past 300ms.
 - **A status changes.** The chip eases its fill and text colour over `--dur-state` (120ms). Its icon morphs (see The status icon morphs).
-- **A task is marked done.** The tick in the box draws itself over `--dur-tick` (160ms). The same tick draws in the Done chip.
-- **The Home glance draws in.** The first time Home is shown in a browser tab, its bars grow from the left (`transform: scaleX`) and the on-time line draws itself (`stroke-dashoffset`, the third named exception, like the tick) over `--dur-slide` (200ms). It never replays on a later visit in the same tab, and reduced motion shows the finished charts at once.
+- **A task is marked done.** The tick in the box draws itself over `--dur-draw-tick` (320ms). The same tick draws in the Done chip.
+- **The Home glance draws in.** The first time Home is shown in a browser tab, its bars grow from the left (`transform: scaleX`) and the on-time line draws itself (`stroke-dashoffset`, the third named exception, like the tick) over `--dur-draw` (480ms) on `--ease-draw`. It never replays on a later visit in the same tab, and reduced motion shows the finished charts at once.
 - **A project status bar grows in.** The first time a project's bar is shown in a browser tab (the card list counts as one surface, each project page as another), its segments grow from the left over `--dur-slide` (200ms), by `transform: scaleX` only. It never replays in the same tab, and reduced motion shows the finished bar at once. The person page cards use the Home glance move above.
 - **A number counts up.** A figure on the ledger counts from 0 to its value once per session, in 280ms. A hard page load, a repeat visit and reduced motion show the true value at once.
 - **A new notice arrives.** While Home is open and the tab is visible, it asks for notices every 60 seconds. When a new one comes, the "N new notices" count beside the date fades in and rises 8px over 180ms (the `.arrive` class, transform and opacity only), and reduced motion shows it at once. Nothing moves on page load. With Sounds on, a soft ping plays once for it (see Sounds).
@@ -513,14 +513,14 @@ Other motion is not a gesture. It is the screen keeping up with the user.
 - **A control is pressed.** A button scales to `--press-scale` (0.96) and a card to `--press-scale-card` (0.98) while it is held.
 - **A focus ring appears.** The ring fades in its colour over `--dur-hover` (150ms), a named exception.
 - **A fold opens.** A fold-out list (Done this week, Dropped, Completed tasks, Update log, History, Removed lines) opens its height on grid rows from `0fr` to `1fr` and fades in over `--dur-fold` (240ms), a named exception. Its chevron is a drawn arrow that turns 90 degrees by transform. A closed fold is inert, so it takes no tab stop. It closes the same way. When it opens past the bottom of the screen, the page then scrolls just enough to show it, and never takes its own button above the top bar. The scroll is smooth, and instant under reduced motion.
-- **A checkpoint or ask is ticked.** The tick draws itself in the box, the same as a task (`--dur-tick`).
-- **A link or invite is copied.** The button says "Copied" for about 1.6 seconds, and a tick draws itself before the word over `--dur-tick`.
+- **A checkpoint or ask is ticked.** The tick draws itself in the box, the same as a task (`--dur-draw-tick`).
+- **A link or invite is copied.** The button says "Copied" for about 1.6 seconds, and a tick draws itself before the word over `--dur-draw-tick`.
 - **A Roster role changes.** After Mark inactive, Make lead, Make admin or the feedback replies switch is saved, the same tick draws itself before the button's new words for about 1.6 seconds.
-- **The ledger ring draws in.** Beside the kept share on the ledger, a small ring draws its arc to the share (`stroke-dashoffset`, a named exception) over `--dur-slide` (200ms), once per session. Reduced motion and a repeat visit show it at once.
-- **A line icon is hovered.** The sidebar icons, Feedback and the help button redraw their stroke over `--dur-slide` (200ms) when the pointer comes onto them. Only on a device with hover. The help button is a drawn question mark, not a typed one.
-- **An empty state shows.** Where an empty state has no picture, the page's own icon (search for no match, the calendar for nothing due, the speech bubble for no feedback) draws itself above the words over `--dur-fold` (240ms).
-- **The sign-in page loads.** The Nicobar wordmark draws its letters' outlines over `--dur-fold`, and the filled letters fade in from 120ms, done by 280ms.
-- **The status icon morphs.** When a status changes, the ring stays, the old glyph shrinks to half size and fades out while the new glyph pops in from a scale of 0.5, both over `--dur-glyph` (120ms). A tick draws its stroke as it arrives (`--dur-tick`). It does not run on first render.
+- **The ledger ring draws in.** Beside the kept share on the ledger, a small ring draws its arc to the share (`stroke-dashoffset`, a named exception) over `--dur-draw` (480ms), once per session. Reduced motion and a repeat visit show it at once.
+- **A line icon is hovered.** The sidebar icons, Feedback and the help button redraw their stroke over `--dur-draw` (480ms) when the pointer comes onto them. Only on a device with hover. The help button is a drawn question mark, not a typed one.
+- **An empty state shows.** Where an empty state has no picture, the page's own icon (search for no match, the calendar for nothing due, the speech bubble for no feedback) draws itself above the words over `--dur-draw` (480ms).
+- **The sign-in page loads.** The Nicobar wordmark draws its letters' outlines over `--dur-draw`, and the filled letters fade in over its second half.
+- **The status icon morphs.** When a status changes, the ring stays, the old glyph shrinks to half size and fades out while the new glyph pops in from a scale of 0.5, both over `--dur-glyph` (120ms). A tick draws its stroke as it arrives (`--dur-draw-tick`). It does not run on first render.
 - **A confirmation appears.** A small bar at the foot of the screen fades in over `--dur-toast` (160ms), stays for `--dwell-confirm`, then fades out. It has `aria-live="polite"`. At most three show at once.
 - **Sounds.** Off until a person turns on Sounds in the account menu (the `nd_sound` cookie). Three Web Audio tones, no files, each under 200ms and quiet: a soft ping for a new notice, a light tick for Done, a low tone for a refused action. None plays on page load. Reduced motion does not mute them, only the switch does (`components/sound.ts`).
 - **A page loads.** `loading.tsx` shows a skeleton shaped like the real content, in `--skeleton-fill`. The fill is static. There is no shimmer.
@@ -593,7 +593,7 @@ Check every screen against this list before showing it. An element that breaks a
 7. **One shadow per card,** and only on cards. Lines never get a shadow or a box.
 
 ### Motion
-8. **Only the motions listed under Motion.** Feedback under 200ms, nothing past 300ms except the first-load stagger, nothing loops. Reduced motion means instant.
+8. **Only the motions listed under Motion.** Feedback under 200ms, nothing past 300ms except the first-load stagger and the stroke draws (480ms at most), nothing loops. Reduced motion means instant.
 
 ### Copy
 9. Plain words, sentence case (Title Case for form labels and form headings), the voice below. No em dashes, no eyebrows, no exclamation marks, no whimsy.
