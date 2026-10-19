@@ -54,7 +54,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
       </form>
       {skipped.length > 0 && <p className="small dim">Not reminded, by choice: {skipped.join(', ')}.</p>}
       {drafts.length === 0 ? <div className="card"><p className="empty card-pad">Nothing to chase. Everyone is on time for this view.</p></div>
-        : <ReminderCards drafts={drafts} />}
+        : <ReminderCards drafts={drafts} appUrl={appUrl} />}
     </>
   );
 }

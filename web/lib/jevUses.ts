@@ -14,6 +14,7 @@ import { today as todayIst, addDays } from './time';
 //   Project health    a labelled suggestion for a project's lead: on track, at risk or slipping.
 //   Check drafts      for draft tasks from meeting minutes: how clear the wording is, and an open task it may repeat.
 //   Project guess     a project for a new task, picked from a fixed list.
+//   Still needed      for a reminder: does the owner's latest note say the task is done or no longer needed.
 //
 // The rules every function here keeps:
 //   - Jev suggests. Nothing here writes a task, a status, a project's stored status or a draft. A person decides.
@@ -378,3 +379,49 @@ export async function guessProject(db: Tx, teamId: string, title: string, projec
 }
 
 export { RISK_DAYS };
+
+// ---------- Still needed (a reminder) ----------
+
+export const MAX_STILL = 20; // tasks read per draft run; the rest stay in the email as they are
+
+export function stillNeededQuestion(title: string, note: string): JevQuestion {
+  return {
+    type: 'noul',
+    instructions: { task: clip(title, 200), owner_note: clip(note, 400),
+      question: 'Does `owner_note`, the latest note from the person who owns `task`, say the task is already done or is no longer needed?' },
+    criteria: { true: 'The note says the work is finished, cancelled or no longer needed.', false: 'The note says the work is still going or waiting, or says nothing about it being finished or unneeded.' },
+  };
+}
+
+// The ids of tasks whose owner's latest note (an update or a comment, in the last HEALTH_DAYS days) reads as done or
+// not needed, at the yes/no floor. Off, failed or unsure: an empty list, and every task stays in the reminder.
+export async function doneByNote(db: Tx, teamId: string, tasks: Pick<Task, 'id' | 'title' | 'ownerId'>[], today = todayIst(), env?: Env): Promise<string[]> {
+  if (!jevOn(env) || !tasks.length) return [];
+  try {
+    const list = tasks.slice(0, MAX_STILL);
+    const since = `${addDays(today, -HEALTH_DAYS)}T00:00:00Z`;
+    const { rows } = await db.query<{ id: string; by: string; text: unknown; at: unknown }>(
+      `SELECT entity_id AS id, actor_id AS by, after AS text, at FROM events
+        WHERE entity_type = 'task' AND field = '_update' AND entity_id = ANY($1) AND at >= $2
+       UNION ALL
+       SELECT subject_id, author_id, to_jsonb(body), created_at FROM comments
+        WHERE subject_kind = 'task' AND subject_id = ANY($1) AND deleted_at IS NULL AND created_at >= $2`, [list.map((t) => t.id), since]);
+    const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
+    const latest = new Map<string, { at: string; text: string }>();
+    for (const t of list) for (const r of rows) {
+      if (r.id !== t.id || r.by !== t.ownerId || typeof r.text !== 'string') continue;
+      const cur = latest.get(t.id);
+      if (!cur || iso(r.at) > cur.at) latest.set(t.id, { at: iso(r.at), text: stripTokens(r.text) });
+    }
+    const asked = list.filter((t) => latest.has(t.id));
+    if (!asked.length) return [];
+    const dict = await dictOf(db, teamId);
+    if (!dict) return [];
+    const questions = Object.fromEntries(asked.map((t, i) => [`s${i}`, stillNeededQuestion(t.title, latest.get(t.id)!.text)]));
+    const r = await jevAsk({ task_count: asked.length }, questions, { dict, env });
+    if (!r.ok) return [];
+    return asked.filter((_, i) => isYes(r.answers[`s${i}`])).map((t) => t.id);
+  } catch {
+    return [];
+  }
+}

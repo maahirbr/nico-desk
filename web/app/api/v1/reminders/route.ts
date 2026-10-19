@@ -13,6 +13,7 @@ export const GET = route(async ({ req, me, db }) => {
 
 const Body = z.object({
   personId: z.string().min(1).max(80), channel: z.enum(['gmail', 'mail_app', 'copy']), subject: z.string().max(200), itemCount: z.number().int().min(0).max(500),
+  itemKeys: z.array(z.string().min(1).max(120)).max(500).optional(),
 }).strict();
 
 export const POST = route(async ({ req, me, db }) => {

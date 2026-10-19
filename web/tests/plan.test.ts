@@ -170,6 +170,40 @@ describe('reminders', () => {
     expect(again.drafts.find((x) => x.personId === 'per_bo')!.lastAt).not.toBeNull();
   });
 
+  it('leaves out an item that may not be needed, with the reason, and drafts the email from the rest', async () => {
+    const { reminderDrafts, subjectFor } = await import('../lib/reminders');
+    const { blockTask, getTask } = await import('../lib/service');
+    const mine = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14 }, 'x', AS_OF)).drafts.find((x) => x.personId === ME)!;
+    const [a, b] = (await mine()).items.filter((i) => i.kind === 'task' && !i.flag);
+    expect(b).toBeDefined();
+    const id = (k: string) => k.slice('task:'.length);
+    const flagOf = async (k: string) => (await mine()).items.find((i) => i.key === k)!.flag;
+    await blockTask(db, ME, id(a.key), { version: (await getTask(db, id(a.key), AS_OF)).version, onId: 'per_bo', ask: 'Waiting on the copy' });
+    const comment = (cid: string, by: string, at: string) => db.query(
+      `INSERT INTO comments (id, subject_kind, subject_id, author_id, body, created_at) VALUES ($1, 'task', $2, $3, 'Sending it today', $4)`, [cid, id(b.key), by, at]);
+    await comment('cmt_t1', 'per_bo', '2026-10-08T10:00:00+05:30'); // someone else: not the owner's update
+    await comment('cmt_t2', ME, '2026-10-05T10:00:00+05:30'); // the owner, too long ago
+    expect(await flagOf(b.key)).toBeNull();
+    await comment('cmt_t3', ME, '2026-10-08T10:00:00+05:30'); // the owner, yesterday
+    const after = await mine();
+    expect(after.items.find((i) => i.key === a.key)!.flag).toMatch(/^Blocked, waiting on /);
+    expect(after.items.find((i) => i.key === b.key)!.flag).toBe('They updated it in the last 2 days');
+    expect(after.body).not.toContain(a.title);
+    expect(after.body).not.toContain(b.title);
+    expect(after.subject).toBe(subjectFor(after.items.filter((i) => !i.flag)));
+  });
+
+  it('leaves out an item already in a recent reminder, and only that item', async () => {
+    const { reminderDrafts, logReminder } = await import('../lib/reminders');
+    const flags = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14 }, 'x', AS_OF)).drafts.find((x) => x.personId === 'per_bo')!.items;
+    const d = await flags();
+    const n = d.findIndex((i) => !i.flag);
+    await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'copy', subject: 'x', itemCount: 0 }); // an old-style row: no keys
+    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i) => i.flag));
+    await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'gmail', subject: 'x', itemCount: 1, itemKeys: [d[n].key] });
+    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? 'Already in a reminder in the last 2 days' : i.flag)));
+  });
+
   it('leaves out people marked never remind', async () => {
     const { reminderDrafts } = await import('../lib/reminders');
     await db.query(`UPDATE people SET never_remind = true WHERE id = 'per_bo'`);

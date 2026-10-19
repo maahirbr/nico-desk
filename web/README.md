@@ -66,7 +66,7 @@ nothing new.
 - Task drawer: a new comment can offer the usual done or blocked banner.
 - New task: a suggested project, filled only while the field is empty.
 
-Not built: "is this reminder still needed", and the sort on the Team page.
+Not built: the sort on the Team page.
 
 ### Projects
 

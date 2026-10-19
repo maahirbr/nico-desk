@@ -4,19 +4,31 @@ import { isLeadOrAdmin } from './roles';
 import { daysBetween, nextCheckpoint } from './planUtil';
 import { planState, teamProjects } from './plan';
 import { newId, teamTasks } from './service';
-import { fmtDate, today as todayIst } from './time';
+import { addDays, today as todayIst } from './time';
+import { doneByNote } from './jevUses';
+import { bodyFor, subjectFor, type RemindItem } from './reminderText';
+
+export { bodyFor, subjectFor, type RemindItem };
 
 // Reminder emails, drafted per person: what is past its date and what is coming up, across
 // tasks, plan lines and actions from meetings. The app never sends anything. A lead opens the
 // draft in their own Gmail or mail app, reads it and presses Send; the app records that.
+//
+// Still needed? Before an item goes in, code flags it when a reminder may not be needed (the repo owner's call, 19 Oct):
+//   - it is blocked, waiting on someone else;
+//   - its owner changed it or commented on it in the last RECENT_DAYS days;
+//   - it was in a reminder to this person in the last RECENT_DAYS days.
+// Then Jev, when it is on, reads the owner's latest note on each task still unflagged, for "done or no longer needed".
+// A flagged item starts left out of the email, with its reason shown, and the lead can tick it back in.
 
-export type RemindItem = { title: string; dueOn: string; days: number; where: string; kind: 'task' | 'line' | 'action' };
+export const RECENT_DAYS = 2; // today and the two days before it
+type Env = Record<string, string | undefined>;
 export type ReminderDraft = {
   personId: string; name: string; to: string | null; items: RemindItem[]; subject: string; body: string; lastAt: string | null;
 };
 export type RemindScope = { mode: 'overdue' | 'window'; days: number; projectId?: string };
 
-export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope, appUrl: string, today = todayIst()): Promise<{ drafts: ReminderDraft[]; skipped: string[] }> {
+export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope, appUrl: string, today = todayIst(), env?: Env): Promise<{ drafts: ReminderDraft[]; skipped: string[] }> {
   const { rows: people } = await db.query<{ id: string; display_name: string; email: string; contact_email: string | null; never_remind: boolean }>(
     `SELECT p.* FROM people p WHERE p.active AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $1) ORDER BY p.display_name`, [teamId]);
   const projects = await teamProjects(db, teamId);
@@ -27,12 +39,17 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   };
   const byPerson = new Map<string, RemindItem[]>();
   const add = (pid: string, it: RemindItem) => byPerson.set(pid, [...(byPerson.get(pid) ?? []), it]);
+  const pnames = Object.fromEntries(people.map((p) => [p.id, p.display_name]));
+  const since = `${addDays(today, -RECENT_DAYS)}T00:00:00+05:30`; // days are judged in IST
 
-  for (const t of await teamTasks(db, teamId, today)) {
-    if (t.statusCategory !== 'open' || t.readOnly) continue;
-    if (scope.projectId && t.projectId !== scope.projectId) continue;
-    if (!wanted(t.dueOn)) continue;
-    add(t.ownerId, { title: t.title, dueOn: t.dueOn, days: daysBetween(today, t.dueOn), kind: 'task',
+  const tasks = (await teamTasks(db, teamId, today)).filter((t) =>
+    t.statusCategory === 'open' && !t.readOnly && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
+  const touched = await ownerTouched(db, tasks.map((t) => t.id), since);
+  for (const t of tasks) {
+    const flag = t.blocked?.onId && t.blocked.onId !== t.ownerId ? `Blocked, waiting on ${pnames[t.blocked.onId]?.split(' ')[0] ?? 'someone else'}`
+      : touched.has(`${t.id}|${t.ownerId}`) ? 'They updated it in the last 2 days'
+      : null;
+    add(t.ownerId, { key: `task:${t.id}`, title: t.title, dueOn: t.dueOn, days: daysBetween(today, t.dueOn), kind: 'task', flag,
       where: [t.projectId ? pname[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ') || 'Tasks' });
   }
   const byName = new Map(people.map((p) => [p.display_name.toLowerCase(), p.id]));
@@ -42,18 +59,33 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
       if (!l.ownerId || l.status === 'Done') continue;
       const n = nextCheckpoint(l);
       if (!n || !wanted(n.date)) continue;
-      add(l.ownerId, { title: n.label ? `${l.what}: ${n.label}` : l.what, dueOn: n.date, days: daysBetween(today, n.date), kind: 'line', where: `${p.name} · line ${l.num}` });
+      add(l.ownerId, { key: `line:${l.id}:${n.date}`, title: n.label ? `${l.what}: ${n.label}` : l.what, dueOn: n.date, days: daysBetween(today, n.date), kind: 'line',
+        where: `${p.name} · line ${l.num}`, flag: null });
     }
     for (const a of s.actions) {
       if (a.done || !a.dueOn || !wanted(a.dueOn)) continue;
       const pid = byName.get(a.ownerName.toLowerCase());
-      if (pid) add(pid, { title: a.task, dueOn: a.dueOn, days: daysBetween(today, a.dueOn), kind: 'action', where: `${p.name} · action from ${a.source.title ?? 'a meeting'}` });
+      if (pid) add(pid, { key: `action:${a.id}`, title: a.task, dueOn: a.dueOn, days: daysBetween(today, a.dueOn), kind: 'action',
+        where: `${p.name} · action from ${a.source.title ?? 'a meeting'}`, flag: null });
     }
   }
 
   const { rows: last } = await db.query<{ person_id: string; at: string }>(
     `SELECT person_id, max(at) AS at FROM reminders WHERE team_id = $1 GROUP BY person_id`, [teamId]);
   const lastAt = new Map(last.map((r) => [r.person_id, r.at]));
+  // Item keys from recent reminders. A row logged before keys were kept has none, so it flags nothing.
+  const { rows: recent } = await db.query<{ person_id: string; item_keys: string[] }>(
+    `SELECT person_id, item_keys FROM reminders WHERE team_id = $1 AND at >= $2 AND item_keys IS NOT NULL`, [teamId, since]);
+  const sentRecently = new Set(recent.flatMap((r) => r.item_keys.map((k) => `${r.person_id}|${k}`)));
+  for (const [pid, items] of byPerson) for (const i of items) if (!i.flag && sentRecently.has(`${pid}|${i.key}`)) i.flag = 'Already in a reminder in the last 2 days';
+
+  // Jev reads words only, on the tasks no rule flagged. Off, slow or unsure leaves them in.
+  const ask = tasks.filter((t) => byPerson.get(t.ownerId)?.find((i) => i.key === `task:${t.id}`)?.flag === null);
+  for (const id of await doneByNote(db, teamId, ask, today, env)) {
+    const t = tasks.find((x) => x.id === id)!;
+    const it = byPerson.get(t.ownerId)!.find((i) => i.key === `task:${id}`)!;
+    it.flag = 'Their latest note reads as done or not needed';
+  }
   const drafts: ReminderDraft[] = [];
   const skipped: string[] = [];
   for (const p of people) {
@@ -62,45 +94,30 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
     if (p.never_remind) { skipped.push(p.display_name); continue; }
     drafts.push({
       personId: p.id, name: p.display_name, to: p.contact_email ?? (p.email.endsWith('@example.test') ? null : p.email), items,
-      subject: subjectFor(items), body: bodyFor(p.display_name, items, appUrl), lastAt: lastAt.get(p.id) ?? null,
+      subject: subjectFor(items.filter((i) => !i.flag)), body: bodyFor(p.display_name, items.filter((i) => !i.flag), appUrl), lastAt: lastAt.get(p.id) ?? null,
     });
   }
   return { drafts, skipped };
 }
 
-// Leads with "Reminder" and names the state; short, since phone inboxes cut long subjects.
-export function subjectFor(items: RemindItem[]): string {
-  const over = items.filter((i) => i.days < 0).length;
-  const soon = items.length - over;
-  if (over && soon) return `Reminder: ${over} overdue, ${soon} coming up`;
-  if (over) return `Reminder: ${over} overdue ${over === 1 ? 'item' : 'items'}`;
-  return `Reminder: ${soon} ${soon === 1 ? 'item' : 'items'} coming up`;
+// "task|person" for each task its owner changed or commented on since the cut-off. Creating a task is not an update.
+async function ownerTouched(db: Tx, taskIds: string[], since: string): Promise<Set<string>> {
+  if (!taskIds.length) return new Set();
+  const { rows } = await db.query<{ id: string; by: string }>(
+    `SELECT entity_id AS id, actor_id AS by FROM events
+      WHERE entity_type = 'task' AND entity_id = ANY($1) AND field <> '_created' AND actor_id IS NOT NULL AND at >= $2
+     UNION
+     SELECT subject_id, author_id FROM comments
+      WHERE subject_kind = 'task' AND subject_id = ANY($1) AND deleted_at IS NULL AND created_at >= $2`, [taskIds, since]);
+  return new Set(rows.map((r) => `${r.id}|${r.by}`));
 }
 
-export function bodyFor(name: string, items: RemindItem[], appUrl: string): string {
-  const over = items.filter((i) => i.days < 0);
-  const soon = items.filter((i) => i.days >= 0);
-  const lines = [`Hi ${name.split(' ')[0]},`, ''];
-  if (over.length) {
-    lines.push('These are past their date:');
-    for (const i of over) lines.push(`• ${i.title} (${i.where}): was due ${fmtDate(i.dueOn)}, ${-i.days} day${i.days === -1 ? '' : 's'} ago`);
-    lines.push('');
-  }
-  if (soon.length) {
-    lines.push(over.length ? 'And these are coming up:' : 'These are coming up:');
-    for (const i of soon) lines.push(`• ${i.title} (${i.where}): due ${fmtDate(i.dueOn)}${i.days === 0 ? ' (today)' : i.days === 1 ? ' (tomorrow)' : ''}`);
-    lines.push('');
-  }
-  lines.push('Could you update these today: close them, or give a new date you can hold, with a line on why.');
-  lines.push('', `Update them here: ${appUrl}`);
-  return lines.join('\n');
-}
-
-export async function logReminder(db: Tx, teamId: string, meId: string, r: { personId: string; channel: 'gmail' | 'mail_app' | 'copy'; subject: string; itemCount: number }) {
+export async function logReminder(db: Tx, teamId: string, meId: string,
+  r: { personId: string; channel: 'gmail' | 'mail_app' | 'copy'; subject: string; itemCount: number; itemKeys?: string[] }) {
   const { rows } = await db.query(`SELECT 1 FROM team_members WHERE team_id = $1 AND person_id = $2`, [teamId, r.personId]);
   if (!rows.length) throw bad('invalid_body', 'That person is not on this team.', 'personId');
-  await db.query(`INSERT INTO reminders (id, team_id, person_id, sent_by, channel, subject, item_count, at) VALUES ($1,$2,$3,$4,$5,$6,$7,now())`,
-    [newId('rem'), teamId, r.personId, meId, r.channel, r.subject.slice(0, 200), r.itemCount]);
+  await db.query(`INSERT INTO reminders (id, team_id, person_id, sent_by, channel, subject, item_count, item_keys, at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now())`,
+    [newId('rem'), teamId, r.personId, meId, r.channel, r.subject.slice(0, 200), r.itemCount, r.itemKeys ?? null]);
 }
 
 export function mayRemind(appRoles: string[]): void {

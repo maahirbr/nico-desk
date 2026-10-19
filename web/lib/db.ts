@@ -106,6 +106,8 @@ export async function upgrade(db: Db) {
   await db.exec(GOOGLE_LINKS_UPGRADE);
   // 13 Oct: team chat, with a message_id on notices for a mention in chat.
   await db.exec(CHAT_UPGRADE);
+  // 19 Oct: a reminder keeps which items it held, so the next draft can leave out what was just sent.
+  await db.exec(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS item_keys text[];`);
 }
 
 // Idempotent: the chat tables (RLS on, no policies) and message_id on notices. The same SQL as lib/schema.ts.

@@ -47,7 +47,7 @@ Last updated 13 Oct 2026. The live app is https://nico-desk.vercel.app.
 
 - A setup check-list for a new lead.
 - A "run the meeting" view that walks the agenda and records action items as it goes.
-- A "still needed?" check before a reminder is drafted.
+- Built 19 Oct: a "still needed?" check on each reminder item (rules, then Jev on synthetic data only).
 
 ## The pilot rollout (Phase 1)
 
@@ -84,7 +84,7 @@ Nine projects and meetings, each set up as one project:
 | Meet on a rhythm | Rhythm and next date per project, an agenda from late, blocked and open items | Nothing for the pilot |
 | Run the agenda and action items | Minutes from paste, Granola, Fireflies, Fathom, Google Meet notes | A "run the meeting" view |
 | Members update their own tasks | Five status words, Home, install on phone, dictation | Nothing for the pilot |
-| No WhatsApp reminders | Reminders open as Gmail drafts, paste a chat to tasks | A "still needed?" check before a nudge |
+| No WhatsApp reminders | Reminders open as Gmail drafts, paste a chat to tasks | A "still needed?" check before a nudge (built 19 Oct) |
 | No spreadsheets | Task and plan boards, the ledger | An export for the monthly review, if leads ask |
 | A senior-team group as members | Members one by one | A saved group to add in one step |
 | Collect feedback | Feedback from the account menu, an admin view | Nothing for the pilot |

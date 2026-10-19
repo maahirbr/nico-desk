@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { openDb, type Db } from '../lib/db';
 import { jevCacheClear } from '../lib/jev';
 import {
-  checkDrafts, combineChecks, combineOrder, dateFacts, draftQuestions, duplicateCandidates, fillIfEmpty, FLOOR, guessProject, healthKeyOf,
+  checkDrafts, combineChecks, doneByNote, combineOrder, dateFacts, draftQuestions, duplicateCandidates, fillIfEmpty, FLOOR, guessProject, healthKeyOf,
   isYes, projectHealth, projectQuestion, readHealth, readinessOf, readProject, readScore, recentNotes, suggestedOrder, taskFacts, YESNO,
   type Draft, type OpenTask, type ProjectOpt,
 } from '../lib/jevUses';
@@ -377,5 +377,50 @@ describe('a person-set field is never overwritten', () => {
     const clients = [...walk(join(root, 'components')), ...walk(join(root, 'app'))].filter((p) => /^['"]use client['"]/.test(readFileSync(p, 'utf8')));
     expect(clients.length).toBeGreaterThan(20);
     for (const p of clients) expect(readFileSync(p, 'utf8'), p).not.toMatch(/from ['"](@\/lib|\.\.\/lib|\.)\/(jev|jevUses|jevStatus|jevSearch|redact)['"]/);
+  });
+});
+
+describe('still needed (a reminder)', () => {
+  const note = (cid: string, task: string, by: string, body: string) => db.query(
+    `INSERT INTO comments (id, subject_kind, subject_id, author_id, body, created_at) VALUES ($1, 'task', $2, $3, $4, now())`, [cid, task, by, body]);
+
+  it('flags a task whose owner says it is done, at the yes/no floor, and reads only the owner', async () => {
+    const [t, u] = await openTasks();
+    const other = ['per_ada', 'per_bo', 'per_fay'].find((p) => p !== u.ownerId)!;
+    await note('cmt_s1', t.id, t.ownerId, 'Done, this went out on Monday.');
+    await note('cmt_s2', u.id, other, 'Done, I think.');
+    const before = await snapshot();
+    fetchMock.mockResolvedValueOnce(ok({ s0: yes(0.9) }));
+    expect(await doneByNote(db, TEAM_ID, [t, u], AS_OF, ON)).toEqual([t.id]);
+    expect(bodyOf(fetchMock)).toContain('this went out on Monday');
+    expect(bodyOf(fetchMock)).not.toContain('I think');
+    jevCacheClear();
+    fetchMock.mockResolvedValueOnce(ok({ s0: yes(YESNO - 0.01) }));
+    expect(await doneByNote(db, TEAM_ID, [t], AS_OF, ON)).toEqual([]);
+    expect(await snapshot()).toEqual(before); // nothing written
+  });
+
+  it('asks nothing when off, and keeps every task when the call fails', async () => {
+    const [t] = await openTasks();
+    await note('cmt_s3', t.id, t.ownerId, 'No longer needed, the brief changed.');
+    expect(await doneByNote(db, TEAM_ID, [t], AS_OF, OFF)).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRejectedValue(new Error('offline'));
+    expect(await doneByNote(db, TEAM_ID, [t], AS_OF, ON)).toEqual([]);
+  });
+
+  it('marks the item in the draft, which leaves it out of the email', async () => {
+    const { reminderDrafts } = await import('../lib/reminders');
+    const d = (await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'x', AS_OF, OFF)).drafts.find((x) => x.items.some((i) => i.kind === 'task' && !i.flag))!;
+    const item = d.items.find((i) => i.kind === 'task' && !i.flag)!;
+    await note('cmt_s4', item.key.slice('task:'.length), d.personId, 'Cancelled, we are not doing this one.');
+    await db.query(`UPDATE comments SET created_at = '2026-10-05T10:00:00Z' WHERE id = 'cmt_s4'`); // older than the 2-day rule
+    fetchMock.mockImplementation(async (_u: string, init: { body: string }) => {
+      const qs = Object.keys(JSON.parse(init.body).questions ?? {});
+      return ok(Object.fromEntries(qs.map((k) => [k, yes(JSON.parse(init.body).questions[k].instructions.owner_note?.includes('not doing') ? 0.95 : 0.1)])));
+    });
+    const on = (await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'x', AS_OF, ON)).drafts.find((x) => x.personId === d.personId)!;
+    expect(on.items.find((i) => i.key === item.key)!.flag).toBe('Their latest note reads as done or not needed');
+    expect(on.body).not.toContain(item.title);
   });
 });

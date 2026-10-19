@@ -627,6 +627,11 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
 .remind-card { padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--space-sm); margin-top: 0 !important; }
 .remind-head { display: flex; justify-content: space-between; align-items: center; }
 .remind-card textarea { font: var(--type-meta); }
+.remind-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+.remind-items li { display: flex; gap: var(--space-sm); align-items: flex-start; }
+.remind-items li .trow-check { flex: none; margin-top: 2px; }
+.remind-items li.out .remind-item-text > span:first-child { color: var(--ink-3); }
+.remind-flag { display: block; color: var(--ink-2); }
 a.btn { text-decoration: none; }
 a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .seg-link { font: var(--type-button); display: inline-flex; align-items: center; min-height: var(--button-height); padding: 0 var(--button-pad-x); text-decoration: none; color: var(--ink-2); background: var(--canvas); }

@@ -429,6 +429,7 @@ CREATE TABLE reminders (
   channel     text NOT NULL CHECK (channel IN ('gmail','mail_app','copy')),
   subject     text NOT NULL,
   item_count  integer NOT NULL,
+  item_keys   text[],
   at          timestamptz NOT NULL
 );
 CREATE INDEX reminders_person ON reminders (team_id, person_id, at);

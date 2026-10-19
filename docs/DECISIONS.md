@@ -717,3 +717,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   restarts on each stroke, so every stroke started together and a short one finished early. `Icon` now splits the
   path at each move, so every stroke draws over the full `--dur-draw`.
   Rollback: `git revert` this commit.
+- **2026-10-19 · Opus 5.5 · Reminders check that each item is still needed.** The repo owner chose rules first, then
+  Jev, and a flagged item left out with a way to add it back. Code flags an item when it is blocked on someone else,
+  when its owner changed it or commented on it in the last 2 days, or when it was in a reminder to that person in the
+  last 2 days. Then Jev, only when `jevOn` (so not on the live pilot), reads the owner's latest note on each task still
+  unflagged and flags it at 0.65 when the note says done or no longer needed. Each item on the Reminders page has a
+  tick box. A flagged item starts unticked with its reason, and ticking rebuilds the subject and the text (a hand edit
+  is replaced). Items carry a key, and a logged reminder keeps the keys in the new `reminders.item_keys` column (added
+  in `upgrade()`; an older row has none and flags nothing). The hosted database needs `npm run db:upgrade` before this
+  build is promoted.
+  Rollback: `git revert` this commit. The `item_keys` column can stay: nothing else reads it.
