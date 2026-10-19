@@ -1,6 +1,6 @@
 # Plan: the setup check-list and the run-the-meeting view
 
-Status: draft by the repo owner's session, 19 Oct. Not started. Two gates below need a yes before part 2 is built.
+Status: part 1 built and committed 20 Oct (1e02659), not pushed or deployed. Part 2 waits for G1 and G2 below.
 Work happens on `maahir/mvp`. Build part 1 first, then part 2. One Sonnet agent per part, one commit per part.
 Read `CLAUDE.md` (all four sections), `DESIGN.md`, `docs/DESIGN-19-OCT.md` (how both features look) and `docs/ROADMAP.md` "Next (week of 19 Oct)" first.
 The repo is public.
