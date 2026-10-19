@@ -4,7 +4,7 @@ One place where a Nicobar team runs its week: tasks and owners, projects and wha
 meeting minutes turned into tasks, linked to the company context layer. Piloted with one small
 team first. `HANDOFF.md` is the brief and the reading list.
 
-Read before work on `maahir/mvp`: `docs/PLAN-13-OCT.md` (the current feature batch), then
+Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.md` (the next build: its design, then its plan and rules), `docs/PLAN-13-OCT.md` (the 13 Oct batch), then
 `docs/HANDOFF-12-OCT.md` (the baseline, the feedback and the UI direction).
 
 ## ARCHITECTURE
