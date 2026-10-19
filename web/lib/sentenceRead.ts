@@ -1,6 +1,7 @@
 import type { Me } from './auth';
 import type { Tx } from './db';
 import { ApiError } from './errors';
+import { modelOn } from './model';
 import { defaultAsk, type Ask } from './paste';
 import { makeMasker, maskDictFor } from './redact';
 import { MAX_TASKS_AT_ONCE, readTasksRules, type SentenceRead } from './sentence';
@@ -10,7 +11,7 @@ import { seenProjects } from './visibility';
 
 // Quick add, said the way a person talks. SERVER ONLY.
 //
-// With the model switched on (ANTHROPIC_API_KEY), the sentence goes to it masked: people, projects, emails, phones,
+// With the model switched on (modelOn in lib/model.ts), the sentence goes to it masked: people, projects, emails, phones,
 // links and amounts become labels (lib/redact.ts), and the answer maps back here. With it off, or when it fails, the
 // plain rules in lib/sentence.ts read the sentence instead. Either way nothing is written: the answer only fills the
 // new task form, and the person presses Add task. The sentence is not stored.
@@ -47,7 +48,7 @@ export async function readSentence(db: Tx, me: Me, text: string, deps: { ask?: A
   const projects = seen.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }));
   const rules = (): TasksRead => ({ tasks: readTasksRules(said, { today, people: active, projects, meName: me.person.displayName }), via: 'rules' });
 
-  if (!deps.ask && !process.env.ANTHROPIC_API_KEY) return rules();
+  if (!deps.ask && !modelOn()) return rules();
   try {
     const dict = await maskDictFor(db, me.team.id);
     if (process.env.DATABASE_URL && dict.people.length === 0) return rules(); // the masking list did not load: send nothing

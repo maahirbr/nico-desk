@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { readBody, route } from '@/lib/http';
 import { logReminder, mayRemind, reminderDrafts } from '@/lib/reminders';
+import { projectFor, sightFor } from '@/lib/visibility';
 
 // GET: the drafts (leads only). POST: record that a lead opened or copied one to send it themselves.
 export const GET = route(async ({ req, me, db }) => {
@@ -8,7 +9,9 @@ export const GET = route(async ({ req, me, db }) => {
   const u = new URL(req.url);
   const mode = u.searchParams.get('mode') === 'window' ? 'window' : 'overdue';
   const days = Math.min(Math.max(Number(u.searchParams.get('days') ?? 2) || 2, 1), 30);
-  return reminderDrafts(db, me.team.id, { mode, days, projectId: u.searchParams.get('project') ?? undefined }, u.origin);
+  const projectId = u.searchParams.get('project') ?? undefined;
+  if (projectId) await projectFor(db, me, projectId); // hidden or on another team reads as missing
+  return reminderDrafts(db, me.team.id, { mode, days, projectId, sight: await sightFor(db, me) }, u.origin);
 });
 
 const Body = z.object({

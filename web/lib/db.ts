@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SCHEMA } from './schema';
+import { PUBLIC_API_LOCK, SCHEMA } from './schema';
 import { jobSecret } from './jobs';
 import { loadLocalProjects, loadRosterOverlay, seed } from './seed';
 
@@ -108,6 +108,8 @@ export async function upgrade(db: Db) {
   await db.exec(CHAT_UPGRADE);
   // 19 Oct: a reminder keeps which items it held, so the next draft can leave out what was just sent.
   await db.exec(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS item_keys text[];`);
+  // 19 Oct: the public API roles get no rights and a deny policy on every table. Last, so it covers new tables.
+  await db.exec(PUBLIC_API_LOCK);
 }
 
 // Idempotent: the chat tables (RLS on, no policies) and message_id on notices. The same SQL as lib/schema.ts.

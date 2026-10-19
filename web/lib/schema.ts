@@ -446,3 +446,28 @@ CREATE TABLE google_links (
 );
 ALTER TABLE google_links ENABLE ROW LEVEL SECURITY;
 `;
+
+// Closes the Supabase Data API path (audit 13 Oct, section 4.3). The app reads through the pooler as the table owner,
+// which RLS does not bind, so this changes nothing for the app. It takes every right from the public API roles, and
+// adds a restrictive policy that refuses them on every table, so a later grant alone cannot open a table. It runs only
+// where those roles exist (Supabase), never on PGlite. Idempotent: reseed and npm run db:upgrade both run it.
+// Rollback: GRANT USAGE ON SCHEMA public TO anon, authenticated; GRANT ALL ON ALL TABLES, SEQUENCES and FUNCTIONS
+// IN SCHEMA public TO anon, authenticated; DROP POLICY deny_public_api on each table.
+export const PUBLIC_API_LOCK = `
+DO $$ DECLARE t text; BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') AND EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
+    REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+    REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM anon, authenticated;
+    REVOKE USAGE ON SCHEMA public FROM anon, authenticated; -- USAGE through PUBLIC stays; it opens no table
+    -- For tables this role makes later. Defaults set by other roles are theirs to change.
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM anon, authenticated;
+    FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+      EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+      EXECUTE format('DROP POLICY IF EXISTS deny_public_api ON public.%I', t);
+      EXECUTE format('CREATE POLICY deny_public_api ON public.%I AS RESTRICTIVE FOR ALL TO anon, authenticated USING (false) WITH CHECK (false)', t);
+    END LOOP;
+  END IF;
+END $$;`;

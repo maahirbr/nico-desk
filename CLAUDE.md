@@ -54,7 +54,8 @@ Read before work on `maahir/mvp`: `docs/PLAN-13-OCT.md` (the current feature bat
   already in it goes in: no real Nicobar data, no credentials, no customer data, no internal URLs
   that are not already public.
 - Before the app goes into active use: a security audit of the deployment, and row level security policies that
-  tighten the database (today every table has RLS on with no policies, and the app reads through the pooler).
+  tighten the database (since 19 Oct every table has RLS on, the public API roles have no rights and a
+  `deny_public_api` policy, and the app reads through the pooler as the owner).
   Raised by a partner teammate on 13 Oct.
 
 ## DECISIONS
@@ -92,7 +93,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `736 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `742 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

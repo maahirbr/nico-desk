@@ -4,6 +4,7 @@ import { ApiError } from '../lib/errors';
 import { getProject, planOp, planState, projectCounts, teamProjects } from '../lib/plan';
 import { countdown, lineLate, membersExceptLead, personCounts, nextStepsOf, plainParse, stampRel, totalPushes } from '../lib/planUtil';
 import { TEAM_ID } from '../lib/seed';
+import { SEE_ALL, sightOf } from '../lib/sight';
 
 // Project pages and the plan board, on the synthetic fixtures (fixtures/plan.json).
 const AS_OF = '2026-10-09';
@@ -156,24 +157,24 @@ describe('task boards: sub-projects and minutes', () => {
 describe('reminders', () => {
   it('drafts one email per person with overdue items, and never sends', async () => {
     const { reminderDrafts, logReminder } = await import('../lib/reminders');
-    const r = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'http://localhost:3100/me', AS_OF);
+    const r = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'http://localhost:3100/me', AS_OF);
     expect(r.drafts.length).toBeGreaterThan(0);
     const d = r.drafts.find((x) => x.personId === 'per_bo')!;
     expect(d.items.every((i) => i.days < 0)).toBe(true);
     expect(d.subject).toMatch(/^Reminder: \d+ overdue/);
     expect(d.body).toContain('http://localhost:3100/me');
     expect(d.to).toBeNull(); // synthetic addresses are never offered as a recipient
-    const wide = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 7 }, 'x', AS_OF);
+    const wide = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 7, sight: SEE_ALL }, 'x', AS_OF);
     expect(wide.drafts.reduce((n, x) => n + x.items.length, 0)).toBeGreaterThan(r.drafts.reduce((n, x) => n + x.items.length, 0));
     await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'gmail', subject: d.subject, itemCount: d.items.length });
-    const again = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'x', AS_OF);
+    const again = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'x', AS_OF);
     expect(again.drafts.find((x) => x.personId === 'per_bo')!.lastAt).not.toBeNull();
   });
 
   it('leaves out an item that may not be needed, with the reason, and drafts the email from the rest', async () => {
     const { reminderDrafts, subjectFor } = await import('../lib/reminders');
     const { blockTask, getTask } = await import('../lib/service');
-    const mine = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14 }, 'x', AS_OF)).drafts.find((x) => x.personId === ME)!;
+    const mine = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight: SEE_ALL }, 'x', AS_OF)).drafts.find((x) => x.personId === ME)!;
     const [a, b] = (await mine()).items.filter((i) => i.kind === 'task' && !i.flag);
     expect(b).toBeDefined();
     const id = (k: string) => k.slice('task:'.length);
@@ -195,7 +196,7 @@ describe('reminders', () => {
 
   it('leaves out an item already in a recent reminder, and only that item', async () => {
     const { reminderDrafts, logReminder } = await import('../lib/reminders');
-    const flags = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14 }, 'x', AS_OF)).drafts.find((x) => x.personId === 'per_bo')!.items;
+    const flags = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight: SEE_ALL }, 'x', AS_OF)).drafts.find((x) => x.personId === 'per_bo')!.items;
     const d = await flags();
     const n = d.findIndex((i) => !i.flag);
     await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'copy', subject: 'x', itemCount: 0 }); // an old-style row: no keys
@@ -204,10 +205,28 @@ describe('reminders', () => {
     expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? 'Already in a reminder in the last 2 days' : i.flag)));
   });
 
+  it('names only what the lead can see', async () => {
+    const { reminderDrafts } = await import('../lib/reminders');
+    const { seesProject, seesTask } = await import('../lib/sight');
+    const { teamTasks } = await import('../lib/service');
+    const sight = await sightOf(db, TEAM_ID, ME); // a lead who is not an admin
+    const all = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight: SEE_ALL }, 'x', AS_OF);
+    const seen = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight }, 'x', AS_OF);
+    const tasks = await teamTasks(db, TEAM_ID, AS_OF);
+    const keys = (r: typeof all) => r.drafts.flatMap((x) => x.items.map((i) => i.key));
+    const hidden = keys(all).filter((k) => !keys(seen).includes(k));
+    expect(hidden.length).toBeGreaterThan(0);
+    for (const k of keys(seen).filter((k) => k.startsWith('task:'))) expect(seesTask(sight, tasks.find((t) => `task:${t.id}` === k)!)).toBe(true);
+    const plans = (await teamProjects(db, TEAM_ID)).filter((p) => p.kind === 'plan');
+    for (const x of seen.drafts.flatMap((d) => d.items.filter((i) => i.kind !== 'task'))) {
+      expect(plans.some((p) => seesProject(sight, p.id) && x.where.startsWith(p.name))).toBe(true);
+    }
+  });
+
   it('leaves out people marked never remind', async () => {
     const { reminderDrafts } = await import('../lib/reminders');
     await db.query(`UPDATE people SET never_remind = true WHERE id = 'per_bo'`);
-    const r = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'x', AS_OF);
+    const r = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'x', AS_OF);
     expect(r.drafts.some((x) => x.personId === 'per_bo')).toBe(false);
     expect(r.skipped.length).toBe(1);
   });

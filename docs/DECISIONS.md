@@ -727,3 +727,16 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   in `upgrade()`; an older row has none and flags nothing). The hosted database needs `npm run db:upgrade` before this
   build is promoted.
   Rollback: `git revert` this commit. The `item_keys` column can stay: nothing else reads it.
+- **2026-10-19 · Opus 5.5 · Security fixes before active use (audit 19 Oct, A to D).** The repo owner said yes to four
+  fixes. A: reminders now follow the lead's own sight (`lib/sight.ts`), so a draft never names a task or a plan line
+  the lead cannot see, and a hidden project id reads as missing. B: the minutes, chat and sentence model reads stay off
+  against the hosted database unless `NICO_MODEL_LIVE=1` (`modelOn` in `lib/model.ts`), the same rule as Jev, because
+  the live pilot holds real work text. Minutes are now masked like a pasted chat, with the partner names added.
+  C: the connections status no longer returns the last 4 characters of a key. D: `PUBLIC_API_LOCK` in `lib/schema.ts`
+  takes every right from the Supabase `anon` and `authenticated` roles and adds a restrictive `deny_public_api` policy
+  on every table. It runs at the end of `reseed()` and `upgrade()`, only where those roles exist, so PGlite skips it.
+  USAGE on the schema through PUBLIC stays, because Supabase's own roles need it, and it opens no table. Team-scoped
+  policies under a non-owner role are not done yet. The hosted database needs `npm run db:upgrade` to get D.
+  Rollback: `git revert` this commit. For D on the hosted database: `GRANT USAGE ON SCHEMA public TO anon,
+  authenticated; GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;` (and SEQUENCES, FUNCTIONS), then
+  `DROP POLICY IF EXISTS deny_public_api` on each table.

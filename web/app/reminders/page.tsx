@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { requireMe } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
 import { seenProjects } from '@/lib/visibility';
+import { seesProject } from '@/lib/sight';
 import { reminderDrafts } from '@/lib/reminders';
 import { ReminderCards } from '@/components/Reminders';
 import { Select } from '@/components/Select';
@@ -17,10 +19,11 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   const mode = one(sp.mode) === 'window' ? 'window' : 'overdue';
   const days = Math.min(Math.max(Number(one(sp.days) ?? 2) || 2, 1), 30);
   const projectId = one(sp.project);
+  if (projectId && !seesProject(sight, projectId)) notFound(); // hidden reads as missing
   const h = await headers();
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
   const [{ drafts, skipped }, projects] = await Promise.all([
-    reminderDrafts(d, me.team.id, { mode, days, projectId }, appUrl),
+    reminderDrafts(d, me.team.id, { mode, days, projectId, sight }, appUrl),
     seenProjects(d, me, sight),
   ]);
   const q = (o: Record<string, string | undefined>) => {

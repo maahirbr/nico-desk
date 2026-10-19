@@ -7,7 +7,7 @@ import { Help } from './HelpMode';
 // they are kept, stored on the server only, and shown back only as their last four characters.
 
 type Name = 'granola' | 'fireflies' | 'fathom';
-type State = { connected: boolean; hint: string | null; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
+type State = { connected: boolean; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
 type Status = Record<Name, State>;
 
 const INFO = {
@@ -58,7 +58,7 @@ export function Connections({ status: initial, canManage, meet = null, meetCode 
           assistants such as Claude, and this app does not use that yet. Copy a meeting’s summary from Wispr Flow and use <b>Import minutes → Paste</b> on any project.
         </p>
       </section>
-      <p className="small dim">Keys are kept on this server only, never shown again in full, and used only to read meetings when someone imports one.</p>
+      <p className="small dim">Keys are kept on this server only, never shown again, and used only to read meetings when someone imports one.</p>
     </div>
   );
 }
@@ -86,7 +86,7 @@ function Card({ p, s, canManage, onChange }: { p: Name; s: State; canManage: boo
     <section className="card conn">
       <div className="conn-head">
         <h2>{info.name}</h2>
-        {s.connected ? <span className="st tone-ok">Connected · key {s.hint}{s.source === 'env' && <> · <Help term="conn_from_env">from the server environment</Help></>}</span> : <span className="st tone-quiet">Not connected</span>}
+        {s.connected ? <span className="st tone-ok">Connected{s.source === 'env' && <> · <Help term="conn_from_env">from the server environment</Help></>}</span> : <span className="st tone-quiet">Not connected</span>}
       </div>
       <p className="small dim" style={{ margin: 0 }}>{info.what}</p>
       {canManage && s.source === 'env' ? (

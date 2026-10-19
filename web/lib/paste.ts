@@ -6,6 +6,7 @@ import { ApiError, bad } from './errors';
 import { makeMasker, maskDictFor, type MaskDict } from './redact';
 import { isLeadOrAdmin } from './roles';
 import { addUpdate, blockTask, closeTask, createTask, getTask, listPeople, renegotiate, setHealth, unblockTask, type Person } from './service';
+import { modelOn } from './model';
 import { today as todayIst } from './time';
 import { assertSeesProject, seenProjects, seenTasks, taskFor } from './visibility';
 
@@ -82,7 +83,7 @@ const SYSTEM = [
 // The same call as the minutes reader in lib/plan.ts: the Anthropic Messages API, the same key and model.
 export async function defaultAsk({ system, user }: { system: string; user: string }): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new ApiError(503, 'model_off', 'Reading a chat needs the model, and it is not switched on here.');
+  if (!key || !modelOn()) throw new ApiError(503, 'model_off', 'Reading a chat needs the model, and it is not switched on here.');
   let res: Response;
   try {
     res = await fetch('https://api.anthropic.com/v1/messages', {

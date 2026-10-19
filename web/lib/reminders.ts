@@ -6,6 +6,7 @@ import { planState, teamProjects } from './plan';
 import { newId, teamTasks } from './service';
 import { addDays, today as todayIst } from './time';
 import { doneByNote } from './jevUses';
+import { seesProject, seesTask, type Sight } from './sight';
 import { bodyFor, subjectFor, type RemindItem } from './reminderText';
 
 export { bodyFor, subjectFor, type RemindItem };
@@ -26,7 +27,8 @@ type Env = Record<string, string | undefined>;
 export type ReminderDraft = {
   personId: string; name: string; to: string | null; items: RemindItem[]; subject: string; body: string; lastAt: string | null;
 };
-export type RemindScope = { mode: 'overdue' | 'window'; days: number; projectId?: string };
+// sight: the lead's own (lib/sight.ts), so a draft never names a task or plan line the lead cannot see.
+export type RemindScope = { mode: 'overdue' | 'window'; days: number; projectId?: string; sight: Sight };
 
 export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope, appUrl: string, today = todayIst(), env?: Env): Promise<{ drafts: ReminderDraft[]; skipped: string[] }> {
   const { rows: people } = await db.query<{ id: string; display_name: string; email: string; contact_email: string | null; never_remind: boolean }>(
@@ -43,7 +45,7 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   const since = `${addDays(today, -RECENT_DAYS)}T00:00:00+05:30`; // days are judged in IST
 
   const tasks = (await teamTasks(db, teamId, today)).filter((t) =>
-    t.statusCategory === 'open' && !t.readOnly && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
+    t.statusCategory === 'open' && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
   const touched = await ownerTouched(db, tasks.map((t) => t.id), since);
   for (const t of tasks) {
     const flag = t.blocked?.onId && t.blocked.onId !== t.ownerId ? `Blocked, waiting on ${pnames[t.blocked.onId]?.split(' ')[0] ?? 'someone else'}`
@@ -53,7 +55,7 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
       where: [t.projectId ? pname[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ') || 'Tasks' });
   }
   const byName = new Map(people.map((p) => [p.display_name.toLowerCase(), p.id]));
-  for (const p of projects.filter((x) => x.kind === 'plan' && (!scope.projectId || x.id === scope.projectId))) {
+  for (const p of projects.filter((x) => x.kind === 'plan' && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId))) {
     const s = await planState(db, p.id);
     for (const l of s.lines) {
       if (!l.ownerId || l.status === 'Done') continue;

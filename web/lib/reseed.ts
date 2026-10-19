@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fixturesDir, type Tx } from './db';
-import { SCHEMA } from './schema';
+import { PUBLIC_API_LOCK, SCHEMA } from './schema';
 import { seed, type LocalProjects, type RosterOverlay } from './seed';
 import { shiftDays, shiftJson } from './shift';
 
@@ -31,8 +31,9 @@ export async function reseed(tx: Tx, dir: string = fixturesDir(), overlay?: Rost
   for (const f of functions) await tx.exec(`DROP FUNCTION IF EXISTS ${f}() CASCADE`);
   await tx.exec(SCHEMA);
   await seed(tx, dir, overlay, local);
-  // The app connects as the table owner, which RLS does not bind. With no policies, the public anon key reads nothing.
+  // The app connects as the table owner, which RLS does not bind. The lock leaves the public API roles nothing.
   const { rows } = await tx.query<{ tablename: string }>(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
   for (const { tablename } of rows) await tx.exec(`ALTER TABLE public."${tablename}" ENABLE ROW LEVEL SECURITY`);
+  await tx.exec(PUBLIC_API_LOCK);
   return rows.length;
 }

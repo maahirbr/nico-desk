@@ -46,7 +46,8 @@ describe('connections', () => {
     await expect(saveConnection('granola', 'nope', 'per_ada')).rejects.toThrow(/grn_/);
     await saveConnection('granola', 'grn_testkey12345', 'per_ada');
     expect(calls[0]).toMatch(/^https:\/\/public-api\.granola\.ai\/v1\/notes\?created_after=.*page_size=30 Bearer grn_testkey12345$/);
-    expect(connectionStatus().granola).toMatchObject({ connected: true, hint: '…2345' });
+    expect(connectionStatus().granola).toMatchObject({ connected: true });
+    expect(JSON.stringify(connectionStatus())).not.toContain('2345'); // no part of the key, not even the end
     expect(JSON.stringify(connectionStatus())).not.toContain('grn_testkey');
     expect(fs.statSync(path.join(dir, 'connections.json')).mode & 0o777).toBe(0o600);
     expect(await listMeetings('granola', { days: 14 })).toEqual([{ id: 'not_abcdefghijklmn', title: 'Web sync', date: '2026-10-08', attendees: ['Kabir Sethi'] }]);

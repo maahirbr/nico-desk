@@ -3,6 +3,7 @@ import { bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
 import { createTask, newId, teamTasks } from './service';
 import { lineSplit, taskSplit, type StatusSplit } from './progress';
+import { modelOn } from './model';
 import { today as todayIst } from './time';
 import {
   lineLate, needsWhy, nextStepsOf, plainParse, stampRel,
@@ -520,24 +521,33 @@ async function accept(tx: Tx, projectId: string, meId: string, proposalId: strin
 
 // ---------- reading minutes ----------
 
-// With ANTHROPIC_API_KEY set, a model reads the next steps and suggests a line for each.
-// Without it, or if the call fails, the plain parser splits them line by line.
+// With the model on (modelOn in lib/model.ts), a model reads the next steps and suggests a line for each. What it is
+// sent is masked first (lib/redact.ts): people, projects, partner names, emails, phones, links and amounts become labels.
+// With it off, or if the call fails, the plain parser splits them line by line.
 async function readMinutes(db: Tx, projectId: string, o: { title: string; date: string; text: string }): Promise<{ steps: ParsedStep[]; usedModel: boolean }> {
   const steps = nextStepsOf(o.text);
   const s = await planState(db, projectId);
   const lines = s.lines.map((l) => ({ num: l.num, what: l.what, doneDef: l.doneDef }));
   if (!steps) return { steps: [], usedModel: false };
   const key = process.env.ANTHROPIC_API_KEY;
-  if (key) {
+  if (key && modelOn()) {
     try {
       const project = await getProject(db, projectId);
+      const { makeMasker, maskDictFor } = await import('./redact'); // redact imports this file, so load it late
+      const dict = await maskDictFor(db, project.teamId);
+      if (process.env.DATABASE_URL && dict.people.length === 0) throw new Error('mask list empty'); // send nothing
+      const partner = [...(project.partnerName ? [project.partnerName] : []), ...project.partnerPeople];
+      const masker = makeMasker({ ...dict, terms: [...(dict.terms ?? []), ...partner] });
+      const m = <T,>(v: T) => masker.mask(v);
+      const um = (v: unknown) => masker.unmask(String(v ?? ''));
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: process.env.NICO_MODEL || 'claude-sonnet-5-5',
           max_tokens: 4000,
-          messages: [{ role: 'user', content: prompt(steps, o, lines, project) }],
+          messages: [{ role: 'user', content: prompt(m(steps), { title: m(o.title), date: o.date }, m(lines),
+            { ...project, partnerName: m(project.partnerName), partnerPeople: m(project.partnerPeople) }) }],
         }),
         signal: AbortSignal.timeout(60_000),
       });
@@ -549,9 +559,9 @@ async function readMinutes(db: Tx, projectId: string, o: { title: string; date: 
           return {
             usedModel: true,
             steps: arr.map((x: any) => ({
-              owner: String(x.owner ?? ''), with: Array.isArray(x.with) ? x.with.map(String) : [], task: String(x.task ?? ''),
+              owner: um(x.owner), with: Array.isArray(x.with) ? x.with.map(um) : [], task: um(x.task),
               due: String(x.due ?? ''), line: typeof x.line === 'number' ? x.line : null, confidence: (x.confidence === 'sure' ? 'sure' : 'unsure') as ParsedStep['confidence'],
-              alt: Array.isArray(x.alt) ? x.alt.filter((n: unknown) => typeof n === 'number') : [], why: String(x.why ?? ''),
+              alt: Array.isArray(x.alt) ? x.alt.filter((n: unknown) => typeof n === 'number') : [], why: um(x.why),
             })).filter((x: ParsedStep) => x.task.trim()),
           };
         }

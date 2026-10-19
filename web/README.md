@@ -85,8 +85,9 @@ pills, countdown) and one of two boards, set by `projects.kind`:
 - **Meeting minutes** (plan board): paste minutes, and each next step becomes a proposal to accept,
   edit or reject; nothing changes on the plan until someone accepts. Without `ANTHROPIC_API_KEY`
   a plain parser reads "(Name) task (Oct 12)" lines and marks every line choice unsure. With the
-  key set, the minutes are sent to the Anthropic API to suggest lines; only set it if that is
-  acceptable for the minutes being pasted.
+  key set, the minutes are masked (`lib/redact.ts`, plus the partner names) and sent to the Anthropic API to suggest
+  lines. With `DATABASE_URL` set, the minutes, chat and sentence reads stay off unless `NICO_MODEL_LIVE=1`
+  (`lib/model.ts`), the same rule as Jev. Tests: `tests/model.test.ts`.
 
 ### Real projects on a local run
 
@@ -239,8 +240,10 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 
 - `lib/db.ts` picks the database:
   - `DATABASE_URL` set: postgres-js through `lib/pgRemote.ts` (Supabase transaction pooler). `npm run db:remote`
-    (`scripts/db-remote.ts`) drops, reseeds and turns RLS on with no policies. `npm run db:upgrade` runs the
-    idempotent `upgrade()` in `lib/db.ts`: it adds columns and tables and keeps all data.
+    (`scripts/db-remote.ts`) drops, reseeds and turns RLS on. `npm run db:upgrade` runs the
+    idempotent `upgrade()` in `lib/db.ts`: it adds columns and tables and keeps all data. Both end with
+    `PUBLIC_API_LOCK` (`lib/schema.ts`): the Supabase `anon` and `authenticated` roles get no rights, and a
+    restrictive `deny_public_api` policy refuses them on every table. The app reads as the owner, so it is not bound.
   - Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last.
   - Unset locally: PGlite in `web/.data/`.
 - `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come

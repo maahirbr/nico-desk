@@ -10,6 +10,7 @@ import {
 } from '../lib/jevUses';
 import { getProject, planOp, pendingProposals } from '../lib/plan';
 import { TEAM_ID } from '../lib/seed';
+import { SEE_ALL } from '../lib/sight';
 import { getTask, teamTasks } from '../lib/service';
 import type { Task } from '../lib/derive';
 
@@ -411,7 +412,7 @@ describe('still needed (a reminder)', () => {
 
   it('marks the item in the draft, which leaves it out of the email', async () => {
     const { reminderDrafts } = await import('../lib/reminders');
-    const d = (await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'x', AS_OF, OFF)).drafts.find((x) => x.items.some((i) => i.kind === 'task' && !i.flag))!;
+    const d = (await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'x', AS_OF, OFF)).drafts.find((x) => x.items.some((i) => i.kind === 'task' && !i.flag))!;
     const item = d.items.find((i) => i.kind === 'task' && !i.flag)!;
     await note('cmt_s4', item.key.slice('task:'.length), d.personId, 'Cancelled, we are not doing this one.');
     await db.query(`UPDATE comments SET created_at = '2026-10-05T10:00:00Z' WHERE id = 'cmt_s4'`); // older than the 2-day rule
@@ -419,7 +420,7 @@ describe('still needed (a reminder)', () => {
       const qs = Object.keys(JSON.parse(init.body).questions ?? {});
       return ok(Object.fromEntries(qs.map((k) => [k, yes(JSON.parse(init.body).questions[k].instructions.owner_note?.includes('not doing') ? 0.95 : 0.1)])));
     });
-    const on = (await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2 }, 'x', AS_OF, ON)).drafts.find((x) => x.personId === d.personId)!;
+    const on = (await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'x', AS_OF, ON)).drafts.find((x) => x.personId === d.personId)!;
     expect(on.items.find((i) => i.key === item.key)!.flag).toBe('Their latest note reads as done or not needed');
     expect(on.body).not.toContain(item.title);
   });

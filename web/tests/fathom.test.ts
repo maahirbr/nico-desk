@@ -53,7 +53,7 @@ describe('Fathom connection', () => {
     expect(calls[0].key).toBe('fathom_test_key_9876');
     const age = Date.now() - Date.parse(u.searchParams.get('created_after')!);
     expect(Math.abs(age - 7 * 86400000)).toBeLessThan(60_000);
-    expect(connectionStatus().fathom).toMatchObject({ connected: true, hint: '…9876', source: 'file' });
+    expect(connectionStatus().fathom).toMatchObject({ connected: true, source: 'file' });
     expect(JSON.stringify(connectionStatus())).not.toContain('fathom_test_key');
     expect(fs.statSync(path.join(dir, 'connections.json')).mode & 0o777).toBe(0o600);
     removeConnection('fathom');
@@ -129,7 +129,7 @@ describe('Fathom connection', () => {
 describe('keys from the environment', () => {
   it('reads the Fathom key from FATHOM_API_KEY when nothing is saved, and says so', async () => {
     process.env.FATHOM_API_KEY = 'env_fathom_key_4321';
-    expect(connectionStatus().fathom).toEqual({ connected: true, hint: '…4321', savedAt: null, source: 'env', envVar: 'FATHOM_API_KEY' });
+    expect(connectionStatus().fathom).toEqual({ connected: true, savedAt: null, source: 'env', envVar: 'FATHOM_API_KEY' });
     const sent: string[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_u: string, init: RequestInit) => { sent.push(headersOf(init)['X-Api-Key']); return json(page([meeting()])); }));
     await listMeetings('fathom', { days: 7 });
@@ -140,9 +140,9 @@ describe('keys from the environment', () => {
     const sent: string[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_u: string, init: RequestInit) => { sent.push(headersOf(init)['X-Api-Key']); return json(page([meeting()])); }));
     await saveConnection('fathom', 'file_fathom_key_1111', 'per_ada');
-    expect(connectionStatus().fathom).toMatchObject({ source: 'file', hint: '…1111' });
+    expect(connectionStatus().fathom).toMatchObject({ source: 'file' });
     process.env.FATHOM_API_KEY = 'env_fathom_key_4321';
-    expect(connectionStatus().fathom).toMatchObject({ source: 'env', hint: '…4321' });
+    expect(connectionStatus().fathom).toMatchObject({ source: 'env' });
     sent.length = 0;
     await listMeetings('fathom', { days: 7 });
     expect(sent).toEqual(['env_fathom_key_4321']);
@@ -153,7 +153,7 @@ describe('keys from the environment', () => {
   it('applies the same rule to Granola and Fireflies', async () => {
     process.env.GRANOLA_API_KEY = 'grn_envkey12345';
     process.env.FIREFLIES_API_KEY = 'ff_env_key_6789';
-    expect(connectionStatus()).toMatchObject({ granola: { source: 'env', hint: '…2345' }, fireflies: { source: 'env', hint: '…6789' }, fathom: { connected: false, source: null } });
+    expect(connectionStatus()).toMatchObject({ granola: { source: 'env' }, fireflies: { source: 'env' }, fathom: { connected: false, source: null } });
     const sent: string[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_u: string, init: RequestInit) => { sent.push(headersOf(init).Authorization); return json({ notes: [], data: { transcripts: [] } }); }));
     await expect(saveConnection('granola', 'grn_unused_key_1', 'per_ada')).rejects.toMatchObject({ code: 'key_from_env' });

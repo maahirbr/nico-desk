@@ -48,15 +48,16 @@ function write(s: Store) {
   fs.writeFileSync(file(), JSON.stringify(s, null, 2), { mode: 0o600 });
 }
 
-export type ConnectionState = { connected: boolean; hint: string | null; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
+// No part of a key is returned, not even its last characters (audit 19 Oct).
+export type ConnectionState = { connected: boolean; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
 
 export function connectionStatus(): Record<Provider, ConnectionState> {
   const s = read();
   const one = (p: Provider): ConnectionState => {
     const env = envKey(p);
-    if (env) return { connected: true, hint: `…${env.slice(-4)}`, savedAt: null, source: 'env', envVar: ENV_VAR[p] };
+    if (env) return { connected: true, savedAt: null, source: 'env', envVar: ENV_VAR[p] };
     const f = s[p];
-    return { connected: !!f, hint: f ? `…${f.key.slice(-4)}` : null, savedAt: f?.savedAt ?? null, source: f ? 'file' : null, envVar: ENV_VAR[p] };
+    return { connected: !!f, savedAt: f?.savedAt ?? null, source: f ? 'file' : null, envVar: ENV_VAR[p] };
   };
   return { granola: one('granola'), fireflies: one('fireflies'), fathom: one('fathom') };
 }
