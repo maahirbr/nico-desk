@@ -7,12 +7,14 @@ import { pendingProposals, planState, projectMembers, projectViewers, type Proje
 import { lineSplit, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
+import { setupState } from '@/lib/setup';
 import { projectFor } from '@/lib/visibility';
 import { fmtStamp, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
 import { ProjectHealth } from '@/components/ProjectHealth';
+import { SetupList } from '@/components/SetupList';
 import { TaskBoard } from '@/components/TaskBoard';
 
 export const dynamic = 'force-dynamic';
@@ -36,6 +38,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   // The lead's health line reads the same work the board shows: tasks on a task board, lines on a plan board.
   const plan = p.kind === 'plan' ? await planState(d, p.id) : null;
   const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
+  const setup = await setupState(d, me, p.id); // null unless this person owns or leads the project, or is a lead or admin
   const split = plan ? lineSplit(plan.lines, now) : taskSplit(tasks, now);
 
   return (
@@ -45,6 +48,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now} />
       {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
+      {setup && <SetupList projectId={p.id} steps={setup} />}
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
       ) : (

@@ -740,3 +740,21 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   Rollback: `git revert` this commit. For D on the hosted database: `GRANT USAGE ON SCHEMA public TO anon,
   authenticated; GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;` (and SEQUENCES, FUNCTIONS), then
   `DROP POLICY IF EXISTS deny_public_api` on each table.
+- **2026-10-19 · Sonnet 5.5 · Setup check-list for a new lead.** A project page shows a short check-list to its owner,
+  its lead and any lead or admin: add people, add the first work, read the first minutes and, on a plan board, name the
+  partner. Each step ticks from data already in the database (`lib/setup.ts`), so nothing new is stored and there is no
+  schema change. Each button opens UI that already exists (Settings, the add form, Import minutes) through a window
+  event. Hiding the list is kept per person and per project in the browser (`localStorage`), and "Show the setup list"
+  in Settings brings it back. Under View as it shows with no buttons and no hide. The rhythm step is built but off
+  (`MEETINGS_ON` in `lib/setup.ts`) until gate G1 in `docs/PLAN-19-OCT.md`: the PM has not said yes to meetings coming
+  back. Rollback: `git revert` this commit.
+- **2026-10-20 · Opus 5.5 · Setup list: new projects only, and each button lands on its part.** The repo owner picked
+  option 1: the list shows only on a project whose `_created` event is at or after `SETUP_SINCE` in `lib/setup.ts`
+  (20 Oct 2026, IST). Projects made before the list shipped, and every seeded project, never show it, so no lead
+  opens an old project to a check-list. Two gaps found in the browser check are fixed. First, "Add people" and "Name
+  the partner" open Settings at that part: the setup event carries the step key, the form scrolls it into view and,
+  on desktop only (`focusOnDesktop`), focuses it one frame later. The frame matters: the scroll fires its own event,
+  and `KeyboardDismiss` blurs a text field that is focused before that event. Second, "Import minutes" on a task board
+  now brings the panel into view after the render that adds it, and both board scrolls stop below any sticky bar over
+  the column (the Warm top bar on desktop, the side bar at phone width). Checked in Warm and Cool at desktop and 375px.
+  Rollback: `git revert` this commit.

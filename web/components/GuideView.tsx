@@ -106,6 +106,7 @@ export function GuideView() {
         <h2 id="g-leads">{title('leads')}</h2>
         <p>Leads and admins see more than members do.</p>
         <ul className="guide-list">
+          <li><b>Set up this project</b> shows at the top of a new project you own or lead. It lists the few things to do first. Each step ticks itself when it is done. Press Hide this list to put it away.</li>
           <li><b>Team</b> lists every open task, by person or by status.</li>
           <li><b>Ledger</b> shows how each person kept their dates, and any silent slips.</li>
           <li><b>Reminders</b> write one draft per person who has late tasks. Each opens as a draft in your own Gmail. You press Send. The app sends nothing.</li>

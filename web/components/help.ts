@@ -140,6 +140,8 @@ export const HELP = {
   meeting_rhythm: 'Meeting rhythm. How often this project meets, and the next date. As needed has no automatic date. The project owner, its lead, a team lead or an admin can change it.',
   meeting_agenda: 'Agenda. The app builds it from the board. It lists what is late, blocked or at risk, what is due before the next meeting, open asks, and what changed since the last meeting.',
   meeting_held: 'Meeting held. Records today as the last meeting and moves the next date on. You can do it once a day.',
+  // Projects
+  setup_list: 'Set up this project. The few things a new project needs before its first meeting. Each step ticks itself when it is done.',
 } as const;
 
 export type HelpTerm = keyof typeof HELP;

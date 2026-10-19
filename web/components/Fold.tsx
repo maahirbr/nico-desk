@@ -6,14 +6,15 @@ import { reduced } from './motion';
 // A fold-out body. It opens its height (grid rows 0fr to 1fr, a named exception in DESIGN.md Motion) and fades in
 // over --dur-fold. The body mounts on the first open and stays, so a close can fold too. A closed body is inert:
 // no tab stop, nothing read aloud. It clips only while it moves, so focus rings and card shadows show once open.
-// When it opens below the fold, the page scrolls just enough to show it, never past its own button.
-export function Fold({ open, children }: { open: boolean; children: React.ReactNode }) {
+// When it opens below the fold, the page scrolls just enough to show it, never past its own button. `scroll={false}`
+// turns that off for a fold that opens by itself, such as a list drawn on page load.
+export function Fold({ open, scroll = true, children }: { open: boolean; scroll?: boolean; children: React.ReactNode }) {
   const [seen, setSeen] = useState(open);
   const [settled, setSettled] = useState(open);
   const [was, setWas] = useState(open);
   const [nudge, setNudge] = useState(false);
   const box = useRef<HTMLDivElement>(null);
-  if (open !== was) { setWas(open); setSettled(reduced() ? open : false); setNudge(open); if (open) setSeen(true); }
+  if (open !== was) { setWas(open); setSettled(reduced() ? open : false); setNudge(open && scroll); if (open) setSeen(true); }
   // The scroll waits for the fold to settle: while it grows, the page has no room yet to scroll it into view.
   useEffect(() => {
     if (!nudge || !settled) return;

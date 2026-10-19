@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
 import { fmtDate } from '@/lib/time';
@@ -9,6 +9,7 @@ import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
 import { Help } from './HelpMode';
 import { ProjectForm } from './ProjectForm';
+import { OPEN_SETTINGS_EVENT } from './setupEvents';
 import { api, Modal, type Opt } from './task-ui';
 import { notify } from './toast';
 
@@ -19,6 +20,19 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  // The setup check-list's "Add people" and "Name the partner" open Settings from here, at the part the step names.
+  const [focus, setFocus] = useState<'members' | 'partner' | undefined>();
+  const mayEdit = canEdit && !p.archivedAt;
+  useEffect(() => {
+    if (!mayEdit) return;
+    const open = (e: Event) => {
+      const step = (e as CustomEvent<string>).detail;
+      setFocus(step === 'members' || step === 'partner' ? step : undefined);
+      setEditing(true);
+    };
+    window.addEventListener(OPEN_SETTINGS_EVENT, open);
+    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, open);
+  }, [mayEdit]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // Archive is refused while work is open: the message says how much, and shows here.
@@ -68,14 +82,14 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
       <div className="phead-actions">
         <div className="phead-btns">
           <CopyLink path={`/projects/${p.id}`} what="project" />
-          {canEdit && !p.archivedAt && <button className="btn ghost" onClick={() => setEditing(true)}>Settings</button>}
+          {canEdit && !p.archivedAt && <button className="btn ghost" onClick={() => { setFocus(undefined); setEditing(true); }}>Settings</button>}
           {canEdit && <button className="btn ghost" disabled={busy} onClick={() => move(p.archivedAt ? 'restore' : 'archive')}>{p.archivedAt ? 'Restore project' : 'Archive project'}</button>}
         </div>
         {err && <p className="err small" role="alert">{err}</p>}
       </div>
       {editing && (
         <Modal title="Project Settings" onClose={() => setEditing(false)} wide>
-          <ProjectForm people={people} meId={meId} projectId={p.id} onDone={() => setEditing(false)} initial={{
+          <ProjectForm people={people} meId={meId} projectId={p.id} focus={focus} onDone={() => setEditing(false)} initial={{
             name: p.name, kind: p.kind, ownerId: p.ownerId, leadId: p.leadId, goal: p.intro ?? '', eyebrow: p.eyebrow ?? '', phase: p.phase ?? '',
             launchOn: p.launchOn ?? '', targetLabel: label, workstreams: p.kind === 'plan' ? p.pillars.filter((x) => x.key !== 'general').map((x) => x.label) : p.workstreams,
             members, partnerName: p.partnerName ?? '', partnerPeople: p.partnerPeople, viewers,

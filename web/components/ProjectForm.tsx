@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DateField } from './DateField';
 import { focusOnDesktop } from './motion';
 import { Select } from './Select';
+import { SHOW_SETUP_EVENT, setupKey } from './setupEvents';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
 import { composing, isRealEnter } from './ime';
@@ -46,17 +47,36 @@ function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChang
   );
 }
 
-export function ProjectForm({ people, meId, initial, projectId, onDone }: {
+export function ProjectForm({ people, meId, initial, projectId, onDone, focus }: {
   people: Opt[]; meId: string; initial?: ProjectValues; projectId?: string; onDone: () => void;
+  focus?: 'members' | 'partner'; // set when a setup step opened Settings: that part is brought into view
 }) {
   const router = useRouter();
   const editing = !!projectId;
+  // Brings back the setup check-list this person hid on this project (components/SetupList.tsx).
+  const showSetup = () => {
+    try { localStorage.removeItem(setupKey(meId, projectId!)); } catch { /* storage blocked: the list was never hidden */ }
+    window.dispatchEvent(new Event(SHOW_SETUP_EVENT));
+    notify('The setup list is back on the project page');
+  };
   const [f, setF] = useState<ProjectValues>(initial ?? {
     name: '', kind: 'tasks', ownerId: meId, leadId: meId, goal: '', eyebrow: '', phase: '', launchOn: '', targetLabel: 'Deadline',
     workstreams: [], members: [], partnerName: '', partnerPeople: [], viewers: [],
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // A setup step opens the form at its own part. This runs once on open, so typing later never scrolls the form.
+  // focusOnDesktop keeps the phone keyboard shut: on a phone the part only scrolls into view. The focus waits a frame:
+  // the scroll's own event fires in that frame, and KeyboardDismiss would blur a text field focused before it.
+  const peopleRef = useRef<HTMLSpanElement>(null);
+  const partnerRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const el = focus === 'members' ? peopleRef.current : focus === 'partner' ? partnerRef.current : null;
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    const raf = requestAnimationFrame(() => focusOnDesktop(focus === 'members' ? (el.parentElement?.querySelector<HTMLElement>('.member-add') ?? null) : el));
+    return () => cancelAnimationFrame(raf);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once, on open
   // The reason Start is not ready shows only after a try, so a fresh form opens clean.
   const [tried, setTried] = useState(false);
   const set = <K extends keyof ProjectValues>(k: K, v: ProjectValues[K]) => setF({ ...f, [k]: v });
@@ -91,7 +111,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       <fieldset>
-        <label className="f"><span>Project Name</span><input ref={focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
+        <label className="f"><span>Project Name</span><input ref={focus ? undefined : focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} placeholder="e.g. SS27 Drop 1" onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
             <button type="button" role="radio" aria-checked={f.kind === 'tasks'} onClick={() => set('kind', 'tasks')}>
@@ -147,7 +167,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
             </Select>
           </label>
         )}
-        <span className="pform-sub">Other People</span>
+        <span className="pform-sub" ref={peopleRef}>Other People</span>
         <p className="dim small pform-note">Only the people added here can own tasks in this project, and they will see it in their view.</p>
         {f.members.map((m, i) => (
           <div key={i} className="member-row">
@@ -160,7 +180,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
             <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>
           </div>
         ))}
-        {free.length > 0 && <button type="button" className="mini-btn" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
+        {free.length > 0 && <button type="button" className="mini-btn member-add" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
 
         {f.viewers && (
           <>
@@ -185,7 +205,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
         {f.kind === 'plan' && (
           <>
             <span className="pform-side">Partner</span>
-            <label className="f"><span>Partner Name</span><input maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. Studio" onChange={(e) => set('partnerName', e.target.value)} /></label>
+            <label className="f"><span>Partner Name</span><input ref={partnerRef} maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. Studio" onChange={(e) => set('partnerName', e.target.value)} /></label>
             <div className="f"><span>Their People</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="Names. Press Enter after each" /></div>
           </>
         )}
@@ -199,6 +219,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone }: {
       {err && <p className="err banner" role="alert">{err}</p>}
       {tried && why && <p className="err small pform-why" id="pform-why" role="alert">{why}</p>}
       <div className="row pform-actions">
+        {editing && <button type="button" className="act pform-setup" onClick={showSetup}>Show the setup list</button>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
         <button className="btn" disabled={busy} aria-describedby={tried && why ? 'pform-why' : undefined}>{editing ? 'Save project' : 'Start project'}</button>
       </div>

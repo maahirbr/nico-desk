@@ -10,6 +10,7 @@ import { fmtDate } from '@/lib/time';
 import { Person, PersonLink } from './chips';
 import { TaskLinkChips } from './TaskLinks';
 import { IMPORT_EVENT } from './MeetingSection';
+import { OPEN_ADD_EVENT } from './setupEvents';
 import { useOpenTask } from './taskUrl';
 import { DateField } from './DateField';
 import { Help } from './HelpMode';
@@ -64,6 +65,25 @@ type Prompt =
   | { kind: 'reopen'; t: Task }
   | null;
 
+// Brings a part of the board to the top of the view, just below any bar that sticks over its column (the Warm top
+// bar, or the side bar at phone width). When .main is the scroller (Cool on desktop), its own padding clears its bar.
+function bringIntoView(selector: string) {
+  const el = document.querySelector<HTMLElement>(selector);
+  if (!el) return;
+  let below = 0;
+  if (document.documentElement.scrollHeight > window.innerHeight) {
+    const r = el.getBoundingClientRect();
+    for (const bar of document.querySelectorAll('.view-banner, .side, .topbar')) {
+      const b = bar.getBoundingClientRect();
+      if (getComputedStyle(bar).position === 'sticky' && b.left < r.right && b.right > r.left) below = Math.max(below, b.bottom);
+    }
+  }
+  el.style.scrollMarginTop = below ? `${Math.round(below) + 8}px` : '';
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+const importIntoView = () => bringIntoView('.imp-panel');
+
 export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, today, log, workstreams = [], proposals = [] }: {
   projectId: string; tasks: Task[]; people: P[]; names: Record<string, string>; projectNames?: Record<string, string>;
   meId: string; isLead: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
@@ -85,17 +105,32 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const setWs = (v: string) => keep('ws', v);
   const setClosedSort = (v: EndedSort) => keep('closedSort', v);
   const [importOpen, setImportOpen] = useState(false);
-  // The Meeting section's "Write the minutes" opens the import panel below and brings it into view.
+  // The Meeting section's "Write the minutes" and the setup list's "Import minutes" open the import panel below and
+  // bring it into view. The scroll waits for the render that adds the panel: a frame alone can run before it.
+  const scrollToImport = useRef(false);
   useEffect(() => {
     const open = () => {
-      setImportOpen(true);
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      requestAnimationFrame(() => document.querySelector('.imp-panel')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }));
+      if (document.querySelector('.imp-panel')) { importIntoView(); return; } // already open: no render will follow
+      scrollToImport.current = true; setImportOpen(true);
     };
     window.addEventListener(IMPORT_EVENT, open);
     return () => window.removeEventListener(IMPORT_EVENT, open);
   }, []);
+  useEffect(() => {
+    if (!importOpen || !scrollToImport.current) return;
+    scrollToImport.current = false;
+    importIntoView();
+  }, [importOpen]);
   const [addOpen, setAddOpen] = useState(false);
+  // The setup check-list's "Add a task" opens the form and brings it into view.
+  useEffect(() => {
+    const open = () => {
+      setAddOpen(true);
+      requestAnimationFrame(() => bringIntoView('.board-head'));
+    };
+    window.addEventListener(OPEN_ADD_EVENT, open);
+    return () => window.removeEventListener(OPEN_ADD_EVENT, open);
+  }, []);
   const [doneOpen, setDoneOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [openId, setOpenId] = useOpenTask();

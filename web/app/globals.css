@@ -880,6 +880,7 @@ td .flag { margin-top: var(--space-xxs); }
 .pform .pform-note { margin: calc(-1 * var(--space-xs)) 0 0; }
 .pform .pform-actions { justify-content: flex-end; align-items: center; }
 .pform .pform-why { margin: 0; text-align: right; }
+.pform .pform-setup { margin-right: auto; color: var(--ink-2); }
 .kind-pick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
 .kind-pick button { font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: var(--space-xxs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); border: var(--rule) solid var(--line-strong); background: var(--surface); color: var(--ink);
   transition: background var(--dur-state) var(--ease); }
@@ -1206,6 +1207,39 @@ button.stat[aria-pressed="true"] .kept-ring { color: var(--canvas); }
   stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--dur-draw-tick) var(--ease-draw); }
 .trow-check input:checked ~ .check-tick path { stroke-dashoffset: 0; }
 
+/* ---------- the setup check-list on a project page (DESIGN-19-OCT.md section 1) ---------- */
+.setup .setup-card { margin: var(--space-md) 0; padding: var(--card-pad); }
+.setup-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); }
+.setup-head h2 { margin: 0; font: var(--type-heading); }
+.setup-count { flex: none; font: var(--type-small); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.setup-steps { list-style: none; margin: var(--space-sm) 0 0; padding: 0; }
+.setup-row { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; column-gap: var(--space-sm); align-items: start; padding: 12px 0; border-top: var(--rule) solid var(--hairline); }
+.setup-row:first-child { border-top: 0; }
+.setup-words { margin: 0; font: var(--type-line); line-height: 20px; color: var(--ink); }
+.setup-row[data-done="true"] .setup-words { color: var(--ink-2); }
+.setup-hint { margin: 0; padding-top: var(--space-xxs); font: var(--type-meta); color: var(--ink-2); }
+.setup-row > .btn { align-self: start; margin-block: -8px; }
+/* The mark is a ring. A done step fills it and draws the tick, over the same time as a checkpoint tick. */
+.setup-mark { box-sizing: border-box; width: 16px; height: 16px; margin-top: 2px; display: grid; place-items: center; border-radius: 50%;
+  border: var(--rule) solid var(--line-strong); transition: background-color var(--dur-state) var(--ease), border-color var(--dur-state) var(--ease); }
+.setup-mark[data-done="true"] { background: var(--ink-2); border-color: var(--ink-2); }
+.setup-mark svg { width: 12px; height: 12px; }
+.setup-mark path { fill: none; stroke: var(--surface); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--dur-draw-tick) var(--ease-draw); }
+.setup-mark[data-done="true"] path { stroke-dashoffset: 0; }
+.setup-hide { margin-top: var(--space-xs); color: var(--ink-2); font: var(--type-small); }
+/* One primary button in view: while the list holds it, the board's own add button is drawn as an outline. */
+.setup[data-primary] ~ .board-head .btn:not(.ghost),
+.setup[data-primary] ~ .plan-board .toolbar-end > .btn:not(.ghost),
+.setup[data-primary] ~ * .empty-block .btn:not(.ghost) { background: var(--canvas); color: var(--ink); border-color: var(--line-strong); }
+.setup[data-primary] ~ .board-head .btn:not(.ghost):hover:not(:disabled),
+.setup[data-primary] ~ .plan-board .toolbar-end > .btn:not(.ghost):hover:not(:disabled),
+.setup[data-primary] ~ * .empty-block .btn:not(.ghost):hover:not(:disabled) { background: var(--sunk); }
+@media (max-width: 860px) {
+  .setup-row > .btn { grid-column: 2; width: 100%; min-height: 40px; margin: var(--space-xs) 0 0; }
+  .setup-hide { min-height: var(--touch-min); }
+}
+
 /* ---------- lists that rise in on first load, and panels that cross-fade when a tab changes ---------- */
 @keyframes stagger-in { from { opacity: 0; transform: translateY(var(--stagger-rise)); } to { opacity: 1; transform: none; } }
 @keyframes page-enter { from { opacity: 0; transform: translateY(var(--page-shift)); } to { opacity: 1; transform: none; } }
@@ -1518,7 +1552,7 @@ a.rlink { color: inherit; text-decoration: none; }
 .glance-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-xs); }
 .glance-head h3 { margin: 0; font: var(--type-heading); color: var(--ink); }
 .glance-head .rlink { font: var(--type-meta); white-space: nowrap; }
-.glance-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.glance-sr, .setup-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 .glance-empty { font: var(--type-meta); padding: var(--space-xs) 0 0; }
 .glance-track { display: block; height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
 .glance-split { display: flex; gap: 2px; margin-top: var(--space-xs); }

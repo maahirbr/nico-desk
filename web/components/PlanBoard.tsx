@@ -11,6 +11,7 @@ import {
 } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { IMPORT_EVENT } from './MeetingSection';
+import { OPEN_ADD_EVENT } from './setupEvents';
 import { Avatar, PersonLink } from './chips';
 import { DateField } from './DateField';
 import { Help } from './HelpMode';
@@ -110,6 +111,12 @@ export function PlanBoard({ project, state, people, names, meId, today }: {
     return () => window.removeEventListener(IMPORT_EVENT, open);
   }, []);
   const [addOpen, setAddOpen] = useState(false);
+  // The setup check-list's "Add a line" opens the add-line form.
+  useEffect(() => {
+    const open = () => setAddOpen(true);
+    window.addEventListener(OPEN_ADD_EVENT, open);
+    return () => window.removeEventListener(OPEN_ADD_EVENT, open);
+  }, []);
   const [menu, setMenu] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [removedOpen, setRemovedOpen] = useState(false);
