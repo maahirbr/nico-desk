@@ -823,3 +823,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   policy on each of the 31 tables. Then the `6cb4805` preview was promoted with the repo owner's yes. Signed-in calls on
   production now run as `nico_app`. Rollback: promote the pre-fence build `phc7c97t9` again. The database changes can
   stay, because the old build runs as the table owner and the policies do not bind it.
+- **2026-10-21 · Opus 5.5 · Hover tints do not stack, and the narrow top bar keeps its gap.** In a row or card with
+  its own hover fill, a link drops its tint and keeps the accent and the stroke: the two fills read as selected text. A
+  person link's tint is one text line tall, not the avatar's height, and in a table cell the link takes one line, so the
+  name centres with the other columns. In Cool, the room kept for the Feedback and help buttons on narrow pages and
+  from 861 to 1180px was 4px short, so the search ran under Feedback. It is now `--bar-tools`, which leaves a 12px gap.
+  DESIGN.md Motion says the tint rule. Rollback: `git revert` this commit.

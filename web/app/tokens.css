@@ -973,7 +973,9 @@
    and --pill-w where the page uses the calm column). Content fades
    out over up to 16px as it goes under the cap (::after, scaled by --cap-fade from components/MainScroll.tsx). */
 @media (min-width: 861px) {
-  :root[data-skin="m"] { --cap-h: calc(var(--bar-height) + 16px); }
+  /* The room the Feedback and help buttons take at the pill's right end: the pill's edge pad, two buttons, the gap
+     between them and the same pad again before the search. Mirrored on the left so the search stays centred. */
+  :root[data-skin="m"] { --cap-h: calc(var(--bar-height) + 16px); --bar-tools: calc(2 * var(--button-height) + 2 * var(--space-sm) + var(--space-xs)); }
   :root[data-skin="m"] .shell { height: 100vh; min-height: 0; }
   :root[data-skin="m"] body[data-viewing] .shell { height: calc(100vh - var(--banner-h)); }
   :root[data-skin="m"] .main { height: calc(100vh - 20px); overflow-y: auto; overscroll-behavior: none; scrollbar-width: thin; scroll-padding-top: var(--cap-h); }
@@ -986,7 +988,7 @@
     background: var(--canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
   :root[data-skin="m"] .main:has(.page > .calm) > .topbar { --pill-w: var(--calm-max); }
   :root[data-skin="m"] .main:has(.page > .calm.narrow) > .topbar { --pill-w: var(--calm-narrow);
-    padding-left: calc(var(--pill-l) + 2 * var(--button-height) + var(--space-md)); padding-right: calc(var(--pill-r) + 2 * var(--button-height) + var(--space-md)); }
+    padding-left: calc(var(--pill-l) + var(--bar-tools)); padding-right: calc(var(--pill-r) + var(--bar-tools)); }
   /* The narrow pill has no room for the Feedback label beside the search, at any width: the icon only, as below 1180px. */
   :root[data-skin="m"] .main:has(.page > .calm.narrow) .top-feedback { width: var(--button-height); padding: 0; justify-content: center; }
   :root[data-skin="m"] .main:has(.page > .calm.narrow) .top-feedback-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -1001,7 +1003,7 @@
 }
 @media (min-width: 861px) and (max-width: 1180px) {
   :root[data-skin="m"] .topbar, :root[data-skin="m"] body[data-viewing] .topbar {
-    padding-left: calc(var(--pill-l) + 2 * var(--button-height) + var(--space-md)); padding-right: calc(var(--pill-r) + 2 * var(--button-height) + var(--space-md)); }
+    padding-left: calc(var(--pill-l) + var(--bar-tools)); padding-right: calc(var(--pill-r) + var(--bar-tools)); }
 }
 @media (min-width: 861px) and (prefers-reduced-transparency: reduce) { :root[data-skin="m"] .topbar::before { background: var(--bar); } }
 
