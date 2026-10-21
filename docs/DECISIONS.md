@@ -783,3 +783,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   with this is promoted. Rollback: `git revert` this commit, then on the hosted database `DROP POLICY team_fence` on
   each table, `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM nico_app; REVOKE USAGE ON SCHEMA public FROM nico_app;
   DROP ROLE nico_app;`.
+- **2026-10-21 · Opus 5.5 · Team fence rolled back on production until the database has it.** The fence build was
+  promoted before `npm run db:upgrade` had run: the upgrade timed out because this network blocks ports 5432 and 6543.
+  Every signed-in page failed with `role "nico_app" does not exist`. Production went back to the pre-fence build with
+  the repo owner's yes. Lesson: before a promote, check that the upgrade printed success, not only that it was started.
+  Next: run `db:upgrade` from a network that reaches the pooler, then promote the `2d67293` preview again.
+  Rollback: not needed, this entry changes no code.
