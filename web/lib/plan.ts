@@ -424,7 +424,7 @@ async function importAsTaskProposals(tx: Tx, project: Project, meId: string, o: 
   const match = (n: string) => {
     const k = n.trim().toLowerCase();
     if (!k) return null;
-    return ppl.find((p) => p.display_name.toLowerCase() === k || p.nickname?.toLowerCase() === k)
+    return ppl.find((p) => p.display_name.toLowerCase() === k) ?? ppl.find((p) => p.nickname?.toLowerCase() === k)
       ?? ppl.find((p) => p.display_name.toLowerCase().split(' ')[0] === k.split(' ')[0]) ?? null;
   };
   const batch = newId('mb');

@@ -54,7 +54,9 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
     add(t.ownerId, { key: `task:${t.id}`, title: t.title, dueOn: t.dueOn, days: daysBetween(today, t.dueOn), kind: 'task', flag,
       where: [t.projectId ? pname[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ') || 'Tasks' });
   }
-  const byName = new Map(people.flatMap((p) => [p.display_name, p.nickname ?? ''].filter(Boolean).map((n) => [n.toLowerCase(), p.id] as const)));
+  // Roster names win; a nickname only fills a key that no roster name holds.
+  const byName = new Map(people.filter((p) => p.nickname).map((p) => [p.nickname!.toLowerCase(), p.id] as const));
+  for (const p of people) byName.set(p.display_name.toLowerCase(), p.id);
   for (const p of projects.filter((x) => x.kind === 'plan' && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId))) {
     const s = await planState(db, p.id);
     for (const l of s.lines) {

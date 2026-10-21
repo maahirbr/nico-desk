@@ -787,6 +787,14 @@ export async function setNames(db: Db, meId: string, input: { name?: string; nic
   if (name !== undefined && (name.length < 2 || name.length > 80)) throw bad('invalid_body', 'Use 2 to 80 characters for your name.', 'name');
   const nick = input.nickname === undefined ? undefined : input.nickname.trim() || null;
   if (nick && nick.length > 40) throw bad('invalid_body', 'Use up to 40 characters for your nickname.', 'nickname');
+  // A name or nickname that is already someone else's would take their reminders, pasted chats and minutes.
+  for (const [v, field] of [[name, 'name'], [nick, 'nickname']] as const) {
+    if (!v) continue;
+    const { rows } = await db.query(
+      `SELECT 1 FROM people WHERE id <> $1 AND lower($2) IN (lower(regexp_replace(display_name, '\\s+', ' ', 'g')), lower(regexp_replace(coalesce(nickname, ''), '\\s+', ' ', 'g')))`,
+      [meId, v.replace(/\s+/g, ' ')]);
+    if (rows.length) throw bad('name_taken', `Someone else already uses that ${field === 'name' ? 'name' : 'nickname'}. Pick another.`, field);
+  }
   if (name !== undefined) await db.query(`UPDATE people SET display_name = $2 WHERE id = $1`, [meId, name]);
   if (nick !== undefined) await db.query(`UPDATE people SET nickname = $2 WHERE id = $1`, [meId, nick]);
 }

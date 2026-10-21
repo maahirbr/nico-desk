@@ -801,3 +801,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   button centres on the button height and puts the button at the end. The hosted database needs `npm run db:upgrade`
   before a build with this is promoted. Rollback: `git revert` this commit, then on the hosted database
   `ALTER TABLE people DROP COLUMN nickname;`.
+- **2026-10-21 · Opus 5.5 · A name or nickname cannot be someone else's.** A security review of the profile commit
+  found that a teammate could set their nickname to another person's roster name and so take that person's reminder
+  items, pasted chat lines and minutes proposals. `setNames` now refuses a name or nickname that matches anyone else's
+  name or nickname, ignoring case and spacing (`name_taken`). Name matching in reminders, paste and minutes now tries
+  roster names before nicknames, so older clashing data still routes to the roster name.
+  Rollback: `git revert` this commit.

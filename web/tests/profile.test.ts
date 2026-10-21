@@ -102,6 +102,20 @@ describe('names', () => {
     expect((await patchProfile({ nickname: 'x'.repeat(41) })).status).toBe(400);
     expect(await namesOf(ME)).toEqual(before);
   });
+  it('refuses a name or nickname someone else already uses, in any case or spacing', async () => {
+    signIn(ME);
+    const other = (await namesOf(OTHER)).display_name;
+    const before = await namesOf(ME);
+    for (const body of ([{ nickname: other.toUpperCase() }, { nickname: other.replace(" ", "  ") }, { name: other }] as Record<string, string>[])) {
+      const r = await patchProfile(body);
+      expect(r.status, JSON.stringify(body)).toBe(400);
+      expect(await code(r)).toBe('name_taken');
+    }
+    await s.setNames(db, OTHER, { nickname: 'Cee' });
+    expect((await patchProfile({ nickname: 'cee' })).status).toBe(400);
+    expect(await namesOf(ME)).toEqual(before);
+    expect((await patchProfile({ nickname: before.display_name })).status).toBe(200); // your own name is fine
+  });
   it('shows the nickname as the display name and keeps the roster name as the full name', async () => {
     const full = (await namesOf(ME)).display_name;
     await s.setNames(db, ME, { nickname: 'Bobo' });

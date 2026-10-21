@@ -127,7 +127,8 @@ function canonicalStatus(v: unknown): StatusWord | null {
 function matchSender(sender: string | null, people: Person[]): Person | null {
   if (!sender) return null;
   const s = norm(sender.replace(/^~\s*/, ''));
-  const exact = people.find((p) => norm(p.displayName) === s || (!!p.fullName && norm(p.fullName) === s) || norm(p.email) === s);
+  // The roster name and the email win over a nickname.
+  const exact = people.find((p) => (!!p.fullName && norm(p.fullName) === s) || norm(p.email) === s) ?? people.find((p) => norm(p.displayName) === s);
   if (exact) return exact;
   const byFirst = people.filter((p) => norm(p.displayName).split(' ')[0] === s || (!!p.fullName && norm(p.fullName).split(' ')[0] === s));
   return byFirst.length === 1 ? byFirst[0] : null;
