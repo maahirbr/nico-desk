@@ -807,3 +807,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   name or nickname, ignoring case and spacing (`name_taken`). Name matching in reminders, paste and minutes now tries
   roster names before nicknames, so older clashing data still routes to the roster name.
   Rollback: `git revert` this commit.
+- **2026-10-21 · Opus 5.5 · The name check covers first names and cannot be raced.** A second review found two gaps in
+  the check above. Paste and minutes fall back to a first name, so a nickname equal to someone's first name could
+  still win over them; the check now also refuses another person's first word. Two saves at the same moment could
+  both pass the check; the check and the save now run in one transaction behind an advisory lock.
+  Rollback: `git revert` this commit.

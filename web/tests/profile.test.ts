@@ -113,6 +113,7 @@ describe('names', () => {
     }
     await s.setNames(db, OTHER, { nickname: 'Cee' });
     expect((await patchProfile({ nickname: 'cee' })).status).toBe(400);
+    expect((await patchProfile({ nickname: other.split(' ')[0].toLowerCase() })).status).toBe(400); // their first name
     expect(await namesOf(ME)).toEqual(before);
     expect((await patchProfile({ nickname: before.display_name })).status).toBe(200); // your own name is fine
   });
