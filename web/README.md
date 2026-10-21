@@ -243,7 +243,9 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
     (`scripts/db-remote.ts`) drops, reseeds and turns RLS on. `npm run db:upgrade` runs the
     idempotent `upgrade()` in `lib/db.ts`: it adds columns and tables and keeps all data. Both end with
     `PUBLIC_API_LOCK` (`lib/schema.ts`): the Supabase `anon` and `authenticated` roles get no rights, and a
-    restrictive `deny_public_api` policy refuses them on every table. The app reads as the owner, so it is not bound.
+    restrictive `deny_public_api` policy refuses them on every table. Then `TEAM_FENCE` makes the `nico_app` role and
+    one `team_fence` policy per table. Signed-in calls go through `scoped()` and run as `nico_app` with their team set,
+    so they see only that team's rows. Sign-in, the session route and the reminders cron still read as the owner.
   - Unset on Vercel: PGlite in tmpdir, seeded from `fixtures/` on each cold start, so edits do not last.
   - Unset locally: PGlite in `web/.data/`.
 - `NICO_OPEN_DEMO=1` skips sign-in: a visitor is the team lead and `/signin` switches person. On Vercel, secrets come

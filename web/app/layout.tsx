@@ -24,7 +24,7 @@ import { JevProvider } from '@/components/jevFlag';
 import { jevOn } from '@/lib/jev';
 import { ViewerProvider } from '@/components/viewer';
 import { ViewBanner } from '@/components/ViewAs';
-import { db, rosterFile } from '@/lib/db';
+import { db, rosterFile, scoped } from '@/lib/db';
 import { freshFor } from '@/lib/page';
 import { projectPeopleMap, projectsMayAddTo } from '@/lib/plan';
 import { seesProject } from '@/lib/sight';
@@ -71,15 +71,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // "View as" is for admins only, judged on the real session person, never on the person being viewed.
   const realAdmin = !!me && me.realPerson.appRoles.includes('admin');
   const roleWord = (roles: string[]) => roles.filter((r) => r !== 'member').join(' · ') || 'member';
-  const viewPeople = realAdmin && me
-    ? (await listPeople(await db(), me.team.id)).filter((p) => p.active && p.id !== me.realPerson.id)
+  const d = me ? scoped(await db(), me.team.id) : null;
+  const viewPeople = realAdmin && me && d
+    ? (await listPeople(d, me.team.id)).filter((p) => p.active && p.id !== me.realPerson.id)
         .map((p) => ({ id: p.id, name: p.displayName, roles: roleWord(p.appRoles) }))
     : [];
-  const sight = me ? await sightFor(await db(), me) : null;
-  const projectPeople = me && sight ? Object.fromEntries(Object.entries(await projectPeopleMap(await db(), me.team.id)).filter(([id]) => seesProject(sight, id))) : {};
-  const mayAddTo = me && sight ? (await projectsMayAddTo(await db(), me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles))).filter((id) => seesProject(sight, id)) : [];
-  const fresh = me ? await freshFor(me, await db()) : {};
-  const photos = me ? await teamPhotos(await db(), me.team.id) : {};
+  const sight = me && d ? await sightFor(d, me) : null;
+  const projectPeople = me && d && sight ? Object.fromEntries(Object.entries(await projectPeopleMap(d, me.team.id)).filter(([id]) => seesProject(sight, id))) : {};
+  const mayAddTo = me && d && sight ? (await projectsMayAddTo(d, me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles))).filter((id) => seesProject(sight, id)) : [];
+  const fresh = me && d ? await freshFor(me, d) : {};
+  const photos = me && d ? await teamPhotos(d, me.team.id) : {};
   return (
     <html lang="en" data-skin={skin} data-theme={themeAttr(theme)} className={`${geist.variable} ${geistMono.variable} ${plexSans.variable} ${plexMono.variable} ${sourceSans.variable} ${fraunces.variable} ${inter.variable}`}>
       <body data-viewing={me?.viewingAs ? '1' : undefined}>

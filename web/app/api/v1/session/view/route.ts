@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { VIEW_COOKIE, cookie, cookieOptions, currentRealMe, isHttps, signView } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, scoped } from '@/lib/db';
 import { ApiError, forbidden } from '@/lib/errors';
 import { errorResponse, rateLimit, readBody, sameOrigin } from '@/lib/http';
 import { getPerson } from '@/lib/service';
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       res.headers.append('Set-Cookie', cookie('', 0, isHttps(req), VIEW_COOKIE));
       return res;
     }
-    const target = await getPerson(await db(), me.team.id, personId);
+    const target = await getPerson(scoped(await db(), me.team.id), me.team.id, personId);
     if (!target?.active) throw new ApiError(404, 'not_found', 'That person is not on the active roster.');
     res.headers.append('Set-Cookie', cookie(signView(me.realPerson.id, target.id), cookieOptions.maxAge, isHttps(req), VIEW_COOKIE));
     return res;

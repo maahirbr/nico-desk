@@ -764,3 +764,22 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   owner's own Vercel account. The failed deployment was removed with the repo owner's yes. Production still builds from
   git: promote the `maahir/mvp` git preview (`vercel redeploy <preview> --target production`, or the dashboard).
   Rollback: `git revert` this commit.
+- **2026-10-21 · Opus 5.5 · Team fence: row level security that binds the app.** The app connects as the table owner,
+  and RLS does not bind an owner, so the `deny_public_api` lock from 19 Oct did nothing for the app's own reads. The
+  repo owner picked the team fence. `TEAM_FENCE` in `lib/schema.ts` makes the role `nico_app` (no login, no inherit,
+  no bypass), grants it to the app's login and adds one `team_fence` policy per table, built from the `FENCE` map: a
+  row is visible only when it belongs to the team in `app.team_id`, directly or through its project, task, comment,
+  message, room or person. `scoped(d, teamId)` in `lib/db.ts` runs each call in a transaction that first sets
+  `app.team_id` and the role with `set_config(..., true)`, so both end with the transaction and are safe with the
+  pooler. No team set means no rows: the fence fails closed. `route()`, `lookups()`, the layout and the pages that read
+  outside them use `scoped()`. Sign-in, the dev picker, the session route, the sign-in callback and the reminders cron
+  stay on the owner connection, because they run before a team is known or across teams. Person sight stays in
+  `lib/sight.ts`: the fence is a second wall, not a replacement. No new login or Vercel env var is needed. Limits: a
+  query that ran `RESET ROLE` would leave the role (every query is parameterized, so the risk is low). Each scoped
+  query costs about four round trips on the hosted database. On a database with many teams, `addPerson` cannot see a
+  person on another team, so a duplicate email shows the database error, not the friendly one. Feedback is fenced by
+  the writer's team. `tests/fence.test.ts` checks a policy on every table, nothing with no team, no cross-team reads
+  or writes, and the owner role back after each call. The hosted database needs `npm run db:upgrade` before a build
+  with this is promoted. Rollback: `git revert` this commit, then on the hosted database `DROP POLICY team_fence` on
+  each table, `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM nico_app; REVOKE USAGE ON SCHEMA public FROM nico_app;
+  DROP ROLE nico_app;`.

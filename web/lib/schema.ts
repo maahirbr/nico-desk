@@ -471,3 +471,73 @@ DO $$ DECLARE t text; BEGIN
     END LOOP;
   END IF;
 END $$;`;
+
+// The team fence (21 Oct). Scoped work runs as nico_app, a role that RLS binds, with the team in app.team_id
+// (lib/db.ts scoped()). Each table's one policy lets nico_app touch only rows of that team: by team_id, or through
+// the project, task, comment, message, line or note the row hangs on. Those subqueries meet the parent table's own
+// policy, so the fence follows the chain. With no team set nothing matches, so a missed setting fails closed.
+// Person sight inside a team stays in lib/sight.ts. People are shared across teams: a person row shows to the teams
+// they are on, and any insert passes, because addPerson writes the person before the team_members row.
+// Feedback is fenced by the writer's team. Sign-in, the reminders cron and the dev picker stay on the owner connection.
+// Idempotent: upgrade() and reseed run it last, after the public API lock.
+// Rollback: DROP POLICY team_fence on each table; REVOKE ALL ON ALL TABLES IN SCHEMA public FROM nico_app; DROP ROLE nico_app.
+const TEAM = `current_setting('app.team_id', true)`;
+const ON_TEAM = `person_id IN (SELECT person_id FROM team_members)`;
+const inProject = (col: string) => `${col} IN (SELECT id FROM projects)`;
+const inTask = (col: string) => `${col} IN (SELECT id FROM tasks)`;
+const kindOf = (kind: string, id: string) => `(${kind} = 'task' AND ${inTask(id)}) OR (${kind} = 'project' AND ${inProject(id)})`;
+const room = `(room_kind = 'team' AND room_id = ${TEAM}) OR (room_kind = 'project' AND ${inProject('room_id')})`;
+const inFeedback = `feedback_id IN (SELECT id FROM feedback)`;
+
+// table → [USING, WITH CHECK]; a single string is both.
+export const FENCE: Record<string, string | [string, string]> = {
+  teams: `id = ${TEAM}`,
+  team_members: `team_id = ${TEAM}`,
+  people: [`id IN (SELECT person_id FROM team_members)`, `true`],
+  person_photos: ON_TEAM,
+  update_seen: ON_TEAM,
+  google_links: ON_TEAM,
+  projects: `team_id = ${TEAM}`,
+  tasks: `team_id = ${TEAM}`,
+  reminders: `team_id = ${TEAM}`,
+  project_members: inProject('project_id'),
+  project_viewers: inProject('project_id'),
+  plan_lines: inProject('project_id'),
+  plan_actions: inProject('project_id'),
+  plan_asks: inProject('project_id'),
+  plan_parked: inProject('project_id'),
+  plan_proposals: inProject('project_id'),
+  plan_activity: inProject('project_id'),
+  plan_checkpoints: `line_id IN (SELECT id FROM plan_lines)`,
+  task_links: inTask('task_id'),
+  events: kindOf('entity_type', 'entity_id'),
+  comments: kindOf('subject_kind', 'subject_id'),
+  comment_refs: `comment_id IN (SELECT id FROM comments)`,
+  chat_messages: room,
+  chat_reads: room,
+  chat_refs: `message_id IN (SELECT id FROM chat_messages)`,
+  chat_task_links: `message_id IN (SELECT id FROM chat_messages) AND ${inTask('task_id')}`,
+  notices: `${ON_TEAM} AND (task_id IS NULL OR ${inTask('task_id')})
+    AND (comment_id IS NULL OR comment_id IN (SELECT id FROM comments))
+    AND (message_id IS NULL OR message_id IN (SELECT id FROM chat_messages))`,
+  feedback: ON_TEAM,
+  feedback_images: inFeedback,
+  feedback_votes: inFeedback,
+  feedback_replies: inFeedback,
+};
+
+export const TEAM_FENCE = `
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nico_app') THEN
+    CREATE ROLE nico_app NOLOGIN NOINHERIT NOBYPASSRLS;
+  END IF;
+  EXECUTE format('GRANT nico_app TO %I', current_user); -- so the app's own login can SET ROLE to it
+END $$;
+GRANT USAGE ON SCHEMA public TO nico_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO nico_app;
+${Object.entries(FENCE).map(([t, p]) => {
+  const [using, check] = typeof p === 'string' ? [p, p] : p;
+  return `ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS team_fence ON ${t};
+CREATE POLICY team_fence ON ${t} FOR ALL TO nico_app USING (${using}) WITH CHECK (${check});`;
+}).join('\n')}`;

@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PUBLIC_API_LOCK, SCHEMA } from './schema';
+import { PUBLIC_API_LOCK, SCHEMA, TEAM_FENCE } from './schema';
 import { jobSecret } from './jobs';
 import { loadLocalProjects, loadRosterOverlay, seed } from './seed';
 
@@ -110,6 +110,8 @@ export async function upgrade(db: Db) {
   await db.exec(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS item_keys text[];`);
   // 19 Oct: the public API roles get no rights and a deny policy on every table. Last, so it covers new tables.
   await db.exec(PUBLIC_API_LOCK);
+  // 21 Oct: the team fence (nico_app and one policy per table). Last too, so it covers new tables.
+  await db.exec(TEAM_FENCE);
 }
 
 // Idempotent: the chat tables (RLS on, no policies) and message_id on notices. The same SQL as lib/schema.ts.
@@ -307,6 +309,23 @@ export const UPDATE_SEEN_UPGRADE = `
     PRIMARY KEY (person_id, scope)
   );
   ALTER TABLE update_seen ENABLE ROW LEVEL SECURITY;`;
+
+// One team's view of the database. Every call runs in a transaction that first sets the team and drops to nico_app,
+// which RLS binds (TEAM_FENCE in lib/schema.ts). Both settings are local, so they end with the transaction and the
+// pooler hands back a clean session. Signed-in work uses this; sign-in and the cron use db() as the owner.
+const FENCE_ON = `SELECT set_config('app.team_id', $1, true), set_config('role', 'nico_app', true)`;
+
+export function scoped(d: Db, teamId: string): Db {
+  const transaction = <T>(fn: (tx: Tx) => Promise<T>) => d.transaction(async (tx) => {
+    await tx.query(FENCE_ON, [teamId]);
+    return fn(tx);
+  });
+  return {
+    query: (sql, params) => transaction((tx) => tx.query(sql, params)),
+    exec: (sql) => transaction((tx) => tx.exec(sql)),
+    transaction,
+  };
+}
 
 const g = globalThis as unknown as { __ndDb?: Promise<Db> };
 

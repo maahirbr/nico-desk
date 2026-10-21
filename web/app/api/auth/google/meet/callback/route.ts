@@ -1,5 +1,5 @@
 import { cookie, currentMe, isHttps } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, scoped } from '@/lib/db';
 import { errorResponse, rateLimit } from '@/lib/http';
 import { checkState, exchangeMeetCode, MEET_CALLBACK_PATH, MEET_STATE_COOKIE, meetEnabled, saveLink } from '@/lib/meet';
 import { isLeadOrAdmin } from '@/lib/roles';
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     const got = await exchangeMeetCode(code, `${url.origin}${MEET_CALLBACK_PATH}`);
     if ('error' in got) return back(got.error);
     // The account Google signed in must be this person's own address, or the link would read someone else's meetings.
-    const d = await db();
+    const d = scoped(await db(), me.team.id);
     const { rows } = await d.query(
       `SELECT 1 FROM people WHERE id = $1 AND (lower(email) = $2 OR $2 IN (SELECT lower(a) FROM unnest(alt_emails) AS a))`,
       [me.realPerson.id, got.email],

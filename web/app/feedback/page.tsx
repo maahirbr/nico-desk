@@ -1,6 +1,6 @@
 import { requireMe } from '@/lib/auth';
 import { listFeedback, mayReplyFeedback } from '@/lib/feedback';
-import { db } from '@/lib/db';
+import { db, scoped } from '@/lib/db';
 import { fmtStamp } from '@/lib/time';
 import { FeedbackForm } from '@/components/FeedbackForm';
 import { FeedbackList } from '@/components/FeedbackList';
@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 // can answer a note. Nothing here is emailed to anyone.
 export default async function Feedback() {
   const me = await requireMe();
-  const rows = await listFeedback(await db(), me);
+  const rows = await listFeedback(scoped(await db(), me.team.id), me);
   return (
     <>
       <h1>Feedback</h1>

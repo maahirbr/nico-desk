@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fixturesDir, type Tx } from './db';
-import { PUBLIC_API_LOCK, SCHEMA } from './schema';
+import { PUBLIC_API_LOCK, SCHEMA, TEAM_FENCE } from './schema';
 import { seed, type LocalProjects, type RosterOverlay } from './seed';
 import { shiftDays, shiftJson } from './shift';
 
@@ -35,5 +35,6 @@ export async function reseed(tx: Tx, dir: string = fixturesDir(), overlay?: Rost
   const { rows } = await tx.query<{ tablename: string }>(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
   for (const { tablename } of rows) await tx.exec(`ALTER TABLE public."${tablename}" ENABLE ROW LEVEL SECURITY`);
   await tx.exec(PUBLIC_API_LOCK);
+  await tx.exec(TEAM_FENCE);
   return rows.length;
 }

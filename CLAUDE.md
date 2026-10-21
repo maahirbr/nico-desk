@@ -12,6 +12,7 @@ Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.
 - `web/`: the app (Next.js 16). `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it.
   `lib/http.ts` `route()` wraps every API call (session, same-origin, rate limit, Zod, View as refusal).
   `lib/schema.ts` is the schema; `lib/db.ts` `upgrade()` brings an existing database up to it.
+  `lib/db.ts` `scoped()` runs a signed-in call as `nico_app` with its team set, so the `team_fence` policies bind it.
   `web/README.md` has the file layout, what is built, what is not, and **Hosting**.
 - Sign-in: Google OAuth direct to Google (`lib/google.ts`, `app/api/auth/google/`), on when `GOOGLE_CLIENT_ID` and
   `GOOGLE_CLIENT_SECRET` are set. The roster picker stays behind `NICO_DEV_SIGNIN=1`. Both end in the signed
@@ -55,7 +56,8 @@ Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.
   that are not already public.
 - Before the app goes into active use: a security audit of the deployment, and row level security policies that
   tighten the database (since 19 Oct every table has RLS on, the public API roles have no rights and a
-  `deny_public_api` policy, and the app reads through the pooler as the owner).
+  `deny_public_api` policy; since 21 Oct signed-in calls run as `nico_app` behind a `team_fence` policy per table,
+  and only sign-in, the session route and the reminders cron read as the owner).
   Raised by a partner teammate on 13 Oct.
 
 ## DECISIONS
@@ -93,7 +95,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `759 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `764 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

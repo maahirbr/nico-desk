@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { currentMe, type Me } from './auth';
-import { db, type Db } from './db';
+import { db, scoped, type Db } from './db';
 import { ApiError, forbidden } from './errors';
 
 // One wrapper for every /api/v1 route: session, same-origin check on writes, rate limits,
@@ -72,7 +72,7 @@ export function route<P = Record<string, never>>(fn: (a: Args<P>) => Promise<unk
         assertNotViewing(me);
         rateLimit(`w:${me.realPerson.id}`, 60);
       }
-      const out = await fn({ req, params: await ctx.params, me, db: await db() });
+      const out = await fn({ req, params: await ctx.params, me, db: scoped(await db(), me.team.id) });
       if (out instanceof Response) return out;
       return Response.json(out ?? null);
     } catch (e) {
