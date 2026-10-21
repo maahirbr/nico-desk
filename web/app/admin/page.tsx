@@ -12,7 +12,7 @@ export default async function Admin() {
   const { people, isAdmin, readOnly } = await lookups(me);
   return (
     <>
-      <h1>Roster</h1>
+      <div className="page-head"><h1>Roster</h1></div>
       <div className="card table-card"><table className="stacked">
         <thead><tr><th>Name</th><th>Job title</th><th>Email</th><th>Access</th>{isAdmin && <th></th>}</tr></thead>
         <tbody>

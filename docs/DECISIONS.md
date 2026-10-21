@@ -834,3 +834,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   exception it replaced. Hover and keyboard focus show the accent colour and the hairline stroke only. The
   `--link-tint` token stays for the two buttons that mix it into their own hover fill. DESIGN.md Motion says the new
   rule. Rollback: `git revert` this commit.
+
+- **2026-10-21 · Opus 5.5 · Two page widths, and every title has the same space under it.** The repo owner found
+  Your profile, and its search bar on Cool, much narrower than the rest of the site, with the card pressed up under
+  the title. The 640px narrow column is retired: Your profile, New task, Search, Connections and the Guide now use the
+  980px `calm` column, as Home and Team do. Form cards lose their 680px cap and fill their column like every other
+  card. Your profile and Roster put their title in a `page-head`, as the other pages do. The look of the full and calm
+  pages does not change. DESIGN.md Layout states the rule. Rollback: `git revert` this commit.

@@ -46,7 +46,7 @@ export function SearchView({ initial }: { initial: string }) {
   const flat = kinds.flatMap((k) => hits!.filter((h) => h.kind === k));
 
   return (
-    <div className="calm narrow">
+    <div className="calm">
       <header className="page-head"><div><h1>Search</h1><p className="summary">Projects, tasks, plan lines, comments and people. Try is:late, @name or #project.</p></div></header>
       <input ref={input} type="search" className="big-search" placeholder="Search for a task, project or person" value={q} aria-label="Search"
         onChange={(e) => setQ(e.target.value)}

@@ -8,7 +8,7 @@ export function NewTaskPage({ people, meId, today, projects, wsByProject }: {
 }) {
   const router = useRouter();
   return (
-    <div className="calm narrow">
+    <div className="calm">
       <header className="page-head"><div><h1>New Task</h1></div></header>
       <div className="card form-card">
         <AddTaskForm people={people} meId={meId} today={today} projects={projects} wsByProject={wsByProject} onDone={() => router.push('/me')} />

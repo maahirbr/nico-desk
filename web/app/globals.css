@@ -258,7 +258,7 @@ a.plink.person-cell .av { text-shadow: none; }
 .stack { display: flex; flex-direction: column; gap: var(--space-md); }
 .row { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: end; }
 .row > label.f { flex: 1 1 180px; }
-.form-card { max-width: 680px; padding: var(--space-lg); }
+.form-card { padding: var(--space-lg); }
 .check { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-meta); }
 /* A form row of checkboxes and its button: the checkboxes centre on the button, which sits at the row's end. */
 .row:has(> .check) > .check { min-height: var(--button-height); }
@@ -658,7 +658,6 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 
 /* ================= calm layout ================= */
 .calm { max-width: var(--calm-max); }
-.calm.narrow { max-width: var(--calm-narrow); }
 .page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); margin-bottom: var(--space-lg); flex-wrap: wrap; }
 .page-head h1 { margin: 0 0 var(--space-xxs); }
 .summary { margin: 0; color: var(--ink-2); }

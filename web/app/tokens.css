@@ -95,7 +95,6 @@
   --chevron: 5px;
   --icon-size: 17px;
   --calm-max: 980px;
-  --calm-narrow: 640px;
   --solo-max: 480px;
   --col-owner: 120px;
   --col-status: 136px;
@@ -987,11 +986,6 @@
     border-radius: 0; box-shadow: none;
     background: var(--canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
   :root[data-skin="m"] .main:has(.page > .calm) > .topbar { --pill-w: var(--calm-max); }
-  :root[data-skin="m"] .main:has(.page > .calm.narrow) > .topbar { --pill-w: var(--calm-narrow);
-    padding-left: calc(var(--pill-l) + var(--bar-tools)); padding-right: calc(var(--pill-r) + var(--bar-tools)); }
-  /* The narrow pill has no room for the Feedback label beside the search, at any width: the icon only, as below 1180px. */
-  :root[data-skin="m"] .main:has(.page > .calm.narrow) .top-feedback { width: var(--button-height); padding: 0; justify-content: center; }
-  :root[data-skin="m"] .main:has(.page > .calm.narrow) .top-feedback-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   :root[data-skin="m"] .topbar::before { content: ""; position: absolute; z-index: -1; inset: 8px var(--pill-r) 8px var(--pill-l); border-radius: 16px; background: var(--bar-glass);
     box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-ring), 0 4px 16px rgb(0 0 0 / 0.06); }
   :root[data-skin="m"] .topbar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 16px; pointer-events: none;

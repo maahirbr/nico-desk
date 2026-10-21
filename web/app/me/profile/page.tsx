@@ -13,8 +13,8 @@ export default async function Profile() {
   const { d } = await lookups(me);
   const profile = await myProfile(d, me.person.id);
   return (
-    <div className="calm narrow">
-      <h1>Your profile</h1>
+    <div className="calm">
+      <div className="page-head"><h1>Your profile</h1></div>
       <ProfileForm personId={me.person.id} profile={profile} />
     </div>
   );

@@ -45,7 +45,7 @@ const WEEK: [string, string][] = [
 
 export function GuideView() {
   return (
-    <article className="guide calm narrow">
+    <article className="guide calm">
       <header className="page-head">
         <div>
           <h1>How to use Nico Desk</h1>

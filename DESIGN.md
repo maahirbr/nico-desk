@@ -456,6 +456,7 @@ Form fields use 16px (`{typography.input}`) so a phone does not zoom in.
 - **Base unit:** 4px. Scale: `{spacing.xxs}` 4 · `{spacing.xs}` 8 · `{spacing.sm}` 12 · `{spacing.md}` 16 · `{spacing.lg}` 24 · `{spacing.xl}` 32 · `{spacing.xxl}` 40 · `{spacing.section}` 56.
 - **Frame:** a dark left sidebar 236px wide, then the main area. The top of the main area is a 64px bar with a centred search field (560px at most). The page is padded 40px at the sides. Its maximum width is 1120px.
 - **Home (`/me`) and Team (`/team`):** one column, no side rail. Both use the `calm` width, 980px at most.
+- **Page widths.** There are two. Pages built around a table or a board (Roster, Ledger, Reminders, Feedback, a project board, a task) use the full page. Every other page uses the `calm` column, 980px at most: Home, Team, Projects, a person, Your profile, New task, Search, Connections and the Guide. Cards, forms included, fill their column. A title sits in a `page-head` or has a lede under it, so the space before the content is the same on every page.
 - **Home** opens with a greeting and one summary line, then a small glance of charts, an updates card and the "Waiting on you" callout when something is waiting. Your tasks follow in groups: Late, Today, This week, Later. Your projects and a collapsed "Done this week" come last.
 - **Team** has a week switcher, a By person and By status switch, a project filter and a person search. By person, each person's tasks sit in Late, This week and Coming up.
 - **A line:** a grid of date (about 150px), what (fills) and status (fits). Rows are 12px top and bottom.
@@ -619,13 +620,13 @@ A colleague, not a mascot. Short, plain, first names, the viewer is "you". Verbs
 
 | Name | Width | Key changes |
 |---|---|---|
-| Desktop | Above 860px | The sidebar sits on the left. Home and Team are one column, 980px at most. |
+| Desktop | Above 860px | The sidebar sits on the left. A page is one of two widths: the full page for tables and boards, the `calm` 980px column for everything else. |
 | Phone | 860px and under | The sidebar becomes a sticky row at the top. One column. Controls grow to 40px. Home is designed at 375px. Team is readable, not designed. |
 
 - **Phone order on Home:** the summary, the glance and the updates, then "Waiting on you", then your tasks. Something someone else is blocked on must not be missed.
 - **Touch:** buttons are 36px tall on desktop and 40px at 860px and under. Plain links and the row opener are about 24px tall, and their hit area grows by 4px above and below on a phone. A few controls already reach 44px (`--touch-min` in `tokens.css`): the sign-in buttons, the guide note close button, the remove button on a list chip and some list rows. The goal is 44px for every control on a touch screen. That goal is open. See Known Gaps.
 - **Keyboard:** the on-screen keyboard closes on a tap outside a field, on return or done, and on scroll. No field leaves it stuck open.
-- **The top bar** is sticky on desktop and static on a phone. On Cool at desktop width, the page sheet is its own scroll area with no bounce, so its rounded corners hold. The top bar is an opaque cap in the sheet colour, so no row shows above or around the bar. The bar itself is a glass pill inside the cap, lined up with the page's own column: 980px on Home, Team and Projects, 640px on narrow pages, the full page elsewhere. Content fades out over up to 16px as it goes under the cap, and does not fade while a sticky table head or group heading sits right under it. A new page starts at the top. On Warm and on a phone the window scrolls, as before.
+- **The top bar** is sticky on desktop and static on a phone. On Cool at desktop width, the page sheet is its own scroll area with no bounce, so its rounded corners hold. The top bar is an opaque cap in the sheet colour, so no row shows above or around the bar. The bar itself is a glass pill inside the cap, lined up with the page's own column: 980px on `calm` pages, the full page elsewhere. Content fades out over up to 16px as it goes under the cap, and does not fade while a sticky table head or group heading sits right under it. A new page starts at the top. On Warm and on a phone the window scrolls, as before.
 
 ## Iteration Guide
 

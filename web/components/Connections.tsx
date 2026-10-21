@@ -47,7 +47,7 @@ const MEET_CODES: Record<string, { err: boolean; text: string }> = {
 export function Connections({ status: initial, canManage, meet = null, meetCode = null }: { status: Status; canManage: boolean; meet?: MeetState | null; meetCode?: string | null }) {
   const [status, setStatus] = useState(initial);
   return (
-    <div className="calm narrow">
+    <div className="calm">
       <header className="page-head"><div><h1>Connections</h1><p className="summary">Bring meeting notes in from the tools you already use.</p></div></header>
       {(['granola', 'fireflies', 'fathom'] as const).map((p) => <Card key={p} p={p} s={status[p]} canManage={canManage} onChange={setStatus} />)}
       {meet && <MeetCard initial={meet} code={meetCode} />}
