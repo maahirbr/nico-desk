@@ -758,3 +758,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   now brings the panel into view after the render that adds it, and both board scrolls stop below any sticky bar over
   the column (the Warm top bar on desktop, the side bar at phone width). Checked in Warm and Cool at desktop and 375px.
   Rollback: `git revert` this commit.
+- **2026-10-21 · Opus 5.5 · `web/.vercelignore` keeps local data out of a CLI upload.** A `vercel deploy --prod` from
+  `web/` failed (the project root is `web`, so the CLI must not upload from inside it) after it had uploaded the
+  folder with no ignore file. That upload likely carried the git-ignored `web/.data/` and `web/pilot/` to the repo
+  owner's own Vercel account. The failed deployment was removed with the repo owner's yes. Production still builds from
+  git: promote the `maahir/mvp` git preview (`vercel redeploy <preview> --target production`, or the dashboard).
+  Rollback: `git revert` this commit.
