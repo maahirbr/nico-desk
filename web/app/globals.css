@@ -256,6 +256,9 @@ textarea { resize: vertical; min-height: 4.5em; width: 100%; }
   :is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a):hover:not(:disabled) { color: var(--primary); text-shadow: var(--link-stroke) 0 0 currentColor; }
   :is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a):hover:not(:disabled)::before { opacity: 1; }
 }
+/* A person link holds the avatar and the name. The tint and the stroke mark the name only; the avatar stays as it is. */
+a.plink.person-cell::before { left: var(--mark-size); }
+a.plink.person-cell .av { text-shadow: none; }
 .err { color: var(--late); font: var(--type-small); margin: var(--space-xxs) 0 0; }
 .ok { color: var(--ink-2); font: var(--type-small); margin: var(--space-xxs) 0 0; }
 .stack { display: flex; flex-direction: column; gap: var(--space-md); }
@@ -263,6 +266,9 @@ textarea { resize: vertical; min-height: 4.5em; width: 100%; }
 .row > label.f { flex: 1 1 180px; }
 .form-card { max-width: 680px; padding: var(--space-lg); }
 .check { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-meta); }
+/* A form row of checkboxes and its button: the checkboxes centre on the button, which sits at the row's end. */
+.row:has(> .check) > .check { min-height: var(--button-height); }
+.row:has(> .check) > .btn { margin-left: auto; }
 
 /* task actions: stacked cards in the side column */
 .actions { display: flex; flex-direction: column; gap: var(--space-md); }

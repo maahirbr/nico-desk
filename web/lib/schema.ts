@@ -13,6 +13,7 @@ CREATE TABLE teams (
 CREATE TABLE people (
   id            text PRIMARY KEY,
   display_name  text NOT NULL,
+  nickname      text CHECK (char_length(nickname) BETWEEN 1 AND 40),  -- set by the person; shown in place of display_name
   role          text NOT NULL,
   department    text NOT NULL,
   email         text NOT NULL UNIQUE,

@@ -261,10 +261,11 @@ export const VISIBILITY_UPGRADE = `
   );
   ALTER TABLE project_viewers ENABLE ROW LEVEL SECURITY;`;
 
-// Idempotent: adds the profile columns and the photo table. RLS on with no policies, like every other table.
+// Idempotent: adds the profile columns (photo, phone, nickname) and the photo table. RLS on with no policies, like every other table.
 export const PEOPLE_PROFILE_UPGRADE = `
   ALTER TABLE people ADD COLUMN IF NOT EXISTS photo_url text;
   ALTER TABLE people ADD COLUMN IF NOT EXISTS phone text CHECK (phone ~ '^[0-9 +-]{7,20}$');
+  ALTER TABLE people ADD COLUMN IF NOT EXISTS nickname text CHECK (char_length(nickname) BETWEEN 1 AND 40);
   CREATE TABLE IF NOT EXISTS person_photos (
     person_id   text PRIMARY KEY REFERENCES people(id),
     bytes       bytea NOT NULL,

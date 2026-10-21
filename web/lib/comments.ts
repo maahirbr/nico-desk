@@ -50,7 +50,7 @@ export function refsIn(body: string): Ref[] {
 }
 
 type Row = { id: string; subject_kind: SubjectKind; subject_id: string; author_id: string; body: string; created_at: string; edited_at: string | null; deleted_at: string | null; author_name: string };
-const COMMENT_SQL = `SELECT c.*, p.display_name AS author_name FROM comments c JOIN people p ON p.id = c.author_id`;
+const COMMENT_SQL = `SELECT c.*, COALESCE(p.nickname, p.display_name) AS author_name FROM comments c JOIN people p ON p.id = c.author_id`;
 
 // The label each reference shows for this reader, or null when they may not see it.
 async function labels(tx: Tx, me: Me, sight: Sight, refs: Ref[]): Promise<Map<string, string | null>> {
@@ -59,7 +59,7 @@ async function labels(tx: Tx, me: Me, sight: Sight, refs: Ref[]): Promise<Map<st
   const ids = (k: RefKind) => [...new Set(refs.filter((r) => r.kind === k).map((r) => r.id))];
   if (ids('person').length) {
     const { rows } = await tx.query<{ id: string; display_name: string }>(
-      `SELECT p.id, p.display_name FROM people p WHERE p.id = ANY($1) AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $2)`, [ids('person'), me.team.id]);
+      `SELECT p.id, COALESCE(p.nickname, p.display_name) AS display_name FROM people p WHERE p.id = ANY($1) AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $2)`, [ids('person'), me.team.id]);
     for (const r of rows) out.set(`person:${r.id}`, r.display_name);
   }
   if (ids('task').length) {
@@ -143,7 +143,7 @@ async function notifyMentions(tx: Tx, me: Me, kind: SubjectKind, subjectId: stri
   for (const pid of new Set(personIds)) {
     if (pid === me.person.id) continue;
     const { rows } = await tx.query<{ display_name: string; email: string; contact_email: string | null }>(
-      `SELECT p.display_name, p.email, p.contact_email FROM people p
+      `SELECT COALESCE(p.nickname, p.display_name) AS display_name, p.email, p.contact_email FROM people p
        WHERE p.id = $1 AND p.active AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $2)`, [pid, me.team.id]);
     if (!rows[0]) continue;
     const sight = await sightOf(tx, me.team.id, pid);
@@ -218,7 +218,7 @@ export type Mention = { noticeId: string; commentId: string; byName: string; sub
 // Unread "mentioned" notices whose comment still stands and whose task or project this person still sees.
 export async function listMentions(db: Db, me: Me): Promise<Mention[]> {
   const { rows } = await db.query<{ notice_id: string; created_at: string } & Row>(
-    `SELECT n.id AS notice_id, c.*, p.display_name AS author_name FROM notices n
+    `SELECT n.id AS notice_id, c.*, COALESCE(p.nickname, p.display_name) AS author_name FROM notices n
      JOIN comments c ON c.id = n.comment_id JOIN people p ON p.id = c.author_id
      WHERE n.person_id = $1 AND n.kind = 'mentioned' AND n.read_at IS NULL AND c.deleted_at IS NULL
      ORDER BY n.created_at DESC LIMIT 50`, [me.person.id]);

@@ -232,7 +232,7 @@ export async function meetingAgenda(db: Db, me: Me, projectId: string, today = t
          AND e.field IN ('_created','owner_id','due_on','blocked_ask','blocked_on_id','status_category','title')`,
       [p.id, cutoff]),
     db.query<{ id: string; subject_kind: 'task' | 'project'; subject_id: string; body: string; created_at: string | Date; author: string }>(
-      `SELECT c.id, c.subject_kind, c.subject_id, c.body, c.created_at, a.display_name AS author FROM comments c JOIN people a ON a.id = c.author_id
+      `SELECT c.id, c.subject_kind, c.subject_id, c.body, c.created_at, COALESCE(a.nickname, a.display_name) AS author FROM comments c JOIN people a ON a.id = c.author_id
        WHERE c.deleted_at IS NULL AND c.created_at >= $2
          AND ((c.subject_kind = 'project' AND c.subject_id = $1) OR (c.subject_kind = 'task' AND c.subject_id IN (SELECT id FROM tasks WHERE project_id = $1)))
        ORDER BY c.created_at DESC LIMIT 20`,

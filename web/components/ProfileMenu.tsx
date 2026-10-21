@@ -151,7 +151,8 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, in
               Sounds<span className="pm-current">{sound ? 'On' : 'Off'}</span>
             </button></Help>
           </div>
-          <Link role="menuitem" className="pm-sep" href="/guide" onClick={() => setOpen(false)}>Guide</Link>
+          <Link role="menuitem" className="pm-sep" href="/me/profile" onClick={() => setOpen(false)}>Your profile</Link>
+          <Link role="menuitem" href="/guide" onClick={() => setOpen(false)}>Guide</Link>
           <button role="menuitem" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>
           <button role="menuitem" className="pm-sep" onClick={signOut}>Sign out</button>
         </div>

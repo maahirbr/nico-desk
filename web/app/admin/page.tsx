@@ -18,10 +18,10 @@ export default async function Admin() {
         <tbody>
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}>
-              <td><Person name={p.displayName} id={p.id} /></td>
+              <td><Person name={p.displayName} id={p.id} />{p.nickname && <span className="dim"> ({p.fullName})</span>}</td>
               <td data-label="Title">{p.role}</td>
-              <td data-label="Email" className="mono small">{p.email}</td>
-              <td data-label="Access" className="small"><span style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</span>{p.active && p.repliesFeedback ? ' · replies to feedback' : ''}</td>
+              <td data-label="Email" className="mono">{p.email}</td>
+              <td data-label="Access"><span style={{ textTransform: 'capitalize' }}>{p.active ? p.appRoles.join(' · ') : 'inactive'}</span>{p.active && p.repliesFeedback ? ' · replies to feedback' : ''}</td>
               {isAdmin && <td>{!readOnly && <PersonControls id={p.id} active={p.active} roles={p.appRoles} self={p.id === me.person.id} email={p.email} repliesFeedback={p.repliesFeedback} />}</td>}
             </tr>
           ))}

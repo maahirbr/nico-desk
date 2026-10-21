@@ -12,7 +12,9 @@ import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateI
 
 export type Person = {
   id: string;
-  displayName: string;
+  displayName: string; // the nickname when the person set one, else the roster name
+  fullName?: string; // the roster name, shown beside a nickname
+  nickname?: string | null;
   role: string;
   department: string;
   email: string;
@@ -41,11 +43,11 @@ function needReason(reason: unknown, field = 'reason'): string {
 
 // ---------- people and roles ----------
 
-type PersonRow = { id: string; display_name: string; role: string; department: string; email: string; active: boolean; app_roles: AppRole[] | null; restricted?: boolean; replies_feedback?: boolean };
+type PersonRow = { id: string; display_name: string; nickname?: string | null; role: string; department: string; email: string; active: boolean; app_roles: AppRole[] | null; restricted?: boolean; replies_feedback?: boolean };
 
 function toPerson(r: PersonRow): Person {
   return {
-    id: r.id, displayName: r.display_name, role: r.role, department: r.department, email: r.email, active: r.active,
+    id: r.id, displayName: r.nickname ?? r.display_name, fullName: r.display_name, nickname: r.nickname ?? null, role: r.role, department: r.department, email: r.email, active: r.active,
     appRoles: r.app_roles ?? [], restricted: r.restricted ?? false, repliesFeedback: r.replies_feedback ?? false,
   };
 }
@@ -151,7 +153,7 @@ export type LogLine = EventRow & { actorName: string | null };
 
 export async function taskLog(db: Tx, taskId: string, before?: string, limit = 50): Promise<LogLine[]> {
   const { rows } = await db.query<LogLine>(
-    `SELECT e.*, p.display_name AS "actorName" FROM events e LEFT JOIN people p ON p.id = e.actor_id
+    `SELECT e.*, COALESCE(p.nickname, p.display_name) AS "actorName" FROM events e LEFT JOIN people p ON p.id = e.actor_id
      WHERE e.entity_type = 'task' AND e.entity_id = $1
        AND ($2::text IS NULL OR (e.at, e.id) < (SELECT at, id FROM events WHERE id = $2))
      ORDER BY e.at DESC, e.id DESC LIMIT $3`,
@@ -749,7 +751,7 @@ export async function patchPerson(
   return (await getPerson(db, teamId, personId))!;
 }
 
-// ---------- profile: phone and photo ----------
+// ---------- profile: names, phone and photo ----------
 
 export const PHONE_RE = /^[0-9 +-]{7,20}$/;
 export const PHOTO_MAX_BYTES = 200 * 1024;
@@ -777,6 +779,26 @@ export async function setPhone(db: Db, meId: string, phone: unknown): Promise<st
   const v = checkPhone(phone);
   await db.query(`UPDATE people SET phone = $2 WHERE id = $1`, [meId, v]);
   return v;
+}
+
+// Your own names. The roster name keeps the 2 to 80 characters the Roster asks for. An empty nickname clears it.
+export async function setNames(db: Db, meId: string, input: { name?: string; nickname?: string }): Promise<void> {
+  const name = input.name?.trim();
+  if (name !== undefined && (name.length < 2 || name.length > 80)) throw bad('invalid_body', 'Use 2 to 80 characters for your name.', 'name');
+  const nick = input.nickname === undefined ? undefined : input.nickname.trim() || null;
+  if (nick && nick.length > 40) throw bad('invalid_body', 'Use up to 40 characters for your nickname.', 'nickname');
+  if (name !== undefined) await db.query(`UPDATE people SET display_name = $2 WHERE id = $1`, [meId, name]);
+  if (nick !== undefined) await db.query(`UPDATE people SET nickname = $2 WHERE id = $1`, [meId, nick]);
+}
+
+export type MyProfile = { name: string; nickname: string | null; phone: string | null; hasPhoto: boolean };
+
+export async function myProfile(db: Db, meId: string): Promise<MyProfile> {
+  const { rows } = await db.query<{ display_name: string; nickname: string | null; phone: string | null; has_photo: boolean }>(
+    `SELECT p.display_name, p.nickname, p.phone, EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id) AS has_photo
+     FROM people p WHERE p.id = $1`, [meId]);
+  const r = rows[0];
+  return { name: r.display_name, nickname: r.nickname, phone: r.phone, hasPhoto: r.has_photo };
 }
 
 export async function savePhoto(db: Db, meId: string, bytes: Uint8Array, claimedMime: string): Promise<void> {
@@ -825,7 +847,7 @@ export async function teamPhotos(db: Tx, teamId: string): Promise<Record<string,
 // The update log across one project's tasks, newest first. It also holds the project's own archive, restore, owner and lead events.
 export async function projectLog(db: Tx, projectId: string, limit = 30): Promise<(LogLine & { taskTitle: string })[]> {
   const { rows } = await db.query<LogLine & { taskTitle: string }>(
-    `SELECT e.*, p.display_name AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
+    `SELECT e.*, COALESCE(p.nickname, p.display_name) AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
      LEFT JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
      LEFT JOIN projects pr ON pr.id = e.entity_id AND e.entity_type = 'project'
      LEFT JOIN people p ON p.id = e.actor_id
@@ -952,7 +974,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
       [teamId, personId],
     ),
     db.query<LogLine & { taskTitle: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null }>(
-      `SELECT e.*, a.display_name AS "actorName", t.title AS "taskTitle",
+      `SELECT e.*, COALESCE(a.nickname, a.display_name) AS "actorName", t.title AS "taskTitle",
               t.project_id, t.owner_id, t.created_by, t.blocked_on_id FROM events e
        JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
        LEFT JOIN people a ON a.id = e.actor_id

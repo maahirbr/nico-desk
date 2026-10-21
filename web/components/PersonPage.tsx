@@ -8,13 +8,13 @@ import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
 import { Help } from './HelpMode';
 import { CopyEmail } from './CopyEmail';
-import { EditProfileButton } from './EditProfile';
 import { useOpenTask } from './taskUrl';
 import { TaskLink } from './TaskLink';
 import { TaskDrawer, TaskRow, dueText, type Opt } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { PersonGlance } from './HomeGlance';
+import { useReadOnly } from './readonly';
 
 // One teammate's page: their open work by project, who waits on them and whom they wait on, what changed lately,
 // their on-time record (only where the viewer may see it) and their projects. Every row links on: a task opens in
@@ -22,13 +22,14 @@ import { PersonGlance } from './HomeGlance';
 
 export type PersonLogItem = { id: string; at: string; whoId: string | null; who: string; text: string; taskId: string; task: string };
 
-export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhoto, name, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record, glance }: {
-  personId: string; email: string; phone: string | null; teamName: string; appRoles: string[]; hasPhoto: boolean; name: string; role: string; department: string; active: boolean; meId: string; isLead: boolean; today: string;
+export function PersonPage({ personId, email, phone, teamName, appRoles, name, fullName, role, department, active, meId, isLead, today, names, projectNames, people, workstreamsByProject, projects, open, waitingOnThem, waitingOnOthers, recent, record, glance }: {
+  personId: string; email: string; phone: string | null; teamName: string; appRoles: string[]; hasPhoto: boolean; name: string; fullName?: string; role: string; department: string; active: boolean; meId: string; isLead: boolean; today: string;
   names: Record<string, string>; projectNames: Record<string, string>; people: Opt[]; workstreamsByProject: Record<string, string[]>;
   projects: PersonProject[]; open: Task[]; waitingOnThem: Task[]; waitingOnOthers: Task[]; recent: PersonLogItem[]; record: OnTimeRecord | null; glance: PersonView['glance'];
 }) {
   const [openId, setOpenId] = useOpenTask();
   const mine = personId === meId;
+  const readOnly = useReadOnly();
   const byProject = new Map<string, Task[]>();
   for (const t of open) byProject.set(t.projectId ?? '', [...(byProject.get(t.projectId ?? '') ?? []), t]);
   const all = [...open, ...waitingOnThem, ...waitingOnOthers];
@@ -45,7 +46,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
           <Avatar id={personId} name={name} lg you={mine} />
           <div>
             <h1>{name}{mine && <span className="dim"> (you)</span>}</h1>
-            <p className="person-meta">{[role, department, active ? '' : 'Not active'].filter(Boolean).join(' · ')}</p>
+            <p className="person-meta">{[fullName && fullName !== name ? fullName : '', role, department, active ? '' : 'Not active'].filter(Boolean).join(' · ')}</p>
             <p className="person-meta">{[teamName, ...appRoles.filter((r) => r !== 'member')].filter(Boolean).join(' · ')}</p>
             <p className="person-contact">
               <span className="pc-email">{email}</span> <CopyEmail email={email} />
@@ -62,7 +63,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, hasPhot
           {waitingOnThem.length > 0 && <> · {waitingOnThem.length} waiting on {first}</>}
         </p>
           <CopyLink path={`/people/${personId}`} what="person" />
-          {mine && <EditProfileButton personId={personId} name={name} phone={phone} hasPhoto={hasPhoto} />}
+          {mine && !readOnly && <Link className="mini-btn" href="/me/profile">Edit profile</Link>}
         </div>
       </header>
 

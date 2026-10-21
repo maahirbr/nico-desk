@@ -141,16 +141,16 @@ function extraTerms(): string[] {
   }
 }
 
-type PRow = { display_name: string; email: string | null; contact_email: string | null; alt_emails: string[] | null };
+type PRow = { display_name: string; nickname: string | null; email: string | null; contact_email: string | null; alt_emails: string[] | null };
 
 export async function maskDictFor(db: Tx, teamId: string): Promise<MaskDict> {
   const { rows } = await db.query<PRow>(
-    `SELECT display_name, email, contact_email, alt_emails FROM people WHERE id IN (SELECT person_id FROM team_members WHERE team_id = $1)`,
+    `SELECT display_name, nickname, email, contact_email, alt_emails FROM people WHERE id IN (SELECT person_id FROM team_members WHERE team_id = $1)`,
     [teamId],
   );
   const people = rows.map((r) => {
     const parts = r.display_name.trim().split(/\s+/);
-    const names = [r.display_name, ...(parts.length > 1 ? [parts[0], parts[parts.length - 1]] : [])];
+    const names = [r.display_name, ...(parts.length > 1 ? [parts[0], parts[parts.length - 1]] : []), ...(r.nickname ? [r.nickname] : [])];
     return { names, emails: [r.email, r.contact_email, ...(r.alt_emails ?? [])].filter((e): e is string => !!e) };
   });
   const [projects, tasks] = await Promise.all([teamProjects(db, teamId), teamTasks(db, teamId, '2000-01-01')]);

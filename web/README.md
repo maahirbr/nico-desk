@@ -210,6 +210,10 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   and `upgrade()`, RLS on) holds the notes. `POST` and `GET /api/v1/feedback` are open to anyone signed in on the team,
   `PATCH /api/v1/feedback/[id]` (mark read) is admin only, and View as refuses every write. Nothing is emailed.
   Test: `tests/feedback.test.ts`.
+- **Your profile** (`/me/profile`, from the account menu and Edit profile on your own page): your name, a nickname, a
+  phone number and a photo. A nickname (up to 40 characters, `people.nickname`) shows in place of the name everywhere;
+  the Roster and the person page show both, and paste, minutes and reminders still match either one.
+  `PATCH /api/v1/me/profile` takes `name`, `nickname` and `phone`; View as refuses it. Test: `tests/profile.test.ts`.
 
 
 ### Ledger and reasons

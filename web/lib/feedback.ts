@@ -43,7 +43,7 @@ type Row = { id: string; person_id: string; person_name: string; path: string | 
 // Everyone on the team reads every note, whatever their role (the PM's call, 14 Oct). Marking a note read stays with admins.
 export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
   const { rows } = await db.query<Row>(
-    `SELECT f.id, f.person_id, p.display_name AS person_name, f.path, f.body, f.created_at,
+    `SELECT f.id, f.person_id, COALESCE(p.nickname, p.display_name) AS person_name, f.path, f.body, f.created_at,
             (SELECT count(*)::int FROM feedback_images i WHERE i.feedback_id = f.id) AS images,
             (SELECT count(*)::int FROM feedback_votes v WHERE v.feedback_id = f.id) AS votes,
             EXISTS (SELECT 1 FROM feedback_votes v WHERE v.feedback_id = f.id AND v.person_id = $2) AS mine
@@ -53,7 +53,7 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
     [me.team.id, me.person.id],
   );
   const replies = await db.query<{ id: string; feedback_id: string; author_name: string; body: string; created_at: string }>(
-    `SELECT r.id, r.feedback_id, p.display_name AS author_name, r.body, r.created_at
+    `SELECT r.id, r.feedback_id, COALESCE(p.nickname, p.display_name) AS author_name, r.body, r.created_at
        FROM feedback_replies r JOIN people p ON p.id = r.author_id JOIN feedback f ON f.id = r.feedback_id
       WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1)
       ORDER BY r.created_at, r.id`, [me.team.id]);
@@ -130,7 +130,7 @@ export async function replyFeedback(db: Db, me: Me, id: string, text: string): P
 export type NewReply = { id: string; authorName: string; body: string; createdAt: string; note: string };
 export async function newRepliesForMe(db: Db, me: Me): Promise<NewReply[]> {
   const { rows } = await db.query<{ id: string; author_name: string; body: string; created_at: string; note: string }>(
-    `SELECT r.id, p.display_name AS author_name, r.body, r.created_at, f.body AS note
+    `SELECT r.id, COALESCE(p.nickname, p.display_name) AS author_name, r.body, r.created_at, f.body AS note
        FROM feedback_replies r JOIN feedback f ON f.id = r.feedback_id JOIN people p ON p.id = r.author_id
       WHERE f.person_id = $1 AND r.seen_at IS NULL AND r.author_id <> $1
       ORDER BY r.created_at DESC LIMIT 20`, [me.person.id]);

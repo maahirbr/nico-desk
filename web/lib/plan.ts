@@ -89,7 +89,7 @@ export async function planState(db: Tx, projectId: string): Promise<PlanState> {
     db.query<LineRow>(`SELECT text FROM plan_parked WHERE project_id = $1 ORDER BY position`, [projectId]),
     db.query<LineRow>(`SELECT * FROM plan_proposals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at, position`, [projectId]),
     db.query<LineRow>(
-      `SELECT a.id, a.at, a.summary, p.display_name AS actor FROM plan_activity a LEFT JOIN people p ON p.id = a.actor_id
+      `SELECT a.id, a.at, a.summary, COALESCE(p.nickname, p.display_name) AS actor FROM plan_activity a LEFT JOIN people p ON p.id = a.actor_id
        WHERE a.project_id = $1 ORDER BY a.at DESC, a.id DESC LIMIT 40`, [projectId]),
   ]);
   const byLine = new Map<string, Checkpoint[]>();
@@ -418,13 +418,13 @@ function meetingOf(o: { title: string; date: string; source?: { provider: string
 }
 
 async function importAsTaskProposals(tx: Tx, project: Project, meId: string, o: { title: string; date: string; source?: { provider: string; id: string; link?: string | null } }, steps: ParsedStep[]) {
-  const { rows: ppl } = await tx.query<{ id: string; display_name: string }>(
-    `SELECT p.id, p.display_name FROM people p JOIN team_members m ON m.person_id = p.id AND m.team_id = $1 WHERE p.active GROUP BY p.id`,
+  const { rows: ppl } = await tx.query<{ id: string; display_name: string; nickname: string | null }>(
+    `SELECT p.id, p.display_name, p.nickname FROM people p JOIN team_members m ON m.person_id = p.id AND m.team_id = $1 WHERE p.active GROUP BY p.id`,
     [project.teamId]);
   const match = (n: string) => {
     const k = n.trim().toLowerCase();
     if (!k) return null;
-    return ppl.find((p) => p.display_name.toLowerCase() === k)
+    return ppl.find((p) => p.display_name.toLowerCase() === k || p.nickname?.toLowerCase() === k)
       ?? ppl.find((p) => p.display_name.toLowerCase().split(' ')[0] === k.split(' ')[0]) ?? null;
   };
   const batch = newId('mb');
@@ -481,7 +481,7 @@ function targetOf(l: PlanLine): string | null {
 }
 
 async function peopleNames(tx: Tx): Promise<Record<string, string>> {
-  const { rows } = await tx.query<{ id: string; display_name: string }>(`SELECT id, display_name FROM people`);
+  const { rows } = await tx.query<{ id: string; display_name: string }>(`SELECT id, COALESCE(nickname, display_name) AS display_name FROM people`);
   return Object.fromEntries(rows.map((r) => [r.id, r.display_name]));
 }
 
@@ -796,8 +796,8 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
     // Someone who still owns open tasks here stays on the project until those tasks move to someone else.
     const keep = [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)];
     const { rows: stuck } = await tx.query<{ display_name: string; n: number }>(
-      `SELECT p.display_name, count(*)::int AS n FROM tasks t JOIN people p ON p.id = t.owner_id
-       WHERE t.project_id = $1 AND t.status_category = 'open' AND NOT (t.owner_id = ANY($2::text[])) GROUP BY p.display_name ORDER BY p.display_name`, [id, keep]);
+      `SELECT COALESCE(p.nickname, p.display_name) AS display_name, count(*)::int AS n FROM tasks t JOIN people p ON p.id = t.owner_id
+       WHERE t.project_id = $1 AND t.status_category = 'open' AND NOT (t.owner_id = ANY($2::text[])) GROUP BY p.id ORDER BY 1`, [id, keep]);
     if (stuck.length) throw bad('invalid_body', `Reassign their open tasks before removing them: ${stuck.map((r) => `${r.display_name} (${r.n})`).join(', ')}.`, 'members');
     await tx.query(`DELETE FROM project_members WHERE project_id = $1`, [id]);
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);

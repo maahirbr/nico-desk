@@ -31,7 +31,7 @@ export type ReminderDraft = {
 export type RemindScope = { mode: 'overdue' | 'window'; days: number; projectId?: string; sight: Sight };
 
 export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope, appUrl: string, today = todayIst(), env?: Env): Promise<{ drafts: ReminderDraft[]; skipped: string[] }> {
-  const { rows: people } = await db.query<{ id: string; display_name: string; email: string; contact_email: string | null; never_remind: boolean }>(
+  const { rows: people } = await db.query<{ id: string; display_name: string; nickname: string | null; email: string; contact_email: string | null; never_remind: boolean }>(
     `SELECT p.* FROM people p WHERE p.active AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $1) ORDER BY p.display_name`, [teamId]);
   const projects = await teamProjects(db, teamId);
   const pname = Object.fromEntries(projects.map((p) => [p.id, p.name]));
@@ -41,7 +41,7 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   };
   const byPerson = new Map<string, RemindItem[]>();
   const add = (pid: string, it: RemindItem) => byPerson.set(pid, [...(byPerson.get(pid) ?? []), it]);
-  const pnames = Object.fromEntries(people.map((p) => [p.id, p.display_name]));
+  const pnames = Object.fromEntries(people.map((p) => [p.id, p.nickname ?? p.display_name]));
   const since = `${addDays(today, -RECENT_DAYS)}T00:00:00+05:30`; // days are judged in IST
 
   const tasks = (await teamTasks(db, teamId, today)).filter((t) =>
@@ -54,7 +54,7 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
     add(t.ownerId, { key: `task:${t.id}`, title: t.title, dueOn: t.dueOn, days: daysBetween(today, t.dueOn), kind: 'task', flag,
       where: [t.projectId ? pname[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ') || 'Tasks' });
   }
-  const byName = new Map(people.map((p) => [p.display_name.toLowerCase(), p.id]));
+  const byName = new Map(people.flatMap((p) => [p.display_name, p.nickname ?? ''].filter(Boolean).map((n) => [n.toLowerCase(), p.id] as const)));
   for (const p of projects.filter((x) => x.kind === 'plan' && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId))) {
     const s = await planState(db, p.id);
     for (const l of s.lines) {
@@ -93,10 +93,10 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   for (const p of people) {
     const items = (byPerson.get(p.id) ?? []).sort((a, b) => a.dueOn.localeCompare(b.dueOn));
     if (!items.length) continue;
-    if (p.never_remind) { skipped.push(p.display_name); continue; }
+    if (p.never_remind) { skipped.push(pnames[p.id]); continue; }
     drafts.push({
-      personId: p.id, name: p.display_name, to: p.contact_email ?? (p.email.endsWith('@example.test') ? null : p.email), items,
-      subject: subjectFor(items.filter((i) => !i.flag)), body: bodyFor(p.display_name, items.filter((i) => !i.flag), appUrl), lastAt: lastAt.get(p.id) ?? null,
+      personId: p.id, name: pnames[p.id], to: p.contact_email ?? (p.email.endsWith('@example.test') ? null : p.email), items,
+      subject: subjectFor(items.filter((i) => !i.flag)), body: bodyFor(pnames[p.id], items.filter((i) => !i.flag), appUrl), lastAt: lastAt.get(p.id) ?? null,
     });
   }
   return { drafts, skipped };

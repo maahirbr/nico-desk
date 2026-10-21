@@ -26,7 +26,7 @@ export default async function PersonRoute({ params }: { params: Promise<{ id: st
   const projects = await seenProjects(d, me, sight);
   return (
     <PersonPage
-      personId={v.person.id} email={v.person.email} phone={v.phone} teamName={v.teamName} appRoles={v.person.appRoles} hasPhoto={v.hasPhoto} name={v.person.displayName} role={v.person.role} department={v.person.department} active={v.person.active}
+      personId={v.person.id} email={v.person.email} phone={v.phone} teamName={v.teamName} appRoles={v.person.appRoles} hasPhoto={v.hasPhoto} name={v.person.displayName} fullName={v.person.fullName} role={v.person.role} department={v.person.department} active={v.person.active}
       meId={me.person.id} isLead={isLead} today={today()} names={names} projectNames={projectNames} people={activeOpts}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       projects={v.projects} open={v.open} waitingOnThem={v.waitingOnThem} waitingOnOthers={v.waitingOnOthers} record={v.record} glance={v.glance}

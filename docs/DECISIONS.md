@@ -789,3 +789,15 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   the repo owner's yes. Lesson: before a promote, check that the upgrade printed success, not only that it was started.
   Next: run `db:upgrade` from a network that reaches the pooler, then promote the `2d67293` preview again.
   Rollback: not needed, this entry changes no code.
+- **2026-10-21 · Opus 5.5 · Profile page, nickname and four UI fixes from the repo owner's screenshots.** A profile
+  page at `/me/profile` (account menu: Your profile) replaces the Edit profile dialog. It edits the name, a nickname,
+  the phone and the photo. The nickname is a new nullable `people.nickname` column (1 to 40 characters, in the schema
+  and `upgrade()`); SQL reads `COALESCE(nickname, display_name)` and `Person.displayName` carries the nickname, so it
+  shows everywhere with no change at each call site. The roster name stays as `fullName`: the Roster and the person
+  page show it beside the nickname, and paste, minutes and reminders match either name, so a nickname never breaks a
+  match. Redaction masks both. UI fixes: on narrow pages in the Cool skin the top bar reserves the button space at
+  every desktop width and Feedback goes icon-only, so the search no longer runs under it; a person link's hover tint
+  and stroke start after the avatar; the Roster email and access text go from 12px to 14px; a row of checkboxes with a
+  button centres on the button height and puts the button at the end. The hosted database needs `npm run db:upgrade`
+  before a build with this is promoted. Rollback: `git revert` this commit, then on the hosted database
+  `ALTER TABLE people DROP COLUMN nickname;`.

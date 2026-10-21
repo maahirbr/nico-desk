@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// The profile: an optional phone and a photo (Google's, or an uploaded 256px one). These tests cover the phone
+// The profile: names, an optional phone and a photo (Google's, or an uploaded 256px one). These tests cover the phone
 // rule, what the photo upload accepts, who may fetch a photo, View as, and the in-place upgrade. Cookies and the
 // database are stubbed, as in view-as.test.ts.
 
@@ -47,6 +47,9 @@ const patchPhone = (phone: string) =>
   profilePatch(new Request('http://localhost/api/v1/me/profile', { method: 'PATCH', headers: { ...hdr, 'content-type': 'application/json' }, body: JSON.stringify({ phone }) }), { params: Promise.resolve({}) });
 const get = (id: string) =>
   photoGet(new Request(`http://localhost/api/v1/people/${id}/photo`, { headers: hdr }), { params: Promise.resolve({ id }) });
+const patchProfile = (body: Record<string, string>) =>
+  profilePatch(new Request('http://localhost/api/v1/me/profile', { method: 'PATCH', headers: { ...hdr, 'content-type': 'application/json' }, body: JSON.stringify(body) }), { params: Promise.resolve({}) });
+const namesOf = async (id: string) => (await db.query<{ display_name: string; nickname: string | null }>(`SELECT display_name, nickname FROM people WHERE id = $1`, [id])).rows[0];
 const phoneOf = async (id: string) => (await db.query<{ phone: string | null }>(`SELECT phone FROM people WHERE id = $1`, [id])).rows[0].phone;
 
 describe('phone', () => {
@@ -79,6 +82,33 @@ describe('phone', () => {
     expect(v.phone).toBe('+91 90000 00009');
     expect(v.teamName).toBeTruthy();
     expect(v.hasPhoto).toBe(false);
+  });
+});
+
+describe('names', () => {
+  it('saves a name and a nickname; an empty nickname clears it', async () => {
+    signIn(ME);
+    const r = await patchProfile({ name: 'Bo Renamed', nickname: '  Bobo ' });
+    expect(r.status).toBe(200);
+    expect(await r.json()).toMatchObject({ name: 'Bo Renamed', nickname: 'Bobo' });
+    expect(await namesOf(ME)).toEqual({ display_name: 'Bo Renamed', nickname: 'Bobo' });
+    expect((await patchProfile({ nickname: '' })).status).toBe(200);
+    expect((await namesOf(ME)).nickname).toBeNull();
+  });
+  it('refuses a name under 2 characters and a nickname over 40, and writes nothing', async () => {
+    signIn(ME);
+    const before = await namesOf(ME);
+    expect((await patchProfile({ name: 'B' })).status).toBe(400);
+    expect((await patchProfile({ nickname: 'x'.repeat(41) })).status).toBe(400);
+    expect(await namesOf(ME)).toEqual(before);
+  });
+  it('shows the nickname as the display name and keeps the roster name as the full name', async () => {
+    const full = (await namesOf(ME)).display_name;
+    await s.setNames(db, ME, { nickname: 'Bobo' });
+    const v = await s.personView(db, TEAM_ID, OTHER, ME);
+    expect(v.person.displayName).toBe('Bobo');
+    expect(v.person.fullName).toBe(full);
+    expect((await s.myProfile(db, ME)).nickname).toBe('Bobo');
   });
 });
 
@@ -192,6 +222,9 @@ describe('View as', () => {
     expect(del.status).toBe(403);
     const ph = await patchPhone('+91 90000 00009');
     expect(ph.status).toBe(403);
+    const before = await namesOf(ME);
+    expect((await patchProfile({ nickname: 'Viewer' })).status).toBe(403);
+    expect(await namesOf(ME)).toEqual(before);
     expect(await phoneOf(ME)).toBe(phoneBefore);
     expect(await phoneOf(ADMIN)).toBeNull();
     expect(await s.getPhoto(db, TEAM_ID, ME)).toBeNull();
@@ -213,13 +246,13 @@ describe('Google photo address', () => {
 
 describe('the upgrade', () => {
   it('adds the profile columns and photo table to an older database, can run again, and keeps data', async () => {
-    await db.exec(`DROP TABLE person_photos; ALTER TABLE people DROP COLUMN photo_url; ALTER TABLE people DROP COLUMN phone;`);
+    await db.exec(`DROP TABLE person_photos; ALTER TABLE people DROP COLUMN photo_url; ALTER TABLE people DROP COLUMN phone; ALTER TABLE people DROP COLUMN nickname;`);
     const before = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM people`)).rows[0].n;
     await upgrade(db);
     await upgrade(db);
     expect((await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM people`)).rows[0].n).toBe(before);
-    const cols = (await db.query<{ column_name: string }>(`SELECT column_name FROM information_schema.columns WHERE table_name = 'people' AND column_name IN ('photo_url','phone')`)).rows;
-    expect(cols.map((c) => c.column_name).sort()).toEqual(['phone', 'photo_url']);
+    const cols = (await db.query<{ column_name: string }>(`SELECT column_name FROM information_schema.columns WHERE table_name = 'people' AND column_name IN ('photo_url','phone','nickname')`)).rows;
+    expect(cols.map((c) => c.column_name).sort()).toEqual(['nickname', 'phone', 'photo_url']);
     await expect(db.query(`UPDATE people SET phone = 'abc' WHERE id = $1`, [ME])).rejects.toThrow();
     await s.setPhone(db, ME, '+91 90000 00009');
     signIn(ME);
