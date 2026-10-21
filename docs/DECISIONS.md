@@ -829,3 +829,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   name centres with the other columns. In Cool, the room kept for the Feedback and help buttons on narrow pages and
   from 861 to 1180px was 4px short, so the search ran under Feedback. It is now `--bar-tools`, which leaves a 12px gap.
   DESIGN.md Motion says the tint rule. Rollback: `git revert` this commit.
+- **2026-10-21 · Opus 5.5 · Clickable text has no hover fill anywhere.** The repo owner wanted the roster's look on
+  every clickable text, so the accent tint behind hovered and focused links is gone site-wide, with the row-only
+  exception it replaced. Hover and keyboard focus show the accent colour and the hairline stroke only. The
+  `--link-tint` token stays for the two buttons that mix it into their own hover fill. DESIGN.md Motion says the new
+  rule. Rollback: `git revert` this commit.

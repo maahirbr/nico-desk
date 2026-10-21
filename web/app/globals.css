@@ -241,28 +241,17 @@ textarea { resize: vertical; min-height: 4.5em; width: 100%; }
 .act:active { opacity: .7; }
 .act:disabled { color: var(--ink-3); cursor: default; text-decoration: none; }
 
-/* Clickable text, site-wide. No underline: on hover the text takes the accent, a hair bolder (a text-shadow
-   stroke, so nothing moves), and a soft accent tint fades in behind it (DESIGN.md Motion, A text link is hovered).
-   The tint is a pseudo-element on opacity only. Rows and cards keep their own background hover. Touch screens
-   get the keyboard focus look only, so a tapped link does not stay lit. */
+/* Clickable text, site-wide. No underline and no fill: on hover the text takes the accent, a hair bolder (a text-shadow
+   stroke, so nothing moves) (DESIGN.md Motion, Clickable text is hovered). Rows and cards keep their own background
+   hover. Touch screens get the keyboard focus look only, so a tapped link does not stay lit. */
 .log a { text-decoration: none; }
-:is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a) { position: relative; isolation: isolate; }
-:is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a)::before {
-  content: ""; position: absolute; inset: calc(var(--rule) * -1) calc(var(--space-xs) * -1); z-index: -1; pointer-events: none;
-  border-radius: var(--radius-flag); background: var(--link-tint); opacity: 0; transition: opacity var(--dur-hover) var(--ease); }
 :is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a):focus-visible { color: var(--primary); text-shadow: var(--link-stroke) 0 0 currentColor; }
-:is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a):focus-visible::before { opacity: 1; }
 @media (hover: hover) {
   :is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a):hover:not(:disabled) { color: var(--primary); text-shadow: var(--link-stroke) 0 0 currentColor; }
-  :is(.act, .linkbtn, .title a, .crumb, .notice a, .mtg-link, .ts-clear, .attn-link, a.plink, a.rlink, .cm-ref, .log a, .guide-note a):hover:not(:disabled)::before { opacity: 1; }
 }
-/* A person link holds the avatar and the name. The tint and the stroke mark the name only, one text line tall; the avatar
-   stays as it is. In a table cell the link takes one line's height, so the name centres with the other columns. */
-a.plink.person-cell::before { left: var(--mark-size); top: calc(50% - .5lh - var(--rule)); bottom: calc(50% - .5lh - var(--rule)); }
+/* A person link holds the avatar and the name. The stroke marks the name only; the avatar stays as it is. In a table
+   cell the link takes one line's height, so the name centres with the other columns. */
 td > a.plink.person-cell { margin-block: calc((1lh - var(--mark-size)) / 2); }
-/* In a row or card that lights up on hover, the row's fill marks the hover. A link in it keeps the accent and the stroke
-   but drops the tint, so two fills do not stack. */
-:is(tbody tr, .trow, .prow, .proj-card, .ask-card, .ws-item, .pcard) :is(.act, .linkbtn, .title a, .mtg-link, .attn-link, a.plink, a.rlink, .cm-ref)::before { display: none; }
 a.plink.person-cell .av { text-shadow: none; }
 .err { color: var(--late); font: var(--type-small); margin: var(--space-xxs) 0 0; }
 .ok { color: var(--ink-2); font: var(--type-small); margin: var(--space-xxs) 0 0; }
