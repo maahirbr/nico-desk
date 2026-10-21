@@ -106,13 +106,16 @@ describe('names', () => {
     signIn(ME);
     const other = (await namesOf(OTHER)).display_name;
     const before = await namesOf(ME);
-    for (const body of ([{ nickname: other.toUpperCase() }, { nickname: other.replace(" ", "  ") }, { name: other }] as Record<string, string>[])) {
+    for (const body of ([{ nickname: other.toUpperCase() }, { nickname: other.replace(" ", "  ") }, { name: other },
+      { nickname: other.replace(" ", ".") }, { nickname: other.replace(" ", "") }, { nickname: `${other.split(' ')[0]} Two` }] as Record<string, string>[])) {
       const r = await patchProfile(body);
       expect(r.status, JSON.stringify(body)).toBe(400);
       expect(await code(r)).toBe('name_taken');
     }
     await s.setNames(db, OTHER, { nickname: 'Cee' });
     expect((await patchProfile({ nickname: 'cee' })).status).toBe(400);
+    expect((await patchProfile({ nickname: 'Cée!' })).status).toBe(400); // accents and punctuation fold away
+    expect((await patchProfile({ nickname: '...' })).status).toBe(400); // nothing to match on
     expect((await patchProfile({ nickname: other.split(' ')[0].toLowerCase() })).status).toBe(400); // their first name
     expect(await namesOf(ME)).toEqual(before);
     expect((await patchProfile({ nickname: before.display_name })).status).toBe(200); // your own name is fine

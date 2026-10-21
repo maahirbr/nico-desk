@@ -43,7 +43,8 @@ const MONTHS: Record<string, number> = {
 const CONNECTORS = new Set(['by', 'on', 'due']);
 const NOT_BEFORE_A_DAY_WORD = new Set(['the', 'a', 'an', 'my', 'our', 'your', 'of', 'this', 'every']);
 
-const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+// Also the key setNames checks names against, so the check and the matcher agree on what counts as the same name.
+export const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 // First tier that has any hit decides: the whole name, the first word, the start of the name, the start of any word.
 export function match<T extends Named>(word: string, items: T[]): Mention<T> {

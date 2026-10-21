@@ -812,3 +812,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   still win over them; the check now also refuses another person's first word. Two saves at the same moment could
   both pass the check; the check and the save now run in one transaction behind an advisory lock.
   Rollback: `git revert` this commit.
+- **2026-10-21 · Opus 5.5 · The name check uses the matcher's key.** A third review found the check folded only case
+  and spaces, while quick-add also folds accents and punctuation, so "Cée!" passed the check and still matched "Cee".
+  The check now reads every name under the lock and compares with quick-add's own `norm`: the whole name with spaces
+  removed and the first word, in both directions. A value the person already holds is not checked again, so a roster
+  name that shares a first name with a teammate still saves. A value with no letters or numbers is refused.
+  Rollback: `git revert` this commit.

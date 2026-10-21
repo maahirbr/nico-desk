@@ -3,6 +3,7 @@ import { derive, type EventRow, type Health, type Task, type TaskRow } from './d
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
+import { norm as nameKey } from './quickadd';
 import { isLeadOrAdmin } from './roles';
 import { seesProject, seesTask, seesTaskRow, sightOf, workingWith, type Sight } from './sight';
 import { addDays, istDate, mondayOf, today as todayIst } from './time';
@@ -788,16 +789,21 @@ export async function setNames(db: Db, meId: string, input: { name?: string; nic
   const nick = input.nickname === undefined ? undefined : input.nickname.trim() || null;
   if (nick && nick.length > 40) throw bad('invalid_body', 'Use up to 40 characters for your nickname.', 'nickname');
   // A name or nickname that is someone else's name, nickname or first word would take their reminders, pasted chats
-  // and minutes. The lock makes two saves at once check in turn, so both cannot claim the same name.
+  // and minutes. Names compare by the matcher's own key (case, accents, punctuation and spaces folded), in both
+  // directions. A value you already hold is not checked again. The lock makes two saves at once check in turn.
   await db.transaction(async (tx) => {
     await tx.query(`SELECT pg_advisory_xact_lock(hashtext('people_names'))`);
-    for (const [v, field] of [[name, 'name'], [nick, 'nickname']] as const) {
-      if (!v) continue;
-      const { rows } = await tx.query(
-        `SELECT 1 FROM people, LATERAL (VALUES (lower(regexp_replace(display_name, '\\s+', ' ', 'g'))), (lower(regexp_replace(nickname, '\\s+', ' ', 'g')))) k(n)
-          WHERE id <> $1 AND k.n IS NOT NULL AND lower($2) IN (k.n, split_part(k.n, ' ', 1))`,
-        [meId, v.replace(/\s+/g, ' ')]);
-      if (rows.length) throw bad('name_taken', `Someone else already uses that ${field}. Pick another.`, field);
+    const { rows } = await tx.query<{ id: string; display_name: string; nickname: string | null }>(`SELECT id, display_name, nickname FROM people`);
+    const mine = rows.find((r) => r.id === meId);
+    const keys = (v: string) => { const k = nameKey(v); return { whole: k.replace(/ /g, ''), first: k.split(' ')[0] }; };
+    const theirs = rows.filter((r) => r.id !== meId).flatMap((r) => [r.display_name, r.nickname]).filter((v): v is string => !!v).map(keys);
+    for (const [v, field, held] of [[name, 'name', mine?.display_name], [nick, 'nickname', mine?.nickname]] as const) {
+      if (!v || (held && nameKey(held) === nameKey(v))) continue;
+      const k = keys(v);
+      if (!k.whole) throw bad('invalid_body', `Use letters or numbers in your ${field}.`, field);
+      if (theirs.some((t) => t.whole === k.whole || t.first === k.whole || t.whole === k.first || t.first === k.first)) {
+        throw bad('name_taken', `Someone else already uses that ${field}. Pick another.`, field);
+      }
     }
     if (name !== undefined) await tx.query(`UPDATE people SET display_name = $2 WHERE id = $1`, [meId, name]);
     if (nick !== undefined) await tx.query(`UPDATE people SET nickname = $2 WHERE id = $1`, [meId, nick]);
