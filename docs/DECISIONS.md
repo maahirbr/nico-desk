@@ -818,3 +818,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   removed and the first word, in both directions. A value the person already holds is not checked again, so a roster
   name that shares a first name with a teammate still saves. A value with no letters or numbers is refused.
   Rollback: `git revert` this commit.
+- **2026-10-21 · Opus 5.5 · Team fence and nicknames live on production.** `npm run db:upgrade` printed success on the
+  hosted database, and a catalog check found `nico_app`, `people.nickname`, and a `team_fence` and a `deny_public_api`
+  policy on each of the 31 tables. Then the `6cb4805` preview was promoted with the repo owner's yes. Signed-in calls on
+  production now run as `nico_app`. Rollback: promote the pre-fence build `phc7c97t9` again. The database changes can
+  stay, because the old build runs as the table owner and the policies do not bind it.
