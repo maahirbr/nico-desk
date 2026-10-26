@@ -1170,12 +1170,10 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .st-tick { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .state-set .st-tick { animation: tick-draw var(--dur-draw-tick) var(--ease-draw) both; }
 @keyframes tick-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-/* Line icons (components/icons.tsx) redraw their stroke when the pointer comes onto their control, and an
-   empty state's mark draws in once. Both are strokes, like the tick (named exception in DESIGN.md). */
+/* Line icons (components/icons.tsx) stay still in the sidebar and the top bar: a redraw on hover replayed on every
+   tab switch (the PM's call, 26 Oct). An empty state's mark still draws in once, a stroke like the tick (named
+   exception in DESIGN.md). */
 .ico path { stroke-dasharray: 1; stroke-dashoffset: 0; }
-@media (hover: hover) {
-  .nav a:hover .ico path, .nav-more:hover .ico path, .top-feedback:hover .ico path, .help-toggle:hover .ico path { animation: tick-draw var(--dur-draw) var(--ease-draw) both; }
-}
 .help-toggle .ico { width: var(--icon-size); height: var(--icon-size); stroke-width: 2.2; }
 .empty-mark { display: block; width: 28px; height: 28px; margin: 0 auto var(--space-sm); color: var(--ink-3); stroke-width: 1.5; }
 .empty-mark path { animation: tick-draw var(--dur-draw) var(--ease-draw) both; }
@@ -1396,7 +1394,7 @@ button.stat[aria-pressed="true"] .kept-ring { color: var(--canvas); }
 
 @media (prefers-reduced-motion: reduce) {
   .dither-fade path, .st-glyph-out, .st-morph .st-glyph, .st-morph .st-tick, .cm-chip-new { animation: none; }
-  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot, .sbar-in > span, .ring-in .kept-arc, .copy-tick path, .ico path, .nav a:hover .ico path, .nav-more:hover .ico path, .top-feedback:hover .ico path, .help-toggle:hover .ico path, .empty-mark path, .wm-line path, .wm-fill, :focus-visible { animation: none; }
+  .arrive, .date-old::after, .date-new, .state-set, .state-set .st-glyph, .state-set .st-tick, .page > *, .tab-panel, .stagger > *, .overlay, .modal, .drawer, .toast, .glance-in .glance-split > span, .glance-in .glance-fill, .glance-in .gl-line, .glance-in .gl-dot, .sbar-in > span, .ring-in .kept-arc, .copy-tick path, .ico path, .empty-mark path, .wm-line path, .wm-fill, :focus-visible { animation: none; }
   .btn:active, .pill:active, .mini-btn:active, button.stat:active, .nav .nav-new:active, .st-pick:active, .status-picker button:active,
   .pcard:active, .proj-card:active, .iconbtn:active, .row-btn:active, .x:active { transform: none; }
   * { transition-duration: 0ms !important; }
