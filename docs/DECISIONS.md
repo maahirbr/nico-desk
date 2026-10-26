@@ -920,3 +920,16 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   consent screen is Internal (the repo owner's word), so only company Workspace accounts pass Google's side: an
   outside address in `NICO_ALLOWED_EMAILS` cannot sign in by Google while that holds. 1 new test, 807 pass. Rollback:
   `git revert` this commit; people added by it stay on the roster and are marked inactive by hand if needed.
+- **2026-10-26 · Opus 5.5 · Security review fixes, a steady build, and nightly backups.** The review before the first
+  adopting team found two things worth fixing now. (1) A Granola, Fireflies or Fathom key saved from the page served
+  every lead on the team, so any lead could read the meetings of whoever saved it, or replace it. On Vercel the key
+  file is now ignored and saving or removing a key is refused (409 `key_env_only`); keys there are env vars only.
+  (2) The roster picker and open demo were locked only by `DATABASE_URL`. A Vercel production deploy is now locked as
+  well, with no override; previews stay open because they run the demo on fixtures. The flaky build (`Aborted()` while
+  prerendering `/status`, `/week` or `/_not-found`) came from `currentMe()` opening PGlite before it read cookies, so
+  nine build workers opened the same folder at once. Cookies are read first now: 2 of 2 builds failed before, 0 of 5
+  after. The free Supabase plan has no backups and SPEC asks for daily ones kept 14 days, so `scripts/backup.sh` runs
+  `pg_dump` (session port) to `~/Backups/nico-desk/`, checks the archive, and drops files older than 14 days. A restore
+  into a throwaway Postgres 17 matched production: 108 tasks, 493 events, 62 policies, 31 tables with RLS. The nightly
+  launchd job is installed by the repo owner. 2 new tests, 809 pass. Rollback: `git revert` this commit; to stop
+  backups, `launchctl bootout gui/$(id -u)/com.nicodesk.backup`.

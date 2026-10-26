@@ -7,7 +7,7 @@ import { Help } from './HelpMode';
 // they are kept, stored on the server only, and shown back only as their last four characters.
 
 type Name = 'granola' | 'fireflies' | 'fathom';
-type State = { connected: boolean; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
+type State = { connected: boolean; savedAt: string | null; source: 'env' | 'file' | null; envVar: string; envOnly?: boolean };
 type Status = Record<Name, State>;
 
 const INFO = {
@@ -91,6 +91,8 @@ function Card({ p, s, canManage, onChange }: { p: Name; s: State; canManage: boo
       <p className="small dim" style={{ margin: 0 }}>{info.what}</p>
       {canManage && s.source === 'env' ? (
         <p className="small" style={{ margin: 0 }}>This key is set in the server environment (<code>{s.envVar}</code>). To change or remove it, edit that setting where the app is hosted.</p>
+      ) : canManage && s.envOnly ? (
+        <p className="small" style={{ margin: 0 }}>On the hosted app, this key is set only in the server environment (<code>{s.envVar}</code>). Ask the repo owner to add it.</p>
       ) : canManage ? (
         <>
           {!s.connected && <ol className="steps small">{info.how.map((h) => <li key={h}>{h}</li>)}</ol>}

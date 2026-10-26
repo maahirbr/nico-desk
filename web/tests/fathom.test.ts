@@ -129,7 +129,7 @@ describe('Fathom connection', () => {
 describe('keys from the environment', () => {
   it('reads the Fathom key from FATHOM_API_KEY when nothing is saved, and says so', async () => {
     process.env.FATHOM_API_KEY = 'env_fathom_key_4321';
-    expect(connectionStatus().fathom).toEqual({ connected: true, savedAt: null, source: 'env', envVar: 'FATHOM_API_KEY' });
+    expect(connectionStatus().fathom).toEqual({ connected: true, savedAt: null, source: 'env', envVar: 'FATHOM_API_KEY', envOnly: false });
     const sent: string[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_u: string, init: RequestInit) => { sent.push(headersOf(init)['X-Api-Key']); return json(page([meeting()])); }));
     await listMeetings('fathom', { days: 7 });
@@ -160,5 +160,21 @@ describe('keys from the environment', () => {
     await listMeetings('granola', { days: 7 });
     await listMeetings('fireflies', { days: 7 });
     expect(sent).toEqual(['Bearer grn_envkey12345', 'Bearer ff_env_key_6789']);
+  });
+});
+
+describe('connector keys on Vercel', () => {
+  afterEach(() => { delete process.env.VERCEL; });
+
+  it('ignores the key file and refuses to save or remove a key', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json(page([meeting()]))));
+    await saveConnection('fathom', 'file_fathom_key_1111', 'per_ada');
+    process.env.VERCEL = '1';
+    expect(connectionStatus().fathom).toMatchObject({ connected: false, source: null, envOnly: true });
+    await expect(listMeetings('fathom', { days: 7 })).rejects.toMatchObject({ code: 'not_connected' });
+    await expect(saveConnection('fathom', 'another_fathom_key_2222', 'per_ada')).rejects.toMatchObject({ status: 409, code: 'key_env_only' });
+    expect(() => removeConnection('fathom')).toThrow(/server environment/);
+    process.env.FATHOM_API_KEY = 'env_fathom_key_4321';
+    expect(connectionStatus().fathom).toMatchObject({ connected: true, source: 'env' });
   });
 });

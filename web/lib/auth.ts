@@ -99,8 +99,11 @@ export function emailAllowed(email: string): boolean {
 }
 
 // A hosted database holds the real pilot, so the roster picker and the open demo stay off there even if
-// their flag is set by mistake. NICO_ALLOW_DEMO_IN_HOSTED=1 is the deliberate override.
-const hostedLock = () => !!process.env.DATABASE_URL && process.env.NICO_ALLOW_DEMO_IN_HOSTED !== '1';
+// their flag is set by mistake. NICO_ALLOW_DEMO_IN_HOSTED=1 is the deliberate override. A Vercel production
+// deploy is locked as well, with no override, so a missing DATABASE_URL cannot open it (security review 26 Oct).
+// Vercel previews run the open demo on fixtures, so they stay unlocked.
+const hostedLock = () => process.env.VERCEL_ENV === 'production'
+  || (!!process.env.DATABASE_URL && process.env.NICO_ALLOW_DEMO_IN_HOSTED !== '1');
 
 export function devSignInEnabled(): boolean {
   return process.env.NICO_DEV_SIGNIN === '1' && !hostedLock();
@@ -144,8 +147,10 @@ export async function resolveMe(d: Database, sessionId: string | null, viewToken
 }
 
 export async function currentMe(): Promise<Me | null> {
-  const d = await db();
+  // Cookies first: at build time this ends the prerender before the database opens. Nine build workers that each
+  // open the same PGlite folder made the build fail now and then (Aborted() on /status, /week, /_not-found).
   const jar = await cookies();
+  const d = await db();
   const id = verify(jar.get(COOKIE)?.value) ?? (openDemo() ? await demoPerson(d) : null);
   return resolveMe(d, id, jar.get(VIEW_COOKIE)?.value);
 }

@@ -141,7 +141,8 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   The key is checked against the tool, kept only in `.data/connections.json` (git-ignored, owner-only
   file), and shown back only as its last four characters. A key set in the server environment
   (`GRANOLA_API_KEY`, `FIREFLIES_API_KEY`, `FATHOM_API_KEY`) wins over the file, and the page says so.
-  On Vercel the file does not survive a cold start, so production keys must be env vars. Import
+  On Vercel the file is not used at all and the page refuses to save or remove a key: one saved key
+  would serve every lead, so keys there are env vars only. Import
   minutes then lists that tool's recent meetings to pick from; a meeting already imported into a
   project is refused. Wispr Flow has no key-based API for apps like this one (its Notetaker has a
   read-only MCP server for AI assistants, not used here yet), so it stays paste-only.

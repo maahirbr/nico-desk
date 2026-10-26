@@ -20,7 +20,8 @@ Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.
 - Data: local runs and previews use PGlite seeded from `fixtures/`. Production (https://nico-desk.vercel.app) reads
   Supabase and holds the real pilot, loaded from the git-ignored `web/pilot/`. Real names go only in git-ignored
   `roster.local.json` files, real projects only in `projects.local.json`. Integration keys live only in git-ignored
-  `web/.data/connections.json`.
+  `web/.data/connections.json` locally, and only in env vars on Vercel. `web/scripts/backup.sh` dumps the hosted
+  database nightly to `~/Backups/nico-desk/` on the repo owner's Mac, kept 14 days.
 - Projects: a task board, or a plan board (`lib/plan.ts`) with checkpoints, asks and minutes-to-proposals.
 - Look: `DESIGN.md` is the visual system and outranks everything visual. Tokens live in `web/app/tokens.css`, one
   `[data-skin]` block per skin, picked in the account menu and kept in the `nd_skin` cookie that `layout.tsx` reads.
@@ -95,7 +96,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `807 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `809 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

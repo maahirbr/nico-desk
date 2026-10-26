@@ -25,6 +25,8 @@ import { ApiError, bad } from './errors';
 // Keys: a key in the server environment (GRANOLA_API_KEY, FIREFLIES_API_KEY, FATHOM_API_KEY) wins over
 // the key file. On Vercel the file sits in a temp folder and does not survive a cold start, so
 // production keys must be env vars.
+// On Vercel the key file is not used at all: one saved key would serve every lead on the team, so any
+// lead could read the meetings of whoever saved it, or replace it (security review 26 Oct).
 
 export type Provider = 'granola' | 'fireflies' | 'fathom';
 export const PROVIDERS: Provider[] = ['granola', 'fireflies', 'fathom'];
@@ -40,7 +42,9 @@ type Store = Partial<Record<Provider, { key: string; savedAt: string; savedBy: s
 function file(): string {
   return path.join(dataDir(), 'connections.json');
 }
+const envOnly = () => !!process.env.VERCEL;
 function read(): Store {
+  if (envOnly()) return {};
   try { return JSON.parse(fs.readFileSync(file(), 'utf8')); } catch { return {}; }
 }
 function write(s: Store) {
@@ -49,15 +53,15 @@ function write(s: Store) {
 }
 
 // No part of a key is returned, not even its last characters (audit 19 Oct).
-export type ConnectionState = { connected: boolean; savedAt: string | null; source: 'env' | 'file' | null; envVar: string };
+export type ConnectionState = { connected: boolean; savedAt: string | null; source: 'env' | 'file' | null; envVar: string; envOnly: boolean };
 
 export function connectionStatus(): Record<Provider, ConnectionState> {
   const s = read();
   const one = (p: Provider): ConnectionState => {
     const env = envKey(p);
-    if (env) return { connected: true, savedAt: null, source: 'env', envVar: ENV_VAR[p] };
+    if (env) return { connected: true, savedAt: null, source: 'env', envVar: ENV_VAR[p], envOnly: envOnly() };
     const f = s[p];
-    return { connected: !!f, savedAt: f?.savedAt ?? null, source: f ? 'file' : null, envVar: ENV_VAR[p] };
+    return { connected: !!f, savedAt: f?.savedAt ?? null, source: f ? 'file' : null, envVar: ENV_VAR[p], envOnly: envOnly() };
   };
   return { granola: one('granola'), fireflies: one('fireflies'), fathom: one('fathom') };
 }
@@ -72,13 +76,19 @@ function keyFor(p: Provider): string {
 export async function saveConnection(p: Provider, key: string, by: string): Promise<void> {
   const k = key.trim();
   if (envKey(p)) throw new ApiError(409, 'key_from_env', `${LABEL[p]} uses the key set in the server environment (${ENV_VAR[p]}). Change it in the hosting settings.`);
+  refuseEnvOnly(p);
   if (p === 'granola' && !/^grn_[A-Za-z0-9_-]{8,}$/.test(k)) throw bad('invalid_body', 'A Granola key starts with grn_.', 'apiKey');
   if (k.length < 8 || k.length > 400) throw bad('invalid_body', 'That does not look like an API key.', 'apiKey');
   await listMeetings(p, { days: 7 }, k); // proves the key works before it is kept
   write({ ...read(), [p]: { key: k, savedAt: new Date().toISOString(), savedBy: by } });
 }
 
+function refuseEnvOnly(p: Provider) {
+  if (envOnly()) throw new ApiError(409, 'key_env_only', `On the hosted app, the ${LABEL[p]} key is set only in the server environment (${ENV_VAR[p]}).`);
+}
+
 export function removeConnection(p: Provider): void {
+  refuseEnvOnly(p);
   const s = read();
   delete s[p];
   write(s);
