@@ -858,3 +858,8 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   which only `deleteProject` sets. The guard is in `upgrade()`: the hosted database needs `npm run db:upgrade` before
   this build is promoted, or deleting a partner plan fails (other deletes and archive work without it). Rollback:
   `git revert` this commit. The new guard can stay: with no `nico.purging` set it behaves as the old trigger.
+- **2026-10-26 · Opus 5.5 · Archive with drop, admin delete and the patched Next.js live on production.** With the
+  repo owner's yes: pushed `5eaa1ab`, ran `npm run db:upgrade` (a catalog check shows `plan_activity_no_change` now
+  runs `plan_activity_guard`), and promoted the preview as `nico-desk-j75v7r3xz`. `/team` answers 200. Rollback:
+  promote `nico-desk-1tojabz51` again. That build is on the vulnerable Next.js, so use it only as a stopgap. The guard
+  can stay.
