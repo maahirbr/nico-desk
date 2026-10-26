@@ -15,7 +15,6 @@ import { Shortcuts } from '@/components/Shortcuts';
 import { ProjectPeopleProvider } from '@/components/OwnerPicker';
 import { ProfileMenu } from '@/components/ProfileMenu';
 import { SKIN_COOKIE, skinOf } from '@/components/skins';
-import { SOUND_COOKIE, soundOf } from '@/components/sound';
 import { THEME_COOKIE, themeAttr, themeOf } from '@/components/theme';
 import { Toaster } from '@/components/toast';
 import { TopSearch } from '@/components/TopSearch';
@@ -66,7 +65,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const skin = skinOf(jar.get(SKIN_COOKIE)?.value);
   const theme = themeOf(jar.get(THEME_COOKIE)?.value);
   const help = helpOf(jar.get(HELP_COOKIE)?.value); // like the skin: read here so the server HTML already shows help mode
-  const sound = soundOf(jar.get(SOUND_COOKIE)?.value); // off unless the cookie says 1
   const ownerId = localOwnerId(rosterFile());
   // "View as" is for admins only, judged on the real session person, never on the person being viewed.
   const realAdmin = !!me && me.realPerson.appRoles.includes('admin');
@@ -108,7 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
-              <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme} initialSound={sound}
+              <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
             </aside>
             <main className="main"><div className="topbar"><TopSearch /><FeedbackLink /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>

@@ -872,3 +872,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   it. The archived project and its events stay as the history. The gap stays open: there is no way to switch a
   project's kind or move its tasks, and archive pushes people to tick work Done. Rollback: `DELETE FROM plan_actions
   WHERE project_id = 'prj_mvow718w1pqejc' AND source ? 'from_task'` (the activity line stays, append-only).
+- **2026-10-26 · Opus 5.5 · Sounds leave the account menu and are off.** The PM asked for the Sounds on/off item to go
+  from the menu under their name. With no switch left, `play()` in `components/sound.ts` returns at once
+  (`SOUNDS_OFF`), so a person who had turned sounds on before is not left with tones they cannot stop. The tones, the
+  `nd_sound` cookie and the help word stay, so they can come back with the switch. Rollback: `git revert` this commit.
+- **2026-10-26 · Opus 5.5 · Line icons stay still.** The PM saw the sidebar icon draw itself each time they switched
+  tabs: the redraw on hover replayed on every click. The sidebar icons, Feedback and the help button no longer move on
+  hover. An empty state's mark still draws in once. DESIGN.md Motion says the rule. Rollback: `git revert` this commit.

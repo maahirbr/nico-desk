@@ -1,5 +1,5 @@
-// The line icons of the sidebar and the top bar. Each stroke has a pathLength of 1, so the stroke can redraw
-// itself on hover and an empty state's mark can draw in (stroke-dashoffset, a named exception in DESIGN.md).
+// The line icons of the sidebar and the top bar. They stay still; each stroke has a pathLength of 1 so an empty
+// state's mark can draw in (stroke-dashoffset, a named exception in DESIGN.md).
 export const ICON: Record<string, string> = {
   '/me': 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z',
   '/team': 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',

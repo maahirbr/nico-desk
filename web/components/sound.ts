@@ -1,6 +1,6 @@
-// Sounds (workstream 7). Three short tones made with the Web Audio API, so there are no audio files. They are off
-// until a person turns on Sounds in the account menu; the switch is the nd_sound cookie. Reduced motion does not
-// mute them, only the switch does. Nothing plays on page load: a tone follows a new notice, Done or a refused action.
+// Sounds (workstream 7). Three short tones made with the Web Audio API, so there are no audio files. They are off:
+// the Sounds switch left the account menu on 26 Oct (SOUNDS_OFF below). Turning SOUNDS_OFF to false and putting the
+// switch back brings them back, with the nd_sound cookie as the switch. Nothing plays on page load: a tone follows a new notice, Done or a refused action.
 
 export const SOUND_COOKIE = 'nd_sound';
 
@@ -26,10 +26,12 @@ const TONES = {
 } as const;
 export type Cue = keyof typeof TONES;
 
+const SOUNDS_OFF = true;
 let ctx: AudioContext | undefined;
 
 export function play(cue: Cue): void {
-  if (typeof document === 'undefined' || !soundOf(cookieValue(document.cookie, SOUND_COOKIE))) return;
+  // The Sounds switch left the account menu (the PM's call, 26 Oct), so nothing plays, even for a cookie set before.
+  if (SOUNDS_OFF || typeof document === 'undefined' || !soundOf(cookieValue(document.cookie, SOUND_COOKIE))) return;
   try {
     const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return;
