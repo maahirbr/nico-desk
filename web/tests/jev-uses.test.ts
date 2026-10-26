@@ -5,7 +5,7 @@ import { openDb, type Db } from '../lib/db';
 import { jevCacheClear } from '../lib/jev';
 import {
   checkDrafts, combineChecks, doneByNote, combineOrder, dateFacts, draftQuestions, duplicateCandidates, fillIfEmpty, FLOOR, guessProject, healthKeyOf,
-  isYes, projectHealth, projectQuestion, readHealth, readinessOf, readProject, readScore, recentNotes, suggestedOrder, taskFacts, YESNO,
+  isYes, NOT_TASK, projectHealth, projectQuestion, readHealth, readinessOf, readProject, readScore, recentNotes, suggestedOrder, taskFacts, YESNO,
   type Draft, type OpenTask, type ProjectOpt,
 } from '../lib/jevUses';
 import { getProject, planOp, pendingProposals } from '../lib/plan';
@@ -304,8 +304,26 @@ describe('check drafts', () => {
     expect(duplicateCandidates('Fix hero image', open).map((o) => o.id)).toEqual(['t1']);
     expect(duplicateCandidates('Plan the autumn shoot', open)).toEqual([]);
     const { questions, cands } = draftQuestions([{ id: 'p1', task: 'Fix hero image', ownerId: null, dueOn: null }, { id: 'p2', task: 'Plan the autumn shoot', ownerId: null, dueOn: null }], open);
-    expect(Object.keys(questions).sort()).toEqual(['d0_0', 'w0', 'w1']); // one yes/no, for the one candidate
+    expect(Object.keys(questions).sort()).toEqual(['c0', 'c1', 'd0_0', 'w0', 'w1']); // one duplicate yes/no, for the one candidate
     expect(cands.d0.length).toBe(1);
+  });
+
+  it('marks a draft that commits no one to work as a remark, whatever its wording score', () => {
+    const drafts: Draft[] = [
+      { id: 'p1', task: 'The vendor was happy with the samples', ownerId: null, dueOn: null, ownerName: 'Kabir Sethi' },
+      { id: 'p2', task: 'Send the signed contract', ownerId: 'per_bo', dueOn: '2026-10-20', ownerName: 'Kabir Sethi' },
+      { id: 'p3', task: 'Book the studio', ownerId: null, dueOn: null },
+    ];
+    const { questions } = draftQuestions(drafts, []);
+    expect(questions.c0.instructions).toMatchObject({ said: 'Kabir Sethi: The vendor was happy with the samples' });
+    expect(questions.c2.instructions).toMatchObject({ said: 'Book the studio' });
+    const checks = combineChecks(drafts, {}, {
+      w0: score(2, 0.9), c0: yes(NOT_TASK - 0.01), // reads clearly, but commits no one
+      w1: score(2, 0.9), c1: yes(NOT_TASK), // at the line: kept
+      c2: yes(0.05), // no wording score at all
+    });
+    expect(checks.map((c) => c.wording)).toEqual(['not_a_task', 'clear', 'not_a_task']);
+    expect(checks[0].readiness).toBe('needs_both'); // the owner and date rule is unchanged
   });
 
   it('changes no draft, writes nothing, and does not take the drafts from the caller', async () => {

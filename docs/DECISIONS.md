@@ -893,3 +893,11 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   drafted 275 to 235, expected tasks found 67 of 69 both before and after. A further rule (drop a "Name: statement"
   line) cut wrong steps 49 to 30 but lost 7 real ones, so it was not kept. 21 new tests, 797 pass. Rollback:
   `git revert` this commit.
+- **2026-10-26 · Opus 5.5 · Check drafts asks whether a draft commits anyone to work.** The repo owner asked for more
+  Jev uses. Check drafts now asks one more yes/no per draft, on the stored `owner: task` text: does it commit or ask a
+  person to do a piece of work after the meeting? Below `NOT_TASK` (0.2) the draft is noted as a remark. Jev still
+  writes nothing. Outside check on the 20 synthetic meeting transcripts (235 drafts, one batched call each, 8 seconds
+  in all): the old clarity score marked 30 of 49 known remarks and 0 real steps; the new question puts 40 of 49
+  remarks below 0.2 and 0 of 68 real steps (the lowest real step scored 0.37). It misses steps cancelled later in the
+  meeting and injection lines; those need their own checks. Jev stays off in production until the repo owner turns it
+  on. 1 new test, 798 pass. Rollback: `git revert` this commit.

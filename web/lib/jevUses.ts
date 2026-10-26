@@ -243,7 +243,7 @@ async function planFacts(db: Tx, project: Project, today: string): Promise<Recor
 
 // ---------- Check drafts (minutes approval queue) ----------
 
-export type Draft = { id: string; task: string; ownerId: string | null; dueOn: string | null };
+export type Draft = { id: string; task: string; ownerId: string | null; dueOn: string | null; ownerName?: string };
 export type OpenTask = { id: string; title: string; note?: string | null };
 
 // The rules, in code. Jev never decides whether a draft has an owner or a date.
@@ -258,6 +258,10 @@ export const CLARITY_LEVELS = [
 ];
 export type Wording = 'not_a_task' | 'vague' | 'clear';
 export const WORDING = ['not_a_task', 'vague', 'clear'] as const;
+// A second, narrower question: does the line commit someone to work after the meeting? Below this probability the draft
+// reads as a remark. Measured on the 20 synthetic meetings (235 drafts): 40 of 49 known remarks fall below it, 0 of 68
+// real steps do; the lowest real step scored 0.37.
+export const NOT_TASK = 0.2;
 
 const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'will', 'our', 'new', 'task', 'check', 'send']);
 const words = (s: string) => new Set(tokensOf(s).filter((w) => w.length >= 3 && !STOP.has(w)));
@@ -292,6 +296,14 @@ export function draftQuestions(drafts: Draft[], open: OpenTask[]): { questions: 
       instructions: { draft_task: clip(d.task, 300), question: 'How clear is `draft_task` as a task to put on a list? Judge the wording only. Who does it and by when are checked elsewhere.' },
       criteria: CLARITY_LEVELS,
     };
+    questions[`c${i}`] = {
+      type: 'noul',
+      instructions: {
+        said: clip(d.ownerName ? `${d.ownerName}: ${d.task}` : d.task, 400),
+        question: 'This line was drafted as a task from meeting notes: `said`. Does it commit a person, or ask a person, to do a specific piece of work after the meeting?',
+      },
+      criteria: { true: 'Someone takes on or is given a piece of work to do after the meeting.', false: 'A remark, an opinion, background, a status update, a joke, or something already done.' },
+    };
     cands[`d${i}`] = duplicateCandidates(d.task, open);
     cands[`d${i}`].forEach((o, j) => {
       questions[`d${i}_${j}`] = {
@@ -309,10 +321,11 @@ export function combineChecks(drafts: Draft[], cands: Record<string, OpenTask[]>
   return drafts.map((d, i) => {
     const s = readScore(answers[`w${i}`], CLARITY_LEVELS.length);
     const dup = (cands[`d${i}`] ?? []).find((_, j) => isYes(answers[`d${i}_${j}`]));
+    const commit = answers[`c${i}`]?.noul;
     return {
       id: d.id,
       readiness: readinessOf(d),
-      wording: s === null ? null : WORDING[Math.round(s)],
+      wording: typeof commit === 'number' && commit < NOT_TASK ? 'not_a_task' : s === null ? null : WORDING[Math.round(s)],
       duplicate: dup ? { taskId: dup.id, title: dup.title } : null,
     };
   });

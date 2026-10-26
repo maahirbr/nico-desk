@@ -11,7 +11,7 @@ export const POST = route<{ id: string }>(async ({ params, me, db }) => {
   const p = await projectFor(db, me, params.id);
   if (!jevOn()) return { ok: false, reason: 'off' };
   try { rateLimit(`jev-d:${me.realPerson.id}`, 10); } catch { return { ok: false, reason: 'unavailable' }; }
-  const drafts = (await pendingProposals(db, p.id)).map((x) => ({ id: x.id, task: x.task, ownerId: x.ownerId, dueOn: x.dueOn }));
+  const drafts = (await pendingProposals(db, p.id)).map((x) => ({ id: x.id, task: x.task, ownerId: x.ownerId, dueOn: x.dueOn, ownerName: x.ownerName }));
   const open = (await seenTasks(db, me)).filter((t) => t.projectId === p.id && t.statusCategory === 'open').map((t) => ({ id: t.id, title: t.title, note: t.note }));
   return checkDrafts(db, me.team.id, drafts, open);
 });
