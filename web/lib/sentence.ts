@@ -1,5 +1,6 @@
 import { addDays, mondayOf } from './time';
 import { match, parseQuickAdd, type Named } from './quickadd';
+import { isContext, readBlocks } from './blocks';
 
 // Quick add, said the way a person talks: "Can you ask Sam to send me the updated design files by Monday for
 // the landing page" becomes one task: title, owner, due date and project. A pure function, so every rule is tested. The server
@@ -18,7 +19,7 @@ import { match, parseQuickAdd, type Named } from './quickadd';
 //  - @name and #project still work, as in quick add.
 
 export type SentenceCtx<P extends Named, R extends Named> = { today: string; people: P[]; projects: R[]; meName: string };
-export type SentenceRead = { title: string; ownerId: string | null; dueOn: string | null; projectId: string | null; notes: string[] };
+export type SentenceRead = { title: string; ownerId: string | null; dueOn: string | null; projectId: string | null; notes: string[]; details?: string };
 
 // Typos are common when typing fast or dictating, so "yuo", "u" and "cn" count too.
 const OPENERS = /^(?:(?:hey|hi|hello|ok|okay)\b[,!.]?\s*)?(?:(?:can|cn|could|would|will)\s+(?:you|yuo|yu|u)\s+)?(?:please\s+|pls\s+|plz\s+|kindly\s+)?/i;
@@ -124,52 +125,82 @@ export function readSentenceRules<P extends Named, R extends Named>(input: strin
   const q = parseQuickAdd(datePhrases(s, ctx.today), ctx);
   if (!ownerId && q.owner?.status === 'matched') ownerId = q.owner.item.id;
   if (!projectId && q.project?.status === 'matched') projectId = q.project.item.id;
-  const title = upper(clean(q.title).replace(/^(?:to|and)\s+/i, ''));
+  const title = upper(clean(q.title).replace(/^(?:to|and|also)\s+/i, ''));
   return { title, ownerId, dueOn: q.dueOn, projectId, notes };
 }
 
 // ---------- several tasks in one go ----------
 //
 // "Sam, can you schedule the strategy meeting by Friday? And then Kabir, can you get back to the vendor by Monday."
-// Pieces come from lines, list markers ("1.", "-"), sentence ends, and joining words ("and also", "and then", "also",
-// "then", "one more") when what follows starts like a new task: a name, an ask word, or "I / we need to". A joining word
-// inside one task ("send the deck and then the prices") stays, because what follows does not start a new task.
+// Pasted lines are read as blocks first (lib/blocks.ts): headings, sub-bullets, wrapped lines, noise and "all by
+// Friday". Each block then splits on sentence ends and joining words ("and also", "and then", "also", "then", "one
+// more") when what follows starts like a new task: a name, an ask word, or "I / we need to". A joining word inside one
+// task ("send the deck and then the prices") stays, because what follows does not start a new task. A plain statement
+// ("The vendor wants it by Friday.") is a detail of the task before it, and "he should also ..." keeps that task's owner.
 
 export const MAX_TASKS_AT_ONCE = 10;
-const LIST_MARK = /^\s*(?:\d+[.)]|[-*•])\s+/;
 const JOINER = /,?\s+(?:and\s+also|and\s+then|and|also|then|plus|one\s+more(?:\s+thing)?)[,:]?\s+/gi;
 const STARTS_TASK = /^(?:ask|tell|get|remind|have|request|nudge|can|cn|could|would|please|pls|i\s+need|i\s+have|we\s+need|i\s+want|i'll|i\s+will)\b/i;
+const PRONOUN = /^(?:he|she|they)\s+(?:(?:should|will|must|can|needs?\s+to|has\s+to|have\s+to|is\s+to)\s+)?(?:also\s+)?(?=\S)/i;
+const MAX_DETAILS = 600;
 
-export function splitTasks<P extends Named>(input: string, people: P[]): string[] {
-  const out: string[] = [];
+type Piece = { text: string; details: string[]; heading: string; due: string; same: boolean };
+
+function pieces<P extends Named>(input: string, people: P[]): Piece[] {
+  const named = (w: string) => !!person(w, people);
   const startsTask = (t: string) => {
     const w = clean(t).split(' ');
     return STARTS_TASK.test(t) || !!person(w[0].replace(/[,:]$/, ''), people) || (w.length > 1 && !!person(`${w[0]} ${w[1]}`.replace(/[,:]$/, ''), people));
   };
-  for (const line of input.split(/\n+/)) {
-    for (const sentence of line.replace(LIST_MARK, '').split(/(?<=[.?!])\s+/)) {
-      let rest = clean(sentence).replace(LEADING_JOINER, '');
-      let piece = '';
-      let m: RegExpExecArray | null;
-      JOINER.lastIndex = 0;
+  const out: Piece[] = [];
+  for (const b of readBlocks(input, named)) {
+    const mine: Piece[] = [];
+    for (const sentence of b.text.split(/(?<=[.?!])\s+/)) {
+      const rest = clean(sentence).replace(LEADING_JOINER, '');
+      if (mine.length && isContext(rest, named)) { mine.at(-1)!.details.push(rest); continue; }
       const parts: string[] = [];
       let from = 0;
+      let m: RegExpExecArray | null;
+      JOINER.lastIndex = 0;
       while ((m = JOINER.exec(rest))) {
-        const after = rest.slice(m.index + m[0].length);
-        if (startsTask(after)) { parts.push(rest.slice(from, m.index)); from = m.index + m[0].length; }
+        if (startsTask(rest.slice(m.index + m[0].length))) { parts.push(rest.slice(from, m.index)); from = m.index + m[0].length; }
       }
       parts.push(rest.slice(from));
-      for (piece of parts) {
+      for (const piece of parts) {
         const t = clean(piece).replace(/^[,;:\s]+|[,;\s]+$/g, '');
-        if (t.replace(/[^\p{L}\p{N}]/gu, '').length >= 3 && !/^(?:and|then|also|plus)$/i.test(t)) out.push(t);
+        if (t.replace(/[^\p{L}\p{N}]/gu, '').length < 3 || /^(?:and|then|also|plus)$/i.test(t)) continue;
+        const same = PRONOUN.test(t);
+        mine.push({ text: same ? t.replace(PRONOUN, '') : t, details: [], heading: b.heading, due: b.due, same });
       }
-      rest = '';
     }
+    if (mine.length) mine.at(-1)!.details.push(...b.details);
+    out.push(...mine);
   }
   return out.slice(0, MAX_TASKS_AT_ONCE);
 }
 
-export function readTasksRules<P extends Named, R extends Named>(input: string, ctx: SentenceCtx<P, R>): SentenceRead[] {
-  return splitTasks(input, ctx.people).map((t) => readSentenceRules(t, ctx)).filter((r) => r.title.length >= 3);
+export function splitTasks<P extends Named>(input: string, people: P[]): string[] {
+  return pieces(input, people).map((p) => p.text);
 }
 
+export function readTasksRules<P extends Named, R extends Named>(input: string, ctx: SentenceCtx<P, R>): SentenceRead[] {
+  const out: SentenceRead[] = [];
+  let owner: string | null = null;
+  for (const p of pieces(input, ctx.people)) {
+    const r = readSentenceRules(p.text, ctx);
+    if (r.title.length < 3) continue;
+    // A heading fills what the line leaves open: a person owns it, a project holds it.
+    if (!r.ownerId && p.same) r.ownerId = owner;
+    if (!r.ownerId && p.heading) r.ownerId = person(p.heading, ctx.people)?.id ?? null;
+    if (!r.projectId && p.heading) {
+      r.projectId = [...ctx.projects].sort((a, b) => b.name.length - a.name.length)
+        .find((x) => new RegExp(`(?<![\\p{L}\\p{N}])${escape(x.name)}(?![\\p{L}\\p{N}])`, 'iu').test(p.heading))?.id ?? null;
+    }
+    if (!r.dueOn && p.due) r.dueOn = readSentenceRules(`x ${p.due}`, ctx).dueOn;
+    const details = p.details.map((d) => upper(clean(d))).join('\n').slice(0, MAX_DETAILS);
+    if (details) r.details = details;
+    owner = r.ownerId;
+    out.push(r);
+  }
+  return out;
+}

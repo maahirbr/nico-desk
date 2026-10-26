@@ -1,5 +1,7 @@
 // Pure helpers for plan boards, shared by the server and the browser. Dates are 'YYYY-MM-DD'.
 
+import { PRONOUN, readBlocks } from './blocks';
+
 export type Checkpoint = {
   id: string; label: string; dueOn: string | null; origDueOn: string | null; pushCount: number; done: boolean; doneOn: string | null;
 };
@@ -111,41 +113,46 @@ const MONTHS: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5,
 
 export type ParsedStep = { owner: string; with: string[]; task: string; due: string; line: number | null; confidence: 'sure' | 'unsure'; alt: number[]; why: string };
 
-// Works without a model: "(Name) task (Oct 7, 2026)" gives owner, task and date. Lines are
-// suggested by shared words and always marked unsure, so a person picks.
+// Works without a model: "(Name) task (Oct 7, 2026)", "Name: task" or "Name to task" give owner, task and date.
+// Pasted lines are read as blocks (lib/blocks.ts): a name heading owns the steps under it, sub-bullets and plain
+// statements fold into the step above, wrapped lines join, and greetings and labels are skipped. "He should also ..."
+// keeps the owner of the step before. Lines are suggested by shared words and always marked unsure, so a person picks.
 export function plainParse(steps: string, meetingDate: string, lines: { num: number; what: string; doneDef: string }[] = []): ParsedStep[] {
-  // A bold name on its own line ("**Kabir Sethi**") owns the lines under it.
-  let group = '';
-  const rows: { line: string; group: string }[] = [];
-  for (const raw of steps.split(/\n/)) {
-    const t = raw.trim();
-    const head = t.match(/^(?:#+\s*)?\*\*(.+?)\*\*:?$/);
-    if (head) { group = head[1].trim(); continue; }
-    const line = t.replace(/^\s*[-*•\d.)]+\s*/, '').replace(/\*\*/g, '').trim();
-    if (line) rows.push({ line, group });
-  }
-  return rows
-    .map(({ line: l, group: g }) => {
-      let owner = g;
-      const m = l.match(/^\(([^)]+)\)\s*(.*)$/) ?? l.match(/^([A-Z][a-z]+(?: [A-Z][a-z]+)*)\s*[:\-–]\s+(.*)$/);
-      if (m) { owner = m[1].trim(); l = m[2].trim(); }
-      let due = '';
-      const dm = l.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:,?\s*(\d{4}))?/i)
-        ?? l.match(/\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:,?\s*(\d{4}))?/i);
-      if (dm) {
-        const [mon, day] = /\d/.test(dm[1]) ? [dm[2], dm[1]] : [dm[1], dm[2]];
-        const y = dm[3] || meetingDate.slice(0, 4);
-        due = `${y}-${String(MONTHS[mon.toLowerCase().slice(0, 3)]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      } else if (/\btoday\b/i.test(l)) due = meetingDate;
-      else if (/\btomorrow\b/i.test(l)) {
-        const d = new Date(`${meetingDate}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); due = d.toISOString().slice(0, 10);
+  const dateIn = (l: string) => {
+    const dm = l.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:,?\s*(\d{4}))?/i)
+      ?? l.match(/\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:,?\s*(\d{4}))?/i);
+    if (dm) {
+      const [mon, day] = /\d/.test(dm[1]) ? [dm[2], dm[1]] : [dm[1], dm[2]];
+      const y = dm[3] || meetingDate.slice(0, 4);
+      return `${y}-${String(MONTHS[mon.toLowerCase().slice(0, 3)]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    if (/\btoday\b/i.test(l)) return meetingDate;
+    if (/\btomorrow\b/i.test(l)) {
+      const d = new Date(`${meetingDate}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10);
+    }
+    return '';
+  };
+  const NAME = /^[A-Z][\p{L}'-]+(?: [A-Z][\p{L}'-]+){0,2}$/u;
+  let prev = '';
+  return readBlocks(steps)
+    .map((b) => {
+      let l = b.text;
+      let owner = NAME.test(b.heading) ? b.heading : '';
+      const m = PRONOUN.test(l) ? null : l.match(/^\(([^)]+)\)\s*(.*)$/) ?? l.match(/^([A-Z][a-z]+(?: [A-Z][a-z]+)*)\s*[:\-–]\s+(.*)$/)
+        ?? l.match(/^([A-Z][a-z]+(?: [A-Z][a-z]+)?)\s+(?:to|should|will|must|needs?\s+to|has\s+to)\s+(?!be\b)(.*)$/);
+      if (m) { owner = m[1].trim(); l = m[2].trim(); } else if (PRONOUN.test(l)) {
+        owner = owner || prev;
+        l = l.replace(PRONOUN, '').replace(/^(?:should|will|must|can|needs?\s+to|has\s+to|have\s+to|is\s+to)\s+/i, '').replace(/^also\s+/i, '');
       }
+      prev = owner;
+      const due = dateIn(l) || (b.due ? dateIn(b.due) : '');
       const stripped = l
         .replace(/\s*\((?:by\s+)?[^)]*\d[^)]*\)\s*$/i, '')
         .replace(/\s+(?:by|on|before)\s+(?:\d{1,2}\s+[a-z]{3,9}|[a-z]{3,9}\.?\s+\d{1,2})(?:,?\s*\d{4})?\.?\s*$/i, '')
         .replace(/\s+(?:by\s+)?(?:today|tomorrow)\.?\s*$/i, '')
         .trim() || l;
-      const task = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+      const head = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+      const task = b.details.length ? `${head}: ${b.details.map((d) => d.replace(/[.;]+$/, '')).join('; ')}` : head;
       const words = new Set(task.toLowerCase().match(/[a-z]{4,}/g) ?? []);
       const scored = lines
         .map((ln) => ({ num: ln.num, score: (`${ln.what} ${ln.doneDef}`.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter((w) => words.has(w)).length }))

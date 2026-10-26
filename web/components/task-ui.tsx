@@ -653,9 +653,9 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
 
   // Quick add (components/QuickAdd.tsx) fills these fields from one line; they stay editable.
   const titleRef = useRef<HTMLInputElement | null>(null);
-  function applyQuick(p: QuickParse): string[] {
+  function applyQuick(p: QuickParse, details?: string): string[] {
     const notes: string[] = [];
-    const next = { ...f, title: p.title || f.title };
+    const next = { ...f, title: p.title || f.title, description: f.description || details || '' };
     if (p.dueOn && p.dueOn >= today) next.dueOn = p.dueOn;
     if (p.project?.status === 'matched' && projects) {
       const id = p.project.item.id;

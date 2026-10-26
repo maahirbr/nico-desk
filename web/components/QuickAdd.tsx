@@ -31,7 +31,7 @@ export function looksLikeChat(text: string): boolean {
 
 export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, onChat, onMany }: {
   today: string; people: Named[]; projects?: Named[]; hasTitle: boolean;
-  apply: (p: QuickParse) => string[]; focusAfter: () => void; onChat?: (text: string) => void; onMany?: (tasks: SentenceRead[]) => void;
+  apply: (p: QuickParse, details?: string) => string[]; focusAfter: () => void; onChat?: (text: string) => void; onMany?: (tasks: SentenceRead[]) => void;
 }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -60,7 +60,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
         title: one.title ?? '', dueOn: one.dueOn ?? null, dueText: null,
         owner: owner ? { word: owner.name, status: 'matched', item: owner } : null,
         project: project ? { word: project.name, status: 'matched', item: project } : null,
-      })];
+      }, one.details)];
       setDone(['Filled in below. Check it, then Add task.', ...notes].join(' '));
       setText('');
       focusAfter();
@@ -108,6 +108,8 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
             onPaste={(e) => {
               const pasted = e.clipboardData.getData('text');
               if (onChat && looksLikeChat(pasted)) { e.preventDefault(); setText(''); onChat(pasted); }
+              // The box is one line, so a pasted list would lose its breaks: read it as pasted instead.
+              else if (/\n\s*\S/.test(pasted.trim())) { e.preventDefault(); void fill(pasted); }
             }}
             onKeyDown={(e) => { if (isRealEnter(e)) { e.preventDefault(); void fill(); } }}
             onBlur={() => { if (!hasTitle && text.trim() && !listening) void fill(); }} />

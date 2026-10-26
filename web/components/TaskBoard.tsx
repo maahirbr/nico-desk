@@ -455,9 +455,9 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
   // Quick add (components/QuickAdd.tsx) fills the date and owner here; the project is this one.
   const titleRef = useRef<HTMLInputElement | null>(null);
   const members = useProjectPeople()[projectId] ?? [];
-  function applyQuick(p: QuickParse): string[] {
+  function applyQuick(p: QuickParse, details?: string): string[] {
     const notes: string[] = [];
-    const next = { ...f, title: p.title || f.title };
+    const next = { ...f, title: p.title || f.title, description: f.description || details || '' };
     if (p.dueOn && p.dueOn >= today) next.dueOn = p.dueOn;
     if (p.owner?.status === 'matched') {
       const o = p.owner.item;

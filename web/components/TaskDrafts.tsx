@@ -14,7 +14,7 @@ import { notify } from './toast';
 // person checks: name, owner, due date, project. Add makes it through the normal task route, Skip leaves it, and Add all
 // makes every card that is ready. Nothing is made until a button is pressed.
 
-type Row = { title: string; ownerId: string; ownerRole?: string; dueOn: string; projectId: string; state: 'open' | 'busy' | 'added' | 'skipped'; err: string | null };
+type Row = { title: string; description: string; ownerId: string; ownerRole?: string; dueOn: string; projectId: string; state: 'open' | 'busy' | 'added' | 'skipped'; err: string | null };
 
 export function TaskDrafts({ drafts, people, projects, projectId, today, onBack, onDone }: {
   drafts: SentenceRead[]; people: Opt[]; projects?: Opt[]; projectId?: string; today: string; onBack: () => void; onDone: () => void;
@@ -24,7 +24,7 @@ export function TaskDrafts({ drafts, people, projects, projectId, today, onBack,
   const [rows, setRows] = useState<Row[]>(() => drafts.map((d) => {
     const pid = projectId ?? d.projectId ?? '';
     const owner = d.ownerId && (!pid || (map[pid] ?? []).includes(d.ownerId)) ? d.ownerId : '';
-    return { title: d.title, ownerId: owner, dueOn: d.dueOn ?? '', projectId: pid, state: 'open', err: owner || !d.ownerId ? null : 'That person is not on this project. Pick the owner, or add them.' };
+    return { title: d.title, description: d.details ?? '', ownerId: owner, dueOn: d.dueOn ?? '', projectId: pid, state: 'open', err: owner || !d.ownerId ? null : 'That person is not on this project. Pick the owner, or add them.' };
   }));
   const set = (i: number, r: Partial<Row>) => setRows((all) => all.map((x, j) => (j === i ? { ...x, ...r } : x)));
   const ready = (r: Row) => r.state === 'open' && r.title.trim().length >= 3 && ownerReady(r.ownerId, r.ownerRole) && !!r.dueOn;
@@ -35,7 +35,7 @@ export function TaskDrafts({ drafts, people, projects, projectId, today, onBack,
     const r = rows[i];
     set(i, { state: 'busy', err: null });
     try {
-      const made = await api('/tasks', 'POST', { title: r.title.trim(), ...ownerFields(r.ownerId, r.ownerRole), dueOn: r.dueOn, projectId: r.projectId || null });
+      const made = await api('/tasks', 'POST', { title: r.title.trim(), description: r.description.trim() || null, ...ownerFields(r.ownerId, r.ownerRole), dueOn: r.dueOn, projectId: r.projectId || null });
       if (made?.id) arrivals.add(made.id);
       set(i, { state: 'added' });
       return true;
@@ -62,6 +62,7 @@ export function TaskDrafts({ drafts, people, projects, projectId, today, onBack,
               : r.state === 'skipped' ? <p className="small dim pc-gone">Skipped: {r.title} <button type="button" className="mini-btn" onClick={() => set(i, { state: 'open' })}>Undo</button></p>
               : (<>
                 <label className="f"><span>Task</span><input value={r.title} maxLength={200} onChange={(e) => set(i, { title: e.target.value })} /></label>
+                {r.description && <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={r.description} onChange={(e) => set(i, { description: e.target.value })} /></label>}
                 <div className="row">
                   <label className="f"><span>Owner</span>
                     <OwnerPicker key={r.projectId} projectId={r.projectId || null} value={r.ownerId} people={people} onChange={(ownerId, ownerRole) => set(i, { ownerId, ownerRole, err: null })} />

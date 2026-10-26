@@ -883,3 +883,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   the design branch into `maahir/mvp` as `0b002d2` (only DECISIONS conflicted, both sides kept), pushed it, and
   promoted its preview as `nico-desk-p6uramot3`. No schema change, so no `db:upgrade`. `/team` answers 200, and the
   live CSS has no hover redraw on the line icons. Rollback: promote `nico-desk-j75v7r3xz` again.
+- **2026-10-26 · Opus 5.5 · Pasted notes read as blocks, not one task per line.** The repo owner said the text-to-task
+  reader made a task of every line and lost the context. `lib/blocks.ts` now reads pasted lines for both Quick Add
+  (`readTasksRules`) and the minutes reader (`plainParse`): a heading gives its project or owner to the lines under
+  it, sub-bullets and plain statements become the task's details, a wrapped line is one line, greetings, attendee
+  lists and thanks are dropped, "All by Friday" dates its section, and "he should also" keeps the owner before it.
+  Quick Add drafts carry the details into a Details box, and a multi-line paste goes straight to drafts. The model
+  prompt gets the same rules and a `details` field. Outside check on the 20 synthetic meeting transcripts: steps
+  drafted 275 to 235, expected tasks found 67 of 69 both before and after. A further rule (drop a "Name: statement"
+  line) cut wrong steps 49 to 30 but lost 7 real ones, so it was not kept. 21 new tests, 797 pass. Rollback:
+  `git revert` this commit.
