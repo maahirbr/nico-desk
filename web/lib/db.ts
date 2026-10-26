@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PUBLIC_API_LOCK, SCHEMA, TEAM_FENCE } from './schema';
+import { PLAN_ACTIVITY_GUARD, PUBLIC_API_LOCK, SCHEMA, TEAM_FENCE } from './schema';
 import { jobSecret } from './jobs';
 import { loadLocalProjects, loadRosterOverlay, seed } from './seed';
 
@@ -108,6 +108,8 @@ export async function upgrade(db: Db) {
   await db.exec(CHAT_UPGRADE);
   // 19 Oct: a reminder keeps which items it held, so the next draft can leave out what was just sent.
   await db.exec(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS item_keys text[];`);
+  // 26 Oct: an admin can delete an archived partner plan, so its activity log may go inside that one transaction.
+  await db.exec(PLAN_ACTIVITY_GUARD);
   // 19 Oct: the public API roles get no rights and a deny policy on every table. Last, so it covers new tables.
   await db.exec(PUBLIC_API_LOCK);
   // 21 Oct: the team fence (nico_app and one policy per table). Last too, so it covers new tables.

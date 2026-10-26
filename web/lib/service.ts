@@ -387,6 +387,23 @@ export async function closeTask(db: Db, meId: string, id: string, input: { versi
   });
 }
 
+// Archiving a project with open work (26 Oct): every open task in it is dropped with one reason, and each drop is
+// logged the same way closeTask logs it. The caller holds the project lock and has already checked who may archive.
+export async function dropOpenTasks(tx: Tx, meId: string, projectId: string, reason: unknown): Promise<number> {
+  const why = needReason(reason, 'dropOpen');
+  const { rows } = await tx.query<TaskRow>(`SELECT * FROM tasks WHERE project_id = $1 AND status_category = 'open' ORDER BY id FOR UPDATE`, [projectId]);
+  if (rows.some((r) => r.origin === 'sheet')) throw new ApiError(403, 'read_only_mirror', 'Some open tasks here come from a Sheet. Close them there first.');
+  const set: Partial<TaskRow> = { status: 'dropped', status_category: 'dropped', blocked_on_id: null, blocked_ask: null, blocked_at: null };
+  const at = new Date().toISOString();
+  for (const row of rows) {
+    await tx.query(`UPDATE tasks SET status = 'dropped', status_category = 'dropped', blocked_on_id = NULL, blocked_ask = NULL, blocked_at = NULL, version = version + 1 WHERE id = $1`, [row.id]);
+    for (const f of ORDER.filter((k) => k in set && set[k] !== row[k] && !SILENT.has(k))) {
+      await insertEvent(tx, { entityId: row.id, field: f, before: row[f], after: set[f], reason: f === 'status_category' ? why : null, actorId: meId, at });
+    }
+  }
+  return rows.length;
+}
+
 export async function reopenTask(db: Db, meId: string, id: string, input: { version: number; reason: string }): Promise<Task> {
   const reason = needReason(input.reason);
   await db.transaction(async (tx) => {

@@ -841,3 +841,20 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   980px `calm` column, as Home and Team do. Form cards lose their 680px cap and fill their column like every other
   card. Your profile and Roster put their title in a `page-head`, as the other pages do. The look of the full and calm
   pages does not change. DESIGN.md Layout states the rule. Rollback: `git revert` this commit.
+- **2026-10-26 · Opus 5.5 · Next.js 16.4.3 and Zod 4.6.7 for new advisories.** `npm audit` found a critical Next.js
+  set (GHSA-2464-fhr4-w9xw, an unauthenticated remote code execution through the image optimizer with SVG files, and
+  two more) and a high Zod memory advisory (GHSA-mrhx-c7xc-m3w5). Next 16.4.0 now refuses to build while affected. Both
+  are patch bumps, and the tests and build pass on them. Rollback: `git revert` this commit, which will not build.
+- **2026-10-26 · Opus 5.5 · Archive drops open work, and an admin can delete an archived project.** A pilot lead could
+  not remove projects: production logs showed each archive refused with `open_work`, because the old rule asked for
+  every task to be closed by hand first. Archive now names what is open and asks for one reason. With it, open tasks
+  are marked Dropped through the normal rules (one event each, carrying the reason), open plan lines are removed,
+  and the project is archived in one transaction. A task mirrored from a Sheet still stops it, because the app does not
+  own those (production has none). Leads, owners and admins archive, as before. On an archived project, an admin also
+  sees Delete for good, which needs the project name typed. It writes a `_deleted` project event first, while the team
+  fence can still see the project, then deletes the project, its tasks and everything hanging on them. Events stay,
+  so the record of the project outlives it, readable only on the owner connection. `plan_activity` is append-only, so
+  its guard now lets a delete through only for the project named in the transaction-local `nico.purging` setting,
+  which only `deleteProject` sets. The guard is in `upgrade()`: the hosted database needs `npm run db:upgrade` before
+  this build is promoted, or deleting a partner plan fails (other deletes and archive work without it). Rollback:
+  `git revert` this commit. The new guard can stay: with no `nico.purging` set it behaves as the old trigger.

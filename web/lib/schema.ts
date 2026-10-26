@@ -1,6 +1,18 @@
 // Slice 1 schema from SPEC.md section 3.3, plus the project boards (project meta and the plan_*
 // tables). Slice 2 tables are not created yet.
 
+// The activity log is append-only, like events. The one exception is deleteProject, which sets
+// nico.purging to the project's id for its own transaction so the project's log can go with it.
+export const PLAN_ACTIVITY_GUARD = `
+CREATE OR REPLACE FUNCTION plan_activity_guard() RETURNS trigger LANGUAGE plpgsql AS
+$$ BEGIN
+  IF TG_OP = 'DELETE' AND OLD.project_id = current_setting('nico.purging', true) THEN RETURN OLD; END IF;
+  RAISE EXCEPTION 'plan_activity is append-only';
+END $$;
+DROP TRIGGER IF EXISTS plan_activity_no_change ON plan_activity;
+CREATE TRIGGER plan_activity_no_change BEFORE UPDATE OR DELETE ON plan_activity
+  FOR EACH ROW EXECUTE FUNCTION plan_activity_guard();`;
+
 export const SCHEMA = `
 SET TIME ZONE 'UTC';
 
@@ -399,8 +411,7 @@ CREATE TABLE plan_activity (
   at          timestamptz NOT NULL
 );
 CREATE INDEX plan_activity_project ON plan_activity (project_id, at);
-CREATE TRIGGER plan_activity_no_change BEFORE UPDATE OR DELETE ON plan_activity
-  FOR EACH ROW EXECUTE FUNCTION events_append_only();
+${PLAN_ACTIVITY_GUARD}
 
 -- Who works on a project, and their role in it (e.g. "Packaging POC"). The project owner is in
 -- projects.owner_id; members here are everyone else named on the project.

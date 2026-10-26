@@ -170,7 +170,7 @@ export async function api(path: string, method: string, body?: unknown) {
   });
   playFor(method, path, body, res.ok);
   const data = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error?.message ?? `Request failed (${res.status}).`);
+  if (!res.ok) throw Object.assign(new Error(data?.error?.message ?? `Request failed (${res.status}).`), { code: data?.error?.code as string | undefined });
   return data;
 }
 

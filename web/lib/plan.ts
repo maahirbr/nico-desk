@@ -1,7 +1,7 @@
 import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
-import { createTask, newId, teamTasks } from './service';
+import { createTask, dropOpenTasks, newId, teamTasks } from './service';
 import { lineSplit, taskSplit, type StatusSplit } from './progress';
 import { modelOn } from './model';
 import { today as todayIst } from './time';
@@ -725,7 +725,8 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
 }
 
 // Archive and restore (12 Oct). The project owner, its lead, a team lead or an admin, the same rule as updateProject.
-// Archiving is refused while work is open, so nothing is left hanging: finish, drop or move it first.
+// Archiving is refused while work is open, so nothing is left hanging. Since 26 Oct the refusal can be answered with
+// a reason (dropOpen): the open tasks are dropped and the open plan lines removed with it, in the same transaction.
 // An archived project keeps its tasks and log, and takes no new tasks. Both moves are logged as project events.
 async function archiveContext(tx: Tx, meId: string, id: string): Promise<Project> {
   const { rows } = await tx.query<ProjectRow>(`SELECT * FROM projects WHERE id = $1 FOR UPDATE`, [id]);
@@ -737,17 +738,24 @@ async function archiveContext(tx: Tx, meId: string, id: string): Promise<Project
   return p;
 }
 
-export async function archiveProject(db: Db, meId: string, id: string): Promise<Project> {
+export async function archiveProject(db: Db, meId: string, id: string, dropOpen?: string): Promise<Project> {
   await db.transaction(async (tx) => {
     const p = await archiveContext(tx, meId, id);
     if (p.archivedAt) throw bad('invalid_body', 'This project is already archived.');
+    if (dropOpen !== undefined) {
+      await dropOpenTasks(tx, meId, id, dropOpen);
+      const { rows: open } = await tx.query<{ id: string }>(
+        `UPDATE plan_lines SET removed = true, removed_by = $2, removed_at = now(), remove_reason = $3, updated_at = now()
+         WHERE project_id = $1 AND NOT removed AND status <> 'Done' RETURNING id`, [id, meId, dropOpen.trim()]);
+      if (open.length) await log(tx, id, meId, `removed ${open.length} open ${open.length === 1 ? 'line' : 'lines'} on archiving: ${dropOpen.trim()}`);
+    }
     const { rows: t } = await tx.query<{ n: number }>(`SELECT count(*)::int AS n FROM tasks WHERE project_id = $1 AND status_category = 'open'`, [id]);
     const { rows: l } = await tx.query<{ n: number }>(`SELECT count(*)::int AS n FROM plan_lines WHERE project_id = $1 AND NOT removed AND status <> 'Done'`, [id]);
     const parts = [
       t[0].n ? `${t[0].n} open ${t[0].n === 1 ? 'task' : 'tasks'}` : '',
       l[0].n ? `${l[0].n} open ${l[0].n === 1 ? 'line of work' : 'lines of work'}` : '',
     ].filter(Boolean);
-    if (parts.length) throw bad('open_work', `This project still has ${parts.join(' and ')}. Finish, drop or move them first, then archive it.`);
+    if (parts.length) throw bad('open_work', `This project still has ${parts.join(' and ')}. Archiving drops them. Give a reason to go ahead.`);
     await tx.query(`UPDATE projects SET archived_at = now(), archived_by = $2 WHERE id = $1`, [id, meId]);
     await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,'_archived',NULL,$3::jsonb,$4,'app',now())`,
       [newId('evt'), id, JSON.stringify({ name: p.name }), meId]);
@@ -764,6 +772,49 @@ export async function restoreProject(db: Db, meId: string, id: string): Promise<
       [newId('evt'), id, JSON.stringify({ name: p.name }), meId]);
   });
   return getProject(db, id);
+}
+
+// Delete for good (26 Oct): an admin only, an archived project only, and the name typed to confirm. The project,
+// its tasks and everything that hangs on them go. The log stays: events are append-only, so the task and project
+// events remain on the owner connection, plus one _deleted event written first, while the team fence can still see
+// the project. The app no longer shows them. Archive is the everyday way out; this is for test and mistaken projects.
+export async function deleteProject(db: Db, meId: string, id: string, confirmName: string): Promise<{ deleted: string; tasks: number }> {
+  return db.transaction(async (tx) => {
+    const { rows } = await tx.query<ProjectRow>(`SELECT * FROM projects WHERE id = $1 FOR UPDATE`, [id]);
+    if (!rows[0]) throw notFound('No such project.');
+    const p = toProject(rows[0]);
+    if (!(await rolesOf(tx, p.teamId, meId)).has('admin')) throw forbidden('Only an admin can delete a project for good.');
+    if (!p.archivedAt) throw bad('not_archived', 'Archive the project before deleting it.');
+    if (confirmName.trim().toLowerCase() !== p.name.trim().toLowerCase()) throw bad('invalid_body', 'Type the project name exactly to confirm.', 'name');
+    const { rows: t } = await tx.query<{ id: string }>(`SELECT id FROM tasks WHERE project_id = $1`, [id]);
+    const tasks = t.map((r) => r.id);
+    const { rows: c } = await tx.query<{ id: string }>(
+      `SELECT id FROM comments WHERE (subject_kind = 'task' AND subject_id = ANY($2::text[])) OR (subject_kind = 'project' AND subject_id = $1)`, [id, tasks]);
+    const comments = c.map((r) => r.id);
+    const { rows: m } = await tx.query<{ id: string }>(`SELECT id FROM chat_messages WHERE room_kind = 'project' AND room_id = $1`, [id]);
+    const messages = m.map((r) => r.id);
+    await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,'_deleted',NULL,$3::jsonb,$4,'app',now())`,
+      [newId('evt'), id, JSON.stringify({ name: p.name, tasks: tasks.length }), meId]);
+    // plan_activity is append-only except for the project named here, for this transaction only.
+    await tx.query(`SELECT set_config('nico.purging', $1, true)`, [id]);
+    // Children before parents, so no foreign key is left pointing at a deleted row.
+    const steps: [string, unknown[]][] = [
+      [`DELETE FROM notices WHERE task_id = ANY($1::text[]) OR comment_id = ANY($2::text[]) OR message_id = ANY($3::text[])`, [tasks, comments, messages]],
+      [`DELETE FROM chat_task_links WHERE task_id = ANY($1::text[]) OR message_id = ANY($2::text[])`, [tasks, messages]],
+      [`DELETE FROM chat_refs WHERE message_id = ANY($1::text[]) OR (ref_kind = 'task' AND ref_id = ANY($2::text[])) OR (ref_kind = 'project' AND ref_id = $3)`, [messages, tasks, id]],
+      [`DELETE FROM comment_refs WHERE comment_id = ANY($1::text[]) OR (ref_kind = 'task' AND ref_id = ANY($2::text[])) OR (ref_kind = 'project' AND ref_id = $3)`, [comments, tasks, id]],
+      [`DELETE FROM comments WHERE id = ANY($1::text[])`, [comments]],
+      [`DELETE FROM chat_reads WHERE room_kind = 'project' AND room_id = $1`, [id]],
+      [`DELETE FROM chat_messages WHERE id = ANY($1::text[])`, [messages]],
+      [`DELETE FROM update_seen WHERE scope = ANY($1::text[])`, [tasks]],
+      [`DELETE FROM task_links WHERE task_id = ANY($1::text[])`, [tasks]],
+      ...['plan_actions', 'plan_proposals', 'plan_asks', 'plan_parked', 'plan_activity', 'plan_lines', 'project_members', 'project_viewers', 'tasks']
+        .map((tbl): [string, unknown[]] => [`DELETE FROM ${tbl} WHERE project_id = $1`, [id]]),
+      [`DELETE FROM projects WHERE id = $1`, [id]],
+    ];
+    for (const [sql, args] of steps) await tx.query(sql, args);
+    return { deleted: id, tasks: tasks.length };
+  });
 }
 
 export async function updateProject(db: Db, meId: string, id: string, input: ProjectInput): Promise<Project> {
