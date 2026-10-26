@@ -863,3 +863,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   runs `plan_activity_guard`), and promoted the preview as `nico-desk-j75v7r3xz`. `/team` answers 200. Rollback:
   promote `nico-desk-1tojabz51` again. That build is on the vulnerable Next.js, so use it only as a stopgap. The guard
   can stay.
+- **2026-10-26 · Opus 5.5 · OKR weekly meeting actions copied onto its new partner board.** A lead moved the AI OKR
+  weekly meeting from a task board to a new partner (plan) project. To archive the old one they ticked its 17 open
+  tasks Done, one by one. A plan page shows plan actions only, so the team saw every action vanish. With the repo
+  owner's yes, one SQL statement on production copied the 32 tasks that were not dropped into the new project as
+  `plan_actions`: 17 open (closed only to archive), 15 done (closed before that day). Each keeps its title, owner,
+  due date and creator, with `source = {title, from_task}` pointing at the old task. One `plan_activity` line records
+  it. The archived project and its events stay as the history. The gap stays open: there is no way to switch a
+  project's kind or move its tasks, and archive pushes people to tick work Done. Rollback: `DELETE FROM plan_actions
+  WHERE project_id = 'prj_mvow718w1pqejc' AND source ? 'from_task'` (the activity line stays, append-only).
