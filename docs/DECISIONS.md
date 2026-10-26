@@ -879,3 +879,7 @@ An entry that replaces an earlier one says so; the earlier text stays as written
 - **2026-10-26 · Opus 5.5 · Line icons stay still.** The PM saw the sidebar icon draw itself each time they switched
   tabs: the redraw on hover replayed on every click. The sidebar icons, Feedback and the help button no longer move on
   hover. An empty state's mark still draws in once. DESIGN.md Motion says the rule. Rollback: `git revert` this commit.
+- **2026-10-26 · Opus 5.5 · Sounds off and still line icons live on production.** With the repo owner's yes: merged
+  the design branch into `maahir/mvp` as `0b002d2` (only DECISIONS conflicted, both sides kept), pushed it, and
+  promoted its preview as `nico-desk-p6uramot3`. No schema change, so no `db:upgrade`. `/team` answers 200, and the
+  live CSS has no hover redraw on the line icons. Rollback: promote `nico-desk-j75v7r3xz` again.
