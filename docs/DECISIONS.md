@@ -841,3 +841,7 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   980px `calm` column, as Home and Team do. Form cards lose their 680px cap and fill their column like every other
   card. Your profile and Roster put their title in a `page-head`, as the other pages do. The look of the full and calm
   pages does not change. DESIGN.md Layout states the rule. Rollback: `git revert` this commit.
+- **2026-10-26 · Opus 5.5 · Sounds leave the account menu and are off.** The PM asked for the Sounds on/off item to go
+  from the menu under their name. With no switch left, `play()` in `components/sound.ts` returns at once
+  (`SOUNDS_OFF`), so a person who had turned sounds on before is not left with tones they cannot stop. The tones, the
+  `nd_sound` cookie and the help word stay, so they can come back with the switch. Rollback: `git revert` this commit.
