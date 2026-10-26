@@ -911,3 +911,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   Google Picker, which asks less of Google but needs a picker key and more UI; it stays an option if verification
   becomes a problem. Not yet checked against a live Google account. 8 new tests, 806 pass. Rollback: `git revert`
   this commit; leads who reconnected keep a link with one unused scope.
+- **2026-10-26 · Opus 5.5 · An admin adds a whole team in one paste.** The access check found that a company address
+  gets in only when an admin has put that person on the roster, and the repo owner kept that rule over any company
+  address joining on first sign-in. To make adding an adopting team quick, the Roster page gets an "Add several
+  people" box: one person per line (name, job title, department, email), tabs from a sheet or commas. Everyone joins as
+  a member; lead and admin are set after, one by one. `addPeople` runs in one transaction, and an email already on
+  the roster is skipped and named back, so the same paste twice adds nobody twice. The route takes 1 to 100 rows. The
+  consent screen is Internal (the repo owner's word), so only company Workspace accounts pass Google's side: an
+  outside address in `NICO_ALLOWED_EMAILS` cannot sign in by Google while that holds. 1 new test, 807 pass. Rollback:
+  `git revert` this commit; people added by it stay on the roster and are marked inactive by hand if needed.

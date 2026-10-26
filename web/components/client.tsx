@@ -419,6 +419,37 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   );
 }
 
+// A whole team at once: one person per line, pasted from a sheet (tabs) or typed (commas). Everyone joins as a
+// member. Lines that do not split into four parts are named, and nothing is sent until they are fixed.
+export function AddPeopleForm({ teamId }: { teamId: string }) {
+  const router = useRouter();
+  const { busy, error, run } = useSubmit();
+  const [text, setText] = useState('');
+  const [bad, setBad] = useState<number[]>([]);
+  const [result, setResult] = useState<{ added: number; skipped: string[] } | null>(null);
+  return (
+    <form className="card form-card stack" onSubmit={async (e) => {
+      e.preventDefault();
+      setResult(null);
+      const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+      const parts = lines.map((l) => l.split(l.includes('\t') ? '\t' : ',').map((x) => x.trim()));
+      const wrong = parts.flatMap((p, i) => (p.length === 4 && p.every(Boolean) ? [] : [i + 1]));
+      setBad(wrong);
+      if (wrong.length || !parts.length) return;
+      const rows = parts.map(([displayName, role, department, email]) => ({ displayName, role, department, email }));
+      await run(`/teams/${teamId}/people/bulk`, 'POST', { rows }, (data) => { setResult(data); setText(''); router.refresh(); });
+    }}>
+      <label className="f"><span>One person per line: name, job title, department, email</span>
+        <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ananya Rao, Designer, Digital, ananya@example.test" />
+      </label>
+      <div className="row"><button className="btn" disabled={busy || !text.trim()}>Add everyone</button></div>
+      {bad.length > 0 && <p className="err" role="alert">Line {bad.join(', ')} needs four parts: name, job title, department, email.</p>}
+      <Err e={error} />
+      {result && <p className="small" role="status">Added {result.added}.{result.skipped.length > 0 && ` Already on the roster: ${result.skipped.join(', ')}.`}</p>}
+    </form>
+  );
+}
+
 export function PersonControls({ id, active, roles, self, email, repliesFeedback }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; repliesFeedback: boolean }) {
   const { busy, error, run } = useSubmit();
   // The button whose change just landed draws a tick before its new label, for as long as "Copied" shows.

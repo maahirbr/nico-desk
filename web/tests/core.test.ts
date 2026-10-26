@@ -233,4 +233,15 @@ describe('roster (FR-55)', () => {
     const p = await s.addPerson(db, ADMIN, TEAM_ID, input);
     expect(p.appRoles).toEqual(['member']);
   });
+
+  it('adds several people at once, skipping emails already on the roster', async () => {
+    const row = (n: string) => ({ displayName: `Bulk ${n}`, role: 'Tester', department: 'Digital', email: `Bulk.${n}@example.test` });
+    expect(await code(s.addPeople(db, LEAD, TEAM_ID, [row('a')]))).toBe('403 not_allowed');
+    expect(await s.addPeople(db, ADMIN, TEAM_ID, [row('a'), row('b'), row('a')])).toEqual({ added: 2, skipped: ['bulk.a@example.test'] });
+    expect(await s.addPeople(db, ADMIN, TEAM_ID, [row('b'), row('c')])).toEqual({ added: 1, skipped: ['bulk.b@example.test'] });
+    const people = await s.listPeople(db, TEAM_ID);
+    expect(people.filter((p) => p.email.startsWith('bulk.')).map((p) => [p.email, p.appRoles])).toEqual([
+      ['bulk.a@example.test', ['member']], ['bulk.b@example.test', ['member']], ['bulk.c@example.test', ['member']],
+    ]);
+  });
 });

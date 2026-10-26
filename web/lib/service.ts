@@ -745,6 +745,32 @@ export async function addPerson(
   return (await getPerson(db, teamId, id))!;
 }
 
+// A whole team at once, as members, from rows pasted out of a sheet. One transaction: every new row goes in or none
+// does. An email already on the roster is skipped and named back, so pasting the same list twice is safe.
+export async function addPeople(
+  db: Db, meId: string, teamId: string,
+  rows: { displayName: string; role: string; department: string; email: string }[],
+): Promise<{ added: number; skipped: string[] }> {
+  let added = 0;
+  const skipped: string[] = [];
+  await db.transaction(async (tx) => {
+    await requireAdmin(tx, teamId, meId);
+    const seen = new Set<string>();
+    for (const r of rows) {
+      const email = r.email.trim().toLowerCase();
+      if (seen.has(email) || (await findPersonByEmail(tx, email))) { skipped.push(email); continue; }
+      seen.add(email);
+      const id = newId('per');
+      await tx.query(`INSERT INTO people (id, display_name, role, department, email) VALUES ($1,$2,$3,$4,$5)`, [
+        id, r.displayName.trim(), r.role.trim(), r.department.trim(), email,
+      ]);
+      await tx.query(`INSERT INTO team_members VALUES ($1,$2,'member')`, [teamId, id]);
+      added++;
+    }
+  });
+  return { added, skipped };
+}
+
 export async function patchPerson(
   db: Db, meId: string, teamId: string, personId: string, input: { active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean; repliesFeedback?: boolean },
 ): Promise<Person> {

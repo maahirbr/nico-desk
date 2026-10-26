@@ -1,7 +1,7 @@
 import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { Person } from '@/components/chips';
-import { AddPersonForm, PersonControls } from '@/components/client';
+import { AddPeopleForm, AddPersonForm, PersonControls } from '@/components/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +30,8 @@ export default async function Admin() {
       {isAdmin && !readOnly && (<>
         <h2>Add a person</h2>
         <AddPersonForm teamId={me.team.id} />
+        <h2>Add several people</h2>
+        <AddPeopleForm teamId={me.team.id} />
       </>)}
     </>
   );

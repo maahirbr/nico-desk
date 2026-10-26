@@ -44,7 +44,7 @@ From SPEC.md slice 1: tasks with a locked first date (`first_due_on`, guarded by
 trigger), renegotiation only with a reason, a picked status plus derived flags and outcome (see below), silent
 slips, the update log (append-only `events`), blocked asks with in-app notices, leader-set
 priority, the four views (My tasks, The week, By status, Ledger), the task page, in-app
-reminders, roster admin, and the `/api/v1` routes in SPEC.md 4.3 to 4.5 with the 4.1 error shape,
+reminders, roster admin (one person, or a pasted list of people as members), and the `/api/v1` routes in SPEC.md 4.3 to 4.5 with the 4.1 error shape,
 version checks, a same-origin check on writes and rate limits.
 
 Google sign-in (FR-54) is built with `fetch` and no extra package. `/api/auth/google` sets a random
