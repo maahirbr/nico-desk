@@ -901,3 +901,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   remarks below 0.2 and 0 of 68 real steps (the lowest real step scored 0.37). It misses steps cancelled later in the
   meeting and injection lines; those need their own checks. Jev stays off in production until the repo owner turns it
   on. 1 new test, 798 pass. Rollback: `git revert` this commit.
+- **2026-10-26 · Opus 5.5 · Minutes from a Google Doc become tasks the same way as Granola.** The repo owner asked for
+  a Google Doc source for minutes. It reuses the Google Meet link: `documents.readonly` joins `MEET_SCOPES`, so one
+  connect covers Meet and Docs, and a lead linked earlier gets `docs_reauth` and connects again. The lead pastes a Doc
+  link in a new Google Doc tab; `readGoogleDoc` reads it with the Docs API and writes headings, bullet depth, person
+  and date chips, tabs and an Owner/Task table as lines for the existing minutes reader, so nothing new decides what a
+  step is. The route is POST so the Doc link stays out of request logs, lead or admin only, refused under View as.
+  The source id is `docId@date`, so a running weekly Doc imports once per meeting. Not chosen: `drive.file` with the
+  Google Picker, which asks less of Google but needs a picker key and more UI; it stays an option if verification
+  becomes a problem. Not yet checked against a live Google account. 8 new tests, 806 pass. Rollback: `git revert`
+  this commit; leads who reconnected keep a link with one unused scope.

@@ -159,6 +159,15 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   Next steps heading, so without `ANTHROPIC_API_KEY` the plain reader gives noisy proposals, and the model reader is
   the better fit. A notes Doc owned by another organizer may not open with these scopes, and the transcript is read
   instead. Not yet checked against a live Google account.
+- **Google Doc minutes** (Import minutes, Google Doc tab; same switch and same Google link as Meet). A lead pastes the
+  link of any Doc they can open. The app reads it once with the Docs API (`documents.readonly`) and the lead's own
+  token, sent by POST so the Doc link stays out of request logs. Headings, bullets and their depth, person chips
+  ("@name task" becomes "(Name) task"), date chips, every tab, and a table with Owner and Task columns become lines
+  for the same minutes reader as Granola, so sub-bullets become details. An "Action items" heading reads as Next
+  steps. The source id is the Doc id and the meeting date, so a running weekly Doc can be imported once per meeting.
+  A lead linked before this change gets `docs_reauth` and must disconnect and connect Google again. Code:
+  `readGoogleDoc` in `lib/meet.ts`, `app/api/v1/connections/google-meet/docs/`. Limit: a re-import of a running Doc
+  also brings back the earlier weeks' action items; the lead rejects them or Check drafts flags them.
 - **Search** (sidebar, or Ctrl/⌘+K): projects, tasks, plan lines and people in one list.
 - **Quick Add** (the first line of New task and of a board's Add task): type or say a sentence such as "ask Sam to send
   me the design files by Monday for Autumn landing page", and it fills in the task name, owner, due date and project for
@@ -264,10 +273,11 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 - With `DATABASE_URL` set, `NICO_SESSION_SECRET` and `NICO_JOB_SECRET` must be set (the app refuses a derived one),
   and the roster picker and open demo stay off unless `NICO_ALLOW_DEMO_IN_HOSTED=1`.
 - Google Meet notes (`NICO_MEET=1`), steps for the person who owns the Google Cloud project:
-  1. In APIs and Services, enable the Google Meet REST API and the Google Drive API.
-  2. On the OAuth consent screen, add the scopes `https://www.googleapis.com/auth/meetings.space.readonly` and
-     `https://www.googleapis.com/auth/drive.meet.readonly`. `drive.meet.readonly` is a Restricted scope, so a public
-     app needs Google verification. An Internal app in one Workspace domain does not.
+  1. In APIs and Services, enable the Google Meet REST API, the Google Drive API and the Google Docs API.
+  2. On the OAuth consent screen, add the scopes `https://www.googleapis.com/auth/meetings.space.readonly`,
+     `https://www.googleapis.com/auth/drive.meet.readonly` and `https://www.googleapis.com/auth/documents.readonly`.
+     `drive.meet.readonly` is Restricted and `documents.readonly` is Sensitive, so a public app needs Google
+     verification. An Internal app in one Workspace domain does not.
   3. On the same OAuth client, add the redirect URI `https://<host>/api/auth/google/meet/callback`, and
      `http://localhost:3100/api/auth/google/meet/callback` for local runs. The sign-in URI stays as it is.
   4. Set `NICO_MEET=1` and `NICO_TOKEN_KEY` (a long random string; keep it, since losing it makes saved links

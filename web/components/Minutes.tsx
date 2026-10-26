@@ -17,16 +17,16 @@ import { isRealEnter } from './ime';
 type Op = (b: Record<string, unknown>) => Promise<boolean>;
 
 type Provider = 'granola' | 'fireflies' | 'fathom' | 'google_meet';
-type Source = 'paste' | Provider | 'wispr';
-type Read = { title: string; date: string; text: string; source?: { provider: Provider; id: string; link?: string | null } };
-const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom', google_meet: 'Google Meet', wispr: 'Wispr Flow' };
+type Source = 'paste' | Provider | 'google_doc' | 'wispr';
+type Read = { title: string; date: string; text: string; source?: { provider: Provider | 'google_doc'; id: string; link?: string | null } };
+const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom', google_meet: 'Google Meet', google_doc: 'Google Doc', wispr: 'Wispr Flow' };
 // Google Meet is one lead's own link, so it has its own address and its own status call.
 const PATH: Record<Provider, string> = { granola: 'granola', fireflies: 'fireflies', fathom: 'fathom', google_meet: 'google-meet' };
 
 export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tasks'; busy: boolean; today: string; onRead: (b: Read) => void }) {
   const [tab, setTab] = useState<Source>('paste');
   const [f, setF] = useState({ title: '', date: today, text: '' });
-  const [meet, setMeet] = useState(false); // the Google Meet tab shows only for a lead who has connected it
+  const [meet, setMeet] = useState(false); // the Google Meet and Google Doc tabs show only for a lead who has connected Google
   useEffect(() => {
     fetch('/api/v1/connections/google-meet').then((r) => (r.ok ? r.json() : null)).then((s) => setMeet(!!s?.connected)).catch(() => setMeet(false));
   }, []);
@@ -34,7 +34,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
     <div className="card imp-panel">
       <div className="imp-head"><h3>Import meeting minutes</h3></div>
       <nav className="tabs imp-tabs" aria-label="Where the minutes come from">
-        {(Object.keys(NAME) as Source[]).filter((k) => k !== 'google_meet' || meet).map((k) => (
+        {(Object.keys(NAME) as Source[]).filter((k) => (k !== 'google_meet' && k !== 'google_doc') || meet).map((k) => (
           <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-minutes" className="tab-ind" />}{NAME[k]}</button>
         ))}
       </nav>
@@ -54,6 +54,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
         </div>
       )}
       {(tab === 'granola' || tab === 'fireflies' || tab === 'fathom' || tab === 'google_meet') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
+      {tab === 'google_doc' && <DocForm busy={busy} today={today} onRead={onRead} />}
       {tab === 'wispr' && (
         <div className="stack small">
           <p style={{ margin: 0 }}>This app can’t read Wispr Flow directly yet. Its Notetaker connects through a read-only MCP server for AI assistants such as Claude, not through a key.</p>
@@ -134,6 +135,39 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
         </div>
       )}
       {provider === 'google_meet' && <p className="small dim" style={{ margin: 0 }}>Reads the Gemini notes when Meet made them, and the transcript when it did not. This does not record anything.</p>}
+    </div>
+  );
+}
+
+// A Google Doc of minutes, by its link, read with the lead's own Google link. Headings and bullets keep their shape.
+function DocForm({ busy, today, onRead }: { busy: boolean; today: string; onRead: (b: Read) => void }) {
+  const [link, setLink] = useState('');
+  const [date, setDate] = useState(today);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
+  async function read() {
+    setReading(true); setMsg(null);
+    try {
+      const note = await api('/connections/google-meet/docs', 'POST', { link });
+      if (!note?.text?.trim()) throw new Error('This Doc has no text to read.');
+      // One Doc often holds a meeting series, so the same Doc can come in again for another meeting date.
+      const on = note.date || date;
+      onRead({ title: note.title, date: on, text: note.text, source: { provider: 'google_doc', id: `${note.id}@${on}`, link: note.link } });
+    } catch (e) { setMsg((e as Error).message || 'Could not read the Doc.'); }
+    finally { setReading(false); }
+  }
+  return (
+    <div className="stack">
+      <div className="row">
+        <label className="f" style={{ flex: '0 1 180px' }}><span>Meeting date</span><DateField value={date} onChange={(e) => setDate(e.target.value)} /></label>
+        <label className="f"><span>Google Doc link</span><input type="url" value={link} placeholder="https://docs.google.com/document/d/…"
+          onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (isRealEnter(e) && link.trim()) read(); }} /></label>
+      </div>
+      {msg && <p className="err" role="alert">{msg}</p>}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" disabled={busy || reading || !link.trim() || !date} onClick={read}>{reading || busy ? 'Reading…' : 'Read Doc'}</button>
+      </div>
+      <p className="small dim" style={{ margin: 0 }}>Reads a Doc you can open in Google. An Action items or Next steps heading, a table with Owner and Task columns, or @name at the start of a line names the owner.</p>
     </div>
   );
 }

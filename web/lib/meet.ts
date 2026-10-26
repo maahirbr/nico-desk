@@ -17,25 +17,31 @@ import type { MeetingNote, MeetingRow } from './connectors';
 //                            smart notes. https://developers.google.com/meet/api/guides/overview
 //   drive.meet.readonly      (Restricted) lets the app export the notes or transcript Doc that Meet saved in Drive.
 //                            https://developers.google.com/workspace/drive/api/guides/api-specific-auth
+//   documents.readonly       (Sensitive) reads a Google Doc of minutes that the lead pastes a link to (26 Oct).
+//                            https://developers.google.com/workspace/docs/api/auth
 //   openid email             only to check that the Google account is the signed-in person's own.
 // Endpoints (all read-only):
 //   GET https://meet.googleapis.com/v2/conferenceRecords?filter=start_time>=...
 //   GET https://meet.googleapis.com/v2/conferenceRecords/{id}  and  /v2/spaces/{id}
 //   GET .../conferenceRecords/{id}/smartNotes | transcripts | participants, and .../transcripts/{t}/entries
 //   GET https://www.googleapis.com/drive/v3/files/{docId}/export?mimeType=text/plain
+//   GET https://docs.googleapis.com/v1/documents/{docId}?includeTabsContent=true
 //   POST https://oauth2.googleapis.com/token (code and refresh) and https://oauth2.googleapis.com/revoke
 // Only the refresh token is kept, encrypted (AES-256-GCM) in google_links. Access tokens live in memory for one call.
 
 export const MEET_SCOPES = [
   'https://www.googleapis.com/auth/meetings.space.readonly',
   'https://www.googleapis.com/auth/drive.meet.readonly',
+  'https://www.googleapis.com/auth/documents.readonly',
 ] as const;
+const DOCS_SCOPE = MEET_SCOPES[2];
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
 const MEET = 'https://meet.googleapis.com/v2';
 const DRIVE = 'https://www.googleapis.com/drive/v3';
+const DOCS = 'https://docs.googleapis.com/v1';
 export const MEET_STATE_COOKIE = 'nd_meet_state';
 export const MEET_CALLBACK_PATH = '/api/auth/google/meet/callback';
 const STATE_TTL_MS = 10 * 60_000;
@@ -164,7 +170,7 @@ export async function exchangeMeetCode(code: string, redirectUri: string): Promi
   const email = readIdToken(j.id_token, clientId());
   if (!email) return { error: 'email' };
   const scopes = typeof j.scope === 'string' ? j.scope.split(/\s+/).filter(Boolean) : [];
-  // Google lets a person untick a permission on the consent screen. Without both, reading would half work.
+  // Google lets a person untick a permission on the consent screen. Without all of them, reading would half work.
   if (!MEET_SCOPES.every((s) => scopes.includes(s))) return { error: 'scopes' };
   if (typeof j.refresh_token !== 'string' || !j.refresh_token) return { error: 'no_refresh' };
   return { refreshToken: j.refresh_token, email, scopes };
@@ -381,4 +387,79 @@ export async function readMeetMeeting(db: Db, personId: string, id: string): Pro
   }
   throw new ApiError(404, 'notes_unavailable',
     'Meet has no notes or transcript for this meeting. Note-taking or transcripts must be turned on during the meeting. They can take a few minutes to appear.');
+}
+
+// ---- A Google Doc of minutes, by its link. Read through the Docs API so headings, bullets and their depth, tables and
+// person chips keep their shape: the minutes reader (nextStepsOf, then readBlocks) uses all of them.
+
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// The id from a Doc link ("https://docs.google.com/document/d/{id}/edit") or a bare id. Null when it is neither.
+export function docIdOf(link: string): string | null {
+  const s = link.trim();
+  const m = s.match(/^https:\/\/docs\.google\.com\/document\/(?:u\/\d+\/)?d\/([A-Za-z0-9_-]+)(?:[/?#]|$)/);
+  const id = m ? m[1] : s;
+  return ID.test(id) && id.length >= 20 ? id : null;
+}
+
+function chip(e: any): string {
+  if (typeof e?.textRun?.content === 'string') return e.textRun.content;
+  if (e?.person) return String(e.person.personProperties?.name || e.person.personProperties?.email || '');
+  if (e?.richLink) return String(e.richLink.richLinkProperties?.title ?? '');
+  if (e?.dateElement) {
+    const p = e.dateElement.dateElementProperties ?? {};
+    if (typeof p.displayText === 'string' && p.displayText) return p.displayText;
+    if (typeof p.timestamp === 'string') { const d = istDate(p.timestamp); return `${MON[Number(d.slice(5, 7)) - 1]} ${Number(d.slice(8, 10))}, ${d.slice(0, 4)}`; }
+  }
+  return '';
+}
+
+function paragraph(p: any): string {
+  const els: any[] = p?.elements ?? [];
+  let text = els.map(chip).join('').replace(/[\u000b\n]+/g, ' ').replace(/\s+$/, '');
+  // A line that starts with a person chip ("@Kabir send the deck") is that person's step, as "(Name) task".
+  const first = els.find((e) => !(typeof e?.textRun?.content === 'string' && !e.textRun.content.trim()));
+  if (first?.person && text.trim()) {
+    const raw = chip(first);
+    text = `(${raw.replace(/[()]/g, ' ').trim()}) ${text.trim().slice(raw.trim().length).replace(/^[\s:,-]+/, '')}`;
+  }
+  text = text.replace(/^\s*\[([^\]]+)\]\s*/, (_, n: string) => `(${n.replace(/[()]/g, ' ').trim()}) `); // Gemini's "[Name] task"
+  if (!text.trim()) return '';
+  const style = String(p?.paragraphStyle?.namedStyleType ?? '');
+  if (/^(?:TITLE|SUBTITLE|HEADING_\d)$/.test(style)) return `### ${STEPS_HEAD.test(text.trim()) ? 'Next steps' : text.trim()}`;
+  if (p?.bullet) return `${'  '.repeat(Math.min(Number(p.bullet.nestingLevel) || 0, 8))}- ${text.trim()}`;
+  return text.trim();
+}
+
+// A table with an owner column and a task column reads as "(Owner) task due"; any other table, one line per cell.
+function table(t: any, walk: (c: any[]) => string[]): string[] {
+  const rows: string[][] = (t?.tableRows ?? []).map((r: any) => (r?.tableCells ?? []).map((c: any) => walk(c?.content ?? []).join(' ').trim()));
+  const head = (rows[0] ?? []).map((h) => h.toLowerCase());
+  const who = head.findIndex((h) => /^(?:owner|who|assignee|assigned to|responsible)$/.test(h));
+  const what = head.findIndex((h) => /^(?:action|action item|task|item|what|next step)s?$/.test(h));
+  const when = head.findIndex((h) => /^(?:due|due date|by|by when|when|deadline|date)$/.test(h));
+  if (who < 0 || what < 0) return rows.flat().filter(Boolean);
+  return rows.slice(1).filter((r) => r[what]).map((r) => `- ${r[who] ? `(${r[who].replace(/[()]/g, ' ').trim()}) ` : ''}${r[what]}${when >= 0 && r[when] ? ` (${r[when]})` : ''}`);
+}
+
+export function docToText(doc: any): string {
+  const walk = (content: any[]): string[] => content.flatMap((el: any) => el?.paragraph ? [paragraph(el.paragraph)] : el?.table ? table(el.table, walk) : []);
+  const tabs = (ts: any[]): string[] => ts.flatMap((t: any) => [...walk(t?.documentTab?.body?.content ?? []), ...tabs(t?.childTabs ?? [])]);
+  const lines = Array.isArray(doc?.tabs) && doc.tabs.length ? tabs(doc.tabs) : walk(doc?.body?.content ?? []);
+  return lines.filter(Boolean).join('\n').slice(0, MAX_TEXT);
+}
+
+export async function readGoogleDoc(db: Db, personId: string, link: string): Promise<MeetNote> {
+  const id = docIdOf(link);
+  if (!id) throw bad('bad_link', 'That is not a Google Doc link. Copy the address of the Doc from the browser.');
+  const l = await linkOf(db, personId);
+  if (!l) throw needLink();
+  if (!l.scopes.includes(DOCS_SCOPE)) throw new ApiError(400, 'docs_reauth', 'Your Google link was made before Docs could be read. Disconnect and connect Google again.');
+  const token = await accessToken(db, personId);
+  const doc = await call(`${DOCS}/documents/${encodeURIComponent(id)}?includeTabsContent=true`, token);
+  const text = docToText(doc);
+  if (!text.trim()) throw new ApiError(404, 'notes_unavailable', 'This Doc has no text to read.');
+  const title = String(doc?.title ?? '').replace(/\s+/g, ' ').trim().slice(0, 120) || 'Google Doc minutes';
+  const d = title.match(/\b(\d{4})[-/.](\d{2})[-/.](\d{2})\b/);
+  return { id, title, date: d ? `${d[1]}-${d[2]}-${d[3]}` : '', text, link: docUrl(id), kind: 'notes' };
 }

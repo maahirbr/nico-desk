@@ -16,7 +16,7 @@ vi.mock('../lib/db', async (orig) => ({ ...(await orig<typeof import('../lib/db'
 import { VIEW_COOKIE, COOKIE, signSession, signView } from '../lib/auth';
 import { openDb, upgrade, type Db } from '../lib/db';
 import {
-  checkState, disconnectMeet, listMeetMeetings, meetAuthUrl, meetEnabled, newNonce, notesToMinutes, openToken, readMeetMeeting, saveLink, sealToken,
+  checkState, disconnectMeet, docIdOf, docToText, listMeetMeetings, meetAuthUrl, meetEnabled, newNonce, notesToMinutes, openToken, readMeetMeeting, saveLink, sealToken,
   signState, transcriptToText,
 } from '../lib/meet';
 import { nextStepsOf, plainParse } from '../lib/planUtil';
@@ -26,6 +26,7 @@ import { GET as callbackGet } from '../app/api/auth/google/meet/callback/route';
 import { DELETE as meetDelete, GET as meetGet, POST as meetPost } from '../app/api/v1/connections/google-meet/route';
 import { GET as meetingsGet } from '../app/api/v1/connections/google-meet/meetings/route';
 import { GET as meetingGet } from '../app/api/v1/connections/google-meet/meetings/[id]/route';
+import { POST as docPost } from '../app/api/v1/connections/google-meet/docs/route';
 import { Connections } from '../components/Connections';
 import { ImportPanel } from '../components/Minutes';
 
@@ -34,7 +35,7 @@ const LEAD = 'per_ada'; // fixtures: lead
 const CLIENT = 'test-client.apps.googleusercontent.com';
 const REFRESH = 'rt-test-refresh-token-1234567890';
 const ACCESS = 'at-test-access-token-abcdef';
-const SCOPES = ['https://www.googleapis.com/auth/meetings.space.readonly', 'https://www.googleapis.com/auth/drive.meet.readonly'];
+const SCOPES = ['https://www.googleapis.com/auth/meetings.space.readonly', 'https://www.googleapis.com/auth/drive.meet.readonly', 'https://www.googleapis.com/auth/documents.readonly'];
 let db: Db;
 let leadEmail: string;
 
@@ -142,7 +143,9 @@ describe('the switch', () => {
     const connected = renderToStaticMarkup(createElement(Connections, { status, canManage: true, meet: { connected: true, email: 'x@example.test', since: null } }));
     expect(connected).toContain('Disconnect');
     // The Minutes tab appears only after the status call says connected, so a first render never has it.
-    expect(renderToStaticMarkup(createElement(ImportPanel, { what: 'plan', busy: false, today: '2026-10-09', onRead: () => {} }))).not.toContain('Google Meet');
+    const panel = renderToStaticMarkup(createElement(ImportPanel, { what: 'plan', busy: false, today: '2026-10-09', onRead: () => {} }));
+    expect(panel).not.toContain('Google Meet');
+    expect(panel).not.toContain('Google Doc');
   });
 });
 
@@ -444,6 +447,120 @@ describe('listing and reading', () => {
     signIn(ADMIN, signView(ADMIN, LEAD));
     expect(await status(meetingGet(get('/api/v1/connections/google-meet/meetings/rec-1'), { params: Promise.resolve({ id: 'rec-1' }) }))).toBe(403);
     expect(g.fn).not.toHaveBeenCalled();
+  });
+});
+
+// A Google Doc of minutes as the Docs API returns it: tabs, headings, bullets, person and date chips, and a table.
+const DOC_ID = '1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789';
+const run = (t: string) => ({ textRun: { content: t } });
+const who = (name: string) => ({ person: { personProperties: { name, email: 'someone@example.test' } } });
+const para = (els: unknown[], extra: Record<string, unknown> = {}) => ({ paragraph: { elements: els, ...extra } });
+const head = (t: string, style = 'HEADING_2') => para([run(`${t}\n`)], { paragraphStyle: { namedStyleType: style } });
+const item = (els: unknown[], level = 0) => para(els, { bullet: { listId: 'l1', nestingLevel: level } });
+const cell = (els: unknown[]) => ({ content: [para(els)] });
+const DOC = {
+  title: 'Vendor sync 2026-10-08',
+  tabs: [{
+    tabProperties: { title: 'Week 41' },
+    documentTab: { body: { content: [
+      head('Vendor sync 2026-10-08', 'TITLE'),
+      para([run('We met about the studio.\n')]),
+      head('Action items'),
+      item([run(' '), who('Kabir Sethi'), run(' send the margin sheet ('), { dateElement: { dateElementProperties: { displayText: 'Oct 12, 2026' } } }, run(')\n')]),
+      item([run("pull last month's numbers\n")], 1),
+      item([run('[Priya Rao] Book the courier\n')]),
+      { table: { tableRows: [
+        { tableCells: [cell([run('Owner\n')]), cell([run('Action item\n')]), cell([run('Due\n')])] },
+        { tableCells: [cell([who('Ananya Rao'), run('\n')]), cell([run('Book the studio\n')]), cell([{ dateElement: { dateElementProperties: { timestamp: '2026-10-14T04:30:00Z' } } }])] },
+      ] } },
+    ] } },
+    childTabs: [{ documentTab: { body: { content: [head('Notes'), para([run('From the second tab\n')])] } } }],
+  }],
+};
+const postJson = (url: string, body: unknown) => new Request(`http://localhost${url}`, {
+  method: 'POST', headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' }, body: JSON.stringify(body),
+});
+const readDoc = (link: string) => docPost(postJson('/api/v1/connections/google-meet/docs', { link }), none);
+const docRoutes = { 'https://docs.googleapis.com/v1/documents/': () => json(DOC) };
+
+describe('reading a Google Doc', () => {
+  beforeEach(async () => { await saveLink(db, LEAD, { refreshToken: REFRESH, email: leadEmail, scopes: SCOPES }); });
+
+  it('takes the id from a Doc link or a bare id, and nothing else', () => {
+    expect(docIdOf(`https://docs.google.com/document/d/${DOC_ID}/edit?tab=t.0#heading=h.1`)).toBe(DOC_ID);
+    expect(docIdOf(`https://docs.google.com/document/u/1/d/${DOC_ID}`)).toBe(DOC_ID);
+    expect(docIdOf(` ${DOC_ID} `)).toBe(DOC_ID);
+    expect(docIdOf(`https://docs.google.com/spreadsheets/d/${DOC_ID}/edit`)).toBeNull();
+    expect(docIdOf(`https://evil.example/document/d/${DOC_ID}`)).toBeNull();
+    expect(docIdOf('short-id')).toBeNull();
+  });
+
+  it('writes headings, bullets, chips, tables and every tab as lines the minutes reader knows', () => {
+    expect(docToText(DOC)).toBe([
+      '### Vendor sync 2026-10-08',
+      'We met about the studio.',
+      '### Next steps',
+      '- (Kabir Sethi) send the margin sheet (Oct 12, 2026)',
+      "  - pull last month's numbers",
+      '- (Priya Rao) Book the courier',
+      '- (Ananya Rao) Book the studio (Oct 14, 2026)',
+      '### Notes',
+      'From the second tab',
+    ].join('\n'));
+    expect(docToText({ body: { content: [para([run('Only a body\n')])] } })).toBe('Only a body'); // a Doc read without tabs
+  });
+
+  it('gives the steps with owners, dates and details through the existing reader', () => {
+    const steps = plainParse(nextStepsOf(docToText(DOC)), '2026-10-08');
+    expect(steps.map((x) => [x.owner, x.task, x.due])).toEqual([
+      ['Kabir Sethi', "Send the margin sheet: pull last month's numbers", '2026-10-12'],
+      ['Priya Rao', 'Book the courier', ''],
+      ['Ananya Rao', 'Book the studio', '2026-10-14'],
+    ]);
+  });
+
+  it('reads the Doc for a lead with the lead\'s own Google token', async () => {
+    const g = fakeGoogle({ routes: docRoutes });
+    signIn(LEAD);
+    const res = await readDoc(`https://docs.google.com/document/d/${DOC_ID}/edit`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ id: DOC_ID, title: 'Vendor sync 2026-10-08', date: '2026-10-08', kind: 'notes', link: `https://docs.google.com/document/d/${DOC_ID}/edit` });
+    const call = g.calls.find((c) => c.url.startsWith('https://docs.googleapis.com/'))!;
+    expect(call.url).toBe(`https://docs.googleapis.com/v1/documents/${DOC_ID}?includeTabsContent=true`);
+    expect(call.auth).toBe(`Bearer ${ACCESS}`);
+  });
+
+  it('refuses a member, a View as session and a link that is not a Doc, before Google is asked', async () => {
+    const g = fakeGoogle({ routes: docRoutes });
+    signIn((await member()).id);
+    expect(await status(readDoc(DOC_ID))).toBe(403);
+    signIn(ADMIN, signView(ADMIN, LEAD));
+    expect(await status(readDoc(DOC_ID))).toBe(403);
+    signIn(LEAD);
+    expect(await code(readDoc('https://example.test/notes'))).toBe('bad_link');
+    expect(g.fn).not.toHaveBeenCalled();
+  });
+
+  it('asks a lead linked before Docs could be read to connect again', async () => {
+    await saveLink(db, LEAD, { refreshToken: REFRESH, email: leadEmail, scopes: SCOPES.slice(0, 2) });
+    const g = fakeGoogle({ routes: docRoutes });
+    signIn(LEAD);
+    expect(await code(readDoc(DOC_ID))).toBe('docs_reauth');
+    expect(g.fn).not.toHaveBeenCalled();
+  });
+
+  it('says so when Google refuses the Doc or the Doc is empty', async () => {
+    signIn(LEAD);
+    fakeGoogle({ routes: { 'https://docs.googleapis.com/v1/documents/': () => json({ error: { code: 403 } }, 403) } });
+    expect(await code(readDoc(DOC_ID))).toBe('meet_forbidden');
+    fakeGoogle({ routes: { 'https://docs.googleapis.com/v1/documents/': () => json({ title: 'Empty', body: { content: [] } }) } });
+    expect(await code(readDoc(DOC_ID))).toBe('notes_unavailable');
+  });
+
+  it('is off with the switch', async () => {
+    delete process.env.NICO_MEET;
+    signIn(LEAD);
+    expect(await status(readDoc(DOC_ID))).toBe(404);
   });
 });
 
