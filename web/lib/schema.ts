@@ -144,7 +144,7 @@ CREATE TABLE events (
   after       jsonb,
   reason      text CHECK (char_length(reason) <= 280),
   actor_id    text REFERENCES people(id),
-  origin      text NOT NULL CHECK (origin IN ('app','sheet','granola')),
+  origin      text NOT NULL CONSTRAINT events_origin_check CHECK (origin IN ('app','sheet','granola','claude')),
   at          timestamptz NOT NULL,
   CHECK (field NOT IN ('due_on','_reopened') OR reason IS NOT NULL),
   CHECK (field <> 'status_category' OR after IS NULL OR after <> '"dropped"'::jsonb OR reason IS NOT NULL)

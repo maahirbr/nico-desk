@@ -2,6 +2,7 @@ import type { Me } from './auth';
 import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
 import { assertNotViewing } from './http';
+import { via } from './origin';
 import { newId } from './service';
 import { seesProject, seesTaskRow, sightOf, type Sight } from './sight';
 import { today as todayIst } from './time';
@@ -30,6 +31,7 @@ export type Part =
 export type CommentView = {
   id: string; subjectKind: SubjectKind; subjectId: string; authorId: string; authorName: string;
   createdAt: string; editedAt: string | null; deleted: boolean; mine: boolean;
+  via: 'claude' | null; // written through the MCP server (lib/origin.ts)
   parts: Part[];
   body: string | null; // the stored text with tokens, for the author only, to edit
 };
@@ -49,7 +51,7 @@ export function refsIn(body: string): Ref[] {
   return out;
 }
 
-type Row = { id: string; subject_kind: SubjectKind; subject_id: string; author_id: string; body: string; created_at: string; edited_at: string | null; deleted_at: string | null; author_name: string };
+type Row = { id: string; subject_kind: SubjectKind; subject_id: string; author_id: string; body: string; created_at: string; edited_at: string | null; deleted_at: string | null; author_name: string; via: 'claude' | null };
 const COMMENT_SQL = `SELECT c.*, COALESCE(p.nickname, p.display_name) AS author_name FROM comments c JOIN people p ON p.id = c.author_id`;
 
 // The label each reference shows for this reader, or null when they may not see it.
@@ -104,7 +106,7 @@ async function views(tx: Tx, me: Me, sight: Sight, rows: Row[]): Promise<Comment
     const mine = r.author_id === me.person.id;
     return {
       id: r.id, subjectKind: r.subject_kind, subjectId: r.subject_id, authorId: r.author_id, authorName: r.author_name,
-      createdAt: r.created_at, editedAt: r.edited_at, deleted, mine,
+      createdAt: r.created_at, editedAt: r.edited_at, deleted, mine, via: r.via ?? null,
       parts: deleted ? [] : partsOf(r.body, names), body: mine && !deleted ? r.body : null,
     };
   });
@@ -165,7 +167,7 @@ export async function addComment(db: Db, me: Me, kind: SubjectKind, subjectId: s
     const sight = await sightFor(tx, me);
     const { body, refs } = await checkBody(tx, me, sight, raw);
     const id = newId('cmt');
-    await tx.query(`INSERT INTO comments (id, subject_kind, subject_id, author_id, body) VALUES ($1,$2,$3,$4,$5)`, [id, kind, subjectId, me.person.id, body]);
+    await tx.query(`INSERT INTO comments (id, subject_kind, subject_id, author_id, body, via) VALUES ($1,$2,$3,$4,$5,$6)`, [id, kind, subjectId, me.person.id, body, via.getStore() ?? null]);
     for (const r of refs) await tx.query(`INSERT INTO comment_refs (comment_id, ref_kind, ref_id) VALUES ($1,$2,$3)`, [id, r.kind, r.id]);
     const mail = await notifyMentions(tx, me, kind, subjectId, id, refs.filter((r) => r.kind === 'person').map((r) => r.id));
     const { rows } = await tx.query<Row>(`${COMMENT_SQL} WHERE c.id = $1`, [id]);

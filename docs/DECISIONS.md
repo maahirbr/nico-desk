@@ -947,3 +947,20 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   plus the field guide commit and `docs/OKR-DESIGN.md`, with no schema change. Eight old unpushed commits on the repo
   owner's local `main`, from 9 Oct, were left out: `maahir/mvp` replaced that work. `web/README.md` Hosting states the
   flow. Rollback: `vercel promote nico-desk-75md6ijko-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+- **2026-10-28 · Opus 5.5 · An MCP server, so a teammate can use the app from Claude.** The founder listed the v1
+  tools in Slack on 27 Oct, and the sponsor asked for a serverless function on Vercel with Google sign-in, usable from
+  Claude Desktop without first signing in to the app. `app/api/mcp/` answers JSON-RPC by hand (no SDK): the stateless
+  2026-07-28 revision and the older `initialize` handshake. Seven tools (`list_my_tasks`, `search_tasks`, `get_task`,
+  `create_task`, `update_task`, `add_comment`, `get_project_summary`) call `lib/service.ts` through `scoped()` as the
+  signed-in person, so they see and change only what that person could in the app. Deletes, bulk edits and people
+  changes are left out, as the founder asked. Writes run inside `via.run('claude')` (`lib/origin.ts`), so events get
+  `origin = 'claude'` and comments `via = 'claude'`, and the history reads "(via Claude)". nico-desk is its own OAuth
+  server: dynamic client registration, PKCE S256 and RFC 8707 resource checks. Only Claude's own callback pages and
+  loopback addresses may receive a code. The person approves at `/connect`, with their app session or with Google.
+  Client ids, codes and tokens are sealed values under `NICO_SESSION_SECRET` with their own labels, so nothing is
+  stored. The cost of that: a code can be redeemed more than once inside its one minute, and an old refresh token stays
+  good until its 30 days end. Every call still checks that the person is active and allowed, so deactivating someone
+  stops them at once, and rotating the secret stops everyone. The report-only CSP `form-action` now lists Claude and
+  loopback, so the consent form's redirect still works once the CSP is enforced. A schema change (the `events` origin
+  check allows `claude`, and `comments.via`) needs `npm run db:upgrade` before the merge. 18 new tests. Rollback:
+  `git revert` this commit. The added column and the wider check are harmless to the old build.

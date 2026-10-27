@@ -3,6 +3,7 @@ import { COOKIE, VIEW_COOKIE, checkSignIn, cookie, cookieOptions, isHttps, signS
 import { exchangeCode, googleSignInEnabled } from '@/lib/google';
 import { db } from '@/lib/db';
 import { errorResponse, rateLimit } from '@/lib/http';
+import { issueCode, readRequest, REQ_COOKIE } from '@/lib/mcpAuth';
 
 const STATE_COOKIE = 'nd_oauth_state';
 
@@ -44,8 +45,16 @@ export async function GET(req: Request) {
     if (got.picture) {
       try { await (await db()).query(`UPDATE people SET photo_url = $2 WHERE id = $1`, [check.personId, got.picture]); } catch { /* sign-in goes on */ }
     }
-    const res = new Response(null, { status: 302, headers: { Location: `${url.origin}/` } });
     const secure = isHttps(req);
+    // Connecting Claude (app/api/mcp/authorize): send the code back to Claude and make no app session.
+    const mcp = readRequest(readCookie(req, REQ_COOKIE));
+    if (mcp) {
+      const res = new Response(null, { status: 302, headers: { Location: issueCode(mcp, check.personId, url.origin) } });
+      res.headers.append('Set-Cookie', cookie('', 0, secure, STATE_COOKIE));
+      res.headers.append('Set-Cookie', cookie('', 0, secure, REQ_COOKIE));
+      return res;
+    }
+    const res = new Response(null, { status: 302, headers: { Location: `${url.origin}/` } });
     res.headers.append('Set-Cookie', cookie(signSession(check.personId), cookieOptions.maxAge, secure, COOKIE));
     res.headers.append('Set-Cookie', cookie('', 0, secure, STATE_COOKIE));
     res.headers.append('Set-Cookie', cookie('', 0, secure, VIEW_COOKIE));

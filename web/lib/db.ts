@@ -110,6 +110,8 @@ export async function upgrade(db: Db) {
   await db.exec(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS item_keys text[];`);
   // 26 Oct: an admin can delete an archived partner plan, so its activity log may go inside that one transaction.
   await db.exec(PLAN_ACTIVITY_GUARD);
+  // 28 Oct: the MCP server. An event or a comment written through Claude says so ("via Claude").
+  await db.exec(MCP_ORIGIN_UPGRADE);
   // 19 Oct: the public API roles get no rights and a deny policy on every table. Last, so it covers new tables.
   await db.exec(PUBLIC_API_LOCK);
   // 21 Oct: the team fence (nico_app and one policy per table). Last too, so it covers new tables.
@@ -312,6 +314,19 @@ export const UPDATE_SEEN_UPGRADE = `
     PRIMARY KEY (person_id, scope)
   );
   ALTER TABLE update_seen ENABLE ROW LEVEL SECURITY;`;
+
+// Idempotent: the events origin check gains 'claude' (whatever the old check was named), and comments gain a via mark.
+export const MCP_ORIGIN_UPGRADE = `
+  DO $$ DECLARE c text; BEGIN
+    FOR c IN SELECT conname FROM pg_constraint WHERE conrelid = 'events'::regclass AND contype = 'c'
+      AND pg_get_constraintdef(oid) LIKE '%origin%' AND pg_get_constraintdef(oid) NOT LIKE '%claude%' LOOP
+      EXECUTE format('ALTER TABLE events DROP CONSTRAINT %I', c);
+    END LOOP;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'events'::regclass AND conname = 'events_origin_check') THEN
+      ALTER TABLE events ADD CONSTRAINT events_origin_check CHECK (origin IN ('app','sheet','granola','claude'));
+    END IF;
+  END $$;
+  ALTER TABLE comments ADD COLUMN IF NOT EXISTS via text CHECK (via = 'claude');`;
 
 // One team's view of the database. Every call runs in a transaction that first sets the team and drops to nico_app,
 // which RLS binds (TEAM_FENCE in lib/schema.ts). Both settings are local, so they end with the transaction and the

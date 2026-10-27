@@ -163,6 +163,8 @@ export function groupLog<T extends LogLine>(events: T[], names: Names, projects:
     // The log is newest first, so ids within an action arrive reversed; restore write order.
     const ordered = [...g].reverse();
     const head = g[g.length - 1];
-    return { ...head, key: head.id, text: actionText(ordered, names, projects), events: ordered };
+    // Changes made through the MCP server carry origin 'claude' (lib/origin.ts); the line says so.
+    const text = actionText(ordered, names, projects) + (head.origin === 'claude' ? ' (via Claude)' : '');
+    return { ...head, key: head.id, text, events: ordered };
   });
 }

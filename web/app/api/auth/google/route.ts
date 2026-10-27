@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { cookie, isHttps } from '@/lib/auth';
 import { authUrl, googleSignInEnabled } from '@/lib/google';
+import { REQ_COOKIE } from '@/lib/mcpAuth';
 import { errorResponse, rateLimit } from '@/lib/http';
 
 const STATE_COOKIE = 'nd_oauth_state';
@@ -17,6 +18,8 @@ export async function GET(req: Request) {
       headers: { Location: authUrl(`${origin}/api/auth/google/callback`, state) },
     });
     res.headers.append('Set-Cookie', cookie(state, 600, isHttps(req), STATE_COOKIE));
+    // A plain sign-in drops any half-finished Claude connection, so it cannot hijack this one.
+    res.headers.append('Set-Cookie', cookie('', 0, isHttps(req), REQ_COOKIE));
     return res;
   } catch (e) {
     return errorResponse(e);

@@ -253,7 +253,7 @@ export function CommentThread({ subjectKind, subjectId, subjectTitle, people, dr
               <div className="cm-head">
                 <Avatar name={c.authorName} id={c.authorId} />
                 <PersonLink id={c.authorId}><b>{c.authorName}</b></PersonLink>
-                <span className="when dim small">{fmtStamp(c.createdAt)}{c.editedAt && !c.deleted ? ' · edited' : ''}</span>
+                <span className="when dim small">{fmtStamp(c.createdAt)}{c.via === 'claude' ? ' · via Claude' : ''}{c.editedAt && !c.deleted ? ' · edited' : ''}</span>
               </div>
               {c.deleted ? <p className="cm-body dim">Comment removed</p>
                 : editing === c.id ? (

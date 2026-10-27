@@ -75,6 +75,29 @@ export function verifyView(token: string | undefined, realId: string): string | 
   return real === realId && target && Number(exp) > Date.now() / 1000 ? target : null;
 }
 
+// A signed, expiring value for the MCP sign-in (lib/mcpAuth.ts): base64url JSON plus a MAC under its own label,
+// so one kind (a code, an access token, a session) can never stand in for another. Nothing is stored server-side.
+export function seal(label: string, value: Record<string, unknown>, ttlS: number): string {
+  const payload = Buffer.from(JSON.stringify({ ...value, exp: Math.floor(Date.now() / 1000) + ttlS })).toString('base64url');
+  return `${payload}.${mac(`${label}:${payload}`)}`;
+}
+
+export function unseal<T extends Record<string, unknown>>(label: string, token: string | null | undefined): T | null {
+  if (!token || token.length > 4096) return null;
+  const i = token.lastIndexOf('.');
+  if (i < 0) return null;
+  const payload = token.slice(0, i);
+  const sig = Buffer.from(token.slice(i + 1));
+  const want = Buffer.from(mac(`${label}:${payload}`));
+  if (sig.length !== want.length || !crypto.timingSafeEqual(sig, want)) return null;
+  try {
+    const v = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as T & { exp?: number };
+    return typeof v.exp === 'number' && v.exp > Date.now() / 1000 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 export const cookieOptions = { maxAge: MAX_AGE_S };
 
 // Secure whenever the request came over HTTPS, so plain http://localhost still works.

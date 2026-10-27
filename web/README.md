@@ -285,6 +285,14 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
      unreadable and each lead must connect again). Without `NICO_TOKEN_KEY` on Vercel or with `DATABASE_URL` set, the
      feature stays off.
   5. Run `npm run db:upgrade` before promoting the build, so `google_links` exists.
+- MCP server for Claude (`app/api/mcp/`, `lib/mcp.ts`, `lib/mcpAuth.ts`): add the custom connector
+  `https://<host>/api/mcp` in Claude. Claude registers itself, the person approves at `/connect` (with their app
+  session, or Google if they have none), and every tool call runs as that person through `scoped()`, with the same
+  sight and edit rules as the app. Seven tools: `list_my_tasks`, `search_tasks`, `get_task`, `create_task`,
+  `update_task`, `add_comment`, `get_project_summary`. No deletes, bulk edits or people changes. Changes are marked
+  "via Claude" (`events.origin = 'claude'`, `comments.via`). Nothing is stored for sign-in: client ids, codes and
+  tokens are sealed with `NICO_SESSION_SECRET` (access 1 hour, refresh 30 days). Deactivating a person stops their
+  access on the next call; rotating the secret stops everyone's. Needs `npm run db:upgrade` once before the first deploy that carries it.
 - Production builds from `main` on each push. Work goes on `maahir/mvp` (each push makes a preview), then merges into
   `main`. A schema change needs `npm run db:upgrade` before that merge.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its

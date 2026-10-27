@@ -313,10 +313,10 @@ a.plink.person-cell .av { text-shadow: none; }
 .signin-brand .mark-name { font: var(--type-heading); }
 .signin ul { list-style: none; padding: 0; margin: 0; }
 .signin li + li { border-top: var(--rule) solid var(--hairline); }
-.signin button { width: 100%; text-align: left; display: flex; align-items: center; gap: var(--space-sm); min-height: var(--touch-min); padding: var(--space-sm) var(--space-md);
+.signin button:not(.btn) { width: 100%; text-align: left; display: flex; align-items: center; gap: var(--space-sm); min-height: var(--touch-min); padding: var(--space-sm) var(--space-md);
   background: none; border: 0; cursor: pointer; transition: background var(--dur-state) var(--ease); }
-.signin button:hover { background: var(--sunk); }
-.signin button:active { background: var(--pill); }
+.signin button:not(.btn):hover { background: var(--sunk); }
+.signin button:not(.btn):active { background: var(--pill); }
 .signin .p-name { font: var(--type-line); }
 .signin .p-role { font: var(--type-small); color: var(--ink-3); }
 .signin .p-tag { margin-left: auto; font: var(--type-small); color: var(--ink-3); text-transform: capitalize; }

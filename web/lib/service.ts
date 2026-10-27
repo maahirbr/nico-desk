@@ -2,6 +2,7 @@ import type { Db, Tx } from './db';
 import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
+import { originNow } from './origin';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { norm as nameKey } from './quickadd';
 import { isLeadOrAdmin } from './roles';
@@ -175,8 +176,8 @@ async function insertEvent(
   const j = (v: unknown) => (v === null || v === undefined ? null : JSON.stringify(v));
   await tx.query(
     `INSERT INTO events (id, entity_type, entity_id, field, before, after, reason, actor_id, origin, at)
-     VALUES ($1, 'task', $2, $3, $4::jsonb, $5::jsonb, $6, $7, 'app', $8)`,
-    [newId('evt'), e.entityId, e.field, j(e.before), j(e.after), e.reason ?? null, e.actorId, e.at],
+     VALUES ($1, 'task', $2, $3, $4::jsonb, $5::jsonb, $6, $7, $9, $8)`,
+    [newId('evt'), e.entityId, e.field, j(e.before), j(e.after), e.reason ?? null, e.actorId, e.at, originNow()],
   );
 }
 
