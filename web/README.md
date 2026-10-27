@@ -207,7 +207,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   composition: `isComposing` or keyCode 229) and `cutBy`. Every Enter-to-submit handler now uses it. `LimitNotice`
   (mounted in `layout.tsx`) listens for `beforeinput` on any box with a `maxLength` and shows a notice when a paste or
   dictation is cut. `Count` shows how many characters are left on the long boxes. Test: `tests/ime.test.ts`.
-- **Feedback.** The Feedback tab (sidebar, under More) is open to everyone. It has a box to write a note (up to 4000
+- **Feedback.** The Feedback link (top bar, an icon only on a phone) is open to everyone. It has a box to write a note (up to 4000
   characters) with an optional pick of the screen it is about, and below it every note from the team, newest first, with
   the writer's name and the date and time. Everyone on the team reads every note, whatever their role.  One thought per note. A note can carry up to three
   screenshots, pasted into the box, dropped on the card or picked with "+ Add screenshot"; the browser shrinks each to at

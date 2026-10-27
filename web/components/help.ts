@@ -40,7 +40,6 @@ export const HELP = {
   blocked_on: 'Blocked on. The task cannot go on until this is sorted out. The person it waits on can clear the block.',
   project_owner: 'Project owner. The person accountable for the project. They, the project lead, and any team lead or admin, can change it and add people to it.',
   project_lead: 'Project lead. The person who runs the project day to day. When no separate lead is set, the owner is the lead.',
-  sounds: 'Sounds. Plays a short, quiet tone for a new notice, for a task marked Done and for an action the app refused. Off until you switch it on. The reduced motion setting does not turn it off.',
   view_as: 'View as. An admin sees the app as another person sees it. It is read-only, so nothing can be changed.',
 
   // Home

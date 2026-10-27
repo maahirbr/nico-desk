@@ -29,7 +29,7 @@ Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.
   `components/keys.ts` the shortcuts, `components/help.ts` the help mode words.
 - Docs: `INTENT.md` (hand-written intent), `SPEC.md` (draft requirements, schema, API), `docs/DATA-MODEL.md`,
   `docs/HOW-TEAMS-WORK.md`, `docs/USE-CASES-8-OCT.md`, `docs/DECISIONS.md` (the full decisions log),
-  `docs/demo/index.html` (demo run sheet), `docs/team-page/` (team question page).
+  `docs/demo/index.html` (demo run sheet), `docs/team-page/` (team question page), `docs/guide/index.html` (feature guide).
 - `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly.
   `denylist.txt` guards against real data. `evals/meetings/`: 20 synthetic transcripts and `check.py`.
 

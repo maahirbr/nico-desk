@@ -933,3 +933,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   into a throwaway Postgres 17 matched production: 108 tasks, 493 events, 62 policies, 31 tables with RLS. The nightly
   launchd job is installed by the repo owner. 2 new tests, 809 pass. Rollback: `git revert` this commit; to stop
   backups, `launchctl bootout gui/$(id -u)/com.nicodesk.backup`.
+- **2026-10-28 · Opus 5.5 · A field guide for the team, and two stale docs fixed.** The repo owner asked for one easy,
+  visual how-to for every feature before the first team adopts the app. `docs/guide/index.html` is a single static page
+  in the Warm skin, light and dark, with working models of each screen and made-up example data. Features that are off
+  in production sit on a "Not on yet" page, and unmounted parts (comments, mentions, sounds) are left out. The `sounds`
+  help word goes from `components/help.ts`: no screen shows it since the switch left, and this replaces the 26 Oct note
+  that it stays. The tones and the `nd_sound` cookie stay. `web/README.md` now says Feedback is in the top bar, not
+  under More. Rollback: `git revert` this commit.
