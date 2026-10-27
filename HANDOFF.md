@@ -143,3 +143,90 @@ From the Nicobar repos:
 4. Draw the data map: each source, what it gives, who owns access, read or write.
 5. Sketch the three first screens (the week, a person, a project) in the Nicobar UI.
 6. Agree the concept and the 31 Dec criteria with the sponsor and the pilot lead by 7 Oct.
+
+## 8. Next session (written 13 Oct; 8.2 and 8.3 are built)
+
+Work in this order. Each build item is spec only. Source edits still ask first.
+
+### 8.1 Release (waits on the repo owner's `db:upgrade`)
+
+1. The repo owner runs `npm run db:upgrade` on the hosted database, from a network that reaches it.
+2. Add to Vercel production: `TYPESAFE_API_KEY` (piped from `web/.env.local`, never printed),
+   `NICO_JEV=1`, `NICO_JEV_LIVE=1`, and `NICO_JOB_SECRET` (a new random 32-byte value).
+3. Deploy with `vercel --prod` from `web/`. Open `/team` and check a task note gives the status nudge.
+
+### 8.2 Security fixes (from the 13 Oct audit)
+
+The full report is `web/.data/security-audit-13-oct.md`. It is git-ignored and stays local because the
+repo is public. Do the High items first, then the Medium items, then the row level security SQL in its
+section 4.3. The SQL is a live database change, so it asks first.
+
+### 8.3 Project visibility (built 13 Oct)
+
+An admin marks a person "Own projects only" on the Roster. That person sees the projects they own,
+lead or are a member of, plus any project whose Settings lists them under "Can also view". They also
+see a task they own or that is blocked on them. Leads and admins see everything. Everything else reads
+as missing. View as shows exactly what the person sees. As built, and how it differs from the plan:
+`docs/VISIBILITY-PLAN.md`.
+
+Before a deploy with this code: `npm run db:upgrade` on the hosted database (it adds
+`people.restricted` and `project_viewers`).
+
+### 8.4 The planned batch
+
+1. Real links: every task, project, person and page is a link that opens in a new tab on right click
+   or middle click. Filters and sort live in the URL.
+2. Workstreams 5 (comments), 6 (Connects to), 7 (sounds), 8 (motion), 9 (local search), as spec'd in
+   `docs/PLAN-13-OCT.md`. Build with Sonnet subagents in worktrees.
+3. Suggested order is a choice in the sort menu, not the default.
+4. The status nudge also shows on the full-page "Add an update" form.
+
+### 8.5 Paste to tasks (WhatsApp and similar)
+
+A box in the add flow where a person pastes copied chat messages, or uploads an exported WhatsApp
+`.txt`. The app reads it and proposes changes. Nothing changes until the person approves.
+
+- Input: pasted text, or an exported chat file. Parse each line into sender, date, time and text.
+  Handle both the iOS and Android export formats and multi-line messages.
+- Masking: everything goes through `lib/redact.ts` before it leaves the server. Add phone numbers,
+  including outside numbers that are not on the roster.
+- Model: Claude, masked, the same way the minutes-to-proposals flow in `lib/plan.ts` works.
+- Output, three kinds:
+  1. New tasks: title, owner, due date, project.
+  2. Updates to existing tasks: a status, a new due date or a note, matched to a task by title.
+  3. A note or comment on a task or project.
+- Review screen: show the app's reading of each message next to the proposal ("This message says the
+  print run is done, so mark it Done"). Each proposal has approve, edit and skip. Approve goes through
+  the normal service rules, one change each, so undo works.
+- Evals: about 20 synthetic chats in `evals/paste/`, like `evals/meetings/`, with injection cases
+  (a message that tells the model to do something) and a `check.py`.
+- Open question: keep the raw pasted text, or drop it after review? Default: drop it.
+
+### 8.6 OpenWhispr and dictation
+
+OpenWhispr types into any text field with a hotkey, so it works today with nothing built.
+
+- Check that every text field takes dictated text well: the drawer title, notes, the add box, the
+  update form. Watch for lost text on fast input and for the keyboard rule on phone.
+- Add one line to `/guide`: "You can dictate into any box with a dictation app such as OpenWhispr."
+- Later options: read OpenWhispr notes through its API (`notes:read`, per-user key, paid plan) and
+  feed them to the paste flow, or a mic button in the app.
+
+### 8.7 Other free connections
+
+Granola and Fireflies are built, both read with a team-wide API key. The research and the fixes to make
+first are in `docs/CONNECTIONS-RESEARCH.md`. Recommended next: Fathom (small, free recording, same
+shape as the current connectors), then Google Meet and Gemini notes (medium, no new vendor), then the
+Wispr Flow Notetaker through MCP, only if the team uses it.
+
+### 8.8 Later
+
+Jev next uses (use cases 2, 10 and 11, then 3 to 8), the thread map (key T), install on phone (PWA),
+and team chat. The last two are overnight runs.
+
+### 8.9 Docs for the team
+
+- `docs/ROADMAP.md`: a short README for the team with this roadmap, roles not names, no em dashes.
+  Publish it as a private page too.
+- `docs/DESIGN-GUIDE.md` (written 13 Oct): a short, plain design guide the PM edits on GitHub. Its section 8 lists the parts of `DESIGN.md` that no longer match the app (it still describes NicoPlain, not the NicoWarm default). Update `DESIGN.md` from that list. `DESIGN.md` stays the
+  full source.

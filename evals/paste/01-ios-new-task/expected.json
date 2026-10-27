@@ -1,0 +1,41 @@
+{
+  "type": "new-task",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Meera Iyer",
+      "date": "2026-10-08",
+      "time": "10:02",
+      "text": "Kabir, can you build the festive FAQ section for the landing page by 14 Oct?"
+    },
+    {
+      "index": 1,
+      "sender": "Kabir Sethi",
+      "date": "2026-10-08",
+      "time": "10:03",
+      "text": "Yes, I will take it."
+    },
+    {
+      "index": 2,
+      "sender": "Meera Iyer",
+      "date": "2026-10-08",
+      "time": "10:04",
+      "text": "Great, thanks."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "new",
+      "title_has": "faq",
+      "owner": "per_bo",
+      "due_on": "2026-10-14",
+      "project": "prj_landing",
+      "source": 0,
+      "quote": "build the festive FAQ section"
+    }
+  ],
+  "must_not": []
+}

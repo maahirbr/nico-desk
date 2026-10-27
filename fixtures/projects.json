@@ -5,8 +5,8 @@
     "department": "Digital",
     "owner_id": "per_ada",
     "status": "on_track",
-    "status_note": "Copy done, build under way.",
-    "status_at": "2026-09-14T05:00:00Z"
+    "status_note": "Staging is up. The form wording is the last open item.",
+    "status_at": "2026-10-07T09:35:00Z"
   },
   {
     "id": "prj_shoot",
@@ -22,8 +22,8 @@
     "name": "Loyalty tier pilot",
     "department": "Retention",
     "owner_id": "per_fay",
-    "status": "on_track",
-    "status_note": "Pilot list agreed.",
-    "status_at": "2026-09-14T05:10:00Z"
+    "status": "at_risk",
+    "status_note": "The launch note waits on the landing page address.",
+    "status_at": "2026-10-08T05:00:00Z"
   }
 ]

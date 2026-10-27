@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nico Desk Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;650&display=swap">
+<style>
+/* Layout: a dark rail of sections on the left (the app's own sidebar), paper pages on the right; each page shows a live mock of the screen it explains. */
+:root {
+  --canvas: #F5F2EC;      /* page ground */
+  --surface: #FFFFFF;     /* mock screens */
+  --sunk: #FAF8F4;
+  --pill: #E8E1D3;
+  --ink: #1F1C18;
+  --ink-2: #6E675C;
+  --line: #E8E2D6;
+  --line-strong: #D6CEBF;
+  --accent: #B3522C;      /* job: what you can press, and what is selected */
+  --on-accent: #FFFFFF;
+  --accent-soft: #F6E6DC;
+  --late: #B83D27; --late-soft: #FAE5DF;
+  --off: #8C5B14; --off-soft: #F8ECD0;
+  --st-idle: #ECE9E3; --st-idle-ink: #57514A;
+  --st-active: #FBEFC9; --st-active-ink: #7A5A00;
+  --st-blocked: #FBE1DC; --st-blocked-ink: #A8321F;
+  --st-done: #DCF1E3; --st-done-ink: #22663F;
+  --st-dropped: #5F5951; --st-dropped-ink: #FFFFFF;
+  --side: #1E1B17; --side-hover: #2B2722; --side-line: #38332C;
+  --side-ink: #E9E3D7; --side-ink-2: #9D9588; --side-accent: #E07B4F;
+  --f-title: "Fraunces", Georgia, "Times New Roman", serif;
+  --f-text: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 10px;
+  --ease: cubic-bezier(.2,.7,.2,1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --canvas: #12110F; --surface: #1B1916; --sunk: #211F1B; --pill: #2B2822;
+  --ink: #EDE8DE; --ink-2: #A39B8E; --line: #2E2B26; --line-strong: #403B34;
+  --accent: #E07B4F; --on-accent: #1B1916; --accent-soft: #3A261C;
+  --late: #F07158; --late-soft: #3A1F1A; --off: #E5A845; --off-soft: #33281A;
+  --st-idle: #34302B; --st-idle-ink: #CFC8BB; --st-active: #3D3317; --st-active-ink: #F0C75E;
+  --st-blocked: #3F201B; --st-blocked-ink: #FF9A8A; --st-done: #1C3527; --st-done-ink: #7FD6A3;
+  --st-dropped: #57514A; --st-dropped-ink: #F2EDE4; --side: #0C0B0A; --side-hover: #1A1815; --side-line: #2A2622;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --canvas: #12110F; --surface: #1B1916; --sunk: #211F1B; --pill: #2B2822;
+  --ink: #EDE8DE; --ink-2: #A39B8E; --line: #2E2B26; --line-strong: #403B34;
+  --accent: #E07B4F; --on-accent: #1B1916; --accent-soft: #3A261C;
+  --late: #F07158; --late-soft: #3A1F1A; --off: #E5A845; --off-soft: #33281A;
+  --st-idle: #34302B; --st-idle-ink: #CFC8BB; --st-active: #3D3317; --st-active-ink: #F0C75E;
+  --st-blocked: #3F201B; --st-blocked-ink: #FF9A8A; --st-done: #1C3527; --st-done-ink: #7FD6A3;
+  --st-dropped: #57514A; --st-dropped-ink: #F2EDE4; --side: #0C0B0A; --side-hover: #1A1815; --side-line: #2A2622;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--canvas); color: var(--ink); font: 400 15px/1.55 var(--f-text); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--side); }
+.shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+/* rail */
+.rail { background: var(--side); color: var(--side-ink); position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; overflow-y: auto; padding: 22px 12px 28px max(12px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 10px; }
+.brand-mark { width: 28px; height: 28px; border-radius: 7px; background: var(--side-accent); color: #1B1916; display: grid; place-items: center; font: 600 15px/1 var(--f-title); }
+.brand b { font: 600 16px/1.2 var(--f-title); display: block; }
+.brand span { font-size: 12px; color: var(--side-ink-2); }
+.rail nav { display: flex; flex-direction: column; gap: 1px; }
+.rail a { color: var(--side-ink-2); text-decoration: none; font: 500 14px/1.2 var(--f-text); padding: 8px 10px; border-radius: 7px; display: flex; gap: 10px; align-items: center; transition: background .15s var(--ease), color .15s var(--ease); }
+.rail a:hover { background: var(--side-hover); color: var(--side-ink); }
+.rail a.on { background: var(--side-hover); color: var(--side-ink); box-shadow: inset 2px 0 0 var(--side-accent); }
+.rail a i { font-style: normal; width: 16px; text-align: center; opacity: .8; font-size: 13px; }
+.rail-foot { margin-top: auto; padding: 0 10px; font-size: 12px; color: var(--side-ink-2); line-height: 1.45; }
+.rail-foot a { display: inline; padding: 0; color: var(--side-ink); text-decoration: underline; text-underline-offset: 2px; }
+/* main */
+main { min-width: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 80px; }
+.col { max-width: 880px; margin: 0 auto; }
+header.hero { padding-block: 56px 28px; border-bottom: 1px solid var(--line); }
+h1 { font: 600 clamp(34px, 5vw, 48px)/1.05 var(--f-title); letter-spacing: -0.015em; margin: 0 0 14px; text-wrap: balance; }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 60ch; margin: 0; }
+.quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 26px; }
+.quick a { text-decoration: none; color: inherit; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 4px; transition: border-color .15s var(--ease), transform .15s var(--ease); }
+.quick a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.quick b { font: 600 15px/1.3 var(--f-text); }
+.quick span { font-size: 13px; color: var(--ink-2); }
+section.pg { padding-block: 52px 8px; scroll-margin-top: 12px; }
+section.pg + section.pg { border-top: 1px solid var(--line); }
+h2 { font: 600 30px/1.15 var(--f-title); letter-spacing: -0.01em; margin: 0 0 8px; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--f-text); margin: 28px 0 8px; }
+p { margin: 0 0 12px; max-width: 66ch; }
+.sub { color: var(--ink-2); font-size: 16px; margin-bottom: 22px; }
+ol.steps { margin: 0 0 16px; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8px; max-width: 66ch; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+ol.steps li::before { content: counter(s); font: 600 12px/22px var(--f-text); width: 22px; height: 22px; text-align: center; border-radius: 50%; background: var(--pill); color: var(--ink); font-variant-numeric: tabular-nums; }
+ul.plain { margin: 0 0 14px; padding-left: 18px; max-width: 66ch; }
+ul.plain li { margin-bottom: 5px; }
+.lbl { font: 500 13px/1 var(--f-text); background: var(--sunk); border: 1px solid var(--line-strong); border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
+kbd { font: 600 12px/1 var(--f-text); background: var(--surface); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 3px 6px; }
+.rule { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 var(--r) var(--r) 0; padding: 12px 14px; margin: 16px 0; max-width: 66ch; }
+.rule b { display: block; font-size: 13px; margin-bottom: 2px; }
+.offtag { display: inline-block; font: 600 11px/1 var(--f-text); letter-spacing: .04em; text-transform: uppercase; color: var(--off); background: var(--off-soft); padding: 4px 6px; border-radius: 5px; vertical-align: 2px; }
+/* mock screens */
+.mock { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; margin: 18px 0 8px; box-shadow: 0 1px 0 var(--line), 0 10px 30px -18px rgba(31,28,24,.35); }
+.mock-bar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--sunk); font-size: 12px; color: var(--ink-2); }
+.mock-bar .dots { display: flex; gap: 5px; }
+.mock-bar .dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
+.mock-bar .url { flex: 1; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mock-body { padding: 16px; }
+.cap { font-size: 13px; color: var(--ink-2); margin: 6px 0 0; }
+/* chips */
+.chip { display: inline-flex; align-items: center; gap: 5px; font: 500 13px/1 var(--f-text); padding: 5px 9px; border-radius: 999px; white-space: nowrap; border: 0; }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .75; }
+.s-idle { background: var(--st-idle); color: var(--st-idle-ink); }
+.s-active { background: var(--st-active); color: var(--st-active-ink); }
+.s-blocked { background: var(--st-blocked); color: var(--st-blocked-ink); }
+.s-done { background: var(--st-done); color: var(--st-done-ink); }
+.s-dropped { background: var(--st-dropped); color: var(--st-dropped-ink); }
+.flag { font: 600 12px/1 var(--f-text); padding: 4px 7px; border-radius: 5px; white-space: nowrap; }
+.f-late { color: var(--late); background: var(--late-soft); }
+.f-risk { color: var(--off); background: var(--off-soft); }
+.f-good { color: var(--st-done-ink); background: var(--st-done); }
+/* buttons and toggles */
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg { display: inline-flex; background: var(--pill); border-radius: 8px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 6px 11px; border-radius: 6px; font: 500 13px/1.1 var(--f-text); color: var(--ink-2); transition: background .15s var(--ease), color .15s var(--ease); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.btn { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 7px; padding: 7px 12px; font: 500 13px/1.1 var(--f-text); transition: border-color .15s var(--ease), background .15s var(--ease); }
+.btn:hover { border-color: var(--ink-2); }
+.btn.pri { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.pri:hover { filter: brightness(1.05); }
+.btn:disabled { opacity: .45; cursor: default; }
+/* app map */
+.map { display: grid; grid-template-columns: 170px minmax(0, 1fr); min-height: 300px; }
+.map-side { background: var(--side); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+.map-side button { text-align: left; border: 0; background: transparent; color: var(--side-ink-2); padding: 8px 10px; border-radius: 6px; font: 500 13px/1.2 var(--f-text); transition: background .15s var(--ease), color .15s var(--ease); }
+.map-side button:hover { color: var(--side-ink); }
+.map-side button[aria-pressed="true"] { background: var(--side-hover); color: var(--side-ink); box-shadow: inset 2px 0 0 var(--side-accent); }
+.map-side .newt { margin-top: 8px; background: var(--side-accent); color: #1B1916; font-weight: 600; text-align: center; }
+.map-side .newt[aria-pressed="true"] { background: var(--side-accent); color: #1B1916; box-shadow: none; outline: 2px solid var(--side-ink); }
+.map-side .sep { height: 1px; background: var(--side-line); margin: 8px 4px; }
+.map-main { padding: 18px 20px; min-width: 0; }
+.map-main h4 { font: 600 20px/1.2 var(--f-title); margin: 0 0 4px; }
+.map-main .path { font-size: 12px; color: var(--ink-2); margin-bottom: 10px; }
+.map-main p { font-size: 14px; }
+/* rows */
+.row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.row:last-child { border-bottom: 0; }
+.tick { width: 18px; height: 18px; border: 1.5px solid var(--line-strong); border-radius: 5px; background: var(--surface); }
+.row .meta { font-size: 12px; color: var(--ink-2); }
+.row .right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.grp { font: 600 12px/1 var(--f-text); color: var(--ink-2); margin: 14px 0 2px; letter-spacing: .03em; text-transform: uppercase; }
+.grp:first-child { margin-top: 0; }
+.greet { font: 600 22px/1.2 var(--f-title); margin: 0 0 4px; }
+/* team mock */
+.team-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.wk { display: flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-text); }
+.wk button { border: 1px solid var(--line-strong); background: var(--surface); width: 28px; height: 28px; border-radius: 6px; }
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.person { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; background: var(--sunk); min-width: 0; }
+.person h5 { margin: 0 0 6px; font: 600 14px/1.2 var(--f-text); display: flex; align-items: center; gap: 8px; }
+.av { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 11px/1 var(--f-text); background: var(--pill); color: var(--ink); flex: none; }
+.person .t { font-size: 13px; padding: 4px 0; display: flex; justify-content: space-between; gap: 8px; border-top: 1px dashed var(--line); }
+.person .t:first-of-type { border-top: 0; }
+.person .t span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.statcol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.statcol > div { min-width: 0; }
+.statcol h5 { margin: 0 0 6px; }
+.statcol .t { font-size: 13px; background: var(--sunk); border: 1px solid var(--line); border-radius: 7px; padding: 7px 8px; margin-bottom: 6px; }
+.statcol .t small { display: block; color: var(--ink-2); font-size: 12px; }
+/* lab panels */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.field label { font: 500 13px/1.2 var(--f-text); color: var(--ink-2); }
+input[type="text"], select { font: 400 14px/1.3 var(--f-text); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 7px; padding: 8px 10px; width: 100%; min-width: 0; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.outcome { border: 1px solid var(--line); background: var(--sunk); border-radius: 9px; padding: 14px; min-height: 120px; }
+.outcome .big { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.outcome p { font-size: 14px; margin: 0; }
+.qa-out { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 6px 10px; font-size: 14px; }
+.qa-out dt { color: var(--ink-2); }
+.qa-out dd { margin: 0; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.qa-out dd.miss { color: var(--off); font-weight: 400; }
+/* minutes flow */
+.flow-steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.flow-steps button { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: 500 13px/1 var(--f-text); color: var(--ink-2); }
+.flow-steps button[aria-pressed="true"] { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+.minutes { font: 400 13px/1.6 ui-monospace, "SF Mono", Menlo, monospace; background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; overflow-x: auto; margin: 0; }
+.prop { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; margin-bottom: 8px; display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap; transition: opacity .2s var(--ease), transform .2s var(--ease); }
+.prop .what { min-width: 0; flex: 1 1 260px; }
+.prop .what b { font-weight: 500; display: block; }
+.prop .what small { color: var(--ink-2); font-size: 12px; }
+.prop .acts { display: flex; gap: 6px; }
+.prop.gone { opacity: .45; }
+.prop.done-ok { border-color: var(--st-done-ink); }
+/* role matrix */
+.matrix { width: 100%; border-collapse: collapse; font-size: 14px; }
+.matrix td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.matrix td:last-child { text-align: right; white-space: nowrap; font-weight: 600; }
+.yes { color: var(--st-done-ink); }
+.no { color: var(--ink-2); font-weight: 400 !important; }
+.scroll { overflow-x: auto; }
+/* keys */
+.keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.key { border: 1px solid var(--line); border-radius: 9px; padding: 12px; background: var(--surface); transition: border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease); }
+.key.hit { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-2px); }
+.key div { margin-bottom: 8px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--ink-2); }
+.key span { font-size: 14px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
+.filters button { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 7px; padding: 6px 10px; font: 500 13px/1 ui-monospace, "SF Mono", Menlo, monospace; }
+.filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.boards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.boards > div { border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; background: var(--surface); }
+.boards h4 { margin: 0 0 4px; font: 600 18px/1.2 var(--f-title); }
+.tiles { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.tiles span { border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font-size: 12px; color: var(--ink-2); background: var(--sunk); }
+.tiles span b { display: block; font: 650 17px/1.1 var(--f-text); color: var(--ink); font-variant-numeric: tabular-nums; }
+.offlist { display: grid; gap: 0; }
+.offlist div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.offlist small { display: block; color: var(--ink-2); font-size: 13px; }
+.mailto { font-size: 13px; }
+.mailto .hd { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+.mailto .hd span:nth-child(odd) { color: var(--ink-2); }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13px; }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: sticky; top: env(safe-area-inset-top, 0px); height: auto; z-index: 5; padding: 10px max(12px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px)); flex-direction: row; align-items: center; gap: 10px; overflow: hidden; }
+  .brand span, .rail-foot { display: none; }
+  .rail nav { flex-direction: row; overflow-x: auto; scrollbar-width: none; gap: 2px; min-width: 0; }
+  .rail nav::-webkit-scrollbar { display: none; }
+  .rail a { white-space: nowrap; padding: 7px 9px; }
+  .rail a i { display: none; }
+  .rail a.on { box-shadow: inset 0 -2px 0 var(--side-accent); }
+  .lab, .boards { grid-template-columns: minmax(0, 1fr); }
+  .quick { grid-template-columns: minmax(0, 1fr); }
+  .statcol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .map { grid-template-columns: minmax(0, 1fr); }
+  .map-side { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  .map-side .sep { display: none; }
+  .map-side .newt { margin-top: 0; }
+  header.hero { padding-block: 32px 22px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="brand"><div class="brand-mark">N</div><div><b>Nico Desk</b><span>Field guide</span></div></div>
+    <nav id="nav">
+      <a href="#start"><i>→</i>Start here</a>
+      <a href="#home"><i>⌂</i>Your Home</a>
+      <a href="#team"><i>◫</i>Team page</a>
+      <a href="#tasks"><i>✓</i>Tasks</a>
+      <a href="#status"><i>●</i>Status and flags</a>
+      <a href="#projects"><i>▤</i>Projects</a>
+      <a href="#minutes"><i>✎</i>Minutes to tasks</a>
+      <a href="#reminders"><i>✉</i>Reminders</a>
+      <a href="#search"><i>⌕</i>Search and keys</a>
+      <a href="#feedback"><i>✦</i>Feedback</a>
+      <a href="#admin"><i>⚙</i>Roster and roles</a>
+      <a href="#look"><i>◐</i>Look and phone</a>
+      <a href="#off"><i>○</i>Not on yet</a>
+    </nav>
+    <div class="rail-foot">The app: <a href="https://nico-desk.vercel.app" target="_blank" rel="noopener">nico-desk.vercel.app</a>. All names and tasks on this page are examples.</div>
+  </aside>
+
+  <main>
+  <div class="col">
+    <header class="hero">
+      <h1>How your team runs its week in Nico Desk</h1>
+      <p class="lede">One place for who owns what, what is due, and what changed. Each page below shows a working model of a screen. Press the buttons, they react the way the app does.</p>
+      <div class="quick">
+        <a href="#tasks"><b>Add my first task</b><span>Press <kbd>n</kbd> and type a sentence.</span></a>
+        <a href="#minutes"><b>Turn minutes into tasks</b><span>Paste notes, accept what is right.</span></a>
+        <a href="#reminders"><b>Chase late work</b><span>Leads: drafts open in your Gmail.</span></a>
+      </div>
+    </header>
+
+    <!-- START -->
+    <section class="pg" id="start">
+      <h2>Start here</h2>
+      <p class="sub">Sign in with your work Google account. Then the sidebar on the left takes you everywhere.</p>
+      <ol class="steps">
+        <li><span>Open <a href="https://nico-desk.vercel.app" target="_blank" rel="noopener">nico-desk.vercel.app</a> and press <span class="lbl">Continue with Google</span>.</span></li>
+        <li><span>Pick your work account. You get in only if you are on the team roster.</span></li>
+        <li><span>If you see "That account is not on the team roster", ask the team admin to add you.</span></li>
+      </ol>
+      <h3>The map of the app</h3>
+      <p>Press a sidebar item to see what that page is for.</p>
+      <div class="mock" aria-label="Model of the app sidebar">
+        <div class="map">
+          <div class="map-side" id="mapSide" role="group" aria-label="Sidebar">
+            <button data-k="home" aria-pressed="true">Home</button>
+            <button data-k="team" aria-pressed="false">Team</button>
+            <button data-k="projects" aria-pressed="false">Projects</button>
+            <div class="sep"></div>
+            <button data-k="ledger" aria-pressed="false">More › Ledger</button>
+            <button data-k="reminders" aria-pressed="false">More › Reminders</button>
+            <button data-k="roster" aria-pressed="false">More › Roster</button>
+            <button data-k="account" aria-pressed="false">Account menu</button>
+            <button data-k="new" class="newt" aria-pressed="false">+ New task</button>
+          </div>
+          <div class="map-main" id="mapMain" aria-live="polite"></div>
+        </div>
+      </div>
+      <p class="cap">The search box, the Feedback link and the help switch sit in the top bar on every page.</p>
+    </section>
+
+    <!-- HOME -->
+    <section class="pg" id="home">
+      <h2>Your Home</h2>
+      <p class="sub">Home shows only your own work, sorted by when it is due. Start each day here.</p>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><span></span><span></span><span></span></div><div class="url">nico-desk.vercel.app/me</div></div>
+        <div class="mock-body">
+          <p class="greet">Good morning, Noor</p>
+          <p class="meta" style="color:var(--ink-2);font-size:13px">5 open · 1 late · 1 waiting on you</p>
+          <div class="grp">Late</div>
+          <div class="row"><div class="tick"></div><div>Send size chart to the studio<div class="meta">Festive capsule</div></div><div class="right"><span class="flag f-late">Late</span><span class="chip s-active">In progress</span></div></div>
+          <div class="grp">Today</div>
+          <div class="row"><div class="tick"></div><div>Approve lookbook shortlist<div class="meta">Autumn landing page</div></div><div class="right"><span class="flag f-risk">At risk</span><span class="chip s-idle">Not started</span></div></div>
+          <div class="grp">This week</div>
+          <div class="row"><div class="tick"></div><div>Brief the photographer<div class="meta">Festive capsule</div></div><div class="right"><span class="chip s-blocked">Blocked</span></div></div>
+          <div class="row"><div class="tick"></div><div>Draft store window copy<div class="meta">One-off task</div></div><div class="right"><span class="chip s-idle">Not started</span></div></div>
+        </div>
+      </div>
+      <ul class="plain">
+        <li>Your tasks sit in groups: <b>Late</b>, <b>Today</b>, <b>This week</b>, <b>Later</b>.</li>
+        <li>Tick the box to mark a task Done. Use the status chip to pick another status.</li>
+        <li><b>Waiting on you</b> lists tasks that are blocked until you act.</li>
+        <li><b>Updates for you</b> shows changes to your tasks. Press <span class="lbl">Mark seen</span> to clear it.</li>
+        <li>Done this week and Dropped stay folded at the foot of the page.</li>
+      </ul>
+    </section>
+
+    <!-- TEAM -->
+    <section class="pg" id="team">
+      <h2>The Team page</h2>
+      <p class="sub">The whole team's week on one screen. Use it in the weekly review in place of a round of messages.</p>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><span></span><span></span><span></span></div><div class="url">nico-desk.vercel.app/team</div></div>
+        <div class="mock-body">
+          <div class="team-tools">
+            <div class="wk"><button id="wkPrev" aria-label="Previous week">‹</button><span id="wkLabel">This week</span><button id="wkNext" aria-label="Next week">›</button></div>
+            <div class="seg" role="group" aria-label="View"><button id="vPerson" aria-pressed="true">By person</button><button id="vStatus" aria-pressed="false">By status</button></div>
+          </div>
+          <p style="font-size:13px;color:var(--ink-2);margin-bottom:10px" id="teamSum"></p>
+          <div id="teamView"></div>
+        </div>
+      </div>
+      <ul class="plain">
+        <li>Use <span class="lbl">‹</span> and <span class="lbl">›</span> to move one week back or forward.</li>
+        <li><b>By person</b> shows each person's Late, This week and Coming up. People with no open work are hidden.</li>
+        <li><b>By status</b> groups the same work as Blocked, Not started, In progress and Done.</li>
+        <li>Filter by project, or type in <span class="lbl">Find a person</span>. The app remembers your view.</li>
+      </ul>
+    </section>
+
+    <!-- TASKS -->
+    <section class="pg" id="tasks">
+      <h2>Add and work a task</h2>
+      <p class="sub">Press <kbd>n</kbd> or <span class="lbl">+ New task</span> from anywhere. Type one sentence, and Quick Add fills in the fields.</p>
+      <div class="lab">
+        <div>
+          <div class="field">
+            <label for="qa">Quick Add (try your own sentence)</label>
+            <input type="text" id="qa" value="ask Sam to send the design files by Monday for Autumn landing page">
+          </div>
+          <div class="seg" role="group" aria-label="Sample sentences" style="margin-bottom:12px">
+            <button data-qa="ask Sam to send the design files by Monday for Autumn landing page" aria-pressed="false">Sample 1</button>
+            <button data-qa="Ira to book the studio by Friday for Festive capsule" aria-pressed="false">Sample 2</button>
+            <button data-qa="check fabric swatches" aria-pressed="false">Sample 3</button>
+          </div>
+          <p class="cap">This page reads simple sentences only, to show the idea. In the app, you check every field before you press <span class="lbl">Add task</span>. You can also open <span class="lbl">Fill It In Yourself</span> and type each field.</p>
+        </div>
+        <div class="outcome" aria-live="polite">
+          <dl class="qa-out" id="qaOut"></dl>
+        </div>
+      </div>
+      <h3>The fields</h3>
+      <ul class="plain">
+        <li><b>Task</b>: what will be done. <b>Owner</b>: one person. <b>Due Date</b>: today or later.</li>
+        <li><b>Project</b>: pick one, or "None (one-off task)". <b>Note</b> and <b>Details</b> are optional.</li>
+      </ul>
+      <h3>Work a task</h3>
+      <ol class="steps">
+        <li><span>Click a task row. A side panel opens with every field, the history and <span class="lbl">Copy link</span>.</span></li>
+        <li><span>Change the status, the owner or the note, then press <span class="lbl">Save changes</span>.</span></li>
+        <li><span>To add a Doc, Sheet or Figma link, paste it in <span class="lbl">Paste a link</span> and press <span class="lbl">Add link</span>.</span></li>
+        <li><span>Press <span class="lbl">Open full page</span> to add an update to the log or to set priority (leads).</span></li>
+      </ol>
+      <div class="rule"><b>The first due date is kept</b>A due date can move, but you must write a reason (10 to 280 characters). The app counts each push and shows the earlier date struck out.</div>
+      <div class="rule"><b>Undo is a new change</b>After a status, date or edit change, a toast offers <span class="lbl">Undo</span>. Undo records a new change. The history is never erased.</div>
+      <h3>Who can do what with a task</h3>
+      <div class="seg" role="group" aria-label="Your role" id="roleSeg" style="margin-bottom:10px">
+        <button data-r="member" aria-pressed="true">Member</button>
+        <button data-r="owner" aria-pressed="false">Task owner</button>
+        <button data-r="lead" aria-pressed="false">Lead</button>
+        <button data-r="admin" aria-pressed="false">Admin</button>
+      </div>
+      <div class="scroll"><table class="matrix" id="matrix"></table></div>
+      <p class="cap">An admin has every right a lead has. A person a blocked task waits on can also unblock it, and writes what they did.</p>
+    </section>
+
+    <!-- STATUS -->
+    <section class="pg" id="status">
+      <h2>Status and flags</h2>
+      <p class="sub">You pick a status. The app works out the flags from the dates. You never pick a flag.</p>
+      <div class="filters" style="margin-bottom:16px">
+        <span class="chip s-idle">Not started</span><span class="chip s-active">In progress</span><span class="chip s-blocked">Blocked</span><span class="chip s-done">Done</span><span class="chip s-dropped">Dropped</span>
+      </div>
+      <ul class="plain">
+        <li><b>Blocked</b> asks for a block reason. You can name the person you wait on.</li>
+        <li><b>Dropped</b>, and a move back to Not started, also ask for a reason.</li>
+      </ul>
+      <h3>Try it: set a status and a date</h3>
+      <div class="lab">
+        <div>
+          <div class="field"><label for="stSel">Status</label>
+            <select id="stSel"><option>Not started</option><option selected>In progress</option><option>Blocked</option><option>Done</option><option>Dropped</option></select>
+          </div>
+          <div class="field"><label for="dSl" id="dLbl">Due in</label>
+            <input type="range" id="dSl" min="-6" max="10" value="4">
+          </div>
+        </div>
+        <div class="outcome" aria-live="polite">
+          <div class="big" id="flagBig"></div>
+          <p id="flagWhy"></p>
+        </div>
+      </div>
+      <div class="scroll" style="margin-top:12px"><table class="matrix">
+        <tr><td><span class="flag f-late">Late</span></td><td style="text-align:left;font-weight:400">The due date has passed and the task is still open.</td></tr>
+        <tr><td><span class="flag f-risk">At risk</span></td><td style="text-align:left;font-weight:400">Due within 2 days, and still Not started or Blocked.</td></tr>
+        <tr><td><span class="flag f-good">Ahead / On time</span></td><td style="text-align:left;font-weight:400">After Done: the finish date compared with the first due date.</td></tr>
+      </table></div>
+      <p class="cap">Turn on help mode with <kbd>?</kbd>. Then hover a dotted word in the app to read what it means.</p>
+    </section>
+
+    <!-- PROJECTS -->
+    <section class="pg" id="projects">
+      <h2>Projects</h2>
+      <p class="sub">A project holds its tasks, its people and its date. Anyone on the team can start one from <span class="lbl">+ New project</span>.</p>
+      <ol class="steps">
+        <li><span>Go to <b>Projects</b> and press <span class="lbl">+ New project</span>.</span></li>
+        <li><span>Fill in <b>Project Name</b>, Internal or <b>Partner / Collaboration</b>, and a <b>Target Date</b> with its label (Launch, Event, Deadline).</span></li>
+        <li><span>Set the <b>Project Owner</b>, the <b>Project Lead</b> and the people. Add sub-projects as chips.</span></li>
+        <li><span>Press <span class="lbl">Start project</span>. Use the <b>Set up this project</b> list to finish.</span></li>
+      </ol>
+      <h3>Two kinds of board</h3>
+      <div class="boards">
+        <div>
+          <h4>Task board</h4>
+          <p style="font-size:14px;color:var(--ink-2)">For internal projects.</p>
+          <div class="tiles"><span><b>12</b>Open</span><span><b>5</b>In progress</span><span><b>2</b>At risk</span><span><b>1</b>Late</span><span><b>9</b>Done</span></div>
+          <ul class="plain" style="font-size:14px">
+            <li>Click a tile to filter the table. Click it again to clear.</li>
+            <li>Filter by person with the pills, or by sub-project.</li>
+            <li><span class="lbl">Import minutes</span> and <span class="lbl">+ Add task</span> sit at the top.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Plan board</h4>
+          <p style="font-size:14px;color:var(--ink-2)">For partner projects.</p>
+          <div class="tiles"><span><b>8</b>Open</span><span><b>3</b>In progress</span><span><b>1</b>Late</span><span><b>2</b>Pending</span><span><b>1</b>Pushed</span></div>
+          <ul class="plain" style="font-size:14px">
+            <li>Tabs: Lines, Next two weeks, Asks, Rhythm and parked, Log.</li>
+            <li>A line says what will be done, what done looks like, and who owns it on each side.</li>
+            <li><b>Asks</b> are the partner's requests. <b>Pending</b> means no owner yet.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="rule"><b>Archive needs open work closed</b>To archive, press <span class="lbl">Archive project</span> and write a reason. Open tasks become Dropped. Only an admin can delete an archived project for good.</div>
+      <p>A project shows a status word: On track, At risk or Off track. A person sets it. The app does not.</p>
+    </section>
+
+    <!-- MINUTES -->
+    <section class="pg" id="minutes">
+      <h2>Turn meeting minutes into tasks</h2>
+      <p class="sub">Paste the notes from a meeting. The app reads the next steps and proposes tasks. Nothing changes until a person accepts.</p>
+      <div class="flow-steps" role="group" aria-label="Steps" id="flowSteps">
+        <button data-f="0" aria-pressed="true">1 · Paste</button>
+        <button data-f="1" aria-pressed="false">2 · Read</button>
+        <button data-f="2" aria-pressed="false">3 · Accept</button>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><span></span><span></span><span></span></div><div class="url">Festive capsule › Import minutes</div></div>
+        <div class="mock-body" id="flowBody" aria-live="polite"></div>
+      </div>
+      <h3>Where the minutes can come from</h3>
+      <ul class="plain">
+        <li><b>Paste</b>: any notes. Set the meeting date and name, then press <span class="lbl">Read minutes</span>.</li>
+        <li><b>Granola, Fireflies, Fathom</b>: search your meetings and pick one. Each needs its key set up first. On the hosted app, ask the repo owner.</li>
+        <li><b>Wispr Flow</b>: copy its summary and use Paste.</li>
+        <li><b>Google Doc and Google Meet</b>: <span class="offtag">Not on yet</span></li>
+      </ul>
+      <div class="rule"><b>A person decides</b>Each accepted step becomes a task with an owner and a date. A step with no owner or date shows "Needs owner and date". The same meeting cannot be imported twice.</div>
+    </section>
+
+    <!-- REMINDERS -->
+    <section class="pg" id="reminders">
+      <h2>Reminders</h2>
+      <p class="sub">For leads. The app writes one reminder per person. It opens as a draft in your own Gmail. You read it and press Send. The app never sends.</p>
+      <div class="lab">
+        <div>
+          <ol class="steps">
+            <li><span>Go to <b>More › Reminders</b>, or press <span class="lbl">Reminders</span> on a board.</span></li>
+            <li><span>Pick <span class="lbl">Overdue only</span> or <span class="lbl">Overdue + due soon</span>, and a project. Press <span class="lbl">Apply</span>.</span></li>
+            <li><span>Untick any item you do not want to chase.</span></li>
+            <li><span>Press <span class="lbl">Open in Gmail</span>. Check the draft, then send it yourself.</span></li>
+          </ol>
+          <p class="cap">"reminded 2 days ago" shows when you last chased that person. Every day at 09:00 the app also puts due and late notices on Home. It sends no email.</p>
+        </div>
+        <div class="mock" style="margin:0">
+          <div class="mock-bar"><div class="url">Draft in your Gmail</div></div>
+          <div class="mock-body mailto">
+            <div class="hd"><span>To</span><span>dev@example.com</span><span>Subject</span><span>Two tasks due this week</span></div>
+            <p>Hi Dev,</p>
+            <p>A quick check on these:</p>
+            <ul class="plain"><li>Send size chart to the studio (was due Monday)</li><li>Book the fit model (due Thursday)</li></ul>
+            <p>Can you update them in Nico Desk?</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn pri" type="button" disabled>Send (you press it in Gmail)</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="pg" id="search">
+      <h2>Search and keyboard</h2>
+      <p class="sub">Press <kbd>/</kbd> to search tasks, projects, plan lines and people. Search also runs commands, such as "New task" or "Go to Team".</p>
+      <h3>Try the keys on this page</h3>
+      <div class="keys" id="keys">
+        <div class="key" data-k="search"><div><kbd>/</kbd> or <kbd>⌘</kbd><kbd>K</kbd></div><span>Search</span></div>
+        <div class="key" data-k="new"><div><kbd>n</kbd></div><span>New task</span></div>
+        <div class="key" data-k="help"><div><kbd>?</kbd></div><span>Help mode on or off</span></div>
+        <div class="key" data-k="esc"><div><kbd>Esc</kbd></div><span>Close a panel, menu or search</span></div>
+      </div>
+      <p class="cap" id="keyNote">Single keys do nothing while you type in a field.</p>
+      <h3>Filter words</h3>
+      <p>Type these in the search box. Press one to see what it finds.</p>
+      <div class="filters" id="filters">
+        <button data-q="is:late" aria-pressed="true">is:late</button>
+        <button data-q="is:blocked" aria-pressed="false">is:blocked</button>
+        <button data-q="is:mine" aria-pressed="false">is:mine</button>
+        <button data-q="due:today" aria-pressed="false">due:today</button>
+        <button data-q="due:week" aria-pressed="false">due:week</button>
+        <button data-q="@sam" aria-pressed="false">@sam</button>
+        <button data-q="#festive" aria-pressed="false">#festive</button>
+        <button data-q="is:done" aria-pressed="false">is:done</button>
+      </div>
+      <div class="outcome" id="filterOut" aria-live="polite" style="min-height:0"></div>
+    </section>
+
+    <!-- FEEDBACK -->
+    <section class="pg" id="feedback">
+      <h2>Feedback</h2>
+      <p class="sub">Tell us what works and what does not. Press <span class="lbl">Feedback</span> in the top bar.</p>
+      <ol class="steps">
+        <li><span>Write your note. Add the page and up to three screenshots: paste, drop or press <span class="lbl">+ Add screenshot</span>.</span></li>
+        <li><span>Press <span class="lbl">Send</span>. Every note on the team appears in the list, newest first.</span></li>
+        <li><span>Agree with a note? Press <span class="lbl">+1, I agree</span>. One vote per person.</span></li>
+        <li><span>When someone replies, you see it on Home under "Replies to your feedback".</span></li>
+      </ol>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="pg" id="admin">
+      <h2>Roster and roles</h2>
+      <p class="sub">Everyone can see the roster under <b>More › Roster</b>. Only an admin can change it.</p>
+      <div class="scroll"><table class="matrix">
+        <tr><td style="text-align:left;font-weight:600">Member</td><td style="text-align:left;font-weight:400;white-space:normal">Adds and works their own tasks, starts projects, imports minutes, sends feedback.</td></tr>
+        <tr><td style="text-align:left;font-weight:600">Lead</td><td style="text-align:left;font-weight:400;white-space:normal">Also reassigns, reopens, sets priority, drafts reminders and sees everyone's Ledger.</td></tr>
+        <tr><td style="text-align:left;font-weight:600">Admin</td><td style="text-align:left;font-weight:400;white-space:normal">Everything a lead can do. Also changes the roster, uses View as, and deletes archived projects.</td></tr>
+      </table></div>
+      <h3>Add people (admin)</h3>
+      <ol class="steps">
+        <li><span>One person: fill in <b>Name</b>, <b>Job title</b>, <b>Department</b> and <b>Email</b>. Tick Lead or Admin if needed. Press <span class="lbl">Add to roster</span>.</span></li>
+        <li><span>A whole team: in <b>Add several people</b>, paste one person per line as name, job title, department, email. Press <span class="lbl">Add everyone</span>.</span></li>
+        <li><span>Press <span class="lbl">Copy invite</span> and send the link to them yourself.</span></li>
+      </ol>
+      <pre class="minutes">Sam Rao, Designer, Brand, sam@example.com
+Ira Shah, Merchandiser, Product, ira@example.com</pre>
+      <p class="cap">Each line needs all four parts. Everyone added this way starts as a member.</p>
+      <div class="rule"><b>View as is read-only</b>An admin can see the app as another person: account menu › <span class="lbl">View as someone else</span>. Nothing can be changed in this mode. Press <span class="lbl">Switch back to you</span> to leave.</div>
+      <h3>The Ledger</h3>
+      <p>More › Ledger shows weekly delivery numbers. Click a number to see its tasks. Leads and admins see everyone. A member sees only their own.</p>
+    </section>
+
+    <!-- LOOK -->
+    <section class="pg" id="look">
+      <h2>Look and phone</h2>
+      <p class="sub">Open the account menu at the foot of the sidebar.</p>
+      <ul class="plain">
+        <li><b>Appearance</b>: two skins, Warm (the default) and Cool, each in Light or Dark.</li>
+        <li><b>Your profile</b>: your name, a nickname, a phone number and a photo. Your photo shows across the app.</li>
+        <li><b>Guide</b> opens the short guide inside the app. <b>Keyboard shortcuts</b> lists the keys.</li>
+      </ul>
+      <h3>Put it on your phone</h3>
+      <ol class="steps">
+        <li><span>Open the app in your phone's browser and sign in.</span></li>
+        <li><span>iPhone: Share › Add to Home Screen. Android: menu › Install app.</span></li>
+        <li><span>It opens full screen, like an app. The mic button in task fields uses your phone's dictation.</span></li>
+      </ol>
+    </section>
+
+    <!-- OFF -->
+    <section class="pg" id="off">
+      <h2>Not on yet</h2>
+      <p class="sub">These parts are built but switched off on the hosted app. The repo owner turns them on.</p>
+      <div class="offlist">
+        <div><span>Google Doc and Google Meet minutes<small>Needs Google set up for each lead.</small></span><span class="offtag">Off</span></div>
+        <div><span>Model reading of minutes and sentences<small>Until then, a plain reader is used and every result is marked unsure. Check each one.</small></span><span class="offtag">Off</span></div>
+        <div><span>Paste a WhatsApp chat into Quick Add<small>Needs the model reader.</small></span><span class="offtag">Off</span></div>
+        <div><span>Check drafts, Suggested order, status nudges<small>Needs the Jev judgment model.</small></span><span class="offtag">Off</span></div>
+        <div><span>Granola, Fireflies and Fathom keys<small>Set on the server by the repo owner.</small></span><span class="offtag">Ask</span></div>
+      </div>
+      <footer>Nico Desk field guide · 26 Oct 2026 · All names, emails and tasks on this page are made-up examples.</footer>
+    </section>
+  </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  function press(group, btn) { $$('button', group).forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); }); }
+
+  /* app map */
+  var MAP = {
+    home: ['Home', '/me', 'Your own tasks, grouped Late, Today, This week and Later. Updates for you and anything waiting on you sit on top.', 'Everyone'],
+    team: ['Team', '/team', 'Everyone\'s week, by person or by status. Step through weeks with the arrows.', 'Everyone'],
+    projects: ['Projects', '/projects', 'Every project, soonest date first. Open one to see its board, its people and what changed.', 'Everyone'],
+    ledger: ['Ledger', '/ledger', 'Weekly delivery numbers. Click a number to see its tasks.', 'Leads see everyone. Members see their own.'],
+    reminders: ['Reminders', '/reminders', 'Drafts a reminder email per person. It opens in your Gmail and you press Send.', 'Leads and admins'],
+    roster: ['Roster', '/admin', 'Who is on the team and what access they have. Admins add people here.', 'Everyone can see. Admins change it.'],
+    account: ['Account menu', 'foot of the sidebar', 'Appearance, your profile, the in-app guide, keyboard shortcuts, View as (admins) and Sign out.', 'Everyone'],
+    'new': ['+ New task', 'or press n', 'Opens Quick Add. Type one sentence, or fill in the fields yourself.', 'Everyone']
+  };
+  function showMap(k) {
+    var m = MAP[k];
+    $('#mapMain').innerHTML = '<h4>' + esc(m[0]) + '</h4><div class="path">' + esc(m[1]) + ' · ' + esc(m[3]) + '</div><p>' + esc(m[2]) + '</p>';
+  }
+  $('#mapSide').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    press($('#mapSide'), b); showMap(b.dataset.k);
+  });
+  showMap('home');
+
+  /* team */
+  var WEEKS = [
+    { label: 'Last week', tasks: [
+      ['Noor', 'Shortlist lookbook shots', 'done', 0], ['Sam', 'Moodboard for windows', 'done', 0], ['Dev', 'Fabric order sent', 'done', 0], ['Ira', 'Fit session notes', 'active', 1] ] },
+    { label: 'This week', tasks: [
+      ['Noor', 'Send size chart to the studio', 'active', 1], ['Noor', 'Approve lookbook shortlist', 'idle', 0],
+      ['Sam', 'Send the design files', 'idle', 0], ['Sam', 'Banner sizes for the site', 'active', 0],
+      ['Dev', 'Book the fit model', 'blocked', 0], ['Dev', 'Swatch card to the store', 'done', 0],
+      ['Ira', 'Book the studio', 'active', 0] ] },
+    { label: 'Week of 2 Nov', tasks: [
+      ['Noor', 'Store window install', 'idle', 0], ['Sam', 'Final banner check', 'idle', 0], ['Ira', 'Shoot day call sheet', 'idle', 0] ] }
+  ];
+  var ST = { idle: ['Not started', 's-idle'], active: ['In progress', 's-active'], blocked: ['Blocked', 's-blocked'], done: ['Done', 's-done'] };
+  var wk = 1, view = 'person';
+  function renderTeam() {
+    var w = WEEKS[wk];
+    $('#wkLabel').textContent = w.label;
+    $('#wkPrev').disabled = wk === 0; $('#wkNext').disabled = wk === WEEKS.length - 1;
+    var open = w.tasks.filter(function (t) { return t[2] !== 'done'; }).length;
+    var late = w.tasks.filter(function (t) { return t[3]; }).length;
+    var done = w.tasks.length - open;
+    $('#teamSum').textContent = open + ' open this week · ' + late + ' late · ' + done + ' done';
+    var html = '';
+    if (view === 'person') {
+      var by = {};
+      w.tasks.forEach(function (t) { (by[t[0]] = by[t[0]] || []).push(t); });
+      html = '<div class="people">' + Object.keys(by).map(function (p) {
+        return '<div class="person"><h5><span class="av">' + p[0] + '</span>' + p + '</h5>' + by[p].map(function (t) {
+          return '<div class="t"><span>' + esc(t[1]) + '</span>' + (t[3] ? '<span class="flag f-late">Late</span>' : '<span class="chip ' + ST[t[2]][1] + '">' + ST[t[2]][0] + '</span>') + '</div>';
+        }).join('') + '</div>';
+      }).join('') + '</div>';
+    } else {
+      html = '<div class="statcol">' + ['blocked', 'idle', 'active', 'done'].map(function (s) {
+        var list = w.tasks.filter(function (t) { return t[2] === s; });
+        return '<div><h5><span class="chip ' + ST[s][1] + '">' + ST[s][0] + ' · ' + list.length + '</span></h5>' + list.map(function (t) {
+          return '<div class="t">' + esc(t[1]) + '<small>' + t[0] + (t[3] ? ' · Late' : '') + '</small></div>';
+        }).join('') + '</div>';
+      }).join('') + '</div>';
+    }
+    $('#teamView').innerHTML = html;
+  }
+  $('#wkPrev').onclick = function () { if (wk > 0) { wk--; renderTeam(); } };
+  $('#wkNext').onclick = function () { if (wk < WEEKS.length - 1) { wk++; renderTeam(); } };
+  $('#vPerson').onclick = function () { view = 'person'; press(this.parentNode, this); renderTeam(); };
+  $('#vStatus').onclick = function () { view = 'status'; press(this.parentNode, this); renderTeam(); };
+  renderTeam();
+
+  /* quick add */
+  var DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'today', 'tomorrow'];
+  function parseQA(s) {
+    var r = { owner: '', task: '', due: '', project: '' };
+    var t = s.trim();
+    var m = t.match(/\s+for\s+(.+)$/i); if (m) { r.project = m[1]; t = t.slice(0, m.index); }
+    m = t.match(/\s+by\s+(\w+)$/i); if (m && DAYS.indexOf(m[1].toLowerCase()) >= 0) { r.due = m[1][0].toUpperCase() + m[1].slice(1).toLowerCase(); t = t.slice(0, m.index); }
+    m = t.match(/^ask\s+(\w+)\s+to\s+(.+)$/i) || t.match(/^([A-Z]\w+)\s+to\s+(.+)$/);
+    if (m) { r.owner = m[1][0].toUpperCase() + m[1].slice(1); t = m[2]; }
+    r.task = t ? t[0].toUpperCase() + t.slice(1) : '';
+    return r;
+  }
+  function renderQA() {
+    var r = parseQA($('#qa').value);
+    var row = function (k, v, miss) { return '<dt>' + k + '</dt><dd class="' + (v ? '' : 'miss') + '">' + (v ? esc(v) : miss) + '</dd>'; };
+    $('#qaOut').innerHTML = row('Task', r.task, 'Type what will be done') + row('Owner', r.owner, 'You (pick someone else if needed)') + row('Due Date', r.due, 'Not found, pick a date') + row('Project', r.project, 'None (one-off task)');
+  }
+  $('#qa').addEventListener('input', renderQA);
+  $$('[data-qa]').forEach(function (b) { b.onclick = function () { $('#qa').value = b.dataset.qa; renderQA(); }; });
+  renderQA();
+
+  /* role matrix */
+  var ACTS = [
+    ['Add a task', 'member owner lead admin'],
+    ['Edit a task you created or own', 'member owner lead admin'],
+    ['Change status, move the date (with a reason)', 'owner lead admin'],
+    ['Add an update to the log', 'owner lead admin'],
+    ['Reassign to someone else', 'lead admin'],
+    ['Reopen a closed task', 'lead admin'],
+    ['Set priority', 'lead admin'],
+    ['Draft reminders', 'lead admin'],
+    ['Change the roster, View as', 'admin']
+  ];
+  function renderMatrix(r) {
+    $('#matrix').innerHTML = ACTS.map(function (a) {
+      var ok = a[1].split(' ').indexOf(r) >= 0;
+      return '<tr><td style="text-align:left;font-weight:400">' + a[0] + '</td><td class="' + (ok ? 'yes' : 'no') + '">' + (ok ? '✓ Yes' : 'No') + '</td></tr>';
+    }).join('');
+  }
+  $('#roleSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; press(this, b); renderMatrix(b.dataset.r); });
+  renderMatrix('member');
+
+  /* flags */
+  function renderFlag() {
+    var s = $('#stSel').value, d = +$('#dSl').value, out = '', why = '';
+    var chip = { 'Not started': 's-idle', 'In progress': 's-active', 'Blocked': 's-blocked', 'Done': 's-done', 'Dropped': 's-dropped' }[s];
+    if (s === 'Done') {
+      $('#dLbl').textContent = d === 0 ? 'Finished on the first due date' : 'Finished ' + Math.abs(d) + ' day' + (Math.abs(d) === 1 ? '' : 's') + (d < 0 ? ' before' : ' after') + ' the first due date';
+      if (d < 0) { out = '<span class="flag f-good">Ahead</span>'; why = 'It finished before the first due date.'; }
+      else if (d === 0) { out = '<span class="flag f-good">On time</span>'; why = 'It finished on the first due date.'; }
+      else { out = '<span class="flag f-late">Late</span>'; why = 'It finished after the first due date. A later new date does not change this.'; }
+    } else {
+      $('#dLbl').textContent = d === 0 ? 'Due today' : d < 0 ? 'Due date passed ' + (-d) + ' day' + (d === -1 ? '' : 's') + ' ago' : 'Due in ' + d + ' day' + (d === 1 ? '' : 's');
+      if (s === 'Dropped') { why = 'A dropped task has no flag. It leaves the open lists.'; }
+      else if (d < 0) { out = '<span class="flag f-late">Late</span>'; why = 'The due date has passed and the task is still open.'; }
+      else if (d <= 2 && (s === 'Not started' || s === 'Blocked')) { out = '<span class="flag f-risk">At risk</span>'; why = 'Due within 2 days and still ' + s + '.'; }
+      else { why = 'No flag. The task is on course.'; }
+    }
+    $('#flagBig').innerHTML = '<span class="chip ' + chip + '">' + s + '</span>' + out;
+    $('#flagWhy').textContent = why;
+  }
+  $('#stSel').addEventListener('change', renderFlag);
+  $('#dSl').addEventListener('input', renderFlag);
+  renderFlag();
+
+  /* minutes flow */
+  var PROPS = [
+    ['Send the design files to the printer', 'Sam · Thu 29 Oct', 'Ready'],
+    ['Confirm the shoot location', 'Ira · Fri 30 Oct', 'Ready'],
+    ['Look into a second fabric supplier', 'No owner · no date', 'Needs owner and date']
+  ];
+  var state = PROPS.map(function () { return ''; });
+  var step = 0;
+  function renderFlow() {
+    press($('#flowSteps'), $('[data-f="' + step + '"]'));
+    var b = $('#flowBody');
+    if (step === 0) {
+      b.innerHTML = '<div class="field"><label>Meeting name</label><input type="text" value="Festive capsule weekly" aria-label="Meeting name"></div>' +
+        '<pre class="minutes">Next steps\n- Sam to send the design files to the printer by Thursday\n- Ira to confirm the shoot location by Friday\n- Look into a second fabric supplier</pre>' +
+        '<div style="margin-top:12px"><button class="btn pri" id="fRead">Read minutes</button></div>';
+      $('#fRead').onclick = function () { step = 1; renderFlow(); };
+    } else if (step === 1) {
+      b.innerHTML = '<p style="font-size:14px">The app found <b>3 next steps</b>. Each is a proposal under <b>Meeting updates</b>. Nothing is on the board yet.</p>' +
+        PROPS.map(function (p) { return '<div class="prop"><div class="what"><b>' + esc(p[0]) + '</b><small>' + esc(p[1]) + '</small></div><span class="flag ' + (p[2] === 'Ready' ? 'f-good' : 'f-risk') + '">' + p[2] + '</span></div>'; }).join('') +
+        '<div><button class="btn pri" id="fNext">Review them</button></div>';
+      $('#fNext').onclick = function () { step = 2; renderFlow(); };
+    } else {
+      var accepted = state.filter(function (s) { return s === 'ok'; }).length;
+      b.innerHTML = PROPS.map(function (p, i) {
+        var st = state[i];
+        var acts = st ? '<span class="flag ' + (st === 'ok' ? 'f-good' : 'f-late') + '">' + (st === 'ok' ? 'Now a task' : 'Rejected') + '</span>' :
+          (p[2] === 'Ready' ? '<button class="btn pri" data-a="ok" data-i="' + i + '">Accept as task</button>' : '<button class="btn" data-a="ok" data-i="' + i + '" title="In the app you first pick an owner and a date">Edit, then accept</button>') +
+          '<button class="btn" data-a="no" data-i="' + i + '">Reject</button>';
+        return '<div class="prop ' + (st === 'no' ? 'gone' : st === 'ok' ? 'done-ok' : '') + '"><div class="what"><b>' + esc(p[0]) + '</b><small>' + esc(st === 'ok' && p[2] !== 'Ready' ? 'Dev · Mon 2 Nov (you picked these)' : p[1]) + '</small></div><div class="acts">' + acts + '</div></div>';
+      }).join('') +
+        '<p class="cap">' + accepted + ' accepted. Each accepted step is now a task on the board, with its owner and date. <button class="btn" id="fReset" style="margin-left:6px">Start again</button></p>';
+      $$('[data-a]', b).forEach(function (x) { x.onclick = function () { state[+x.dataset.i] = x.dataset.a; renderFlow(); }; });
+      $('#fReset').onclick = function () { state = PROPS.map(function () { return ''; }); step = 0; renderFlow(); };
+    }
+  }
+  $('#flowSteps').addEventListener('click', function (e) { var x = e.target.closest('button'); if (!x) return; step = +x.dataset.f; renderFlow(); });
+  renderFlow();
+
+  /* keys */
+  var keyTimer;
+  function hit(k, note) {
+    $$('.key').forEach(function (el) { el.classList.toggle('hit', el.dataset.k === k); });
+    $('#keyNote').textContent = note;
+    clearTimeout(keyTimer); keyTimer = setTimeout(function () { $$('.key').forEach(function (el) { el.classList.remove('hit'); }); }, 1200);
+  }
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    var typing = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); hit('search', 'In the app, this opens search.'); return; }
+    if (e.key === 'Escape') { hit('esc', 'In the app, this closes the open panel, menu or search.'); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === '/') { e.preventDefault(); hit('search', 'In the app, this opens search.'); }
+    else if (e.key === 'n') { hit('new', 'In the app, this opens a new task.'); }
+    else if (e.key === '?') { hit('help', 'In the app, this turns help mode on or off.'); }
+  });
+
+  /* filters */
+  var FQ = {
+    'is:late': ['Send size chart to the studio · Noor', 'Book the fit model · Dev'],
+    'is:blocked': ['Brief the photographer · Noor (waiting on Ira)'],
+    'is:mine': ['Your open tasks, from any project'],
+    'due:today': ['Approve lookbook shortlist · Noor'],
+    'due:week': ['Everything due before Sunday, all owners'],
+    '@sam': ['Send the design files · Sam', 'Banner sizes for the site · Sam'],
+    '#festive': ['Tasks and plan lines in Festive capsule'],
+    'is:done': ['Swatch card to the store · Dev', 'Fabric order sent · Dev']
+  };
+  function renderF(q) { $('#filterOut').innerHTML = '<p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Results for <b>' + esc(q) + '</b></p>' + FQ[q].map(function (r) { return '<div class="row" style="grid-template-columns:minmax(0,1fr)"><div>' + esc(r) + '</div></div>'; }).join(''); }
+  $('#filters').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; press(this, b); renderF(b.dataset.q); });
+  renderF('is:late');
+
+  /* rail highlight */
+  var links = $$('#nav a');
+  function mark(id) { links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + id); }); }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) mark(en.target.id); }); }, { rootMargin: '-35% 0px -60% 0px' });
+    $$('section.pg').forEach(function (s) { io.observe(s); });
+  }
+  mark(location.hash ? location.hash.slice(1) : 'start');
+  if (location.hash && document.getElementById(location.hash.slice(1))) document.getElementById(location.hash.slice(1)).scrollIntoView();
+})();
+</script>
+
+</body>
+</html>

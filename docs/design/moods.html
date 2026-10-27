@@ -1,0 +1,375 @@
+<title>nico-desk moods</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<style>
+/* Page chrome. Neutral on purpose, so it does not lean toward any mood. */
+:root{
+  --pg:#E7E8EA; --pg-ink:#16181B; --pg-ink-2:#565B63; --pg-line:#D3D5D9; --pg-card:#F4F5F6; --pg-on:#16181B; --pg-on-ink:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --pg:#0B0C0D; --pg-ink:#ECEDEF; --pg-ink-2:#9A9FA7; --pg-line:#24272B; --pg-card:#141618; --pg-on:#ECEDEF; --pg-on-ink:#0B0C0D; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --pg:#0B0C0D; --pg-ink:#ECEDEF; --pg-ink-2:#9A9FA7; --pg-line:#24272B; --pg-card:#141618; --pg-on:#ECEDEF; --pg-on-ink:#0B0C0D; color-scheme:dark}
+
+body{background:var(--pg);color:var(--pg-ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{padding-inline:24px;padding-block:40px 64px;max-width:1880px;margin:0 auto;display:grid;gap:32px}
+.head{display:grid;gap:12px;max-width:68ch}
+.head h1{margin:0;font-size:28px;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
+.head p{margin:0;color:var(--pg-ink-2)}
+.controls{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--pg-line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--pg-ink-2);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--pg-on);color:var(--pg-on-ink)}
+.ctl{display:flex;gap:10px;align-items:center;color:var(--pg-ink-2);font-size:14px}
+.moods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start}
+.moods.solo{grid-template-columns:minmax(0,1fr)}
+.moods.solo .mood:not(.shown){display:none}
+.mood{display:grid;gap:14px;min-width:0}
+.mood h2{margin:0;font-size:18px;line-height:1.3}
+.mood h2 small{font-size:13px;font-weight:500;color:var(--pg-ink-2);margin-left:8px}
+.cap{margin:0;color:var(--pg-ink-2);font-size:14px;max-width:62ch}
+.lbl{font-size:12px;color:var(--pg-ink-2);margin:6px 0 -6px}
+.scaler{min-width:0;overflow:hidden;border:1px solid var(--pg-line);border-radius:8px;background:var(--pg-card)}
+.scaler.narrow{max-width:377px}
+.src{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:8px;overflow-x:auto}
+.src table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+.src th,.src td{text-align:left;vertical-align:top;padding:12px 16px;border-top:1px solid var(--pg-line)}
+.src thead th{border-top:0;color:var(--pg-ink-2);font-weight:500}
+.src td:first-child{font-weight:600;white-space:nowrap}
+.foot{color:var(--pg-ink-2);font-size:14px;max-width:68ch;margin:0}
+@media (max-width:1100px){.moods{grid-template-columns:minmax(0,1fr)}}
+
+/* Mood tokens. Same names in all three, only values change. */
+.m-a{--bg:#FFFFFF;--surface:#FFFFFF;--bar:#FFFFFF;--sunk:#F4F5F7;--ink:#111317;--ink-2:#4D535E;--ink-3:#6B717C;--line:#E6E8EC;
+  --accent:#1C5BD9;--accent-soft:#E8EFFC;--late:#C3352B;--late-soft:#FCEBEA;--off:#93560A;--off-soft:#FFF3DC;--pill:#EEF0F3;
+  --date-ink:var(--accent);--due-ink:var(--accent);--own:var(--accent);
+  --font:"Geist",system-ui,sans-serif;--num:"Geist",system-ui,sans-serif;--lh:1.4;
+  --r:10px;--r2:14px;--pr:999px;--pb:1px solid transparent;--row:16px;--date:30px;--dw:650;--date-t:22px;
+  --shadow:0 1px 2px rgba(17,19,23,.06),0 6px 20px rgba(17,19,23,.05)}
+.m-b{--bg:#F4F5F7;--surface:#FFFFFF;--bar:#FFFFFF;--sunk:#ECEEF1;--ink:#1A1D22;--ink-2:#565D68;--ink-3:#69707B;--line:#D9DDE3;
+  --accent:#0B7A75;--accent-soft:transparent;--late:#B42318;--late-soft:transparent;--off:#8A5300;--off-soft:transparent;--pill:transparent;
+  --date-ink:var(--ink);--due-ink:var(--accent);--own:var(--ink);
+  --font:"IBM Plex Sans",system-ui,sans-serif;--num:"IBM Plex Mono",ui-monospace,monospace;--lh:1.3;
+  --r:3px;--r2:3px;--pr:3px;--pb:1px solid currentColor;--row:10px;--date:22px;--dw:500;--date-t:17px;
+  --shadow:none}
+.m-c{--bg:#FAF8F5;--surface:#FFFFFF;--bar:#FAF8F5;--sunk:#F2EEE8;--ink:#1F2430;--ink-2:#545A68;--ink-3:#6E6A63;--line:#E8E2DA;
+  --accent:#2D6A55;--accent-soft:#E4F0EA;--late:#B3261E;--late-soft:#FBE9E6;--off:#8C5200;--off-soft:#FCF0DC;--pill:#F0ECE6;
+  --date-ink:var(--accent);--due-ink:var(--accent);--own:var(--accent);
+  --font:"Source Sans 3",system-ui,sans-serif;--num:"Source Sans 3",system-ui,sans-serif;--lh:1.55;
+  --r:6px;--r2:6px;--pr:6px;--pb:1px solid transparent;--row:20px;--date:28px;--dw:600;--date-t:21px;
+  --shadow:0 1px 3px rgba(31,36,48,.07)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .m-a{--bg:#0F1114;--surface:#171A1F;--bar:#0F1114;--sunk:#171A1F;--ink:#F2F4F7;--ink-2:#A9B0BB;--ink-3:#8A909A;--line:#262A31;
+    --accent:#86ABFF;--accent-soft:#1A2540;--late:#FF8A80;--late-soft:#3A1A18;--off:#F2B866;--off-soft:#33270F;--pill:#22262D;--shadow:none}
+  :root:not([data-theme="light"]) .m-b{--bg:#121417;--surface:#181B1F;--bar:#181B1F;--sunk:#1E2226;--ink:#E7EAEE;--ink-2:#A2A9B3;--ink-3:#8C939E;--line:#2A2F36;
+    --accent:#4FC2BB;--late:#FF7B70;--off:#E0B060}
+  :root:not([data-theme="light"]) .m-c{--bg:#1A1917;--surface:#22211E;--bar:#1A1917;--sunk:#22211E;--ink:#F1EDE6;--ink-2:#BDB7AC;--ink-3:#A7A196;--line:#33302B;
+    --accent:#7CC3A6;--accent-soft:#1F3029;--late:#F28B7D;--late-soft:#3A201C;--off:#E6B86A;--off-soft:#33281A;--pill:#2B2925;--shadow:none}
+}
+:root[data-theme="dark"] .m-a{--bg:#0F1114;--surface:#171A1F;--bar:#0F1114;--sunk:#171A1F;--ink:#F2F4F7;--ink-2:#A9B0BB;--ink-3:#8A909A;--line:#262A31;
+  --accent:#86ABFF;--accent-soft:#1A2540;--late:#FF8A80;--late-soft:#3A1A18;--off:#F2B866;--off-soft:#33270F;--pill:#22262D;--shadow:none}
+:root[data-theme="dark"] .m-b{--bg:#121417;--surface:#181B1F;--bar:#181B1F;--sunk:#1E2226;--ink:#E7EAEE;--ink-2:#A2A9B3;--ink-3:#8C939E;--line:#2A2F36;
+  --accent:#4FC2BB;--late:#FF7B70;--off:#E0B060}
+:root[data-theme="dark"] .m-c{--bg:#1A1917;--surface:#22211E;--bar:#1A1917;--sunk:#22211E;--ink:#F1EDE6;--ink-2:#BDB7AC;--ink-3:#A7A196;--line:#33302B;
+  --accent:#7CC3A6;--accent-soft:#1F3029;--late:#F28B7D;--late-soft:#3A201C;--off:#E6B86A;--off-soft:#33281A;--pill:#2B2925;--shadow:none}
+
+/* The sketch. One markup, styled only through the mood tokens. */
+.f{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:var(--lh);font-size:15px}
+.f[data-w="1440"]{width:1440px;min-height:640px}
+.f[data-w="375"]{width:375px;min-height:780px}
+.f *{box-sizing:border-box}
+.bar{display:flex;align-items:center;gap:28px;height:64px;padding:0 40px;border-bottom:1px solid var(--line);background:var(--bar)}
+.mk{font-weight:650;font-size:16px;letter-spacing:-.01em}
+.nav{display:flex;gap:4px}
+.nav span{padding:6px 12px;border-radius:var(--r);color:var(--ink-2)}
+.nav span.on{color:var(--ink);background:var(--sunk);font-weight:500}
+.field{flex:1;max-width:560px;margin-left:auto;height:40px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);display:flex;align-items:center;padding:0 14px;color:var(--ink-3)}
+.me{display:flex;gap:8px;align-items:center;color:var(--ink-2)}
+.av{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:999px;background:var(--sunk);color:var(--ink-2);font-size:11px;font-weight:600;letter-spacing:.02em;flex:none}
+.av.you{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pg{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:56px;padding:40px 40px 56px;max-width:1360px}
+.hd{display:flex;align-items:baseline;gap:14px;margin:0 0 20px}
+.hd h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.01em}
+.hd span{color:var(--ink-2)}
+.line{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:24px;align-items:center;padding:var(--row) 0;border-top:1px solid var(--line)}
+.line:last-child{border-bottom:1px solid var(--line)}
+.when b{display:block;font-family:var(--num);font-size:var(--date);font-weight:var(--dw);line-height:1.05;color:var(--date-ink);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.when i{display:block;font-style:normal;color:var(--ink-2);font-size:14px;margin-top:2px;font-variant-numeric:tabular-nums}
+.when s{color:var(--ink-3);margin-left:6px}
+.due .when b{color:var(--due-ink)}
+.late .when b{color:var(--late)}
+.past .when b{color:var(--ink-3)}
+.ti{display:block;font-size:16px;font-weight:500}
+.mt{display:block;font-size:14px;color:var(--ink-2);margin-top:2px}
+.st{font-size:13px;font-weight:500;padding:3px 10px;border-radius:var(--pr);background:var(--pill);color:var(--ink-2);border:var(--pb);white-space:nowrap;line-height:1.3}
+.st.late{background:var(--late-soft);color:var(--late)}
+.st.off{background:var(--off-soft);color:var(--off)}
+.st.asked{background:var(--accent-soft);color:var(--accent)}
+.st.done{color:var(--ink-3)}
+.rail{display:grid;gap:36px;align-content:start}
+.rail h2{margin:0 0 12px;font-size:15px;font-weight:600;display:flex;gap:8px;align-items:baseline}
+.rail h2 span{color:var(--ink-3);font-weight:500}
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:20px;box-shadow:var(--shadow);display:grid;gap:14px}
+.ask .who{display:flex;gap:10px;align-items:center;color:var(--ink-2);font-size:14px}
+.ask .who strong{color:var(--ink);font-weight:600}
+.ask .t{font-size:18px;font-weight:600;line-height:1.3}
+.ask .d{display:flex;align-items:baseline;gap:10px}
+.ask .d b{font-family:var(--num);font-size:var(--date);font-weight:var(--dw);color:var(--date-ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ask .d i{font-style:normal;color:var(--ink-2)}
+.ask .for{font-size:14px;color:var(--ink-2)}
+.ans{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg);color:var(--ink);font-weight:500;font-size:14px;white-space:nowrap}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mini{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:14px}
+.mini:last-child{border-bottom:1px solid var(--line)}
+.mini .ti{font-size:15px}
+.mini .dd{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+/* Team */
+.pg.team{grid-template-columns:minmax(0,1fr) 380px}
+.tools{display:flex;gap:20px;align-items:center;margin:-6px 0 22px;color:var(--ink-2);font-size:14px;flex-wrap:wrap}
+.scrub{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.scrub span{padding:5px 12px;color:var(--ink-2);font-size:14px}
+.scrub span.on{background:var(--ink);color:var(--bg)}
+.sum{color:var(--ink-2)}
+.sum b{color:var(--ink);font-weight:600}
+.grp{margin-top:26px}
+.grp:first-of-type{margin-top:0}
+.gh{display:flex;gap:10px;align-items:center;margin-bottom:8px;font-weight:600}
+.gh span{color:var(--ink-3);font-weight:500;font-size:14px}
+.line.t{grid-template-columns:130px minmax(0,1fr) auto;padding:calc(var(--row) * .75) 0}
+.line.t .when b{font-size:var(--date-t)}
+.line.own{box-shadow:inset 3px 0 0 var(--own);padding-left:14px}
+.mv{display:grid;gap:12px;font-size:14px;margin:0;padding:0;list-style:none}
+.mv li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
+.mv .ti{font-size:14px;font-weight:600}
+.mv .mt{font-size:14px}
+.mv s{color:var(--ink-3)}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:18px 20px;box-shadow:var(--shadow);display:grid;gap:12px}
+.note p{margin:0;color:var(--ink-2);font-size:14px}
+.swr{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.sw{width:36px;height:20px;border-radius:999px;background:var(--accent);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:999px;background:var(--bg)}
+/* Phone */
+.pb{display:flex;align-items:center;height:52px;padding:0 16px;border-bottom:1px solid var(--line);color:var(--ink-2);font-size:15px;background:var(--bar)}
+.pc{padding:20px 20px 28px;display:grid;gap:16px}
+.pc .who{display:flex;gap:10px;align-items:center;color:var(--ink-2);font-size:14px}
+.pc .who strong{color:var(--ink)}
+.pc .t{font-size:22px;font-weight:600;line-height:1.25;margin:0}
+.pc .d{display:flex;align-items:baseline;gap:10px}
+.pc .d b{font-family:var(--num);font-size:calc(var(--date) + 6px);font-weight:var(--dw);color:var(--date-ink);letter-spacing:-.02em}
+.pc .d i{font-style:normal;color:var(--ink-2)}
+.pc .for{font-size:14px;color:var(--ink-2);margin-top:-8px}
+.opt{border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;font-weight:500;background:var(--surface)}
+.opt.sel{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);display:grid;gap:14px}
+.opt .k{font-size:13px;color:var(--ink-2);font-weight:500;margin-bottom:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:6px 12px;border:1px solid var(--line);border-radius:var(--pr);font-size:14px;font-weight:500;color:var(--ink-2);font-family:var(--num)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ta{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;min-height:64px;font-weight:400;background:var(--bg)}
+.go{height:48px;border-radius:var(--r);background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:600}
+.hint{font-size:14px;color:var(--ink-2);text-align:center;margin-top:-6px}
+</style>
+
+<main class="wrap">
+  <header class="head">
+    <h1>nico-desk moods</h1>
+    <p>The same week of the E-commerce team, drawn three times. Layout, data and every word are identical. Only the colour, the type, the spacing and the corners change. Each mood shows Wren's week with an ask from Tamsin, the team page as Tamsin sees it, and Wren answering the ask on a phone. A is recommended. If no pick comes back before the build starts, A is built and the call is logged in the repo.</p>
+  </header>
+
+  <div class="controls">
+    <div class="ctl">View
+      <div class="seg" id="view">
+        <button aria-pressed="true" data-v="all">All three</button>
+        <button aria-pressed="false" data-v="a">A</button>
+        <button aria-pressed="false" data-v="b">B</button>
+        <button aria-pressed="false" data-v="c">C</button>
+      </div>
+    </div>
+    <div class="ctl">Light
+      <div class="seg" id="theme">
+        <button aria-pressed="true" data-t="">System</button>
+        <button aria-pressed="false" data-t="light">Day</button>
+        <button aria-pressed="false" data-t="dark">Night</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="moods" id="moods">
+    <article class="mood shown" data-m="a">
+      <h2>A. Plain and familiar <small>recommended</small></h2>
+      <div class="lbl">My week, 1440</div><div class="scaler m-a" data-s="home"></div>
+      <div class="lbl">Team, 1440</div><div class="scaler m-a" data-s="team"></div>
+      <div class="lbl">Answering the ask, 375</div><div class="scaler narrow m-a" data-s="phone"></div>
+      <p class="cap">Pace: act. White and near-black, one blue for dates and for your own lines, Geist with large tabular dates, states as words in soft pills. Closest to Reminders: open it, see what is due, press one button.</p>
+    </article>
+    <article class="mood" data-m="b">
+      <h2>B. Calm and precise</h2>
+      <div class="lbl">My week, 1440</div><div class="scaler m-b" data-s="home"></div>
+      <div class="lbl">Team, 1440</div><div class="scaler m-b" data-s="team"></div>
+      <div class="lbl">Answering the ask, 375</div><div class="scaler narrow m-b" data-s="phone"></div>
+      <p class="cap">Pace: scan. Cool light grey, hairline rules, tight rows, IBM Plex with mono dates, teal only on what is due today. Reads like a timetable. Strongest on the lead and founder pages, coldest on a member's own week.</p>
+    </article>
+    <article class="mood" data-m="c">
+      <h2>C. Soft and warm</h2>
+      <div class="lbl">My week, 1440</div><div class="scaler m-c" data-s="home"></div>
+      <div class="lbl">Team, 1440</div><div class="scaler m-c" data-s="team"></div>
+      <div class="lbl">Answering the ask, 375</div><div class="scaler narrow m-c" data-s="phone"></div>
+      <p class="cap">Pace: read. Warm off-white, deep ink, Source Sans 3, more air between lines, 6px corners, pine green for dates. Feels like a shared notebook. Slowest to scan once a team page passes fifteen lines.</p>
+    </article>
+  </section>
+
+  <section class="src" aria-label="Sources">
+    <table>
+      <thead><tr><th>Reference</th><th>What it does well</th><th>What we take</th><th>What we leave</th></tr></thead>
+      <tbody>
+        <tr><td>1. Apple Reminders and Calendar</td><td>The date is read before anything else. Lists run top to bottom. One tap completes. Nothing to set up.</td><td>The relative date as the largest text on a line. Done in one tap. No settings screen. Empty states that give the good news.</td><td>iOS chrome, colour-coded lists, smart lists, the red badge for today.</td></tr>
+        <tr><td>2. Linear and Things</td><td>A state is one word. Rows are dense but still breathe. The keyboard drives everything. An issue is an object with one owner.</td><td>One-word states. The row rhythm. One field that takes commands from the keyboard. The ask as its own object with an asker, an owner and a date.</td><td>Cycles, priorities, estimates, the project tree, brand purple, the round checkboxes.</td></tr>
+        <tr><td>3. Notion and Craft</td><td>Text turns into structure. A block keeps its source. A page prints clean.</td><td>The note turns into draft lines beside it. Picking a line lights the sentence it came from. The record prints as one page per week.</td><td>Blank-canvas freedom, slash menus, nested pages, emoji icons, cover images.</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <p class="foot">Synthetic data. The people are invented. Today in the sketch is Friday 9 October.</p>
+</main>
+
+<template id="t-home">
+  <div class="f" data-w="1440">
+    <div class="bar"><span class="mk">nico-desk</span>
+      <nav class="nav"><span class="on">My week</span><span>Asks</span><span>Team</span></nav>
+      <div class="field">Commit or ask</div>
+      <div class="me"><span class="av you">WC</span>Wren</div></div>
+    <div class="pg">
+      <div>
+        <div class="hd"><h1>Your week</h1><span>Friday 9 October</span></div>
+        <div>
+          <div class="line due"><div class="when"><b>Today</b><i>Fri 9 Oct</i></div><div><span class="ti">Tier benefits copy for the pilot stores</span><span class="mt">Loyalty tiers pilot</span></div><span class="st">on track</span></div>
+          <div class="line"><div class="when"><b>Mon</b><i>12 Oct<s>Fri 9 Oct</s></i></div><div><span class="ti">Pilot store list for store operations</span><span class="mt">Moved: the store count changed</span></div><span class="st off">off track</span></div>
+          <div class="line"><div class="when"><b>Thu</b><i>15 Oct</i></div><div><span class="ti">Festive email schedule</span><span class="mt">Festive website relaunch</span></div><span class="st">on track</span></div>
+          <div class="line past"><div class="when"><b>Wed</b><i>7 Oct</i></div><div><span class="ti">Members survey summary</span><span class="mt">Done a day early</span></div><span class="st done">done</span></div>
+        </div>
+      </div>
+      <div class="rail">
+        <section><h2>Waiting on you <span>1</span></h2>
+          <div class="ask">
+            <div class="who"><span class="av">TQ</span><span><strong>Tamsin</strong> needs</span></div>
+            <div class="t">Final tier names for the landing page</div>
+            <div class="d"><b>Wed</b><i>14 Oct</i></div>
+            <div class="for">For: Build the festive landing page</div>
+            <div class="ans"><span class="btn pri">Yes, by then</span><span class="btn">Later, because…</span><span class="btn">Not me, because…</span></div>
+          </div>
+        </section>
+        <section><h2>You are waiting on <span>1</span></h2>
+          <div class="mini"><span class="av">OV</span><div><span class="ti">Sign-up form for the tiers page</span><span class="mt">Orrin</span></div><span class="dd">Tue 13 Oct</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="t-team">
+  <div class="f" data-w="1440">
+    <div class="bar"><span class="mk">nico-desk</span>
+      <nav class="nav"><span>My week</span><span>Asks</span><span class="on">Team</span></nav>
+      <div class="field">Commit or ask</div>
+      <div class="me"><span class="av you">TQ</span>Tamsin</div></div>
+    <div class="pg team">
+      <div>
+        <div class="hd"><h1>E-commerce</h1><span>Week of 5 October</span></div>
+        <div class="tools">
+          <span>As of</span>
+          <span class="scrub"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span class="on">Fri</span></span>
+          <span class="sum"><b>1</b> late · <b>2</b> off track · <b>1</b> asked · <b>1</b> waiting · <b>2</b> on track · <b>1</b> done</span>
+        </div>
+        <div class="grp"><div class="gh"><span class="av">AF</span>Alder <span>1 late</span></div>
+          <div class="line t late"><div class="when"><b>Wed</b><i>7 Oct</i></div><div><span class="ti">Window brief for the Bengaluru store</span><span class="mt">Late by 2 days, no word yet</span></div><span class="st late">late</span></div>
+          <div class="line t"><div class="when"><b>Tue</b><i>13 Oct</i></div><div><span class="ti">Staff list for the Bengaluru window install</span><span class="mt">Asked by Bexley</span></div><span class="st">on track</span></div>
+        </div>
+        <div class="grp"><div class="gh"><span class="av">SP</span>Sorrel <span>1 off track</span></div>
+          <div class="line t"><div class="when"><b>Mon</b><i>12 Oct<s>Thu 8 Oct</s></i></div><div><span class="ti">Cropped hero images for the festive page</span><span class="mt">Asked by Orrin. Later, because: waiting on the final edit from the shoot</span></div><span class="st off">off track</span></div>
+        </div>
+        <div class="grp"><div class="gh"><span class="av">WC</span>Wren <span>1 asked, 1 off track</span></div>
+          <div class="line t"><div class="when"><b>Wed</b><i>14 Oct</i></div><div><span class="ti">Final tier names for the landing page</span><span class="mt">Asked by you, no answer yet</span></div><span class="st asked">asked</span></div>
+          <div class="line t"><div class="when"><b>Mon</b><i>12 Oct<s>Fri 9 Oct</s></i></div><div><span class="ti">Pilot store list for store operations</span><span class="mt">Moved: the store count changed</span></div><span class="st off">off track</span></div>
+        </div>
+        <div class="grp"><div class="gh"><span class="av you">TQ</span>You</div>
+          <div class="line t own"><div class="when"><b>Fri</b><i>16 Oct</i></div><div><span class="ti">Build the festive landing page</span><span class="mt">Waiting on Wren for the tier names</span></div><span class="st">waiting</span></div>
+        </div>
+        <div class="grp"><div class="gh"><span class="av">BM</span>Bexley</div>
+          <div class="line t"><div class="when"><b>Thu</b><i>15 Oct</i></div><div><span class="ti">Call sheet for the festive edit shoot</span><span class="mt">Festive edit shoot</span></div><span class="st">on track</span></div>
+        </div>
+        <div class="grp"><div class="gh"><span class="av">OV</span>Orrin</div>
+          <div class="line t past"><div class="when"><b>Wed</b><i>7 Oct</i></div><div><span class="ti">Build checklist for the festive page</span><span class="mt">Done 2 days early</span></div><span class="st done">done</span></div>
+        </div>
+      </div>
+      <div class="rail">
+        <section><h2>Moved this week <span>3</span></h2>
+          <ul class="mv">
+            <li><span class="av">SP</span><div><span class="ti">Cropped hero images</span><span class="mt"><s>Thu 8</s> Mon 12. Waiting on the final edit from the shoot.</span></div></li>
+            <li><span class="av">WC</span><div><span class="ti">Pilot store list</span><span class="mt"><s>Fri 9</s> Mon 12. The store count changed.</span></div></li>
+            <li><span class="av">AF</span><div><span class="ti">Window brief</span><span class="mt">Passed Wed 7 with no word.</span></div></li>
+          </ul>
+        </section>
+        <section><h2>Who waits on whom</h2>
+          <div class="mini"><span class="av you">TQ</span><div><span class="ti">You wait on Wren</span><span class="mt">Tier names</span></div><span class="dd">Wed 14 Oct</span></div>
+          <div class="mini"><span class="av">OV</span><div><span class="ti">Orrin waits on Sorrel</span><span class="mt">Hero images</span></div><span class="dd">Mon 12 Oct</span></div>
+          <div class="mini"><span class="av">BM</span><div><span class="ti">Bexley waits on Alder</span><span class="mt">Staff list</span></div><span class="dd">Tue 13 Oct</span></div>
+        </section>
+        <section class="note">
+          <h2 style="margin:0">Friday note</h2>
+          <p>Drafted from this week. The team sees it when you send it.</p>
+          <div class="swr"><span>Draft it every Friday</span><span class="sw" role="img" aria-label="On"></span></div>
+          <div><span class="btn pri">Read the note</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="t-phone">
+  <div class="f" data-w="375">
+    <div class="pb">‹ Your week</div>
+    <div class="pc">
+      <div class="who"><span class="av">TQ</span><span><strong>Tamsin</strong> needs</span></div>
+      <p class="t">Final tier names for the landing page</p>
+      <div class="d"><b>Wed</b><i>14 Oct</i></div>
+      <div class="for">For: Build the festive landing page</div>
+      <div class="opt">Yes, by then</div>
+      <div class="opt sel">Later, because…
+        <div><div class="k">New date</div><div class="chips"><span class="chip">Thu 15</span><span class="chip on">Fri 16</span><span class="chip">Mon 19</span><span class="chip">Pick</span></div></div>
+        <div><div class="k">Because</div><div class="ta">The names wait on the members survey, which closes Thursday.</div></div>
+      </div>
+      <div class="opt">Not me, because…</div>
+      <div class="go">Send to Tamsin</div>
+      <div class="hint">Tamsin will see this when you send it.</div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function(){
+  var tpl={home:'t-home',team:'t-team',phone:'t-phone'};
+  document.querySelectorAll('.scaler').forEach(function(s){
+    s.appendChild(document.getElementById(tpl[s.dataset.s]).content.cloneNode(true));
+  });
+  function fit(){
+    document.querySelectorAll('.scaler').forEach(function(s){
+      var f=s.firstElementChild; if(!f) return;
+      var w=+f.dataset.w; f.style.zoom=Math.min(1,s.clientWidth/w);
+    });
+  }
+  new ResizeObserver(fit).observe(document.body); fit();
+  var moods=document.getElementById('moods');
+  function press(group,btn){group.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b===btn))})}
+  document.getElementById('view').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return; press(this,b);
+    var v=b.dataset.v; moods.classList.toggle('solo',v!=='all');
+    moods.querySelectorAll('.mood').forEach(function(m){m.classList.toggle('shown',v==='all'||m.dataset.m===v)});
+    fit();
+  });
+  document.getElementById('theme').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return; press(this,b);
+    if(b.dataset.t) document.documentElement.setAttribute('data-theme',b.dataset.t);
+    else document.documentElement.removeAttribute('data-theme');
+  });
+})();
+</script>

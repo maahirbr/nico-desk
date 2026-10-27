@@ -1,0 +1,26 @@
+{
+  "type": "system-lines",
+  "viewer": "per_ada",
+  "format": "ios",
+  "dropped": 4,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Arjun Nair",
+      "date": "2026-10-09",
+      "time": "09:03",
+      "text": "I collected photos from all the stores. The window photos task is done."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "update",
+      "task": "tsk_042",
+      "status": "Done",
+      "due_on": null,
+      "source": 0,
+      "quote": "The window photos task is done."
+    }
+  ],
+  "must_not": []
+}

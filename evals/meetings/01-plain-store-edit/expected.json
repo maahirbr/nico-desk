@@ -4,21 +4,21 @@
   "tasks": [
     {
       "title": "Send autumn window artwork to the printer",
-      "owner": "Bexley Marsh",
+      "owner": "Ananya Rao",
       "due_on": "2026-10-07",
       "quote": "I will send the artwork to the printer on 7 October",
       "critical": true
     },
     {
       "title": "Brief Harbour Street team on the new layout",
-      "owner": "Alder Finch",
+      "owner": "Arjun Nair",
       "due_on": "2026-10-09",
       "quote": "I will brief the Harbour Street team on the new layout on 9 October",
       "critical": false
     },
     {
       "title": "Book photographer for the store edit shoot on 13 October",
-      "owner": "Orrin Vale",
+      "owner": "Kabir Sethi",
       "due_on": "missing",
       "quote": "I will book the photographer for the 13th.",
       "critical": false

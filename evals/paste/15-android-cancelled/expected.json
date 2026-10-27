@@ -1,0 +1,36 @@
+{
+  "type": "cancelled",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Arjun Nair",
+      "date": "2026-10-09",
+      "time": "12:00",
+      "text": "I will prepare a store feedback form for next week."
+    },
+    {
+      "index": 1,
+      "sender": "Meera Iyer",
+      "date": "2026-10-09",
+      "time": "12:20",
+      "text": "Let us skip the feedback form this quarter."
+    },
+    {
+      "index": 2,
+      "sender": "Arjun Nair",
+      "date": "2026-10-09",
+      "time": "12:21",
+      "text": "Agreed, dropping it."
+    }
+  ],
+  "proposals": [],
+  "must_not": [
+    {
+      "quote": "I will prepare a store feedback form for next week.",
+      "why": "Dropped later in the same chat. Nothing to propose."
+    }
+  ]
+}

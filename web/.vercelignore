@@ -1,0 +1,10 @@
+# Keeps git-ignored local data out of a `vercel deploy` upload. Production builds from git, which never has these.
+.data/
+pilot/
+*.local.json
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+.vercel/

@@ -1,0 +1,31 @@
+{
+  "type": "note",
+  "viewer": "per_ada",
+  "format": "android",
+  "dropped": 0,
+  "messages": [
+    {
+      "index": 0,
+      "sender": "Ananya Rao",
+      "date": "2026-10-08",
+      "time": "16:20",
+      "text": "FYI the agency sent three model options for the shoot. The rates are in the shared folder."
+    },
+    {
+      "index": 1,
+      "sender": "Ananya Rao",
+      "date": "2026-10-08",
+      "time": "16:21",
+      "text": "The booking call is on Monday."
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "note",
+      "task": "tsk_039",
+      "source": 0,
+      "quote": "the agency sent three model options"
+    }
+  ],
+  "must_not": []
+}

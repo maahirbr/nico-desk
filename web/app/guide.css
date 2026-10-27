@@ -1,0 +1,58 @@
+/* The Guide page (components/GuideView.tsx) and the first-visit note on Home (components/GuideNote.tsx).
+   Tokens only, so every skin works in day and night. No new colour, size or radius. */
+
+/* ---------- the reading column ---------- */
+.guide section { margin-top: var(--space-xl); }
+.guide section > h2 { margin-top: 0; }
+.guide p { margin: 0 0 var(--space-sm); max-width: 68ch; }
+.guide p:last-child { margin-bottom: 0; }
+.guide .page-head { margin-bottom: 0; }
+.guide-rule { font: var(--type-line); font-weight: 600; color: var(--ink); }
+
+/* A week: the moment on the left, what to do on the right */
+.guide-week { list-style: none; margin: 0; padding: 0; }
+.guide-week li { display: grid; grid-template-columns: calc(var(--label-col) + var(--space-lg)) minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-sm) 0; border-top: var(--rule) solid var(--hairline); }
+.guide-week li:last-child { border-bottom: var(--rule) solid var(--hairline); }
+.guide-week b { font-weight: 600; }
+
+/* A word and what it means: the five statuses, then late and at risk */
+.guide-defs { margin: 0 0 var(--space-md); }
+.guide-defs > div { display: grid; grid-template-columns: var(--label-col) minmax(0, 1fr); gap: var(--space-sm); align-items: baseline; padding: var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); }
+.guide-defs > div:last-child { border-bottom: var(--rule) solid var(--hairline); }
+.guide-defs dt, .guide-defs dd { margin: 0; }
+.guide-defs dt b { font-weight: 600; }
+
+.guide-list { margin: 0 0 var(--space-sm); padding-left: var(--space-lg); }
+.guide-list li { margin-bottom: var(--space-xs); max-width: 68ch; }
+.guide-keys { margin-top: var(--space-xs); }
+
+/* The date figure: a hairline frame, no fill, drawn from tokens */
+.guide-fig { margin: var(--space-md) 0 0; padding: var(--space-md); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); max-width: 480px; }
+.guide-fig svg { display: block; width: 100%; height: auto; font-family: var(--font-sans); }
+.guide-fig figcaption { margin-top: var(--space-xs); font: var(--type-small); color: var(--ink-2); }
+.gf-line { stroke: var(--line-strong); stroke-width: 1.5; }
+.gf-label { font-size: 12px; fill: var(--ink-2); }
+.gf-title { font-size: 13px; font-weight: 600; fill: var(--ink); }
+.gf-today { fill: var(--ink-3); }
+.gf-first { fill: var(--canvas); stroke: var(--primary); stroke-width: 2; }
+.gf-new { fill: var(--primary); }
+.gf-arc { stroke: var(--primary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.gf-gap { stroke: var(--late); stroke-width: 3; stroke-linecap: round; }
+.gf-first.gf-late { stroke: var(--late); }
+.gf-today.gf-late { fill: var(--late); }
+.gf-late-text { fill: var(--late); font-weight: 600; }
+
+/* ---------- Home: the first-visit note ---------- */
+.guide-note { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); margin: 0 0 var(--space-md); padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
+  background: var(--sunk); border-radius: var(--radius-control); font: var(--type-meta); color: var(--ink); }
+.guide-note a { color: var(--primary); }
+.guide-note-x { flex: none; display: grid; place-items: center; width: var(--button-height); height: var(--button-height); padding: 0; background: none; border: 0; border-radius: var(--radius-control); color: var(--ink-2); cursor: pointer;
+  transition: background var(--dur-state) var(--ease), transform var(--dur-state) var(--ease); }
+.guide-note-x:hover { background: var(--pill); color: var(--ink); }
+.guide-note-x:active { transform: scale(var(--press-scale)); }
+
+@media (max-width: 860px) {
+  .guide-week li, .guide-defs > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-xxs); }
+  .guide-note a { display: inline-flex; align-items: center; min-height: var(--touch-min); }
+  .guide-note-x { width: var(--touch-min); height: var(--touch-min); }
+}

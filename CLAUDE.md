@@ -2,29 +2,50 @@
 
 One place where a Nicobar team runs its week: tasks and owners, projects and what changed,
 meeting minutes turned into tasks, linked to the company context layer. Piloted with one small
-team first. Nothing is built yet; `HANDOFF.md` is the brief and the reading list.
+team first. `HANDOFF.md` is the brief and the reading list.
+
+Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.md` (the next build: its design, then its plan and rules), `docs/PLAN-13-OCT.md` (the 13 Oct batch), then
+`docs/HANDOFF-12-OCT.md` (the baseline, the feedback and the UI direction).
 
 ## ARCHITECTURE
 
-No code yet. Filled in at the first code commit.
-
-- `HANDOFF.md`: the brief, push-backs, context map, sources, open questions, first-session steps.
-- `INTENT.md`: hand-written intent, no model edits. `docs/INTENT-FABLE.md` is the model-written counterpart.
-- `SPEC.md`: requirements, schema, API and acceptance tests for the pilot, built from `INTENT.md`. Draft. Changes `docs/DATA-MODEL.md` in four places (section 3.1), including on-time judged against the date first given.
-- `docs/`: `BRIEF.md`, `RESEARCH-PLAN.md`, `HANDOFF-FABLE.md`, `HOW-TEAMS-WORK.md` (the sponsor's four team types), `USE-CASES-8-OCT.md` (requests mapped to intent, slice one or spec), `DATA-MODEL.md` (Postgres DDL: people, projects, tasks, append-only events; on-time ledger derived, never stored).
-- `docs/team-page/`: the team question page, published as a private Artifact; `img/` holds vendor screenshots.
-- `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly. `denylist.txt` guards against real data.
-- `evals/meetings/`: 20 synthetic transcripts with expected drafts, and `check.py`.
+- `web/`: the app (Next.js 16). `lib/service.ts` holds every rule; pages and `app/api/v1/` both call it.
+  `lib/http.ts` `route()` wraps every API call (session, same-origin, rate limit, Zod, View as refusal).
+  `lib/schema.ts` is the schema; `lib/db.ts` `upgrade()` brings an existing database up to it.
+  `lib/db.ts` `scoped()` runs a signed-in call as `nico_app` with its team set, so the `team_fence` policies bind it.
+  `web/README.md` has the file layout, what is built, what is not, and **Hosting**.
+- Sign-in: Google OAuth direct to Google (`lib/google.ts`, `app/api/auth/google/`), on when `GOOGLE_CLIENT_ID` and
+  `GOOGLE_CLIENT_SECRET` are set. The roster picker stays behind `NICO_DEV_SIGNIN=1`. Both end in the signed
+  `nd_session` cookie and the same `checkSignIn` roster and domain check (`lib/auth.ts`).
+- Data: local runs and previews use PGlite seeded from `fixtures/`. Production (https://nico-desk.vercel.app) reads
+  Supabase and holds the real pilot, loaded from the git-ignored `web/pilot/`. Real names go only in git-ignored
+  `roster.local.json` files, real projects only in `projects.local.json`. Integration keys live only in git-ignored
+  `web/.data/connections.json` locally, and only in env vars on Vercel. `web/scripts/backup.sh` dumps the hosted
+  database nightly to `~/Backups/nico-desk/` on the repo owner's Mac, kept 14 days.
+- Projects: a task board, or a plan board (`lib/plan.ts`) with checkpoints, asks and minutes-to-proposals.
+- Look: `DESIGN.md` is the visual system and outranks everything visual. Tokens live in `web/app/tokens.css`, one
+  `[data-skin]` block per skin, picked in the account menu and kept in the `nd_skin` cookie that `layout.tsx` reads.
+  `components/motion.ts` holds motion, `components/KeyboardDismiss.tsx` the mobile keyboard rule,
+  `components/keys.ts` the shortcuts, `components/help.ts` the help mode words.
+- Docs: `INTENT.md` (hand-written intent), `SPEC.md` (draft requirements, schema, API), `docs/DATA-MODEL.md`,
+  `docs/HOW-TEAMS-WORK.md`, `docs/USE-CASES-8-OCT.md`, `docs/DECISIONS.md` (the full decisions log),
+  `docs/demo/index.html` (demo run sheet), `docs/team-page/` (team question page), `docs/guide/index.html` (feature guide).
+- `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly.
+  `denylist.txt` guards against real data. `evals/meetings/`: 20 synthetic transcripts and `check.py`.
 
 ## CONSTRAINTS
 
-- Any Nicobar surface uses the UI already designed in `~/Code/Nicobar work` (`docs/SHEET-SPEC.md`,
-  the `web/` tokens and components). No new visual language.
+- nico-desk has its own visual language, designed from the product's needs (decision 2026-10-09).
+  The OKR page's sheet language in `~/Code/Nicobar work` is not a reference for it. The rule that
+  any Nicobar surface uses that sheet language still holds for the OKR page itself.
 - Do not rebuild the tracker owner's tracker (`nicobar-okr-processor`). Read what it produces.
 - Never write to the founder's Supabase or any department Google Sheet without access granted for
   that purpose.
-- No real Nicobar data in git, fixtures or artifacts; synthetic fixtures only. Any exception is
-  the repo owner's call, recorded in DECISIONS.
+- No real Nicobar data in git, fixtures or artifacts; synthetic fixtures only. The company name and
+  its public context (team names, kinds of project, product and place words from the public site)
+  are allowed in fixtures (decision 2026-10-09). Real people, real dates, real numbers and anything
+  from a department sheet or Supabase are not. Any other exception is the repo owner's call,
+  recorded in DECISIONS.
 - No people's names in repo files. Use roles: the repo owner, the sponsor, the pilot lead, the
   founder, the tracker owner, the context layer lead, the OKR backend developer.
 - No customer PII. Nothing from `~/Code/personalised-NL/`, the Full Moon files or order exports.
@@ -34,43 +55,48 @@ No code yet. Filled in at the first code commit.
 - The repo is public (decision 2026-10-08, see DECISIONS). So nothing internal beyond what is
   already in it goes in: no real Nicobar data, no credentials, no customer data, no internal URLs
   that are not already public.
+- Before the app goes into active use: a security audit of the deployment, and row level security policies that
+  tighten the database (since 19 Oct every table has RLS on, the public API roles have no rights and a
+  `deny_public_api` policy; since 21 Oct signed-in calls run as `nico_app` behind a `team_fence` policy per table,
+  and only sign-in, the session route and the reminders cron read as the owner).
+  Raised by a partner teammate on 13 Oct.
 
 ## DECISIONS
 
-- 2026-09-30 · Opus 5.5 · Repo created as `nico-desk`, separate from `~/Code/Nicobar work` (the OKR
-  page) and `~/Code/nicobar-recs`: the hub spans teams and sources, and the OKR page may become
-  one part of it (open question 6 in `HANDOFF.md`) rather than the other way round. Meeting
-  minutes default to reading Granola, which already feeds the tracker, not building a recorder.
-- 2026-10-08 · Sonnet 5.5 · Repo made public at the repo owner's call, replacing the earlier "stays
-  private" rule. I advised keeping it private, since a private repo also takes collaborators. Four
-  teammates will be added as collaborators. Risk: public content can be cached or indexed.
-  Rollback: set the repo private again with `gh repo edit maahirbr/nico-desk --visibility private
-  --accept-visibility-change-consequences`. Copies already taken stay out of our reach.
-- 2026-10-08 · Fable 5.1 · `INTENT.md` stays hand-written. No model edits it, because the teammate
-  who drafted it found the model-written version unclear. Three intent files get compared
-  (`INTENT.md`, `docs/INTENT-FABLE.md`, one by the repo owner) and one is kept. Granola is read
-  through its public API with an admin-made workspace key, never a personal key, so no one person's
-  credential carries the pipeline. Names in repo files were replaced with roles, since the repo is
-  public. Vendor product screenshots sit in `docs/team-page/img/` for the comparison gallery; they
-  come from the vendors' public pages and go if any vendor objects.
-- 2026-10-08 · Opus 5.5 · The "`INTENT.md` stays hand-written" rule above is lifted for one
-  rewrite. The teammate who drafted `INTENT.md` asked a model to rewrite it around the problem,
-  the evidence and the goals, using an example intent file as the shape. The rewrite adds the
-  overarching goal (every commitment gets done or openly renegotiated, without chasing), the
-  sponsor's four pain points, the founder's and a business lead's use cases, and the four team
-  types. Further model edits still need that teammate's ask. The three-way comparison with
-  `docs/INTENT-FABLE.md` and the repo owner's file still stands. Rollback: `git revert` commits
-  `0782139` to `38c6555`.
-- 2026-10-08 · Opus 5.5 · Granola is read through each note-taker's own MCP sign-in, with their
-  yes. This replaces "workspace key, never a personal key" above: Nicobar has no organisation-wide
-  Granola licence, so no workspace key exists. Risk: ingestion depends on personal connections, and
-  on the free plan MCP sees only the last 30 days of personal notes. A meeting's tasks come through
-  whoever took its notes, so no one account carries the whole team. Open question 9 in `INTENT.md`.
+The full log is `docs/DECISIONS.md`: append-only, one entry per change (date · model · the why · Rollback line).
+Add new entries at its bottom, never here. The rules below come from that log and still bind:
+
+- Commits and `CLAUDE.md` edits go ahead without a wait. Push, deploy, live database changes and sends ask first.
+- `INTENT.md` takes no model edits unless the teammate who drafted it asks.
+- Granola is read through each note-taker's own MCP sign-in, with their yes.
+- Task status is one of five words (Not started, In progress, Blocked, Done, Dropped). Ahead, at risk and late are
+  flags derived from dates, never picked. On-time is judged against the first due date.
+- An admin has every right a lead has (`isLeadOrAdmin` in `lib/roles.ts`). Only a project's owner or lead, a lead
+  or an admin brings someone new onto a project.
+- View as: every non-GET `/api/v1` call is refused in `route()`. Any write path outside `route()` must call
+  `assertNotViewing`.
+- Reminders open as drafts in the lead's own Gmail. The app never sends. The cron only writes in-app notices.
+- Undo makes a new change through the normal rules, never a delete.
+- Every table has RLS on. Every schema change also goes into `upgrade()`, and the hosted database needs
+  `npm run db:upgrade` before a build that uses it is promoted. Never run `db:remote` on production without
+  `NICO_ROSTER=pilot/roster.local.json`: it drops and reseeds.
+- Partner sign-in addresses live only in the env var `NICO_ALLOWED_EMAILS`. A second address for one person goes
+  in `people.alt_emails`.
+- Two skins, Warm (W) and Cool (M), each in Light or Dark. Warm and Light are the default. Motion uses transform and opacity (the named exceptions are listed under
+  DESIGN.md Motion), stays under 300ms except the first-load stagger, and stops under reduced motion.
+- Tests pin today to 2026-10-09.
 
 ## VERIFY
 
 ```
 python3 -I evals/meetings/check.py
+python3 -I evals/paste/check.py
+grep -rilf fixtures/denylist.txt fixtures/*.json evals/
+cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
-expects `OK: 20 cases`. Then: `grep -rilf fixtures/denylist.txt fixtures/*.json evals/` expects no output (the company name is allowed in docs, not in fixtures). Until code exists, done still means `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.
+Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
+internal hosts are not); typecheck silent; `809 passed`; build green. Then run the app
+(`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
+375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
+`docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

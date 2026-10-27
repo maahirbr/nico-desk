@@ -1,0 +1,399 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { openDb, type Db } from '../lib/db';
+import { ApiError } from '../lib/errors';
+import { getProject, planOp, planState, projectCounts, teamProjects } from '../lib/plan';
+import { countdown, lineLate, membersExceptLead, personCounts, nextStepsOf, plainParse, stampRel, totalPushes } from '../lib/planUtil';
+import { TEAM_ID } from '../lib/seed';
+import { SEE_ALL, sightOf } from '../lib/sight';
+
+// Project pages and the plan board, on the synthetic fixtures (fixtures/plan.json).
+const AS_OF = '2026-10-09';
+const ME = 'per_ada';
+const PLAN = 'prj_studio';
+const ADMIN = 'per_fay';
+
+let db: Db;
+beforeEach(async () => {
+  db = await openDb();
+});
+
+async function code(p: Promise<unknown>): Promise<string> {
+  try { await p; } catch (e) { if (e instanceof ApiError) return `${e.status} ${e.code}`; throw e; }
+  return 'ok';
+}
+const line = async (id: string) => (await planState(db, PLAN)).lines.find((l) => l.id === id)!;
+
+describe('projects', () => {
+  it('lists task boards and the partner plan with header details', async () => {
+    const ps = await teamProjects(db, TEAM_ID);
+    expect(ps.map((p) => p.id).sort()).toEqual(['prj_landing', 'prj_shoot', 'prj_studio', 'prj_tiers']);
+    const plan = await getProject(db, PLAN);
+    expect(plan.kind).toBe('plan');
+    expect(plan.partnerPeople).toEqual(['Leela', 'Rohan', 'Tanvi']);
+    expect((await getProject(db, 'prj_landing')).launchOn).toBe('2026-10-30');
+    const c = await projectCounts(db, TEAM_ID, AS_OF);
+    expect(c[PLAN]).toEqual({ open: 7, overdue: 1, done: 1 });
+  });
+
+  it('counts down to a launch in months and days', () => {
+    expect(countdown('2026-10-09', '2026-12-31')).toEqual({ months: 2, days: 22, past: false });
+    expect(countdown('2026-10-09', '2026-10-01')).toEqual({ months: 0, days: 8, past: true });
+  });
+});
+
+describe('plan board', () => {
+  it('derives overdue lines, pushes and done stamps from the first date', async () => {
+    const s = await planState(db, PLAN);
+    expect(s.lines).toHaveLength(8);
+    expect(s.removed.map((l) => l.num)).toEqual([9]);
+    expect(s.lines.filter((l) => lineLate(l, AS_OF)).map((l) => l.num)).toEqual([2]);
+    expect(totalPushes(s.lines.find((l) => l.num === 1)!)).toBe(1);
+    expect(stampRel('2026-10-07', '2026-10-06')).toEqual({ rel: '1 day late', kind: 'late' });
+    expect(stampRel('2026-10-01', '2026-10-02')).toEqual({ rel: '1 day early', kind: 'early' });
+  });
+
+  it('needs a reason to mark a line blocked, and logs it', async () => {
+    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_04', status: 'Blocked' }, AS_OF))).toBe('400 reason_required');
+    await planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_04', status: 'Blocked', reason: 'Waiting on names' }, AS_OF);
+    const l = await line('ln_04');
+    expect(l.status).toBe('Blocked');
+    expect(l.note).toBe('Blocked: Waiting on names');
+    expect((await planState(db, PLAN)).activity[0].summary).toContain('Waiting on names');
+  });
+
+  it('stamps a done date and clears it on reopen', async () => {
+    await planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_02', status: 'Done' }, AS_OF);
+    expect((await line('ln_02')).completedOn).toBe(AS_OF);
+    expect((await planState(db, PLAN)).activity[0].summary).toContain('1 day late');
+    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_02', status: 'In progress' }, AS_OF))).toBe('400 reason_required');
+    await planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_02', status: 'In progress', reason: 'Studio found a gap in the setup.' }, AS_OF);
+    expect((await line('ln_02')).completedOn).toBeNull();
+  });
+
+  it('keeps the first date when a date is pushed, and asks why', async () => {
+    const l = await line('ln_08');
+    const edit = (dueOn: string, dateReason?: string) => planOp(db, ME, PLAN, {
+      op: 'editLine', lineId: l.id, what: l.what, doneDef: l.doneDef, note: l.note, ownerId: l.ownerId, ownerWith: l.ownerWith,
+      partner: l.partner, partnerRole: l.partnerRole, mode: l.mode, dueOn, byLabel: l.byLabel, checkpoints: [], dateReason,
+    }, AS_OF);
+    expect(await code(edit('2026-11-16'))).toBe('400 reason_required');
+    await edit('2026-11-16', 'Sales data arrives a week later.');
+    const after = await line('ln_08');
+    expect([after.dueOn, after.origDueOn, after.pushCount]).toEqual(['2026-11-16', '2026-11-09', 1]);
+    // Moving it again within ten minutes is a correction: no second push, first date unchanged.
+    await edit('2026-11-17');
+    const fixed = await line('ln_08');
+    expect([fixed.dueOn, fixed.origDueOn, fixed.pushCount]).toEqual(['2026-11-17', '2026-11-09', 1]);
+  });
+
+  it('removes a line only with a reason, and restores it', async () => {
+    expect(await code(planOp(db, ME, PLAN, { op: 'removeLine', lineId: 'ln_03', reason: ' ' }, AS_OF))).toBe('400 reason_required');
+    await planOp(db, ME, PLAN, { op: 'removeLine', lineId: 'ln_03', reason: 'Folded into line 1' }, AS_OF);
+    let s = await planState(db, PLAN);
+    expect(s.removed.map((l) => l.id)).toContain('ln_03');
+    await planOp(db, ME, PLAN, { op: 'restoreLine', lineId: 'ln_03' }, AS_OF);
+    s = await planState(db, PLAN);
+    expect(s.lines.map((l) => l.id)).toContain('ln_03');
+  });
+
+  it('adds the next line number and keeps the activity log append-only', async () => {
+    await planOp(db, ME, PLAN, { op: 'addLine', pillar: 'people', what: 'Onboarding guide', doneDef: '', ownerId: null, partner: '', partnerRole: '', dueOn: null }, AS_OF);
+    expect((await planState(db, PLAN)).lines.find((l) => l.what === 'Onboarding guide')?.num).toBe(10);
+    await expect(db.query(`DELETE FROM plan_activity`)).rejects.toThrow(/append-only/);
+  });
+});
+
+describe('meeting minutes to actions', () => {
+  it('reads owners and dates from next steps without a model', () => {
+    const text = '# Summary\nTalked.\n### Next Steps\n- (Kabir Sethi) Send the studio the column list (Oct 12, 2026)\n- Rohan: share the board template by 14 Oct\n';
+    const steps = plainParse(nextStepsOf(text), '2026-10-09', [{ num: 2, what: 'Shared task tracker', doneDef: 'board template for every team' }]);
+    expect(steps.map((x) => [x.owner, x.due])).toEqual([['Kabir Sethi', '2026-10-12'], ['Rohan', '2026-10-14']]);
+    expect(steps.map((x) => x.task)).toEqual(['Send the studio the column list', 'Share the board template']);
+    expect(steps[1].line).toBe(2);
+    expect(steps.every((x) => x.confidence === 'unsure')).toBe(true);
+  });
+
+  it('turns minutes into proposals, and only accepting one changes the plan', async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    await planOp(db, ME, PLAN, { op: 'importMinutes', title: 'Working session', date: AS_OF, text: '(Rohan) Share the board template (Oct 14)\n(Leela) Draft the case exercise' }, AS_OF);
+    let s = await planState(db, PLAN);
+    expect(s.proposals).toHaveLength(2);
+    const before = s.actions.length;
+    const [a, b] = s.proposals;
+    await planOp(db, ME, PLAN, { op: 'acceptProposal', proposalId: a.id, lineId: 'ln_02' }, AS_OF);
+    await planOp(db, ME, PLAN, { op: 'rejectProposal', proposalId: b.id }, AS_OF);
+    s = await planState(db, PLAN);
+    expect(s.proposals).toHaveLength(0);
+    expect(s.actions).toHaveLength(before + 1);
+    expect(s.actions.find((x) => x.task === 'Share the board template')).toMatchObject({ lineId: 'ln_02', ownerName: 'Rohan', dueOn: '2026-10-14' });
+    expect(await code(planOp(db, ME, PLAN, { op: 'acceptProposal', proposalId: b.id, lineId: null }, AS_OF))).toBe('404 not_found');
+  });
+});
+
+describe('task boards: sub-projects and minutes', () => {
+  it('keeps a sub-project on a task and edits it', async () => {
+    const { createTask, editTask, getTask } = await import('../lib/service');
+    const t = await createTask(db, ME, { teamId: TEAM_ID, title: 'Print the brand book', ownerId: ME, dueOn: '2026-12-01', projectId: 'prj_landing', workstream: 'Brand Book' });
+    expect(t.workstream).toBe('Brand Book');
+    const e = await editTask(db, ME, t.id, { version: t.version, workstream: null });
+    expect((await getTask(db, e.id)).workstream).toBeNull();
+  });
+
+  it('turns minutes into proposed tasks that need an owner and a date', async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    const { teamTasks } = await import('../lib/service');
+    const { pendingProposals } = await import('../lib/plan');
+    await planOp(db, ME, 'prj_landing', { op: 'importMinutes', title: 'Web sync', date: AS_OF, text: '(Kabir Sethi) Fix the hero image (Oct 20)\n(Someone) Look into fonts' }, AS_OF);
+    const ps = await pendingProposals(db, 'prj_landing');
+    expect(ps.map((p) => [p.ownerId, p.dueOn, p.confidence])).toEqual([['per_bo', '2026-10-20', 'sure'], [null, null, 'unsure']]);
+    expect(await code(planOp(db, ME, 'prj_landing', { op: 'acceptProposal', proposalId: ps[1].id, lineId: null }, AS_OF))).toBe('400 owner_required');
+    await planOp(db, ME, 'prj_landing', { op: 'acceptProposal', proposalId: ps[0].id, lineId: null }, AS_OF);
+    const made = (await teamTasks(db, TEAM_ID, AS_OF)).find((t) => t.title === 'Fix the hero image');
+    expect(made).toMatchObject({ ownerId: 'per_bo', dueOn: '2026-10-20', firstDueOn: '2026-10-20', projectId: 'prj_landing' });
+    expect(await code(planOp(db, ME, 'prj_landing', { op: 'removeLine', lineId: 'x', reason: 'nope nope' }, AS_OF))).toBe('400 not_a_plan');
+  });
+});
+
+describe('reminders', () => {
+  it('drafts one email per person with overdue items, and never sends', async () => {
+    const { reminderDrafts, logReminder } = await import('../lib/reminders');
+    const r = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'http://localhost:3100/me', AS_OF);
+    expect(r.drafts.length).toBeGreaterThan(0);
+    const d = r.drafts.find((x) => x.personId === 'per_bo')!;
+    expect(d.items.every((i) => i.days < 0)).toBe(true);
+    expect(d.subject).toMatch(/^Reminder: \d+ overdue/);
+    expect(d.body).toContain('http://localhost:3100/me');
+    expect(d.to).toBeNull(); // synthetic addresses are never offered as a recipient
+    const wide = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 7, sight: SEE_ALL }, 'x', AS_OF);
+    expect(wide.drafts.reduce((n, x) => n + x.items.length, 0)).toBeGreaterThan(r.drafts.reduce((n, x) => n + x.items.length, 0));
+    await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'gmail', subject: d.subject, itemCount: d.items.length });
+    const again = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'x', AS_OF);
+    expect(again.drafts.find((x) => x.personId === 'per_bo')!.lastAt).not.toBeNull();
+  });
+
+  it('leaves out an item that may not be needed, with the reason, and drafts the email from the rest', async () => {
+    const { reminderDrafts, subjectFor } = await import('../lib/reminders');
+    const { blockTask, getTask } = await import('../lib/service');
+    const mine = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight: SEE_ALL }, 'x', AS_OF)).drafts.find((x) => x.personId === ME)!;
+    const [a, b] = (await mine()).items.filter((i) => i.kind === 'task' && !i.flag);
+    expect(b).toBeDefined();
+    const id = (k: string) => k.slice('task:'.length);
+    const flagOf = async (k: string) => (await mine()).items.find((i) => i.key === k)!.flag;
+    await blockTask(db, ME, id(a.key), { version: (await getTask(db, id(a.key), AS_OF)).version, onId: 'per_bo', ask: 'Waiting on the copy' });
+    const comment = (cid: string, by: string, at: string) => db.query(
+      `INSERT INTO comments (id, subject_kind, subject_id, author_id, body, created_at) VALUES ($1, 'task', $2, $3, 'Sending it today', $4)`, [cid, id(b.key), by, at]);
+    await comment('cmt_t1', 'per_bo', '2026-10-08T10:00:00+05:30'); // someone else: not the owner's update
+    await comment('cmt_t2', ME, '2026-10-05T10:00:00+05:30'); // the owner, too long ago
+    expect(await flagOf(b.key)).toBeNull();
+    await comment('cmt_t3', ME, '2026-10-08T10:00:00+05:30'); // the owner, yesterday
+    const after = await mine();
+    expect(after.items.find((i) => i.key === a.key)!.flag).toMatch(/^Blocked, waiting on /);
+    expect(after.items.find((i) => i.key === b.key)!.flag).toBe('They updated it in the last 2 days');
+    expect(after.body).not.toContain(a.title);
+    expect(after.body).not.toContain(b.title);
+    expect(after.subject).toBe(subjectFor(after.items.filter((i) => !i.flag)));
+  });
+
+  it('leaves out an item already in a recent reminder, and only that item', async () => {
+    const { reminderDrafts, logReminder } = await import('../lib/reminders');
+    const flags = async () => (await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight: SEE_ALL }, 'x', AS_OF)).drafts.find((x) => x.personId === 'per_bo')!.items;
+    const d = await flags();
+    const n = d.findIndex((i) => !i.flag);
+    await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'copy', subject: 'x', itemCount: 0 }); // an old-style row: no keys
+    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i) => i.flag));
+    await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'gmail', subject: 'x', itemCount: 1, itemKeys: [d[n].key] });
+    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? 'Already in a reminder in the last 2 days' : i.flag)));
+  });
+
+  it('names only what the lead can see', async () => {
+    const { reminderDrafts } = await import('../lib/reminders');
+    const { seesProject, seesTask } = await import('../lib/sight');
+    const { teamTasks } = await import('../lib/service');
+    const sight = await sightOf(db, TEAM_ID, ME); // a lead who is not an admin
+    const all = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight: SEE_ALL }, 'x', AS_OF);
+    const seen = await reminderDrafts(db, TEAM_ID, { mode: 'window', days: 14, sight }, 'x', AS_OF);
+    const tasks = await teamTasks(db, TEAM_ID, AS_OF);
+    const keys = (r: typeof all) => r.drafts.flatMap((x) => x.items.map((i) => i.key));
+    const hidden = keys(all).filter((k) => !keys(seen).includes(k));
+    expect(hidden.length).toBeGreaterThan(0);
+    for (const k of keys(seen).filter((k) => k.startsWith('task:'))) expect(seesTask(sight, tasks.find((t) => `task:${t.id}` === k)!)).toBe(true);
+    const plans = (await teamProjects(db, TEAM_ID)).filter((p) => p.kind === 'plan');
+    for (const x of seen.drafts.flatMap((d) => d.items.filter((i) => i.kind !== 'task'))) {
+      expect(plans.some((p) => seesProject(sight, p.id) && x.where.startsWith(p.name))).toBe(true);
+    }
+  });
+
+  it('leaves out people marked never remind', async () => {
+    const { reminderDrafts } = await import('../lib/reminders');
+    await db.query(`UPDATE people SET never_remind = true WHERE id = 'per_bo'`);
+    const r = await reminderDrafts(db, TEAM_ID, { mode: 'overdue', days: 2, sight: SEE_ALL }, 'x', AS_OF);
+    expect(r.drafts.some((x) => x.personId === 'per_bo')).toBe(false);
+    expect(r.skipped.length).toBe(1);
+  });
+});
+
+describe('starting a project', () => {
+  const base = { name: 'Diwali hampers', kind: 'tasks' as const, ownerId: ME, goal: 'Hampers in every store by 25 Oct.', launchOn: '2026-10-25',
+    targetLabel: 'Launch', phase: 'Sampling', workstreams: ['Hampers', 'Packaging'], members: [{ personId: 'per_bo', role: 'Packaging POC' }] };
+
+  it('lets anyone on the team start one with roles, a date and sub-projects', async () => {
+    const { createProject, projectMembers } = await import('../lib/plan');
+    const p = await createProject(db, ME, TEAM_ID, base);
+    expect(p).toMatchObject({ kind: 'tasks', launchOn: '2026-10-25', targetLabel: 'Launch', workstreams: ['Hampers', 'Packaging'] });
+    expect(p.pills.map((x) => x.label)).toEqual(['Launch', 'Phase']);
+    expect(await projectMembers(db, p.id)).toEqual([{ personId: 'per_bo', role: 'Packaging POC' }]);
+    expect(await code(createProject(db, ME, TEAM_ID, base))).toBe('400 invalid_body'); // same name
+    expect((await createProject(db, 'per_bo', TEAM_ID, { ...base, name: 'Other', ownerId: 'per_bo', members: [] })).name).toBe('Other'); // a member
+    expect(await code(createProject(db, 'per_nobody', TEAM_ID, { ...base, name: 'Outsider' }))).toBe('403 not_allowed');
+  });
+
+  it('gives a partner project one unnamed group when it has no sub-projects, and keeps keys on rename', async () => {
+    const { createProject, updateProject } = await import('../lib/plan');
+    const bare = await createProject(db, ME, TEAM_ID, { ...base, name: 'Collab', kind: 'plan', workstreams: [] });
+    expect(bare.pillars).toEqual([{ key: 'general', label: 'General' }]);
+    expect(bare.targetLabel).toBe('Launch');
+    expect((await createProject(db, ME, TEAM_ID, { ...base, name: 'No label', targetLabel: '' })).targetLabel).toBe('Deadline');
+    const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Studio', kind: 'plan', workstreams: ['Foundations'], partnerName: 'Loom', partnerPeople: ['Tanvi'] });
+    const key = p.pillars[0].key;
+    const u = await updateProject(db, ME, p.id, { ...base, name: 'Studio', kind: 'plan', workstreams: ['Groundwork'], partnerName: 'Loom', partnerPeople: ['Tanvi'] });
+    expect(u.pillars).toEqual([{ key, label: 'Groundwork' }]);
+    expect(await code(updateProject(db, ME, p.id, { ...base, name: 'Studio', kind: 'tasks' }))).toBe('400 invalid_body');
+  });
+  it('keeps a separate lead, who can edit it and sees it on Home with the members', async () => {
+    const { createProject, updateProject, myProjects, projectPeopleMap } = await import('../lib/plan');
+    const same = await createProject(db, ME, TEAM_ID, { ...base, leadId: ME });
+    expect(same.leadId).toBe(ME);
+    const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Gift boxes', leadId: 'per_cy' });
+    expect(p).toMatchObject({ ownerId: ME, leadId: 'per_cy' });
+    expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy']);
+    expect((await myProjects(db, TEAM_ID, 'per_cy')).find((x) => x.id === p.id)?.role).toBe('Lead');
+    expect((await myProjects(db, TEAM_ID, 'per_bo')).find((x) => x.id === p.id)?.role).toBe('Packaging POC');
+    expect((await myProjects(db, TEAM_ID, 'per_dee')).some((x) => x.id === p.id)).toBe(false);
+    const u = await updateProject(db, 'per_cy', p.id, { ...base, name: 'Gift boxes', leadId: null });
+    expect(u.leadId).toBe(ME);
+  });
+  it('keeps archived projects off Home', async () => {
+    const { createProject, archiveProject, myProjects } = await import('../lib/plan');
+    const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Old run', leadId: 'per_cy' });
+    expect((await myProjects(db, TEAM_ID, 'per_cy')).some((x) => x.id === p.id)).toBe(true);
+    await archiveProject(db, ME, p.id);
+    for (const who of [ME, 'per_cy', 'per_bo']) expect((await myProjects(db, TEAM_ID, who)).some((x) => x.id === p.id)).toBe(false);
+  });
+});
+
+describe('a project task goes to one of its people', () => {
+  const base = { name: 'Gift wrap drive', kind: 'tasks' as const, ownerId: ME, goal: '', workstreams: [], members: [{ personId: 'per_bo', role: 'Packaging POC' }] };
+  const task = { teamId: TEAM_ID, title: 'Cut the hamper ribbon', dueOn: '2026-10-20' };
+
+  it('brings a new owner onto the project with their role, or as Member', async () => {
+    const { createProject, projectMembers, projectPeopleMap } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const p = await createProject(db, ME, TEAM_ID, base);
+    expect(await code(s.createTask(db, ME, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: ' ' }))).toBe('400 invalid_body');
+    const t = await s.createTask(db, ME, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' });
+    expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_cy', role: 'Gift wrap' });
+    const e = await s.editTask(db, ME, t.id, { version: t.version, ownerId: 'per_dee' }); // no role given, as from an import
+    expect(e.ownerId).toBe('per_dee');
+    expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_dee', role: 'Member' });
+    expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy', 'per_dee']);
+  });
+
+  it('lets only the project owner, a lead or an admin bring someone new in', async () => {
+    const { createProject, projectMembers, projectsMayAddTo } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const p = await createProject(db, ME, TEAM_ID, base); // the lead owns it; per_bo is a member
+    // A member may give a task to the project's people, but not pull a teammate in.
+    const own = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo', projectId: p.id });
+    expect(await code(s.createTask(db, 'per_bo', { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' }))).toBe('403 not_allowed');
+    expect(await code(s.editTask(db, 'per_bo', own.id, { version: own.version, ownerId: 'per_cy', ownerRole: 'Gift wrap' }))).toBe('403 not_allowed');
+    expect((await projectMembers(db, p.id)).map((m) => m.personId)).toEqual(['per_bo']);
+    // An admin may.
+    await s.createTask(db, ADMIN, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' });
+    // A member who owns the project may.
+    const q = await createProject(db, ME, TEAM_ID, { ...base, name: 'Hamper run', ownerId: 'per_bo', members: [] });
+    await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_dee', projectId: q.id, ownerRole: 'Hampers' });
+    expect(await projectMembers(db, q.id)).toEqual([{ personId: 'per_dee', role: 'Hampers' }]);
+    // The owner picker offers "+ Add someone" on exactly these projects.
+    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toEqual([q.id]);
+    expect((await projectsMayAddTo(db, TEAM_ID, ME, true))).toEqual(expect.arrayContaining([p.id, q.id]));
+  });
+
+  it('keeps someone on the project while they own open tasks in it', async () => {
+    const { createProject, updateProject, projectMembers } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const p = await createProject(db, ME, TEAM_ID, base);
+    const t = await s.createTask(db, ME, { ...task, ownerId: 'per_bo', projectId: p.id });
+    expect(await code(updateProject(db, ME, p.id, { ...base, members: [] }))).toBe('400 invalid_body');
+    await s.closeTask(db, 'per_bo', t.id, { version: t.version, as: 'done' });
+    await updateProject(db, ME, p.id, { ...base, members: [] });
+    expect(await projectMembers(db, p.id)).toEqual([]);
+  });
+});
+
+describe('search', () => {
+  it('finds projects, tasks, plan lines and people, title matches first', async () => {
+    const { search } = await import('../lib/search');
+    const { SEE_ALL } = await import('../lib/sight');
+    const hits = await search(db, TEAM_ID, SEE_ALL, 'shoot', AS_OF);
+    expect(hits[0]).toMatchObject({ kind: 'project', title: 'Campaign shoot plan' });
+    expect(hits.some((h) => h.kind === 'task')).toBe(true);
+    expect((await search(db, TEAM_ID, SEE_ALL, 'champions', AS_OF)).map((h) => h.kind)).toContain('line');
+    expect((await search(db, TEAM_ID, SEE_ALL, 'web producer', AS_OF))[0]).toMatchObject({ kind: 'person', id: 'per_bo' });
+    expect(await search(db, TEAM_ID, SEE_ALL, '   ', AS_OF)).toEqual([]);
+  });
+});
+
+describe('blocked and dropped say why; starting and finishing are one click', () => {
+  it('blocks only with a reason (a person is optional), drops only with a reason', async () => {
+    const s = await import('../lib/service');
+    const t = (await s.teamTasks(db, TEAM_ID, AS_OF)).find((x) => x.statusCategory === 'open' && x.origin === 'app' && x.ownerId === 'per_bo')!;
+    expect(await code(s.blockTask(db, 'per_bo', t.id, { version: t.version, ask: '   ' }))).toBe('400 reason_required');
+    const solo = await s.blockTask(db, 'per_bo', t.id, { version: t.version, ask: 'No data' }); // a short reason is enough
+    expect(solo.blocked).toMatchObject({ onId: null, ask: 'No data' });
+    const free = await s.unblockTask(db, 'per_bo', t.id, { version: solo.version }); // clearing a block needs no note
+    const b = await s.blockTask(db, 'per_bo', t.id, { version: free.version, onId: ME, ask: 'Need the final price list please.' });
+    expect(b.blocked?.onId).toBe(ME);
+    const c = await s.unblockTask(db, ME, t.id, { version: b.version });
+    expect(c.blocked).toBeNull();
+    expect(await code(s.closeTask(db, 'per_bo', t.id, { version: c.version, as: 'dropped' }))).toBe('400 reason_required');
+    const done = await s.closeTask(db, 'per_bo', t.id, { version: c.version, as: 'done' });
+    expect(done.statusCategory).toBe('done'); // marking done needs no reason
+  });
+
+  it('plan lines: blocked, back to not started and reopening need a reason; starting and done do not', async () => {
+    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'Blocked', reason: ' ' }, AS_OF))).toBe('400 reason_required');
+    const from = (await line('ln_08')).status;
+    if (from !== 'In progress') await planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'In progress' }, AS_OF);
+    expect((await line('ln_08')).status).toBe('In progress');
+    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'Not started' }, AS_OF))).toBe('400 reason_required');
+    await planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'Done' }, AS_OF);
+    expect((await line('ln_08')).status).toBe('Done');
+    expect(await code(planOp(db, ME, PLAN, { op: 'status', lineId: 'ln_08', status: 'In progress' }, AS_OF))).toBe('400 reason_required');
+  });
+});
+
+describe('ledger drill-down', () => {
+  it('lists exactly the tasks the ledger counts', async () => {
+    const s = await import('../lib/service');
+    const rows = await s.ledger(db, TEAM_ID, '2026-01-05', '2026-12-28', undefined, AS_OF);
+    const tasks = await s.ledgerTasks(db, TEAM_ID, '2026-01-05', '2026-12-28', undefined, AS_OF);
+    const sum = (k: keyof (typeof rows)[number]) => rows.reduce((n, r) => n + (r[k] as number), 0);
+    expect(tasks.filter((t) => t.outcome === 'ahead' || t.outcome === 'on_time').length).toBe(sum('closedAhead') + sum('closedOnTime'));
+    expect(tasks.filter((t) => t.outcome === 'late').length).toBe(sum('closedLate'));
+    expect(tasks.filter((t) => t.overdue).length).toBe(sum('openPastDue'));
+    expect(tasks.filter((t) => t.slippedSilently).length).toBe(sum('silentSlips'));
+  });
+});
+
+describe('header counts and member list', () => {
+  it('counts open tasks and late tasks, never "ahead"', () => {
+    // One task, not started, due weeks ago: one open, one late.
+    expect(personCounts([{ dueOn: '2026-09-01' }], [], AS_OF)).toEqual({ open: 1, late: 1 });
+    expect(personCounts([{ dueOn: '2026-10-12' }, { dueOn: '2026-10-01' }], [{}, {}], AS_OF)).toEqual({ open: 4, late: 1 });
+  });
+  it('shows the project lead once, as Project lead', () => {
+    const members = [{ personId: 'per_ada', role: 'Lead' }, { personId: 'per_bo', role: 'Design' }];
+    expect(membersExceptLead(members, 'per_ada')).toEqual([{ personId: 'per_bo', role: 'Design' }]);
+    expect(membersExceptLead(members, 'per_zed')).toEqual(members);
+  });
+});

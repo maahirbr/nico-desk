@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.data/
+next-env.d.ts
+*.tsbuildinfo
+roster.local.json
+projects.local.json
+.env
+.env.*
+!.env.example
+.vercel/
+pilot/jev-terms.local.json

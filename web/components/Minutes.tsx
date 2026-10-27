@@ -1,0 +1,304 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import type { PlanLine, Proposal } from '@/lib/planUtil';
+import { fmtDate } from '@/lib/time';
+import { PersonLink } from './chips';
+import { DateField } from './DateField';
+import { Help } from './HelpMode';
+import { Select } from './Select';
+import { useJev } from './jevFlag';
+import { api } from './task-ui';
+import { SlideInd } from './motion-ui';
+import { isRealEnter } from './ime';
+
+// Meeting minutes in, proposals out: nothing changes until a person accepts each one.
+
+type Op = (b: Record<string, unknown>) => Promise<boolean>;
+
+type Provider = 'granola' | 'fireflies' | 'fathom' | 'google_meet';
+type Source = 'paste' | Provider | 'google_doc' | 'wispr';
+type Read = { title: string; date: string; text: string; source?: { provider: Provider | 'google_doc'; id: string; link?: string | null } };
+const NAME: Record<Source, string> = { paste: 'Paste', granola: 'Granola', fireflies: 'Fireflies', fathom: 'Fathom', google_meet: 'Google Meet', google_doc: 'Google Doc', wispr: 'Wispr Flow' };
+// Google Meet is one lead's own link, so it has its own address and its own status call.
+const PATH: Record<Provider, string> = { granola: 'granola', fireflies: 'fireflies', fathom: 'fathom', google_meet: 'google-meet' };
+
+export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tasks'; busy: boolean; today: string; onRead: (b: Read) => void }) {
+  const [tab, setTab] = useState<Source>('paste');
+  const [f, setF] = useState({ title: '', date: today, text: '' });
+  const [meet, setMeet] = useState(false); // the Google Meet and Google Doc tabs show only for a lead who has connected Google
+  useEffect(() => {
+    fetch('/api/v1/connections/google-meet').then((r) => (r.ok ? r.json() : null)).then((s) => setMeet(!!s?.connected)).catch(() => setMeet(false));
+  }, []);
+  return (
+    <div className="card imp-panel">
+      <div className="imp-head"><h3>Import meeting minutes</h3></div>
+      <nav className="tabs imp-tabs" aria-label="Where the minutes come from">
+        {(Object.keys(NAME) as Source[]).filter((k) => (k !== 'google_meet' && k !== 'google_doc') || meet).map((k) => (
+          <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-minutes" className="tab-ind" />}{NAME[k]}</button>
+        ))}
+      </nav>
+      <p className="sub">Next steps become proposals to review. Nothing changes on the {what === 'plan' ? 'plan' : 'board'} until someone accepts them{what === 'tasks' ? '; each accepted step becomes a task with an owner and a date' : ''}.</p>
+      <div key={tab} className="tab-panel">
+      {tab === 'paste' && (
+        <div className="stack">
+          <div className="row">
+            <label className="f" style={{ flex: '0 1 180px' }}><span>Meeting date</span><DateField value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
+            <label className="f"><span>Meeting name</span><input value={f.title} placeholder="e.g. Weekly working session" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+          </div>
+          <textarea rows={7} value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })}
+            placeholder={'Paste the minutes, or just the Next Steps:\n(Kabir Sethi) Send the studio the column list (Oct 12, 2026)\nRohan: share the board template by 14 Oct'} />
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" disabled={busy || !f.text.trim() || !f.date} onClick={() => onRead(f)}>{busy ? 'Reading…' : 'Read minutes'}</button>
+          </div>
+        </div>
+      )}
+      {(tab === 'granola' || tab === 'fireflies' || tab === 'fathom' || tab === 'google_meet') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
+      {tab === 'google_doc' && <DocForm busy={busy} today={today} onRead={onRead} />}
+      {tab === 'wispr' && (
+        <div className="stack small">
+          <p style={{ margin: 0 }}>This app can’t read Wispr Flow directly yet. Its Notetaker connects through a read-only MCP server for AI assistants such as Claude, not through a key.</p>
+          <ol className="steps">
+            <li>Open the meeting in Wispr Flow.</li>
+            <li>Copy the summary, or just its <b>Next steps</b> section.</li>
+            <li>Paste it under <button className="act" onClick={() => setTab('paste')}>Paste</button> and press Read minutes.</li>
+          </ol>
+        </div>
+      )}
+      </div>
+    </div>
+  );
+}
+
+// Meetings from a connected source: pick one, and its action items are read like pasted minutes.
+function SourceList({ provider, busy, onRead }: { provider: Provider; busy: boolean; onRead: (b: Read) => void }) {
+  const [status, setStatus] = useState<'loading' | 'off' | 'on'>('loading');
+  const [days, setDays] = useState(14);
+  const [q, setQ] = useState('');
+  const [rows, setRows] = useState<{ id: string; title: string; date: string; attendees: string[] }[] | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [pick, setPick] = useState<string | null>(null);
+
+  async function load(d = days, query = q) {
+    setMsg(null); setRows(null);
+    const res = await fetch(`/api/v1/connections/${PATH[provider]}/meetings?days=${d}${query ? `&q=${encodeURIComponent(query)}` : ''}`);
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { setMsg(data?.error?.message ?? 'Could not load meetings.'); setRows([]); return; }
+    setRows(data);
+  }
+  useEffect(() => {
+    fetch(provider === 'google_meet' ? '/api/v1/connections/google-meet' : '/api/v1/connections').then((r) => r.json()).then((s) => {
+      const on = !!(provider === 'google_meet' ? s : s?.[provider])?.connected;
+      setStatus(on ? 'on' : 'off');
+      if (on) load();
+    }).catch(() => setStatus('off'));
+  }, [provider]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (status === 'loading') return <p className="small dim">Checking the connection…</p>;
+  if (status === 'off') return (
+    <div className="stack small">
+      <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. {provider === 'google_meet' ? 'A lead connects their own Google account once' : `A lead adds the team’s ${NAME[provider]} API key once`}: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>
+    </div>
+  );
+  return (
+    <div className="stack">
+      <div className="row">
+        <input type="search" className="search" placeholder={`Search ${NAME[provider]} meetings`} value={q} aria-label="Search meetings"
+          onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (isRealEnter(e)) load(days, q); }} />
+        <Select value={String(days)} aria-label="How far back" onChange={(v) => { setDays(Number(v)); load(Number(v), q); }}>
+          <option value={7}>Last 7 days</option><option value={14}>Last 14 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option>
+        </Select>
+        <button className="btn ghost" onClick={() => load(days, q)}>Search</button>
+      </div>
+      {msg && <p className="err" role="alert">{msg}</p>}
+      {rows === null ? <p className="small dim">Loading meetings…</p> : rows.length === 0 && !msg ? <p className="small dim">{provider === 'google_meet' ? 'No Meet meetings in this range. Only meetings you were part of show here.' : 'No meetings in this range.'}</p> : (
+        <div className="meet-list">
+          {rows.map((m) => (
+            <div key={m.id} className="meet">
+              <div className="meet-main">
+                <b>{m.title}</b>
+                <span className="small dim">{m.date ? fmtDate(m.date) : ''}{m.attendees.length ? ` · ${m.attendees.slice(0, 4).join(', ')}${m.attendees.length > 4 ? ` +${m.attendees.length - 4}` : ''}` : ''}</span>
+              </div>
+              <button className="btn small-btn" disabled={busy || pick === m.id} onClick={async () => {
+                setPick(m.id); setMsg(null);
+                try {
+                  const res = await fetch(`/api/v1/connections/${PATH[provider]}/meetings/${encodeURIComponent(m.id)}`);
+                  const note = await res.json();
+                  if (!res.ok) throw new Error(note?.error?.message ?? 'Could not fetch the meeting.');
+                  if (!note.text?.trim()) throw new Error('This meeting has no summary or action items yet.');
+                  onRead({ title: note.title, date: note.date || new Date().toISOString().slice(0, 10), text: note.text, source: { provider, id: note.id, link: note.link } });
+                } catch (e) { setMsg((e as Error).message); }
+                finally { setPick(null); }
+              }}>{pick === m.id ? 'Reading…' : 'Import'}</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {provider === 'google_meet' && <p className="small dim" style={{ margin: 0 }}>Reads the Gemini notes when Meet made them, and the transcript when it did not. This does not record anything.</p>}
+    </div>
+  );
+}
+
+// A Google Doc of minutes, by its link, read with the lead's own Google link. Headings and bullets keep their shape.
+function DocForm({ busy, today, onRead }: { busy: boolean; today: string; onRead: (b: Read) => void }) {
+  const [link, setLink] = useState('');
+  const [date, setDate] = useState(today);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
+  async function read() {
+    setReading(true); setMsg(null);
+    try {
+      const note = await api('/connections/google-meet/docs', 'POST', { link });
+      if (!note?.text?.trim()) throw new Error('This Doc has no text to read.');
+      // One Doc often holds a meeting series, so the same Doc can come in again for another meeting date.
+      const on = note.date || date;
+      onRead({ title: note.title, date: on, text: note.text, source: { provider: 'google_doc', id: `${note.id}@${on}`, link: note.link } });
+    } catch (e) { setMsg((e as Error).message || 'Could not read the Doc.'); }
+    finally { setReading(false); }
+  }
+  return (
+    <div className="stack">
+      <div className="row">
+        <label className="f" style={{ flex: '0 1 180px' }}><span>Meeting date</span><DateField value={date} onChange={(e) => setDate(e.target.value)} /></label>
+        <label className="f"><span>Google Doc link</span><input type="url" value={link} placeholder="https://docs.google.com/document/d/…"
+          onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (isRealEnter(e) && link.trim()) read(); }} /></label>
+      </div>
+      {msg && <p className="err" role="alert">{msg}</p>}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" disabled={busy || reading || !link.trim() || !date} onClick={read}>{reading || busy ? 'Reading…' : 'Read Doc'}</button>
+      </div>
+      <p className="small dim" style={{ margin: 0 }}>Reads a Doc you can open in Google. An Action items or Next steps heading, a table with Owner and Task columns, or @name at the start of a line names the owner.</p>
+    </div>
+  );
+}
+
+// What Jev noted about one draft (lib/jevUses.ts DraftCheck). Notes only: the owner and date rule stays in the badge.
+type Check = { wording: 'not_a_task' | 'vague' | 'clear' | null; duplicate: { taskId: string; title: string } | null };
+const checkNotes = (c: Check | undefined): string[] => !c ? [] : [
+  c.wording === 'not_a_task' ? 'Reads like a remark, not a task.' : c.wording === 'vague' ? 'The wording is vague. Say what done looks like.' : '',
+  c.duplicate ? `May repeat an open task: ${c.duplicate.title}` : '',
+].filter(Boolean);
+
+export function Inbox({ mode, proposals, lines = [], people = [], workstreams = [], busy, today, op, projectId }: {
+  mode: 'plan' | 'tasks'; proposals: Proposal[]; lines?: PlanLine[]; people?: { id: string; name: string }[]; workstreams?: string[];
+  busy: boolean; today: string; op: Op; projectId?: string;
+}) {
+  // Check drafts (Jev, tasks mode only). The lead asks; nothing runs on its own. Notes are suggestions and change nothing.
+  const jev = useJev();
+  const [checks, setChecks] = useState<Record<string, Check> | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkNote, setCheckNote] = useState<string | null>(null);
+  async function check() {
+    if (!projectId) return;
+    setChecking(true); setCheckNote(null);
+    try {
+      const r = await api(`/projects/${projectId}/check-drafts`, 'POST');
+      if (r?.ok && Array.isArray(r.checks)) {
+        setChecks(Object.fromEntries((r.checks as (Check & { id: string })[]).map((c) => [c.id, c])));
+        if (!(r.checks as Check[]).some((c) => checkNotes(c).length)) setCheckNote('Nothing to note on these drafts.');
+      } else setCheckNote('No suggestion right now.');
+    } catch { setCheckNote('No suggestion right now.'); }
+    finally { setChecking(false); }
+  }
+  const [editingP, setEditingP] = useState<string | null>(null);
+  const [armed, setArmed] = useState<string | null>(null);
+  const batches = [...new Set(proposals.map((p) => p.batch))];
+  return (
+    <section className="inbox">
+      <div className="inbox-head"><h2><Help term="proposals">Meeting updates</Help></h2><span className="count-badge">{proposals.length} to review</span></div>
+      {jev && mode === 'tasks' && projectId && (
+        <div className="suggest-bar">
+          <Help term="jev_check_drafts" host><button className="mini-btn" type="button" disabled={busy || checking} onClick={check}>{checking ? 'Reading…' : checks ? 'Check again' : 'Check drafts'}</button></Help>
+          {checkNote && <span className="suggest-note" role="status">{checkNote}</span>}
+        </div>
+      )}
+      {batches.map((b) => {
+        const items = proposals.filter((p) => p.batch === b).sort((x, y) => x.position - y.position);
+        const m = items[0].meeting;
+        const sure = items.filter((p) => p.confidence === 'sure' && (mode === 'tasks' || p.lineId)).length;
+        return (
+          <div key={b} className="card inbox-batch">
+            <div className="batch-head">
+              <div><div className="batch-title">{m.title}</div><div className="small dim">{fmtDate(m.date)} · {items.length} next steps</div></div>
+              <div className="row">
+                <Help term="proposal_accept_sure" host><button className="mini-btn" disabled={busy || !sure} onClick={() => op({ op: 'acceptSure', batch: b })}>Accept all sure ones ({sure})</button></Help>
+                <button className="mini-btn danger" disabled={busy}
+                  onClick={() => { if (armed === b) { op({ op: 'dismissBatch', batch: b }); setArmed(null); } else { setArmed(b); setTimeout(() => setArmed(null), 5000); } }}>
+                  {armed === b ? `Confirm dismiss ${items.length}` : 'Dismiss all'}
+                </button>
+              </div>
+            </div>
+            {items.map((p) => <ProposalCard key={p.id} notes={checkNotes(checks?.[p.id])} mode={mode} p={p} lines={lines} people={people} workstreams={workstreams} busy={busy} today={today} editing={editingP === p.id}
+              onEdit={() => setEditingP(editingP === p.id ? null : p.id)} op={op} />)}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editing, onEdit, op, notes = [] }: {
+  notes?: string[]; mode: 'plan' | 'tasks'; p: Proposal; lines: PlanLine[]; people: { id: string; name: string }[]; workstreams: string[];
+  busy: boolean; today: string; editing: boolean; onEdit: () => void; op: Op;
+}) {
+  const [lineId, setLineId] = useState(p.lineId ?? '');
+  const [ownerId, setOwnerId] = useState(p.ownerId ?? '');
+  const [ws, setWs] = useState(p.workstream ?? '');
+  const [f, setF] = useState({ task: p.task, ownerName: p.ownerName, ownerWith: p.ownerWith, dueOn: p.dueOn ?? '' });
+  const unsure = mode === 'plan' ? p.confidence !== 'sure' || !p.lineId : !ownerId || !(editing ? f.dueOn : p.dueOn);
+  return (
+    <div className={`pc${unsure ? ' unsure' : ''}`}>
+      <div className="pc-top">
+        <span className={`pc-badge${unsure ? ' unsure' : ''}`}><Help term={unsure ? 'proposal_unsure' : 'proposal_sure'}>{unsure ? (mode === 'plan' ? 'Check the line' : 'Needs owner and date') : mode === 'plan' ? 'Sure' : 'Ready'}</Help></span>
+        {mode === 'plan' ? (
+          <Select className="pc-line" value={lineId} aria-label="Line for this action" onChange={setLineId}>
+            <option value="">Other actions (no line)</option>
+            {[...lines].sort((a, b) => a.num - b.num).map((l) => <option key={l.id} value={l.id}>{l.num}. {l.what}{p.alt.includes(l.id) ? '  (maybe)' : ''}</option>)}
+          </Select>
+        ) : (
+          <>
+            <Select className="pc-line" value={ownerId} aria-label="Owner" onChange={setOwnerId}>
+              <option value="">Owner: pick from the roster{p.ownerName ? ` (minutes say “${p.ownerName}”)` : ''}</option>
+              {people.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </Select>
+            {workstreams.length > 0 && (
+              <Select className="pc-line" value={ws} aria-label="Sub-project" onChange={setWs}>
+                <option value="">No sub-project</option>
+                {workstreams.map((w) => <option key={w}>{w}</option>)}
+              </Select>
+            )}
+          </>
+        )}
+        {p.why && !unsure && <span className="pc-why">{p.why}</span>}
+      </div>
+      {editing ? (
+        <div className="stack" style={{ gap: 8 }}>
+          <textarea rows={2} value={f.task} onChange={(e) => setF({ ...f, task: e.target.value })} aria-label="Task" />
+          <div className="row">
+            <input value={f.ownerName} placeholder="Owner" aria-label="Owner" onChange={(e) => setF({ ...f, ownerName: e.target.value })} />
+            <input value={f.ownerWith} placeholder="Supported by" aria-label="Supported by" onChange={(e) => setF({ ...f, ownerWith: e.target.value })} />
+            <DateField value={f.dueOn} aria-label="Due date" onChange={(e) => setF({ ...f, dueOn: e.target.value })} />
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="pc-task">{p.task}</div>
+          <div className="small dim">
+            <b className="pc-owner">{mode === 'tasks' && ownerId ? <PersonLink id={ownerId}>{people.find((x) => x.id === ownerId)?.name ?? p.ownerName}</PersonLink> : p.ownerName || 'No owner named'}</b>{p.ownerWith && ` · with ${p.ownerWith}`}
+            <span className={p.dueOn && p.dueOn < today ? 'late' : ''}>{p.dueOn ? ` · due ${fmtDate(p.dueOn)}` : ' · no date'}</span>
+          </div>
+        </div>
+      )}
+      {notes.map((n) => <p key={n} className="suggest-line">{n}</p>)}
+      <div className="row pc-actions">
+        <button className="btn small-btn" disabled={busy || (mode === 'tasks' && unsure)} title={mode === 'tasks' && unsure ? 'Pick an owner, and a date under Edit' : undefined} onClick={() => op({
+          op: 'acceptProposal', proposalId: p.id, lineId: lineId || null,
+          ...(mode === 'tasks' ? { ownerId: ownerId || null, workstream: ws || null } : {}),
+          ...(editing ? { task: f.task, ownerName: f.ownerName, ownerWith: f.ownerWith, dueOn: f.dueOn || null } : {}),
+        })}>{mode === 'tasks' ? 'Accept as task' : 'Accept'}</button>
+        <button className="mini-btn" disabled={busy} onClick={onEdit}>{editing ? 'Done editing' : 'Edit'}</button>
+        <button className="mini-btn danger" disabled={busy} onClick={() => op({ op: 'rejectProposal', proposalId: p.id })}>Reject</button>
+      </div>
+    </div>
+  );
+}

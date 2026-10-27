@@ -1,0 +1,76 @@
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { DitherArt } from './DitherArt';
+import type { SearchHit } from '@/lib/search';
+import { fmtDate } from '@/lib/time';
+import { isRealEnter } from './ime';
+
+const LABEL: Record<SearchHit['kind'], string> = { project: 'Projects', person: 'People', task: 'Tasks', line: 'Plan lines', comment: 'Comments' };
+
+export function SearchView({ initial }: { initial: string }) {
+  const router = useRouter();
+  const [q, setQ] = useState(initial);
+  const [hits, setHits] = useState<SearchHit[] | null>(null);
+  const [sel, setSel] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
+
+  // Focus only when the page opens empty. After a search from the top bar, the keyboard stays closed.
+  useEffect(() => { if (!initial.trim()) input.current?.focus(); }, [initial]);
+  useEffect(() => {
+    const term = q.trim();
+    if (!term) { setHits(null); return; }
+    let stale = false;
+    const t = setTimeout(async () => {
+      const res = await fetch(`/api/v1/search?q=${encodeURIComponent(term)}`);
+      if (stale) return;
+      setHits(res.ok ? await res.json() : []);
+      setSel(0);
+      window.history.replaceState(null, '', `/search?q=${encodeURIComponent(term)}`);
+      // Jev on: ask for the same results ordered by meaning. Any failure keeps the list above.
+      if (res.ok && res.headers.get('x-nico-jev') === 'on' && term.length >= 3) {
+        try {
+          const r2 = await fetch(`/api/v1/search?q=${encodeURIComponent(term)}&meaning=1`);
+          if (stale || !r2.ok || r2.headers.get('x-nico-jev') !== 'ranked') return;
+          setHits(await r2.json());
+          setSel(0);
+        } catch { /* keep the plain list */ }
+      }
+    }, 180);
+    return () => { stale = true; clearTimeout(t); };
+  }, [q]);
+
+  const kinds = (['project', 'person', 'task', 'line', 'comment'] as const).filter((k) => hits?.some((h) => h.kind === k));
+  const flat = kinds.flatMap((k) => hits!.filter((h) => h.kind === k));
+
+  return (
+    <div className="calm">
+      <header className="page-head"><div><h1>Search</h1><p className="summary">Projects, tasks, plan lines, comments and people. Try is:late, @name or #project.</p></div></header>
+      <input ref={input} type="search" className="big-search" placeholder="Search for a task, project or person" value={q} aria-label="Search"
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') { e.preventDefault(); setSel(Math.min(sel + 1, flat.length - 1)); }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setSel(Math.max(sel - 1, 0)); }
+          if (isRealEnter(e) && flat[sel]) router.push(flat[sel].href);
+        }} />
+      {hits && hits.length === 0 && <div className="empty-state"><DitherArt field="bands" className="dither-empty" fade /><p>Nothing matches “{q.trim()}”.</p></div>}
+      {kinds.map((k) => (
+        <section key={k} className="group">
+          <h2>{LABEL[k]} <span className="n">{hits!.filter((h) => h.kind === k).length}</span></h2>
+          <div className="tlist">
+            {hits!.filter((h) => h.kind === k).map((h) => (
+              <Link key={`${h.kind}-${h.id}`} href={h.href} className={`hit${flat[sel] === h ? ' sel' : ''}`}>
+                <span className="hit-main"><b>{h.title}</b><span className="small dim">{h.sub}</span></span>
+                {h.kind === 'task' && (
+                  <span className={`small ${h.overdue ? 'late-text' : 'dim'}`}>{h.open ? `Due ${fmtDate(h.dueOn)}` : 'Closed'}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
