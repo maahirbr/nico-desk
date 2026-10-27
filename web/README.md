@@ -285,6 +285,8 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
      unreadable and each lead must connect again). Without `NICO_TOKEN_KEY` on Vercel or with `DATABASE_URL` set, the
      feature stays off.
   5. Run `npm run db:upgrade` before promoting the build, so `google_links` exists.
+- Production builds from `main` on each push. Work goes on `maahir/mvp` (each push makes a preview), then merges into
+  `main`. A schema change needs `npm run db:upgrade` before that merge.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its
   ask columns are not in the Supabase schema.
 

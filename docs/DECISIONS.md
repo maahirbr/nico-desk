@@ -940,3 +940,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   help word goes from `components/help.ts`: no screen shows it since the switch left, and this replaces the 26 Oct note
   that it stays. The tones and the `nd_sound` cookie stay. `web/README.md` now says Feedback is in the top bar, not
   under More. Rollback: `git revert` this commit.
+
+- 2026-10-28 · Opus 5.5 · `maahir/mvp` merged into `main` (fb3fedd), and production now builds from `main`. A partner
+  teammate's local copy did not match the live app because production was promoted from `maahir/mvp` while `main`
+  stood at 14 Oct. The sponsor asked for this on 26 Oct. The push to `main` built and served fb3fedd, which is cf53015
+  plus the field guide commit and `docs/OKR-DESIGN.md`, with no schema change. Eight old unpushed commits on the repo
+  owner's local `main`, from 9 Oct, were left out: `maahir/mvp` replaced that work. `web/README.md` Hosting states the
+  flow. Rollback: `vercel promote nico-desk-75md6ijko-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
