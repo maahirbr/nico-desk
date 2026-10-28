@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { dataDir, db } from './db';
 import { derivedSecret } from './secret';
 import { findPersonByEmail, getPerson, teamsOf, type Person } from './service';
+import { noteVisit } from './activity';
 
 // Sessions are a signed cookie naming a roster person. SPEC.md FR-54 asks for Google sign-in
 // (lib/google.ts, app/api/auth/google/). Local runs can also use a roster picker, enabled only by
@@ -174,8 +175,11 @@ export async function currentMe(): Promise<Me | null> {
   // open the same PGlite folder made the build fail now and then (Aborted() on /status, /week, /_not-found).
   const jar = await cookies();
   const d = await db();
-  const id = verify(jar.get(COOKIE)?.value) ?? (openDemo() ? await demoPerson(d) : null);
-  return resolveMe(d, id, jar.get(VIEW_COOKIE)?.value);
+  const signedIn = verify(jar.get(COOKIE)?.value);
+  const id = signedIn ?? (openDemo() ? await demoPerson(d) : null);
+  const me = await resolveMe(d, id, jar.get(VIEW_COOKIE)?.value);
+  if (me && signedIn) await noteVisit(d, me.realPerson.id); // the activity log's "opened the app"
+  return me;
 }
 
 // The signed-in person with any "View as" ignored. Only the View as endpoint itself uses this.

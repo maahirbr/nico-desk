@@ -964,3 +964,12 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   loopback, so the consent form's redirect still works once the CSP is enforced. A schema change (the `events` origin
   check allows `claude`, and `comments.via`) needs `npm run db:upgrade` before the merge. 18 new tests. Rollback:
   `git revert` this commit. The added column and the wider check are harmless to the old build.
+- **2026-10-28 · Opus 5.5 · An activity log for the admins.** The pilot lead asked to see "how many people are even
+  updating, reviewing", for the three people running the pilot. `/activity` lists each active person with the days they
+  opened the app, their changes (task and project events plus plan board actions), comments and chat messages, for the
+  last 7 and 30 days by Kolkata day. Counts only, never content, so it reads as a pulse and not a surveillance log.
+  Opening the app had no record, so a new `visit_days` table keeps one row per person per day, written on the first
+  signed-in request (demo and View as visits are not counted, and a failed write never stops a page). It has RLS on
+  and a `team_fence` policy like every table. Admins see it, and `NICO_ACTIVITY_EMAILS` narrows it to named admins,
+  since production has more admins than the three. Needs `npm run db:upgrade` before the merge. 7 new tests.
+  Rollback: `git revert` this commit, then `DROP TABLE visit_days` on the hosted database if wanted.

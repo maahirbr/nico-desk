@@ -57,12 +57,12 @@ const Err = ({ e }: { e: string | null }) => (e ? <p className="err" role="alert
 
 // ---------- frame ----------
 
-export function Nav({ isAdmin, isLead = false }: { isAdmin: boolean; isLead?: boolean }) {
+export function Nav({ isAdmin, isLead = false, activity = false }: { isAdmin: boolean; isLead?: boolean; activity?: boolean }) {
   const path = usePathname();
   const readOnly = useReadOnly();
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
   const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
-  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster']];
+  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster'], ...(activity ? [['/activity', 'Activity']] : [])];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (

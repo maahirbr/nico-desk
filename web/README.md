@@ -293,6 +293,11 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   "via Claude" (`events.origin = 'claude'`, `comments.via`). Nothing is stored for sign-in: client ids, codes and
   tokens are sealed with `NICO_SESSION_SECRET` (access 1 hour, refresh 30 days). Deactivating a person stops their
   access on the next call; rotating the secret stops everyone's. Needs `npm run db:upgrade` once before the first deploy that carries it.
+- Activity log (`/activity`, `lib/activity.ts`): for admins, under More. Per person, the days they opened the app, then
+  their changes, comments and chat messages, each for the last 7 and 30 days, by Kolkata day. Counts only, never what
+  was written. A visit is one `visit_days` row per person per day, written on their first signed-in request. Visits
+  count from the deploy that adds the table. Optional `NICO_ACTIVITY_EMAILS` (comma list) narrows the page to the
+  admins named there. Needs `npm run db:upgrade` once before the first deploy that carries it.
 - Production builds from `main` on each push. Work goes on `maahir/mvp` (each push makes a preview), then merges into
   `main`. A schema change needs `npm run db:upgrade` before that merge.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its

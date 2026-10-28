@@ -164,6 +164,14 @@ CREATE TABLE update_seen (
   PRIMARY KEY (person_id, scope)
 );
 
+-- The days someone opened the app, one row per person per day (Asia/Kolkata). The activity log reads it (lib/activity.ts).
+CREATE TABLE visit_days (
+  person_id  text NOT NULL REFERENCES people(id),
+  day        date NOT NULL,
+  PRIMARY KEY (person_id, day)
+);
+ALTER TABLE visit_days ENABLE ROW LEVEL SECURITY;
+
 -- Comments on a task or a project. @person, #task and #project are stored as ids in comment_refs, not parsed from the text
 -- again. A removed comment keeps its row (deleted_at) with an empty body, so the thread still reads "Comment removed".
 CREATE TABLE comments (
@@ -508,6 +516,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   people: [`id IN (SELECT person_id FROM team_members)`, `true`],
   person_photos: ON_TEAM,
   update_seen: ON_TEAM,
+  visit_days: ON_TEAM,
   google_links: ON_TEAM,
   projects: `team_id = ${TEAM}`,
   tasks: `team_id = ${TEAM}`,
