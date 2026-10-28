@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { dataDir, db } from './db';
 import { derivedSecret } from './secret';
-import { findPersonByEmail, getPerson, teamsOf, type Person } from './service';
+import { claimPlaceholder, findPersonByEmail, getPerson, teamsOf, type Person } from './service';
 import { noteVisit } from './activity';
 
 // Sessions are a signed cookie naming a roster person. SPEC.md FR-54 asks for Google sign-in
@@ -141,11 +141,18 @@ export function openDemo(): boolean {
 }
 
 // Returns the person id if they may sign in, else a reason.
-export async function checkSignIn(email: string): Promise<{ ok: true; personId: string } | { ok: false; why: string }> {
-  if (!emailAllowed(email)) return { ok: false, why: 'That email is not on the company domain.' };
-  const p = await findPersonByEmail(await db(), email);
-  if (!p) return { ok: false, why: 'That email is not on the roster.' };
-  if (!p.active) return { ok: false, why: 'That person is inactive.' };
+// claim is Google's name and Workspace domain: a company account whose address is not on the roster yet may take a
+// placeholder row by name (lib/service.ts claimPlaceholder). Only an account on the company domain itself, never one
+// let in through NICO_ALLOWED_EMAILS.
+export async function checkSignIn(
+  email: string, claim?: { name: string | null; hd: string | null },
+): Promise<{ ok: true; personId: string } | { ok: false; code: 'not_domain' | 'not_allowed'; why: string }> {
+  if (!emailAllowed(email)) return { ok: false, code: 'not_domain', why: 'That email is not on the company domain.' };
+  const d = await db();
+  const company = email.trim().toLowerCase().split('@')[1] === allowedDomain() && claim?.hd === allowedDomain();
+  const p = (await findPersonByEmail(d, email)) ?? (company && claim?.name ? await claimPlaceholder(d, email, claim.name) : null);
+  if (!p) return { ok: false, code: 'not_allowed', why: 'That email is not on the roster.' };
+  if (!p.active) return { ok: false, code: 'not_allowed', why: 'That person is inactive.' };
   return { ok: true, personId: p.id };
 }
 

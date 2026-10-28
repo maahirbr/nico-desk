@@ -987,3 +987,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   than once in its 60 seconds and a refresh token cannot be revoked alone (deactivating the person or rotating the
   secret stops it). The consent screen cannot tell which Claude account will receive the code, as with any public
   claude.ai connector. 5 new tests. Rollback: `git revert` this commit.
+
+- **2026-10-28 · Opus 5.5 · A company account claims its placeholder row by name.** Seven pilot people were added
+  before their addresses were known, so their rows hold a placeholder on the reserved `pending.invalid` domain and
+  their Google sign-in was refused as "not on the roster". The repo owner asked for sign-in to work without collecting
+  each address. Now a verified Google account on the company domain, with the Workspace `hd` claim on that domain,
+  that matches no row takes the one active placeholder row whose full name (or nickname) equals Google's name, and
+  signs in. It is refused when anyone else on the roster shares that name, and a row with a real address is never
+  claimed. Accounts let in through `NICO_ALLOWED_EMAILS` never claim. A personal account now gets its own message
+  ("not a company Google account") in place of "not on the roster". No schema change. Rollback: git revert the commit;
+  claimed rows keep their real addresses, which is the wanted end state.

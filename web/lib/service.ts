@@ -80,6 +80,27 @@ export async function findPersonByEmail(db: Tx, email: string): Promise<{ id: st
   return rows[0] ?? null;
 }
 
+// A roster row added before its address was known holds a placeholder on this reserved domain (RFC 2606).
+export const PLACEHOLDER_DOMAIN = 'pending.invalid';
+const sameName = (s: string) => s.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
+
+// First sign-in for someone added without an address: their verified company account takes the one placeholder row
+// whose full name matches Google's. Refused when any other person shares that name, so no real account is taken.
+export async function claimPlaceholder(db: Tx, email: string, name: string): Promise<{ id: string; active: boolean } | null> {
+  const want = sameName(name);
+  if (!want) return null;
+  const { rows } = await db.query<{ id: string; active: boolean; email: string; display_name: string; nickname: string | null }>(
+    `SELECT id, active, email, display_name, nickname FROM people`,
+  );
+  const hits = rows.filter((p) => sameName(p.display_name) === want || (p.nickname && sameName(p.nickname) === want));
+  if (hits.length !== 1 || !hits[0].active || !hits[0].email.toLowerCase().endsWith(`@${PLACEHOLDER_DOMAIN}`)) return null;
+  const { rows: done } = await db.query<{ id: string; active: boolean }>(
+    `UPDATE people SET email = lower($2) WHERE id = $1 AND lower(email) LIKE $3 RETURNING id, active`,
+    [hits[0].id, email, `%@${PLACEHOLDER_DOMAIN}`],
+  );
+  return done[0] ?? null;
+}
+
 export async function teamsOf(db: Tx, personId: string): Promise<{ id: string; name: string; teamType: string }[]> {
   const { rows } = await db.query<{ id: string; name: string; team_type: string }>(
     `SELECT DISTINCT t.* FROM teams t JOIN team_members m ON m.team_id = t.id WHERE m.person_id = $1 ORDER BY t.name`,

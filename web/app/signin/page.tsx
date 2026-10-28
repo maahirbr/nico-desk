@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
 
 const ERRORS: Record<string, string> = {
   not_allowed: 'That account is not on the team roster. Ask the team admin to add you.',
+  not_domain: 'That is not a company Google account. Choose your company account and try again.',
   state: 'Sign-in did not finish. Try again.',
   google: 'Sign-in did not finish. Try again.',
   cancelled: 'Sign-in did not finish. Try again.',

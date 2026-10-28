@@ -39,8 +39,8 @@ export async function GET(req: Request) {
     if (!state || !want || !safeEqual(state, want) || !code) return back('state');
     const got = await exchangeCode(code, `${url.origin}/api/auth/google/callback`);
     if (!got) return back('google');
-    const check = await checkSignIn(got.email);
-    if (!check.ok) return back('not_allowed');
+    const check = await checkSignIn(got.email, got);
+    if (!check.ok) return back(check.code);
     // Keep Google's photo address fresh, only when the token carried one. Never blocks sign-in.
     if (got.picture) {
       try { await (await db()).query(`UPDATE people SET photo_url = $2 WHERE id = $1`, [check.personId, got.picture]); } catch { /* sign-in goes on */ }

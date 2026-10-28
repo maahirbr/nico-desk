@@ -44,6 +44,18 @@ export function readIdToken(idToken: string, id: string): string | null {
   }
 }
 
+// The full name and the Workspace domain (hd) from a token readIdToken accepted. lib/auth.ts claimByName uses both.
+export function readProfile(idToken: string): { name: string | null; hd: string | null } {
+  try {
+    const c = JSON.parse(Buffer.from(idToken.split('.')[1] ?? '', 'base64url').toString('utf8')) as Record<string, unknown>;
+    const str = (v: unknown) => (typeof v === 'string' && v.trim() && v.length <= 200 ? v.trim() : null);
+    const parts = [str(c.given_name), str(c.family_name)].filter(Boolean).join(' ');
+    return { name: str(c.name) ?? (parts || null), hd: str(c.hd)?.toLowerCase() ?? null };
+  } catch {
+    return { name: null, hd: null };
+  }
+}
+
 // The profile photo address from a token readIdToken accepted. Only an https address counts; anything else is dropped.
 export function readPicture(idToken: string): string | null {
   try {
@@ -56,7 +68,9 @@ export function readPicture(idToken: string): string | null {
   }
 }
 
-export async function exchangeCode(code: string, redirectUri: string): Promise<{ email: string; picture: string | null } | null> {
+export async function exchangeCode(
+  code: string, redirectUri: string,
+): Promise<{ email: string; picture: string | null; name: string | null; hd: string | null } | null> {
   try {
     const res = await fetch(TOKEN_URL, {
       method: 'POST',
@@ -69,7 +83,7 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<{
     const json = (await res.json()) as { id_token?: unknown };
     if (typeof json.id_token !== 'string') return null;
     const email = readIdToken(json.id_token, clientId());
-    return email ? { email, picture: readPicture(json.id_token) } : null;
+    return email ? { email, picture: readPicture(json.id_token), ...readProfile(json.id_token) } : null;
   } catch {
     return null;
   }
