@@ -182,7 +182,8 @@ CREATE TABLE comments (
   body          text NOT NULL CHECK (char_length(body) <= 2000),
   created_at    timestamptz NOT NULL DEFAULT now(),
   edited_at     timestamptz,
-  deleted_at    timestamptz
+  deleted_at    timestamptz,
+  via           text CHECK (via = 'claude')
 );
 CREATE INDEX comments_subject ON comments (subject_kind, subject_id, created_at);
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;

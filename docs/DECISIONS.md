@@ -973,3 +973,17 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   and a `team_fence` policy like every table. Admins see it, and `NICO_ACTIVITY_EMAILS` narrows it to named admins,
   since production has more admins than the three. Needs `npm run db:upgrade` before the merge. 7 new tests.
   Rollback: `git revert` this commit, then `DROP TABLE visit_days` on the hosted database if wanted.
+- **2026-10-28 · Opus 5.5 · "Added since" on the Team page, and fixes from a review of the MCP and activity work.**
+  The founder enters to-dos in the app during a meeting and asked for a filter to see the ones entered after a time,
+  to close the meeting by reading them back. It is a filter on the Team page and not a new page, so the person and
+  status groups, the project filter and the task drawer all still work. The cutoff is a time and not a date, because a
+  meeting is an hour, and it is read as India time (`istInstant`, fixed +05:30). The list ignores the week and runs in
+  the order tasks were made, since that is the order the meeting agreed them. Dropped tasks are left out, because
+  dropping is how a to-do is taken back. Visibility is unchanged: it filters the same `seenTasks` list. An independent
+  review of the MCP and activity commits found, and this fixes: `comments.via` was only added by `upgrade()`, so a
+  `db:remote` reseed would break every comment post (now also in `SCHEMA`). "Changes" counted sheet and Granola
+  imports as the person's own (now app and Claude only). The activity order compared a UTC midnight with IST times (now
+  IST). Accepted and not changed: MCP codes and refresh tokens are sealed and stateless, so a code can be redeemed more
+  than once in its 60 seconds and a refresh token cannot be revoked alone (deactivating the person or rotating the
+  secret stops it). The consent screen cannot tell which Claude account will receive the code, as with any public
+  claude.ai connector. 5 new tests. Rollback: `git revert` this commit.

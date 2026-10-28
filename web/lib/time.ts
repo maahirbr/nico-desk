@@ -54,6 +54,18 @@ export function isDate(s: unknown): s is string {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 }
 
+// A cutoff in India time, 'YYYY-MM-DDTHH:MM' (what a datetime-local field gives). India keeps +05:30 all year.
+export function istInstant(s: unknown): Date | null {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return null;
+  const d = new Date(`${s}:00+05:30`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+// The other way: an instant as India time 'YYYY-MM-DDTHH:MM', for the field and the address.
+export function istLocal(at: Date): string {
+  return new Date(at.getTime() + 330 * 60_000).toISOString().slice(0, 16);
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // "26 Sep": fixed words, so it reads the same in every browser locale.

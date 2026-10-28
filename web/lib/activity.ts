@@ -35,7 +35,7 @@ export type ActivityRow = {
 export type ActivityReport = { rows: ActivityRow[]; since: string | null };
 
 // Active people of the team. "Week" is today and the 6 days before it, "month" today and the 29 before, by Kolkata day.
-// Changes are task and project events plus plan board actions. Run on a scoped db, so the fence keeps it to the team.
+// Changes are task and project events made in the app or through Claude (not sheet or Granola imports), plus plan board actions. Run on a scoped db, so the fence keeps it to the team.
 export async function teamActivity(db: Db, teamId: string): Promise<ActivityReport> {
   const week = addDays(today(), -6), month = addDays(today(), -29);
   const ist = (col: string) => `(${col} AT TIME ZONE 'Asia/Kolkata')::date`;
@@ -46,7 +46,7 @@ export async function teamActivity(db: Db, teamId: string): Promise<ActivityRepo
     id: string; name: string; d7: number; d30: number; seen: string | null;
     x7: number; x30: number; c7: number; c30: number; m7: number; m30: number; last: string | null;
   }>(`
-    WITH x AS (${tally('(SELECT actor_id, at FROM events UNION ALL SELECT actor_id, at FROM plan_activity) a', 'actor_id', 'at')}),
+    WITH x AS (${tally("(SELECT actor_id, at FROM events WHERE origin IN ('app','claude') UNION ALL SELECT actor_id, at FROM plan_activity) a", 'actor_id', 'at')}),
          c AS (${tally('comments', 'author_id', 'created_at', 'deleted_at IS NULL')}),
          m AS (${tally('chat_messages', 'author_id', 'created_at', 'deleted_at IS NULL')}),
          v AS (SELECT person_id AS id, count(*) FILTER (WHERE day >= $2) AS week, count(*) FILTER (WHERE day >= $3) AS month, max(day)::text AS last
@@ -60,7 +60,7 @@ export async function teamActivity(db: Db, teamId: string): Promise<ActivityRepo
     FROM people p
     LEFT JOIN v ON v.id = p.id LEFT JOIN x ON x.id = p.id LEFT JOIN c ON c.id = p.id LEFT JOIN m ON m.id = p.id
     WHERE p.active AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $1)
-    ORDER BY greatest(x.last, c.last, m.last, v.last::date) DESC NULLS LAST, name`, [teamId, week, month]);
+    ORDER BY greatest(x.last, c.last, m.last, v.last::date::timestamp AT TIME ZONE 'Asia/Kolkata') DESC NULLS LAST, name`, [teamId, week, month]);
   const { rows: [first] } = await db.query<{ since: string | null }>(`SELECT min(day)::text AS since FROM visit_days`);
   return {
     since: first?.since ?? null,

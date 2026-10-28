@@ -297,7 +297,12 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   their changes, comments and chat messages, each for the last 7 and 30 days, by Kolkata day. Counts only, never what
   was written. A visit is one `visit_days` row per person per day, written on their first signed-in request. Visits
   count from the deploy that adds the table. Optional `NICO_ACTIVITY_EMAILS` (comma list) narrows the page to the
-  admins named there. Needs `npm run db:upgrade` once before the first deploy that carries it.
+  admins named there. Needs `npm run db:upgrade` once before the first deploy that carries it. "Changes" counts
+  events made in the app or through Claude, not sheet or Granola imports.
+- Added since (`/team?added=YYYY-MM-DDTHH:MM`, India time): the Team page's "Added" menu (last hour, last 2 hours,
+  today, or an exact time) lists every task the viewer may see that was made since then, from any week and any source,
+  in the order it was made, by person or by status. Dropped tasks are left out. For closing a meeting by reading back
+  its to-dos. No schema change.
 - Production builds from `main` on each push. Work goes on `maahir/mvp` (each push makes a preview), then merges into
   `main`. A schema change needs `npm run db:upgrade` before that merge.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its

@@ -88,6 +88,13 @@ export type Task = {
 // Completed lists: the most recently finished first.
 export const latestEndedFirst = (a: Task, b: Task) => (b.endedAt ?? '').localeCompare(a.endedAt ?? '');
 
+// "Added since": the tasks made at or after a cutoff, from any source, in the order they were made, so a meeting
+// can close by reading back what it agreed. Dropped ones are left out: dropping is how a to-do is taken back.
+export function addedSince(list: Task[], cutoff: Date): Task[] {
+  const at = (t: Task) => new Date(t.createdAt).getTime();
+  return list.filter((t) => t.statusCategory !== 'dropped' && at(t) >= cutoff.getTime()).sort((a, b) => at(a) - at(b));
+}
+
 // The sort picker on finished lists. Ties, and tasks not yet finished, fall back to the due date.
 export type EndedSort = 'recent' | 'oldest' | 'due';
 export function sortEnded(list: Task[], by: EndedSort, due: 'dueOn' | 'firstDueOn' = 'dueOn'): Task[] {
