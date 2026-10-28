@@ -340,3 +340,17 @@ describe('deleting a project for good (26 Oct)', () => {
     expect((await deleteRoute(del(), params)).status).toBe(200);
   });
 });
+
+describe('a project with a deactivated member (28 Oct)', () => {
+  it('can still be edited and take someone new, but takes no one inactive', async () => {
+    const p = await createProject(db, LEAD, TEAM_ID, base);
+    await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo', projectId: p.id });
+    await db.query(`UPDATE people SET active = false WHERE id = 'per_bo'`);
+    const withDee = { ...base, members: [...base.members, { personId: 'per_dee', role: 'Ribbons' }] };
+    expect(await code(updateProject(db, ADMIN, p.id, withDee))).toBe('ok');
+    const on = (await db.query<{ person_id: string }>(`SELECT person_id FROM project_members WHERE project_id = $1`, [p.id])).rows.map((r) => r.person_id);
+    expect(on).toEqual(expect.arrayContaining(['per_bo', 'per_dee']));
+    await db.query(`UPDATE people SET active = false WHERE id = 'per_cy'`);
+    expect(await code(updateProject(db, ADMIN, p.id, { ...withDee, members: [...withDee.members, { personId: 'per_cy', role: 'Tags' }] }))).toBe('400 owner_not_on_roster');
+  });
+});

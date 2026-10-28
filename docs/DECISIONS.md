@@ -997,3 +997,10 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   claimed. Accounts let in through `NICO_ALLOWED_EMAILS` never claim. A personal account now gets its own message
   ("not a company Google account") in place of "not on the roster". No schema change. Rollback: git revert the commit;
   claimed rows keep their real addresses, which is the wanted end state.
+- **2026-10-28 · Opus 5.5 · Name claim hardened, and a deactivated member no longer locks a project.** A security
+  review flagged the name claim: a Google name can be edited by its holder, so a company account not on the roster
+  could rename itself and take a placeholder row. The claim now matches the full display name only, never a nickname,
+  and never takes a row that holds the lead or admin role on any team (an admin sets those addresses). Separately, an
+  admin deactivated a placeholder row that still sat on a project with open tasks, and from then on every save of that
+  project failed, so no one could be added to it. `updateProject` now asks only people new to the project to be
+  active. 3 new tests. No schema change. Rollback: git revert the commit.

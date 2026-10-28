@@ -85,18 +85,22 @@ export const PLACEHOLDER_DOMAIN = 'pending.invalid';
 const sameName = (s: string) => s.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
 
 // First sign-in for someone added without an address: their verified company account takes the one placeholder row
-// whose full name matches Google's. Refused when any other person shares that name, so no real account is taken.
+// whose full name matches Google's. Refused when any other person shares that name or nickname, so no real account is
+// taken. A Google name can be edited by its holder, so a lead or admin row is never claimed: an admin sets that address.
 export async function claimPlaceholder(db: Tx, email: string, name: string): Promise<{ id: string; active: boolean } | null> {
   const want = sameName(name);
   if (!want) return null;
-  const { rows } = await db.query<{ id: string; active: boolean; email: string; display_name: string; nickname: string | null }>(
-    `SELECT id, active, email, display_name, nickname FROM people`,
+  const { rows } = await db.query<{ id: string; active: boolean; email: string; display_name: string; nickname: string | null; raised: boolean }>(
+    `SELECT id, active, email, display_name, nickname,
+       EXISTS (SELECT 1 FROM team_members m WHERE m.person_id = people.id AND m.app_role IN ('lead', 'admin')) AS raised
+     FROM people`,
   );
   const hits = rows.filter((p) => sameName(p.display_name) === want || (p.nickname && sameName(p.nickname) === want));
-  if (hits.length !== 1 || !hits[0].active || !hits[0].email.toLowerCase().endsWith(`@${PLACEHOLDER_DOMAIN}`)) return null;
+  const h = hits[0];
+  if (hits.length !== 1 || sameName(h.display_name) !== want || !h.active || h.raised || !h.email.toLowerCase().endsWith(`@${PLACEHOLDER_DOMAIN}`)) return null;
   const { rows: done } = await db.query<{ id: string; active: boolean }>(
     `UPDATE people SET email = lower($2) WHERE id = $1 AND lower(email) LIKE $3 RETURNING id, active`,
-    [hits[0].id, email, `%@${PLACEHOLDER_DOMAIN}`],
+    [h.id, email, `%@${PLACEHOLDER_DOMAIN}`],
   );
   return done[0] ?? null;
 }

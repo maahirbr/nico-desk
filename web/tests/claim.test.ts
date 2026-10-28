@@ -61,6 +61,19 @@ describe('claiming a placeholder row by name', () => {
     expect(await emailOf(p.id)).toBe('ravi@pending.invalid');
   });
 
+  it('never claims a lead or admin row, since a Google name can be edited', async () => {
+    const p = await s.addPerson(db, ADMIN, TEAM_ID, { displayName: 'Kiran Holt', role: 'Lead', department: 'Design', email: 'kiran@pending.invalid', appRoles: ['lead'] });
+    expect(await checkSignIn('kholt@example.test', { name: 'Kiran Holt', hd: CO })).toMatchObject({ ok: false, code: 'not_allowed' });
+    expect(await emailOf(p.id)).toBe('kiran@pending.invalid');
+  });
+
+  it('matches the full name only, never a nickname', async () => {
+    const p = await add('Maya Fern', 'maya@pending.invalid');
+    await db.query(`UPDATE people SET nickname = 'Mayu' WHERE id = $1`, [p.id]);
+    expect(await checkSignIn('mayu@example.test', { name: 'Mayu', hd: CO })).toMatchObject({ ok: false, code: 'not_allowed' });
+    expect(await emailOf(p.id)).toBe('maya@pending.invalid');
+  });
+
   it('names a personal account apart from a roster miss', async () => {
     expect(await checkSignIn('someone@gmail.com', { name: 'Tara Quill', hd: null })).toMatchObject({ ok: false, code: 'not_domain' });
   });

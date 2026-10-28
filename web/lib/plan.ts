@@ -825,7 +825,11 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
   const c = clean(input);
   await db.transaction(async (tx) => {
-    await checkPeople(tx, p.teamId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)]);
+    // Only people new to the project must be active. Someone deactivated while still on it stays until their tasks move,
+    // so the project can still be edited (and others added) in the meantime.
+    const { rows: was } = await tx.query<{ person_id: string }>(`SELECT person_id FROM project_members WHERE project_id = $1`, [id]);
+    const on = new Set([p.ownerId, p.leadId, ...was.map((r) => r.person_id)]);
+    await checkPeople(tx, p.teamId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)].filter((x) => !on.has(x)));
     const { rows } = await tx.query(`SELECT 1 FROM projects WHERE team_id = $1 AND lower(name) = lower($2) AND id <> $3`, [p.teamId, c.name, id]);
     if (rows.length) throw bad('invalid_body', 'A project with that name already exists.', 'name');
     // Plan pillars keep their keys, so lines stay in their pillar when one is renamed.
