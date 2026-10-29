@@ -1004,3 +1004,9 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   admin deactivated a placeholder row that still sat on a project with open tasks, and from then on every save of that
   project failed, so no one could be added to it. `updateProject` now asks only people new to the project to be
   active. 3 new tests. No schema change. Rollback: git revert the commit.
+- **2026-10-29 · Opus 5.5 · Voice Quick Add waits through pauses.** A teammate reported that the mic filled in the task
+  while they were still talking, at the first pause to think. The browser's speech service ran with `continuous` off,
+  which ends the take at the first short gap. It now runs continuous, and the app stops the take once nothing new is
+  heard for 2.5 seconds (`QUIET_MS` in `components/QuickAdd.tsx`), or when the mic is tapped. Checked with a fake speech
+  service: a 1.5 second gap kept listening, and the take ended 2.5 seconds after the last words. Not yet tried on a
+  real Android or iPhone; Android Chrome is known to repeat words in continuous mode. Rollback: git revert the commit.

@@ -23,6 +23,9 @@ const speechApi = (): (new () => Speech) | null => {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 };
 
+// How long a silence ends a spoken take. Long enough to stop and think mid-sentence.
+const QUIET_MS = 2500;
+
 // A chat looks like several lines with a sender each, as WhatsApp copies them.
 export function looksLikeChat(text: string): boolean {
   if (!/\n/.test(text.trim())) return false;
@@ -40,7 +43,8 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
   const [canSpeak, setCanSpeak] = useState(false);
   const rec = useRef<Speech | null>(null);
   const said = useRef('');
-  useEffect(() => { setCanSpeak(!!speechApi()); return () => rec.current?.stop(); }, []);
+  const quiet = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => { setCanSpeak(!!speechApi()); return () => { clearTimeout(quiet.current); rec.current?.stop(); }; }, []);
 
   async function fill(line = text.trim()) {
     if (!line || busy) return;
@@ -74,11 +78,14 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
     const Api = speechApi();
     if (!Api) return;
     const r = new Api();
-    r.lang = 'en-IN'; r.interimResults = true; r.continuous = false;
+    // Continuous, so a pause to think does not end the take: the browser alone stops at the first short gap.
+    // We stop once nothing new is heard for QUIET_MS, or when the mic is tapped.
+    r.lang = 'en-IN'; r.interimResults = true; r.continuous = true;
     said.current = '';
     r.onresult = (e) => {
       const all = Array.from(e.results).map((x) => x[0]?.transcript ?? '').join(' ').replace(/\s+/g, ' ').trim();
       said.current = all; setText(all);
+      clearTimeout(quiet.current); quiet.current = setTimeout(() => r.stop(), QUIET_MS);
     };
     // Each failure says what to do, since "blocked" covers several different causes.
     r.onerror = (e) => {
@@ -92,7 +99,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       };
       if (e.error !== 'aborted') setDone(say[e.error] ?? `The microphone stopped (${e.error}). Try again, or type instead.`);
     };
-    r.onend = () => { setListening(false); rec.current = null; if (said.current) void fill(said.current); };
+    r.onend = () => { clearTimeout(quiet.current); setListening(false); rec.current = null; if (said.current) void fill(said.current); };
     rec.current = r; setDone(null); setListening(true);
     try { r.start(); } catch { setListening(false); rec.current = null; setDone('The microphone could not start. Reload the page and try again, or type instead.'); }
   }
@@ -125,7 +132,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
         </div>
       </div>
       <p className="hint" aria-live="polite" style={{ margin: 0 }}>
-        {done ?? (listening ? 'Say what needs doing, who does it and by when. Tap the mic again to stop.'
+        {done ?? (listening ? 'Say what needs doing, who does it and by when. Pause as long as you need. It fills in when you stop talking, or tap the mic.'
           : `Type it, or tap the mic and say it the way you'd tell someone. One task or several.${onChat ? ' You can also paste a WhatsApp chat.' : ''}`)}
       </p>
     </>
