@@ -162,6 +162,14 @@ describe('names as speech spells them', () => {
     expect(soundKey('Kabir')).not.toBe(soundKey('Kavya'));
   });
 
+  it('also meets ay and ai, ou and au, and a name that ends in an h', () => {
+    expect(soundKey('Akshai')).toBe(soundKey('Akshay'));
+    expect(soundKey('Sourav')).toBe(soundKey('Saurav'));
+    expect(soundKey('Nehah')).toBe(soundKey('Neha'));
+    expect(soundKey('Priya')).not.toBe(soundKey('Pria')); // the y before a vowel stays a y
+    expect(respell('Roll out the site, then ask Sourav to check it', ['Saurav Rao', 'Raul Das'])).toBe('Roll out the site, then ask Saurav to check it');
+  });
+
   it('respells a heard name to the roster, and leaves other words and exact names alone', () => {
     expect(respell('ask Kabeer to send Sreya the deck', roster)).toBe('ask Kabir to send Shreya the deck');
     expect(respell('ask Kabir and Mira to call', roster)).toBe('ask Kabir and Meera to call');

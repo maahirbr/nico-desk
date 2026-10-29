@@ -1021,3 +1021,13 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   per stretch (`maxAlternatives`) and keeps the first that holds a teammate's or project's name (`pickHeard`). Not yet
   tried on a real phone, and how often Chrome capitalises an Indian name it does not know is not measured. 5 new tests.
   No schema change. Rollback: git revert the commit.
+
+## 2026-10-29 · Opus 5.5 · Every pilot name checked against the spellings speech gives
+
+Each of the 20 pilot names went through `respell` and the rules reader, as the full name, the first name and 19 kinds of
+respelling (aa/a, ee/i, sh/s, th/t, v/w, doubled letters and others). All 20 full and first names find their person. No two
+people share a first name or a sound. The sound key now also meets ay and ai, ou and au, and a word-final h, which took the
+pilot from 58 to 68 of 77 heard spellings. The misses left change the vowel itself (Neha heard as Niha), which a sound key
+cannot meet without merging different names. An au-to-o rule was tried and dropped: it turned "Roll" into a roster name.
+One new test.
+Rollback: git revert the commit.

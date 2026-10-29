@@ -47,9 +47,11 @@ const NOT_BEFORE_A_DAY_WORD = new Set(['the', 'a', 'an', 'my', 'our', 'your', 'o
 export const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 // How a name sounds, so the spellings speech gives for Indian names meet the roster's: Kabeer and Kabir, Sreya and Shreya,
-// Mira and Meera, Wivek and Vivek. Aspirates lose their h, ee and oo shorten, w is v, and doubled letters count once.
+// Mira and Meera, Wivek and Vivek, Akshai and Akshay, Sourav and Saurav, Nehah and Neha. Aspirates lose their h, ee and oo
+// shorten, ou is au, w is v, a y with no vowel after it is i, an h that ends a word goes, and doubled letters count once.
 export const soundKey = (s: string) => norm(s).replace(/([bcdgjkpst])h/g, '$1').replace(/ee/g, 'i').replace(/oo/g, 'u')
-  .replace(/w/g, 'v').replace(/([a-z])\1+/g, '$1').replace(/ /g, '');
+  .replace(/ou/g, 'au').replace(/w/g, 'v').replace(/y(?![aeiou])/g, 'i').replace(/([aeiou])h\b/g, '$1')
+  .replace(/([a-z])\1+/g, '$1').replace(/ /g, '');
 
 // A word that could be a name: capitalised, as speech writes names, and 3 letters or more. The capital keeps ordinary
 // words out: "seeing" sounds like Singh and "bath" like Bhatt.
