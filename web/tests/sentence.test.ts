@@ -111,6 +111,11 @@ describe('the server reader', () => {
     expect(r.tasks).toEqual([expect.objectContaining({ ownerId: BO, dueOn: '2026-10-12', title: 'Send the deck to Meera' })]);
   });
 
+  it('finds a teammate whose name speech spelled another way', async () => {
+    const r = await readSentence(db, await meAs(LEAD), 'ask Kabeer to send me the deck by Monday', { today: AS_OF });
+    expect(r.tasks).toEqual([expect.objectContaining({ ownerId: BO, dueOn: '2026-10-12', title: 'Send the deck to Meera' })]);
+  });
+
   it('sends the model labels, not names, and maps its answer back', async () => {
     let sent = '';
     const ask: Ask = async ({ user }) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeQuick, parseQuickAdd } from '../lib/quickadd';
+import { describeQuick, parseQuickAdd, pickHeard, respell, soundKey } from '../lib/quickadd';
 
 // The quick-add line: title, due date, @owner and #project. Wednesday 7 Oct 2026 unless a test says otherwise.
 
@@ -147,5 +147,36 @@ describe('the whole line', () => {
   it('handles empty input and extra spaces', () => {
     expect(parse('').title).toBe('');
     expect(parse('   Send   deck   fri  ').title).toBe('Send deck');
+  });
+});
+
+describe('names as speech spells them', () => {
+  const roster = ['Kabir Sethi', 'Shreya Iyer', 'Meera Rao', 'Ishaan Bhatt', 'Vivek Nair'];
+
+  it('gives the common Indian spellings of one name one sound', () => {
+    expect(soundKey('Kabeer')).toBe(soundKey('Kabir'));
+    expect(soundKey('Sreya')).toBe(soundKey('Shreya'));
+    expect(soundKey('Mira')).toBe(soundKey('Meera'));
+    expect(soundKey('Ishan')).toBe(soundKey('Ishaan'));
+    expect(soundKey('Wivek')).toBe(soundKey('Vivek'));
+    expect(soundKey('Kabir')).not.toBe(soundKey('Kavya'));
+  });
+
+  it('respells a heard name to the roster, and leaves other words and exact names alone', () => {
+    expect(respell('ask Kabeer to send Sreya the deck', roster)).toBe('ask Kabir to send Shreya the deck');
+    expect(respell('ask Kabir and Mira to call', roster)).toBe('ask Kabir and Meera to call');
+    expect(respell('send the files by Monday', roster)).toBe('send the files by Monday');
+    expect(respell('ask kabeer to call', roster)).toBe('ask kabeer to call'); // lower case: not written as a name
+    expect(respell('I am seeing the vendor about the bath fittings', ['Arjun Singh', 'Ishaan Bhatt'])).toBe('I am seeing the vendor about the bath fittings');
+  });
+
+  it('leaves a sound alone when two roster spellings share it', () => {
+    expect(respell('ask Mira to call', ['Meera Rao', 'Mira Nair'])).toBe('ask Mira to call');
+  });
+
+  it('picks the speech guess that holds a roster name, else the first', () => {
+    expect(pickHeard(['ask cab here to send the deck', 'ask Kabeer to send the deck'], roster)).toBe('ask Kabeer to send the deck');
+    expect(pickHeard(['send the deck', 'sent the deck'], roster)).toBe('send the deck');
+    expect(pickHeard([], roster)).toBe('');
   });
 });

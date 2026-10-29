@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { parseChat } from '@/lib/chat';
-import type { Named, QuickParse } from '@/lib/quickadd';
+import { pickHeard, type Named, type QuickParse } from '@/lib/quickadd';
 import type { SentenceRead } from '@/lib/sentence';
 import { focusOnDesktop } from './motion';
 import { isRealEnter } from './ime';
@@ -14,7 +14,7 @@ import { isRealEnter } from './ime';
 // The mic types what is said into the box, through the browser's own speech service, and reads it when the person stops.
 // Keyboard rule: Enter ("go") reads the line and the global handler closes the keyboard.
 
-type Speech = { lang: string; interimResults: boolean; continuous: boolean; start(): void; stop(): void;
+type Speech = { lang: string; interimResults: boolean; continuous: boolean; maxAlternatives: number; start(): void; stop(): void;
   onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
   onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null };
 const speechApi = (): (new () => Speech) | null => {
@@ -80,10 +80,12 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
     const r = new Api();
     // Continuous, so a pause to think does not end the take: the browser alone stops at the first short gap.
     // We stop once nothing new is heard for QUIET_MS, or when the mic is tapped.
-    r.lang = 'en-IN'; r.interimResults = true; r.continuous = true;
+    // Three guesses per stretch of speech: the one that has a teammate's or project's name in it wins (lib/quickadd.ts pickHeard).
+    r.lang = 'en-IN'; r.interimResults = true; r.continuous = true; r.maxAlternatives = 3;
     said.current = '';
+    const names = [...people, ...(projects ?? [])].map((p) => p.name);
     r.onresult = (e) => {
-      const all = Array.from(e.results).map((x) => x[0]?.transcript ?? '').join(' ').replace(/\s+/g, ' ').trim();
+      const all = Array.from(e.results).map((x) => pickHeard(Array.from(x).map((a) => a.transcript), names)).join(' ').replace(/\s+/g, ' ').trim();
       said.current = all; setText(all);
       clearTimeout(quiet.current); quiet.current = setTimeout(() => r.stop(), QUIET_MS);
     };

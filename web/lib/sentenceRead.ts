@@ -2,6 +2,7 @@ import type { Me } from './auth';
 import type { Tx } from './db';
 import { ApiError } from './errors';
 import { modelOn } from './model';
+import { respell } from './quickadd';
 import { defaultAsk, type Ask } from './paste';
 import { makeMasker, maskDictFor } from './redact';
 import { MAX_TASKS_AT_ONCE, readTasksRules, type SentenceRead } from './sentence';
@@ -50,9 +51,11 @@ export type TasksRead = { tasks: SentenceRead[]; via: 'model' | 'rules' };
 export async function readSentence(db: Tx, me: Me, text: string, deps: { ask?: Ask; today?: string } = {}): Promise<TasksRead> {
   const today = deps.today ?? todayIst();
   // Spaces inside a line collapse; the indent at its start stays, since it says which lines are sub-points.
-  const said = text.replace(/\r/g, '').replace(/(\S)[ \t]+/g, '$1 ').replace(/^\s*\n|\s+$/g, '').slice(0, MAX_SENTENCE);
+  const typed = text.replace(/\r/g, '').replace(/(\S)[ \t]+/g, '$1 ').replace(/^\s*\n|\s+$/g, '').slice(0, MAX_SENTENCE);
   const [people, seen] = await Promise.all([listPeople(db, me.team.id), seenProjects(db, me)]);
   const active = people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName }));
+  // A name spelled the way speech heard it takes the roster's spelling first, so both readers below can match it.
+  const said = respell(typed, active.map((p) => p.name));
   const projects = seen.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }));
   const rules = (): TasksRead => ({ tasks: readTasksRules(said, { today, people: active, projects, meName: me.person.displayName }), via: 'rules' });
 

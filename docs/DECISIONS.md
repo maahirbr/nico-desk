@@ -1010,3 +1010,14 @@ An entry that replaces an earlier one says so; the earlier text stays as written
   heard for 2.5 seconds (`QUIET_MS` in `components/QuickAdd.tsx`), or when the mic is tapped. Checked with a fake speech
   service: a 1.5 second gap kept listening, and the take ended 2.5 seconds after the last words. Not yet tried on a
   real Android or iPhone; Android Chrome is known to repeat words in continuous mode. Rollback: git revert the commit.
+- **2026-10-29 · Opus 5.5 · Quick Add hears Indian names spelled other ways.** Most users are Indian, and speech to text
+  spells their names many ways (Kabeer for Kabir, Sreya for Shreya, Mira for Meera), so the reader found no owner.
+  `soundKey` in `lib/quickadd.ts` gives those spellings one sound (aspirate h dropped, ee and oo shortened, w as v,
+  doubled letters once). `respell` rewrites a capitalised word that sounds like one roster name word to the roster's
+  spelling, in `readSentence` before both the rules and the model, so typed and spoken text gain alike and the masker
+  now hides the name it would have missed. A sound two roster spellings share is left alone. The capital is required
+  because, checked against the system dictionary, lower-case words collide ("seeing" with Singh, "bath" with Bhatt);
+  checked against the 983 words of the meeting and paste evals, nothing is rewritten. The mic now asks for 3 guesses
+  per stretch (`maxAlternatives`) and keeps the first that holds a teammate's or project's name (`pickHeard`). Not yet
+  tried on a real phone, and how often Chrome capitalises an Indian name it does not know is not measured. 5 new tests.
+  No schema change. Rollback: git revert the commit.

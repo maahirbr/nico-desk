@@ -46,6 +46,37 @@ const NOT_BEFORE_A_DAY_WORD = new Set(['the', 'a', 'an', 'my', 'our', 'your', 'o
 // Also the key setNames checks names against, so the check and the matcher agree on what counts as the same name.
 export const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
+// How a name sounds, so the spellings speech gives for Indian names meet the roster's: Kabeer and Kabir, Sreya and Shreya,
+// Mira and Meera, Wivek and Vivek. Aspirates lose their h, ee and oo shorten, w is v, and doubled letters count once.
+export const soundKey = (s: string) => norm(s).replace(/([bcdgjkpst])h/g, '$1').replace(/ee/g, 'i').replace(/oo/g, 'u')
+  .replace(/w/g, 'v').replace(/([a-z])\1+/g, '$1').replace(/ /g, '');
+
+// A word that could be a name: capitalised, as speech writes names, and 3 letters or more. The capital keeps ordinary
+// words out: "seeing" sounds like Singh and "bath" like Bhatt.
+const nameLike = (w: string) => w.length >= 3 && /^\p{Lu}/u.test(w);
+
+// Rewrites each word that sounds like one roster name word, spelled another way, to the roster's spelling, so "ask
+// Kabeer to ..." finds Kabir in every reader after it. Sounds two roster spellings share stay as they are.
+export function respell(text: string, names: string[]): string {
+  const byKey = new Map<string, string | null>();
+  for (const w of names.flatMap((n) => n.split(/\s+/))) {
+    if (norm(w).length < 3) continue;
+    const k = soundKey(w), had = byKey.get(k);
+    byKey.set(k, had === undefined || (had !== null && norm(had) === norm(w)) ? w : null);
+  }
+  return text.replace(/\p{L}+/gu, (w) => {
+    const hit = nameLike(w) ? byKey.get(soundKey(w)) : null;
+    return hit && norm(hit) !== norm(w) ? hit : w;
+  });
+}
+
+// Of the browser's guesses at what was said, the first that sounds like a roster name or project word, else its best guess.
+export function pickHeard(guesses: string[], names: string[]): string {
+  const keys = new Set(names.flatMap((n) => n.split(/\s+/)).filter((w) => norm(w).length >= 3).map(soundKey));
+  const named = (g: string) => (g.match(/\p{L}+/gu) ?? []).some((w) => nameLike(w) && keys.has(soundKey(w)));
+  return guesses.find(named) ?? guesses[0] ?? '';
+}
+
 // First tier that has any hit decides: the whole name, the first word, the start of the name, the start of any word.
 export function match<T extends Named>(word: string, items: T[]): Mention<T> {
   const w = norm(word);
