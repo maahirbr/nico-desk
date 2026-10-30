@@ -1163,3 +1163,10 @@ the last 15 days"). Older entries open with "Show older (N)" and close with "Hid
 stay append-only and keep feeding task History, the Ledger, Updates for you and Undo. The page now reads the latest 500
 entries in place of 60, so Show older reaches further back. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The profile form follows the * rule
+
+The PM's call. On Your profile, Name (required) ends in a *, "Nickname (optional)" and "Phone (optional)" become
+"Nickname" and "Phone", and the line under the photo buttons ("It is cropped to a square and shrunk on your device.
+Teammates can see it.") is removed. No other change.
+Rollback: git revert the commit.
