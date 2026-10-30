@@ -1181,3 +1181,14 @@ under it. These are the only emoji on the app's screens. On the Feedback form, "
 (optional)" becomes "Page", and the page list's empty choice reads "Select a page" in place of "Not about one page".
 No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Home cheers once today is clear, not only when nothing is open
+
+Refines the entry above (the PM's call): almost everyone has tasks due later, so the cheer line now shows once nothing is
+late and nothing is due today, not counting a task blocked on someone else, since that wait is theirs. It sits in a
+dashed box at the top of the list with "Next up: N tasks this week" (or later), and the tasks to come stay listed below.
+With no open tasks at all, the hill and the line show as before. The five lines now speak of today: "All clear for
+today! Time for a slow chai ☕", "Clean desk, clear skies. Nothing due today ✨", "Island time! Today's list is done 🏝️",
+"Today's done, zero worries. Treat yourself 🍪", "All done for today. Slow down, it's a Nicobar kind of day 🌿".
+No schema change.
+Rollback: git revert the commit.

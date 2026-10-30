@@ -29,14 +29,15 @@ const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', wee
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-// With nothing open, Home cheers a little (the PM's call, 30 Oct): one of these lines, the same all day for a person and a
-// new one the next day, so it stays a small surprise. The rest of the app keeps no emoji; this one moment does.
+// Once today is clear, Home cheers a little (the PM's call, 30 Oct): nothing late and nothing due today, not counting a
+// task blocked on someone else, since that wait is theirs. One of these lines shows, the same all day for a person and a
+// new one the next day. Tasks due later stay listed below it. The rest of the app keeps no emoji; this moment does.
 export const CLEAR_LINES = [
-  'All clear! Nothing on your plate. Time for a slow chai ☕',
-  'Clean desk, clear skies. Nothing waiting on you ✨',
-  'Island time! Not a single task in sight 🏝️',
-  'Zero tasks, zero worries. Treat yourself 🍪',
-  'All done. Slow down, it’s a Nicobar kind of day 🌿',
+  'All clear for today! Time for a slow chai ☕',
+  'Clean desk, clear skies. Nothing due today ✨',
+  'Island time! Today’s list is done 🏝️',
+  'Today’s done, zero worries. Treat yourself 🍪',
+  'All done for today. Slow down, it’s a Nicobar kind of day 🌿',
 ];
 export function clearLine(personId: string, day: string): string {
   let h = 0;
@@ -97,6 +98,11 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
     { key: 'later', label: 'Later', items: mine.filter((t) => t.dueOn > weekEnd) },
   ].filter((g) => g.items.length);
   const overdue = mine.filter((t) => t.dueOn < today).length;
+  // Today is clear when nothing late or due today is left that is yours to do.
+  const todayClear = !mine.some((t) => t.dueOn <= today && !t.blocked);
+  const nextWeek = mine.filter((t) => t.dueOn > today && t.dueOn <= weekEnd).length;
+  const nextLater = mine.filter((t) => t.dueOn > weekEnd).length;
+  const nextUp = nextWeek ? `Next up: ${nextWeek} ${nextWeek === 1 ? 'task' : 'tasks'} this week` : nextLater ? `Next up: ${nextLater} ${nextLater === 1 ? 'task' : 'tasks'} later` : '';
   const open = (id: string, s?: RowAction) => {
     setOpenId(id); setStartStatus(s);
     if (assignedNotice[id] && !readOnly) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
@@ -126,10 +132,15 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       <WaitingCard tasks={waiting} names={names} projectNames={projectNames} now={updates.now} onOpen={(id) => open(id)} />
 
-      {groups.length === 0 && (
+      {groups.length === 0 ? (
         <div className="empty-state">
           <DitherArt field="hill" className="dither-empty" fade />
           <p>{clearLine(meId, today)}</p>
+        </div>
+      ) : todayClear && (
+        <div className="today-clear" role="status">
+          <p className="today-clear-line">{clearLine(meId, today)}</p>
+          {nextUp && <p className="today-clear-next">{nextUp}</p>}
         </div>
       )}
 
