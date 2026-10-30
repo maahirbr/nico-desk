@@ -3,6 +3,8 @@ import { readBody, route } from '@/lib/http';
 import { patchPerson } from '@/lib/service';
 
 const Body = z.object({
+  displayName: z.string().trim().min(2).max(80).optional(),
+  email: z.email().optional(),
   active: z.boolean().optional(),
   appRoles: z.array(z.enum(['member', 'lead', 'admin'])).optional(),
   role: z.string().trim().min(2).max(80).optional(),

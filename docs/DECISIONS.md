@@ -1031,3 +1031,13 @@ pilot from 58 to 68 of 77 heard spellings. The misses left change the vowel itse
 cannot meet without merging different names. An au-to-o rule was tried and dropped: it turned "Roll" into a roster name.
 One new test.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · An admin edits a roster row: name, job title, email and access
+
+The PM asked to edit people on the Roster. Each row's Mark inactive, Make lead, Make admin and feedback replies buttons
+become one Edit window (name, job title, email, and Active, Lead, Admin, Can reply to feedback ticks); Copy invite stays on
+the row. `patchPerson` now also takes `displayName` and `email`, admin only as before. A new email becomes the sign-in
+address and the old one moves to `alt_emails`, so a typo or a slow switch never locks the person out; an email already on
+the roster is refused, and an admin cannot change their own email, Active or Admin. The person's own nickname still shows
+in place of the roster name. No schema change. 2 new tests.
+Rollback: git revert the commit.

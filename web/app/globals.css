@@ -840,6 +840,8 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .status-picker button:active:not(:disabled) { transform: scale(var(--press-scale)); }
 .status-picker button[aria-pressed="true"] { background: var(--tone-bg); border-color: transparent; color: var(--tone-fg); }
 .status-picker button:disabled { cursor: default; opacity: .7; }
+.edit-access { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+.edit-access legend { padding: 0; margin-bottom: var(--space-xs); font: var(--type-label); color: var(--ink-2); }
 .drawer-form { background: var(--sunk); border-radius: var(--radius-control); padding: var(--space-sm) var(--space-md); display: flex; flex-direction: column; gap: var(--space-sm); }
 .drawer-facts { display: grid; grid-template-columns: 100px 1fr; gap: var(--space-sm) var(--space-md); margin: var(--space-xxs) 0 0; align-items: center; }
 .drawer-facts dt { font: var(--type-meta); color: var(--ink-3); }
