@@ -1170,3 +1170,14 @@ The PM's call. On Your profile, Name (required) ends in a *, "Nickname (optional
 "Nickname" and "Phone", and the line under the photo buttons ("It is cropped to a square and shrunk on your device.
 Teammates can see it.") is removed. No other change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Home cheers when nothing is open, and Feedback follows the * rule
+
+The PM's call. With nothing open, Home's empty state shows one of five lines, the same all day for a person and another
+the next day: "All clear! Nothing on your plate. Time for a slow chai ☕", "Clean desk, clear skies. Nothing waiting on
+you ✨", "Island time! Not a single task in sight 🏝️", "Zero tasks, zero worries. Treat yourself 🍪" and "All done. Slow
+down, it's a Nicobar kind of day 🌿". It replaces "You're clear. Nothing open on your side." and the Add a task button
+under it. These are the only emoji on the app's screens. On the Feedback form, "Your Experience" ends in a *, "Page
+(optional)" becomes "Page", and the page list's empty choice reads "Select a page" in place of "Not about one page".
+No schema change.
+Rollback: git revert the commit.

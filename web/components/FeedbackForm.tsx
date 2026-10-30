@@ -19,7 +19,7 @@ export const FEEDBACK_LIMIT = 4000;
 const MAX_SHOTS = 3;
 
 export const PAGES: [string, string][] = [
-  ['', 'Not about one page'], ['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/tasks/new', 'New Task'],
+  ['', 'Select a page'], ['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/tasks/new', 'New Task'],
   ['/ledger', 'Ledger'], ['/reminders', 'Reminders'], ['/admin', 'Roster'], ['/guide', 'Guide'],
 ];
 
@@ -72,7 +72,7 @@ export function FeedbackForm() {
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); void addShots(Array.from(e.dataTransfer.files)); }}>
       <label className="f">
-        <span>Your Experience</span>
+        <span>Your Experience <span className="req" aria-hidden="true">*</span></span>
         <textarea rows={5} maxLength={FEEDBACK_LIMIT} value={text} aria-required="true" placeholder="What is working well? What is confusing, missing or wrong?"
           onChange={(e) => setText(e.target.value)}
           onPaste={(e) => {
@@ -99,7 +99,7 @@ export function FeedbackForm() {
         <span className="hint">or paste one into the box</span>
       </div>
       <label className="f">
-        <span><Help term="feedback_page">Page (optional)</Help></span>
+        <span><Help term="feedback_page">Page</Help></span>
         <Select value={page} onChange={setPage}>{PAGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
       </label>
       {err && <p className="err" role="alert">{err}</p>}

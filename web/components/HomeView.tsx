@@ -29,6 +29,21 @@ const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', wee
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
+// With nothing open, Home cheers a little (the PM's call, 30 Oct): one of these lines, the same all day for a person and a
+// new one the next day, so it stays a small surprise. The rest of the app keeps no emoji; this one moment does.
+export const CLEAR_LINES = [
+  'All clear! Nothing on your plate. Time for a slow chai ☕',
+  'Clean desk, clear skies. Nothing waiting on you ✨',
+  'Island time! Not a single task in sight 🏝️',
+  'Zero tasks, zero worries. Treat yourself 🍪',
+  'All done. Slow down, it’s a Nicobar kind of day 🌿',
+];
+export function clearLine(personId: string, day: string): string {
+  let h = 0;
+  for (const c of `${personId}|${day}`) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return CLEAR_LINES[h % CLEAR_LINES.length];
+}
+
 export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
@@ -114,8 +129,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       {groups.length === 0 && (
         <div className="empty-state">
           <DitherArt field="hill" className="dither-empty" fade />
-          <p>You’re clear. Nothing open on your side.</p>
-          {!readOnly && <button className="btn" onClick={() => setAdding(true)}>Add a task</button>}
+          <p>{clearLine(meId, today)}</p>
         </div>
       )}
 
