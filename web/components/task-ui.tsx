@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flags';
 import type { LogLine } from '@/lib/service';
-import { fmtDate, fmtStamp } from '@/lib/time';
+import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
 import { StatusNudge } from './StatusNudge';
@@ -106,11 +106,16 @@ export function flagOf(t: Task, today: string): Flag | null {
 
 // hideLate: the row already says "3 days late" in red, so most skins do not say Late a second time.
 // Skin W, the PM's build, does: the flag is rendered with flag-again and tokens.css shows it there only.
+// A finished task also shows the day it was done or dropped, next to its flag and outside it, small and quiet, as an
+// aside: "AHEAD 12 Oct" (the PM's call, 30 Oct). Not "Done 12 Oct": the status beside it already says Done.
 export function FlagChip({ t, today, hideLate = false }: { t: Task; today: string; hideLate?: boolean }) {
   const help = useHelpOn(); // in help mode the tooltip carries the reason, so the native title steps aside
   const f = flagOf(t, today);
-  if (!f) return null;
-  return <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' ? ' flag-again' : ''}`} title={help ? undefined : f.why}><Help term={f.key} note={f.why}>{f.word}</Help></span>;
+  const ended = t.statusCategory !== 'open' && t.endedAt ? fmtDate(istDate(t.endedAt)) : null;
+  const day = ended && <span className="flag-day" title={`${t.statusCategory === 'dropped' ? 'Dropped' : 'Done'} on ${ended}`}>{ended}</span>;
+  if (!f) return day || null;
+  const chip = <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' && !ended ? ' flag-again' : ''}`} title={help ? undefined : f.why}><Help term={f.key} note={f.why}>{f.word}</Help></span>;
+  return day ? <span className="flag-with-day">{chip}{day}</span> : chip;
 }
 
 export function StatusLabel({ t, today }: { t: Task; today?: string }) {

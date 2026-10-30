@@ -1139,3 +1139,12 @@ README and in the current docs (DESIGN-GUIDE, the guide and demo pages). This re
 which was the repo owner's call. The repo, package, Vercel project and URL keep `nico-desk`. Older entries in this log
 and the 13 Oct plan keep the old spelling as they were written. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A finished task shows the day it was finished
+
+The PM asked to see when a task was completed, not only Ahead, On time or Late. Beside the flag, outside the chip, the
+day it was done or dropped now shows small and in a quiet colour: "AHEAD 12 Oct". It does not repeat "Done", since the
+status beside it says so. A dropped task, which has no flag, shows the day alone. It shows wherever the flag does
+(project lists and the Done tile, Home, Team, the task drawer). The day comes from `endedAt`, read in India time.
+No schema change.
+Rollback: git revert the commit.
