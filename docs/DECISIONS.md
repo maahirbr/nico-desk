@@ -1130,3 +1130,12 @@ Rollback: git revert the commit.
 With required fields marked *, an unmarked field is optional, so "Note (optional)" becomes "Note" (the PM's call).
 Other forms keep "(optional)" until they move to the * rule. No other change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The app is called NicoDesk, one word
+
+The PM's call: the name is written NicoDesk everywhere it shows (tab title, sidebar, sign-in and connect pages, the
+installed app's name, the offline page, the invite text, the Guide, the Feedback page line, a task's origin), in the
+README and in the current docs (DESIGN-GUIDE, the guide and demo pages). This replaces the 12 Oct spelling "Nico Desk",
+which was the repo owner's call. The repo, package, Vercel project and URL keep `nico-desk`. Older entries in this log
+and the 13 Oct plan keep the old spelling as they were written. No schema change.
+Rollback: git revert the commit.

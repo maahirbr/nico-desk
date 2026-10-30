@@ -16,7 +16,7 @@ export default async function Connect({ searchParams }: { searchParams: Promise<
   const origin = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('x-forwarded-host') ?? h.get('host')}`;
   const checked = checkAuthRequest(q, origin);
   if ('error' in checked && checked.redirect) redirect(checked.redirect);
-  const brand = <div className="signin-brand"><Wordmark className="signin-logo" /><span className="mark-name">Nico Desk</span></div>;
+  const brand = <div className="signin-brand"><Wordmark className="signin-logo" /><span className="mark-name">NicoDesk</span></div>;
   if ('error' in checked) {
     return <div className="signin">{brand}<h1>Connect Claude</h1><p className="err" role="alert">{checked.error}</p></div>;
   }

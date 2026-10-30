@@ -196,7 +196,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 
 ### Phone install, dictation and feedback
 
-- **Install on a phone.** `app/manifest.ts` serves `/manifest.webmanifest` (name Nico Desk, standalone, skin W day colours).
+- **Install on a phone.** `app/manifest.ts` serves `/manifest.webmanifest` (name NicoDesk, standalone, skin W day colours).
   Icons are in `public/icons/` (192, 512, maskable 512, apple touch 180), made by `scripts/make-icons.mjs`. `layout.tsx`
   sets `appleWebApp` and a light and dark `themeColor`. `public/sw.js` is a small service worker, registered in
   production only (`components/ServiceWorker.tsx`). It never touches `/api/`, any non-GET request or another origin, and

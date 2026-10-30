@@ -21,7 +21,7 @@ describe('the guide page', () => {
     const markup = html(await Guide());
     for (const s of GUIDE_SECTIONS) expect(markup, s.title).toContain(`<h2 id="g-${s.id}">${s.title}</h2>`);
     expect(markup.match(/<h2/g)).toHaveLength(GUIDE_SECTIONS.length);
-    expect(markup).toContain('<h1>How to use Nico Desk</h1>');
+    expect(markup).toContain('<h1>How to use NicoDesk</h1>');
   });
 
   it('sends a signed-out visitor to sign-in: the redirect from requireMe goes up, nothing renders', async () => {

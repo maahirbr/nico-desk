@@ -5,14 +5,14 @@ import { HELP, type HelpTerm } from './help';
 import { SHORTCUTS } from './keys';
 import { PICK, STATUS, StatusIcon, type StatusKey } from './task-ui';
 
-// The Guide page (/guide): a short read for a team that is new to Nico Desk. It has no state. It is a client module
+// The Guide page (/guide): a short read for a team that is new to NicoDesk. It has no state. It is a client module
 // only because PICK and STATUS live in task-ui.tsx, which is one. The status words come from help.ts (the same text help mode shows) and the keys from keys.ts, so neither can
 // drift from the app. Everything else is written here, in plain words.
 
 // The section headings, in order. The test pins these and the page renders them as its h2 elements.
 export const GUIDE_SECTIONS = [
-  { id: 'purpose', title: 'What Nico Desk is for' },
-  { id: 'week', title: 'A week in Nico Desk' },
+  { id: 'purpose', title: 'What NicoDesk is for' },
+  { id: 'week', title: 'A week in NicoDesk' },
   { id: 'statuses', title: 'The five statuses' },
   { id: 'rule', title: 'The one rule' },
   { id: 'blocked', title: 'When you are blocked' },
@@ -48,14 +48,14 @@ export function GuideView() {
     <article className="guide calm">
       <header className="page-head">
         <div>
-          <h1>How to use Nico Desk</h1>
+          <h1>How to use NicoDesk</h1>
           <p className="summary">Two minutes. Read it once, then use it in your week.</p>
         </div>
       </header>
 
       <section id="purpose" aria-labelledby="g-purpose">
         <h2 id="g-purpose">{title('purpose')}</h2>
-        <p>Nico Desk is one place to see who owes what, and by when. Every task has one owner and a date.</p>
+        <p>NicoDesk is one place to see who owes what, and by when. Every task has one owner and a date.</p>
         <p>When everyone can see the same list, no one has to chase anyone for an update.</p>
       </section>
 
@@ -126,17 +126,17 @@ export function GuideView() {
 
       <section id="phone" aria-labelledby="g-phone">
         <h2 id="g-phone">{title('phone')}</h2>
-        <p>You can put Nico Desk on your home screen. It then opens like an app, with no browser bar.</p>
+        <p>You can put NicoDesk on your home screen. It then opens like an app, with no browser bar.</p>
         <ul>
-          <li>On an iPhone, open Nico Desk in Safari. Tap Share, then Add to Home Screen.</li>
-          <li>On Android, open Nico Desk in Chrome. Tap the menu, then Install app.</li>
+          <li>On an iPhone, open NicoDesk in Safari. Tap Share, then Add to Home Screen.</li>
+          <li>On Android, open NicoDesk in Chrome. Tap the menu, then Install app.</li>
         </ul>
-        <p>You still need a connection. Nico Desk does not keep your tasks on the phone.</p>
+        <p>You still need a connection. NicoDesk does not keep your tasks on the phone.</p>
       </section>
 
       <section id="feedback" aria-labelledby="g-feedback">
         <h2 id="g-feedback">{title('feedback')}</h2>
-        <p>Tell the pilot lead what is confusing, missing or wrong. A short note is enough. This team&rsquo;s weeks shape what Nico Desk becomes.</p>
+        <p>Tell the pilot lead what is confusing, missing or wrong. A short note is enough. This team&rsquo;s weeks shape what NicoDesk becomes.</p>
         <p>Press Feedback at the top right, next to the help button, and write what is working well and what is not. Everyone on the team can read the notes, reply, and mark a note Done, or Not now with a short reason. The writer and everyone who gave it +1 see that on Home. Nothing is sent by email.</p>
       </section>
     </article>

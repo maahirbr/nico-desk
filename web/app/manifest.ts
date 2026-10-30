@@ -6,8 +6,8 @@ const MANIFEST_CANVAS = '#f5f2ec';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Nico Desk',
-    short_name: 'Nico Desk',
+    name: 'NicoDesk',
+    short_name: 'NicoDesk',
     description: 'Where a Nicobar team runs its week.',
     start_url: '/',
     scope: '/',
