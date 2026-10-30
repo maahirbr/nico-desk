@@ -1106,3 +1106,14 @@ while it was on, so pressing it showed an empty table. The PM's call: Done now s
 open list, open and sortable, straight under the tiles, and works with the person pills and Added since. Pressing it again
 or Clear filters goes back. The other tiles are unchanged. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · New Task takes several tasks at once, and required fields carry a *
+
+The PM's call. Under Note in the New Task form, "+ Add another task" adds a full task block (Task, Details, Owner, Due
+Date, Project, Sub-Project, Note; no Quick Add), each starting empty with nothing carried over, headed "Task 2", "Task 3"
+with a Remove button. The button counts ("Add 3 tasks") and adds them in order through the normal task route; a missing
+owner stops all of them, and if the server refuses one, those before it stay added and leave the form. In both task
+forms (New Task and a project's Add task) a required field's label ends in a * in the accent colour (Task, Owner, Due
+Date), "Details (if any)" becomes "Details", and the Task box has no example text. An empty owner with no project now
+reads "Choose a person", as it does on a project, in place of the first name on the list. No schema change.
+Rollback: git revert the commit.

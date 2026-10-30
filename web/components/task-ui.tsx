@@ -619,6 +619,48 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   );
 }
 
+type TaskDraft = { key: string; title: string; description: string; ownerId: string; ownerRole: string | undefined; dueOn: string; note: string; workstream: string; projectId: string };
+
+// One task's own fields in the New Task form: the first task and each one added under it look the same.
+function TaskFields({ d, set, people, today, projects, workstreams, titleRef, onTitleBlur, afterDates }: {
+  d: TaskDraft; set: (d: TaskDraft) => void; people: Opt[]; today: string; projects?: Opt[]; workstreams: string[];
+  titleRef?: React.Ref<HTMLInputElement>; onTitleBlur?: () => void; afterDates?: React.ReactNode;
+}) {
+  const map = useProjectPeople();
+  return (
+    <>
+      <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} name="title" required minLength={3} maxLength={200} value={d.title} onChange={(e) => set({ ...d, title: e.target.value })} onBlur={onTitleBlur} /></label>
+      <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={d.description} placeholder="Anything the owner should know" onChange={(e) => set({ ...d, description: e.target.value })} /><Count value={d.description} max={600} /></label>
+      <div className="row">
+        <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
+          <OwnerPicker key={d.projectId} projectId={d.projectId || null} value={d.ownerId} people={people} onChange={(ownerId, ownerRole) => set({ ...d, ownerId, ownerRole })} />
+        </label>
+        <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>
+      </div>
+      {afterDates}
+      {(projects || workstreams.length > 0) && (
+        <div className="row">
+          {projects && (
+            <label className="f"><span>Project</span>
+              <Select value={d.projectId} onChange={(p) => { set({ ...d, projectId: p, workstream: '', ownerRole: undefined, ownerId: !p || (map[p] ?? []).includes(d.ownerId) ? d.ownerId : '' }); }}>
+                <option value="">None (one-off task)</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+            </label>
+          )}
+          {workstreams.length > 0 && (
+            <label className="f"><span>Sub-Project</span>
+              <Select value={d.workstream} onChange={(v) => set({ ...d, workstream: v })}>
+                <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
+              </Select>
+            </label>
+          )}
+        </div>
+      )}
+      <label className="f"><span>Note (optional)</span><input maxLength={140} value={d.note} onChange={(e) => set({ ...d, note: e.target.value })} /></label>
+    </>
+  );
+}
+
 // ---------- add a task ----------
 
 export function AddTaskForm({ people, meId, today, projectId, projects, workstreams: fixedWs = [], wsByProject, defaultWs = '', onDone }: {
@@ -635,6 +677,13 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
   const [pasting, setPasting] = useState<string | null>(null); // a chat pasted into Quick Add: its proposals, in place of this form
   const readOnly = useReadOnly();
   const workstreams = wsByProject ? wsByProject[f.projectId] ?? [] : fixedWs;
+  const wsFor = (pid: string) => (wsByProject ? wsByProject[pid] ?? [] : fixedWs);
+  // "+ Add another task": more full tasks under the first, each empty, nothing carried over (the PM's call, 30 Oct).
+  // One press adds them all. Only the first has Quick Add and the project suggestion.
+  const blank = (): TaskDraft => ({ key: Math.random().toString(36).slice(2), title: '', description: '', ownerId: '', ownerRole: undefined, dueOn: '', note: '', workstream: '', projectId: startProject });
+  const [extra, setExtra] = useState<TaskDraft[]>([]);
+  const setExtraAt = (i: number, d: TaskDraft) => setExtra((all) => all.map((x, j) => (j === i ? d : x)));
+  const addAnother = () => { setExtra((all) => [...all, blank()]); setTimeout(() => [...document.querySelectorAll<HTMLInputElement>('.task-more input[name="title"]')].pop()?.focus(), 50); };
 
   // A project for the title (Jev), picked from the list in the Project field. It asks once, when the person leaves the
   // title, and only while no project is chosen. It offers; it never fills the field. Off or unsure: nothing shows.
@@ -675,24 +724,36 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
   if (pasting !== null) return <PasteChat people={people} projects={projects} today={today} startText={pasting} onBack={() => setPasting(null)} onDone={onDone} />;
   return (
     <form className="stack" onSubmit={async (e) => {
-      e.preventDefault(); setBusy(true); setErr(null);
+      e.preventDefault(); setErr(null);
+      const all = [{ ...f, key: 'first' }, ...extra];
+      const missing = all.findIndex((d) => !ownerReady(d.ownerId, d.ownerRole));
+      if (missing >= 0) { setErr(`Pick an owner for task ${missing + 1}.`); return; }
+      setBusy(true);
+      // One by one, in order. If one is refused, the ones before it stay added and leave the form; the rest stay to fix.
+      let added = 0;
       try {
-        const made = await api('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId: f.projectId || null, note: f.note || null, workstream: f.workstream || null });
-        if (made?.id) arrivals.add(made.id);
-        notify('Task added');
+        for (const d of all) {
+          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn, projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null });
+          if (made?.id) arrivals.add(made.id);
+          added++;
+        }
+        notify(added === 1 ? 'Task added' : `${added} tasks added`);
         router.refresh(); onDone();
-      } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
+      } catch (er) {
+        if (added > 0) {
+          const left = all.slice(added);
+          setF({ ...left[0] });
+          setExtra(left.slice(1));
+          router.refresh();
+        }
+        setErr(`${added > 0 ? `${added} added. ` : ''}${added > 0 ? 'The next one' : 'It'} was not: ${(er as Error).message}`);
+      } finally { setBusy(false); }
     }}>
       <QuickAddField today={today} people={people} projects={projects} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onChat={readOnly ? undefined : setPasting} onMany={setMany} />
       <div className="form-split"><span>Fill It In Yourself</span></div>
-      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} onBlur={guessProject} /></label>
-      <label className="f"><span>Details (if any)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
-      <div className="row">
-        <label className="f"><span>Owner</span>
-          <OwnerPicker key={f.projectId} projectId={f.projectId || null} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
-        </label>
-        <label className="f"><span>Due Date</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
-      </div>
+      {extra.length > 0 && <h3 className="task-more-h">Task 1</h3>}
+      <TaskFields d={{ ...f, key: 'first' }} set={(d) => setF(d)} people={people} today={today} projects={projects} workstreams={workstreams} titleRef={titleRef} onTitleBlur={guessProject}
+        afterDates={<>
       {guess && !f.projectId && projects && (
         <p className="suggest-line" role="status"><Help term="jev_project_guess">Suggested project</Help>: {projects.find((p) => p.id === guess)?.name}.
           <button type="button" className="mini-btn" onClick={() => {
@@ -703,27 +764,17 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
           <button type="button" className="mini-btn" onClick={() => setGuess(null)}>Not this</button>
         </p>
       )}
-      {(projects || workstreams.length > 0) && (
-        <div className="row">
-          {projects && (
-            <label className="f"><span>Project</span>
-              <Select value={f.projectId} onChange={(p) => { setF({ ...f, projectId: p, workstream: '', ownerRole: undefined, ownerId: !p || (map[p] ?? []).includes(f.ownerId) ? f.ownerId : '' }); }}>
-                <option value="">None (one-off task)</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </Select>
-            </label>
-          )}
-          {workstreams.length > 0 && (
-            <label className="f"><span>Sub-Project</span>
-              <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
-                <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
-              </Select>
-            </label>
-          )}
+      </>} />
+      {extra.map((d, i) => (
+        <div key={d.key} className="task-more">
+          <div className="task-more-head"><h3 className="task-more-h">Task {i + 2}</h3>
+            <button type="button" className="mini-btn" onClick={() => setExtra((all) => all.filter((x) => x.key !== d.key))} aria-label={`Remove task ${i + 2}`}>✕ Remove</button></div>
+          <TaskFields d={d} set={(nd) => setExtraAt(i, nd)} people={people} today={today} projects={projects} workstreams={wsFor(d.projectId)} />
         </div>
-      )}
-      <label className="f"><span>Note (optional)</span><input maxLength={140} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
+      ))}
+      <button type="button" className="linkbtn task-more-add" onClick={addAnother}>+ Add another task</button>
       {err && <p className="err" role="alert">{err}</p>}
-      <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button></div>
+      <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy}>{busy ? 'Adding…' : extra.length ? `Add ${extra.length + 1} tasks` : 'Add task'}</button></div>
     </form>
   );
 }

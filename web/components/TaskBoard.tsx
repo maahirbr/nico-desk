@@ -503,10 +503,10 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     }}>
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
       <div className="form-split"><span>Fill It In Yourself</span></div>
-      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-      <label className="f"><span>Details (if any)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
+      <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
-        <label className="f"><span>Owner</span>
+        <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
           <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
         {workstreams.length > 0 && (
@@ -516,7 +516,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
             </Select>
           </label>
         )}
-        <label className="f"><span>Due Date</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
+        <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}

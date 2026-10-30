@@ -27,6 +27,7 @@ export function DateField({ className = '', onChange, ...rest }: Omit<React.Inpu
     if (!label || rest['aria-label']) return;
     const copy = label.cloneNode(true) as HTMLElement;
     copy.querySelector('.datefield')?.remove();
+    copy.querySelectorAll('[aria-hidden="true"]').forEach((n) => n.remove()); // a required field's * is not part of its name
     const text = copy.textContent?.trim().replace(/\s+/g, ' ');
     setName(text || undefined);
   });

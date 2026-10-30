@@ -1722,3 +1722,11 @@ a.rlink { color: inherit; text-decoration: none; }
 .fb-switch .count-badge { color: inherit; opacity: .75; margin-left: var(--space-xxs); }
 .fb-reply-form { margin-top: var(--space-sm); }
 .remind-find { display: block; margin: 0 0 var(--space-md); }
+
+/* New Task: "+ Add another task" adds full task blocks under the first (30 Oct). */
+.task-more { display: flex; flex-direction: column; gap: var(--space-sm); padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
+.task-more-head { display: flex; align-items: center; justify-content: space-between; }
+.task-more-h { font: var(--type-label); font-weight: 600; color: var(--ink); margin: 0; }
+.task-more-add { align-self: flex-start; margin-left: 0; border: 0; background: none; padding: 0; cursor: pointer; }
+/* A required field's label ends in *, in the accent colour; optional fields carry no mark (the PM's call, 30 Oct). */
+.req { color: var(--primary); font-weight: 600; }

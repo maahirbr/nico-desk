@@ -30,7 +30,11 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   const [before, setBefore] = useState(value);
 
   if (!members) {
-    return <Select value={value} disabled={disabled} onChange={(v) => onChange(v)}>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>;
+    // An empty owner reads "Choose a person", as on a project, never the first name on the list.
+    return <Select value={value} disabled={disabled} onChange={(v) => onChange(v)}>
+      {!people.some((p) => p.id === value) && <option value="" disabled>Choose a person</option>}
+      {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+    </Select>;
   }
   const inProject = people.filter((p) => members.includes(p.id) || p.id === value && !adding);
   const others = mayAdd ? people.filter((p) => !members.includes(p.id)) : [];
