@@ -1098,3 +1098,11 @@ to clear. It combines with the person pills and Clear filters; dropped tasks are
 address (`?added=`), never in the remembered filters, so tomorrow does not open on yesterday's review. Partner plan
 boards do not have it yet. This replaces the Team page's hour-based menu removed earlier today. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A project's Done tile shows the completed tasks
+
+On a project, the Done tile filtered the open-task list to finished tasks, which it never holds, and hid Completed tasks
+while it was on, so pressing it showed an empty table. The PM's call: Done now shows the completed tasks in place of the
+open list, open and sortable, straight under the tiles, and works with the person pills and Added since. Pressing it again
+or Clear filters goes back. The other tiles are unchanged. No schema change.
+Rollback: git revert the commit.

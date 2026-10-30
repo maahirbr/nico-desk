@@ -321,20 +321,31 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </aside>
         )}
         <div style={{ minWidth: 0 }}>
-          {table(openRows, filtered
-            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>
-            : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
-          {closedRows.length > 0 && tile !== 'done' && (
+          {tile === 'done' ? (
+            // The Done tile shows the finished tasks in place of the open list, open and ready to read (the PM's call, 30 Oct).
             <>
-              <div className="list-head" style={{ marginTop: 22 }}>
-                <button className="log-toggle small-toggle" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
-                  <FoldChev /> Completed tasks <span className="count-badge">{closedRows.length}</span>
-                </button>
-                {doneOpen && closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
+              <div className="list-head">
+                <span className="small-toggle">Completed tasks <span className="count-badge">{closedRows.length}</span></span>
+                {closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
               </div>
-              <Fold open={doneOpen}>{table(closedRows, '')}</Fold>
+              {table(closedRows, <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No completed tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>)}
             </>
-          )}
+          ) : (<>
+            {table(openRows, filtered
+              ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>
+              : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
+            {closedRows.length > 0 && (
+              <>
+                <div className="list-head" style={{ marginTop: 22 }}>
+                  <button className="log-toggle small-toggle" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
+                    <FoldChev /> Completed tasks <span className="count-badge">{closedRows.length}</span>
+                  </button>
+                  {doneOpen && closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
+                </div>
+                <Fold open={doneOpen}>{table(closedRows, '')}</Fold>
+              </>
+            )}
+          </>)}
         </div>
       </div>
 
