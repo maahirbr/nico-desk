@@ -56,7 +56,6 @@ export const HELP = {
 
   // Team
   team_by_person: 'By person. One group for each person, with their open tasks.',
-  team_added: 'Added since. Every task made since a time, from any week, in the order it was made. Use it to close a meeting by reading back the to-dos it agreed.',
   team_by_status: 'By status. One group for each status, with everyone\'s tasks in it.',
   coming_up: 'Coming up. Open tasks due after this week.',
 

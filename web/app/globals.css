@@ -1120,8 +1120,6 @@ details.breakdown > .defs { margin-top: 0; }
 
 /* Team, by person: what is next */
 .find-person { width: 180px; }
-.added-since { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.added-since input[type='datetime-local'] { width: auto; }
 .next-h { font: var(--type-state); color: var(--ink-3); margin: var(--space-sm) 0 var(--space-xs); }
 .next-h.late-text { color: var(--late); }
 .next-empty, .next-idle { color: var(--ink-3); font: var(--type-small); margin: var(--space-xs) 0 0; }

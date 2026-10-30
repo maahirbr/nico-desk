@@ -12,7 +12,7 @@ describe('help text', () => {
       'comment_box', 'comment_mention', 'comment_urgent', 
       // coverage pass of 13 Oct
       'group_today', 'group_this_week', 'group_later', 'overdue', 'waiting_on_you', 'updates_for_you', 'mark_seen', 'your_projects', 'done_this_week',
-      'team_by_person', 'team_by_status', 'team_added', 'coming_up',
+      'team_by_person', 'team_by_status', 'coming_up',
       'project_on_track', 'project_at_risk', 'project_off_track', 'project_archived', 'project_internal', 'project_partner', 'project_progress',
       'tile_open', 'pushed', 'priority', 'unblock', 'move_date', 'reassign',
       'plan_status', 'plan_pending', 'plan_hands_on', 'plan_coaching', 'plan_checkpoints', 'plan_asks', 'plan_ongoing', 'plan_parked',

@@ -1041,3 +1041,10 @@ address and the old one moves to `alt_emails`, so a typo or a slow switch never 
 the roster is refused, and an admin cannot change their own email, Active or Admin. The person's own nickname still shows
 in place of the roster name. No schema change. 2 new tests.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The Team page loses its "Added since" menu
+
+The PM asked to remove the Team page's "Added any time" menu (last hour, last 2 hours, today, or an exact time). The
+menu, its `?added=` reading in `app/team/page.tsx`, its help word and its README entry go. `addedSince` in
+`lib/derive.ts` and its test stay, unused by any page, so the menu can come back in one change. No schema change.
+Rollback: git revert the commit.
