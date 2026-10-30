@@ -1192,3 +1192,14 @@ today! Time for a slow chai ☕", "Clean desk, clear skies. Nothing due today �
 "Today's done, zero worries. Treat yourself 🍪", "All done for today. Slow down, it's a Nicobar kind of day 🌿".
 No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The Guide, shorter and up to date
+
+The PM asked for a Guide that is quick to read. It now has 11 short sections: what NicoDesk is for, adding tasks (Quick
+Add, + Add another task), your Home (including the cheer once today is done), the five statuses with Late and At risk,
+the one rule, when you are blocked, projects (tiles, Added since, Done), leads and admins (Team, Ledger, Reminders,
+Roster), help and shortcuts, your phone, and feedback (reply, +1, Done, Resolved). "A week in NicoDesk", the setup list
+and Google Meet notes, and the dictation-app mention are gone. The status words still come from the help text, and the
+plain-words test still holds. The dictation test now looks for Quick Add's "Type or say it" line, since the app's own mic
+replaces the dictation app the old line named. No schema change.
+Rollback: git revert the commit.

@@ -47,7 +47,8 @@ describe('the text boxes', () => {
     expect(readFileSync(new URL('LimitNotice.tsx', dir), 'utf8')).toContain("'beforeinput'");
   });
 
-  it('keeps the dictation line in the guide', () => {
-    expect(readFileSync(new URL('GuideView.tsx', dir), 'utf8')).toContain('You can dictate into any box with a dictation app such as OpenWhispr.');
+  it('keeps a speaking line in the guide', () => {
+    // Since 30 Oct the Guide points to Quick Add's own mic in place of a dictation app.
+    expect(readFileSync(new URL('GuideView.tsx', dir), 'utf8')).toContain('Type or say it the way you&rsquo;d tell someone');
   });
 });

@@ -12,14 +12,16 @@ import { PICK, STATUS, StatusIcon, type StatusKey } from './task-ui';
 // The section headings, in order. The test pins these and the page renders them as its h2 elements.
 export const GUIDE_SECTIONS = [
   { id: 'purpose', title: 'What NicoDesk is for' },
-  { id: 'week', title: 'A week in NicoDesk' },
+  { id: 'adding', title: 'Adding tasks' },
+  { id: 'home', title: 'Your Home' },
   { id: 'statuses', title: 'The five statuses' },
   { id: 'rule', title: 'The one rule' },
   { id: 'blocked', title: 'When you are blocked' },
+  { id: 'projects', title: 'Projects' },
   { id: 'leads', title: 'For leads and admins' },
-  { id: 'help', title: 'Help mode and shortcuts' },
+  { id: 'help', title: 'Help and shortcuts' },
   { id: 'phone', title: 'On your phone' },
-  { id: 'feedback', title: 'Tell us how it is going' },
+  { id: 'feedback', title: 'Feedback' },
 ] as const;
 
 const title = (id: (typeof GUIDE_SECTIONS)[number]['id']) => GUIDE_SECTIONS.find((s) => s.id === id)!.title;
@@ -36,39 +38,42 @@ const FLAGS: { term: HelpTerm; word: string }[] = [
   { term: 'at_risk', word: 'At risk' },
 ];
 
-const WEEK: [string, string][] = [
-  ['Monday', 'Open Home to see what is on your side. Open Team to see what everyone has this week.'],
-  ['Through the week', 'Tick tasks off as you finish them. Change the status when the work changes.'],
-  ['When a date will slip', 'Move it before it passes. Write the reason.'],
-  ['Friday', 'Open Done this week on Home to see what closed.'],
-];
-
 export function GuideView() {
   return (
     <article className="guide calm">
       <header className="page-head">
         <div>
           <h1>How to use NicoDesk</h1>
-          <p className="summary">Two minutes. Read it once, then use it in your week.</p>
+          <p className="summary">One minute. Read it once, then use it.</p>
         </div>
       </header>
 
       <section id="purpose" aria-labelledby="g-purpose">
         <h2 id="g-purpose">{title('purpose')}</h2>
-        <p>NicoDesk is one place to see who owes what, and by when. Every task has one owner and a date.</p>
-        <p>When everyone can see the same list, no one has to chase anyone for an update.</p>
+        <p>One place to see who is doing what, and by when. Every task has one owner and one date.</p>
       </section>
 
-      <section id="week" aria-labelledby="g-week">
-        <h2 id="g-week">{title('week')}</h2>
-        <ol className="guide-week">
-          {WEEK.map(([when, what]) => (<li key={when}><b>{when}</b><span>{what}</span></li>))}
-        </ol>
+      <section id="adding" aria-labelledby="g-adding">
+        <h2 id="g-adding">{title('adding')}</h2>
+        <ul className="guide-list">
+          <li><b>Quick Add.</b> Type or say it the way you&rsquo;d tell someone, like &ldquo;Sam to send samples by Friday&rdquo;. Add a few at once, or paste a WhatsApp chat.</li>
+          <li><b>Fill it in yourself.</b> Use the form. Press + Add another task to add more in one go.</li>
+        </ul>
+      </section>
+
+      <section id="home" aria-labelledby="g-home">
+        <h2 id="g-home">{title('home')}</h2>
+        <ul className="guide-list">
+          <li>Your tasks, sorted into Late, Today, This week and Later.</li>
+          <li><b>Updates for you.</b> Changes others made to your tasks.</li>
+          <li><b>Waiting on you.</b> Tasks stuck until you act.</li>
+          <li>Finish today&rsquo;s tasks and you get a little cheer.</li>
+        </ul>
       </section>
 
       <section id="statuses" aria-labelledby="g-statuses">
         <h2 id="g-statuses">{title('statuses')}</h2>
-        <p>You pick one of five statuses for every task.</p>
+        <p>You pick one for every task.</p>
         <dl className="guide-defs">
           {PICK.map((s: StatusKey) => (
             <div key={s}>
@@ -77,7 +82,7 @@ export function GuideView() {
             </div>
           ))}
         </dl>
-        <p>Late and at risk are not statuses. The app works them out from the dates, so you never pick them.</p>
+        <p>The app works these out from the dates. You never pick them.</p>
         <dl className="guide-defs">
           {FLAGS.map((f) => (
             <div key={f.term}>
@@ -91,34 +96,37 @@ export function GuideView() {
       <section id="rule" aria-labelledby="g-rule">
         <h2 id="g-rule">{title('rule')}</h2>
         <p className="guide-rule">Move a date before it passes, and say why.</p>
-        <p>A moved date with a reason is fine. The team knew in time. The first date stays on record, and the ledger shows the task as flagged early, not missed.</p>
-        <p>A silent slip is different. The date passes and no one hears. That is what the ledger counts, and the goal is 0.</p>
+        <p>A moved date is fine. A date that passes in silence is a miss.</p>
         <DateMoveFigure />
       </section>
 
       <section id="blocked" aria-labelledby="g-blocked">
         <h2 id="g-blocked">{title('blocked')}</h2>
-        <p>If a task cannot go on, set it to Blocked and say what it waits on.</p>
-        <p>The person it waits on sees it under Waiting on you on their Home. When they clear the block, the task goes back to In progress.</p>
+        <p>Set the task to Blocked and say who you are waiting on. They see it on their Home.</p>
+      </section>
+
+      <section id="projects" aria-labelledby="g-projects">
+        <h2 id="g-projects">{title('projects')}</h2>
+        <ul className="guide-list">
+          <li>Press a tile, like Late or Done, to filter the list.</li>
+          <li><b>Added since.</b> Pick Today to review everything added in a meeting.</li>
+          <li><b>Done.</b> See finished tasks and when they were done.</li>
+        </ul>
       </section>
 
       <section id="leads" aria-labelledby="g-leads">
         <h2 id="g-leads">{title('leads')}</h2>
-        <p>Leads and admins see more than members do.</p>
         <ul className="guide-list">
-          <li><b>Set up this project</b> shows at the top of a new project you own or lead. It lists the few things to do first. Each step ticks itself when it is done. Press Hide this list to put it away.</li>
-          <li><b>Team</b> lists every open task, by person or by status.</li>
-          <li><b>Ledger</b> shows how each person kept their dates, and any silent slips.</li>
-          <li><b>Reminders</b> write one draft per person who has late tasks. Each opens as a draft in your own Gmail. You press Send. The app sends nothing.</li>
-          <li><b>Google Meet</b> is on only when the app is set up for it. A lead connects it on Connections. It reads the notes and transcripts of meetings that lead was in. These are notes Google already made. It does not record. Recording still needs everyone&rsquo;s consent.</li>
+          <li><b>Team.</b> Everyone&rsquo;s open tasks.</li>
+          <li><b>Ledger.</b> Who kept their dates.</li>
+          <li><b>Reminders.</b> Drafts a nudge in your Gmail. You press Send.</li>
+          <li><b>Roster.</b> Add and edit people.</li>
         </ul>
       </section>
 
       <section id="help" aria-labelledby="g-help">
         <h2 id="g-help">{title('help')}</h2>
-        <p>Not sure what a word means? Press the ? button at the top right, or press the ? key. Help mode turns on. Words with a dotted line under them now show a short note.</p>
-        <p>You can dictate into any box with a dictation app such as OpenWhispr.</p>
-        <p>These keys work anywhere in the app, unless you are typing in a field.</p>
+        <p>Press ? at the top right. Any word with a dotted line then explains itself.</p>
         <dl className="keylist guide-keys">
           {SHORTCUTS.map(([k, what]) => (<div key={k}><dt><kbd className="kbd-key">{k}</kbd></dt><dd>{what}</dd></div>))}
         </dl>
@@ -126,18 +134,15 @@ export function GuideView() {
 
       <section id="phone" aria-labelledby="g-phone">
         <h2 id="g-phone">{title('phone')}</h2>
-        <p>You can put NicoDesk on your home screen. It then opens like an app, with no browser bar.</p>
-        <ul>
-          <li>On an iPhone, open NicoDesk in Safari. Tap Share, then Add to Home Screen.</li>
-          <li>On Android, open NicoDesk in Chrome. Tap the menu, then Install app.</li>
+        <ul className="guide-list">
+          <li><b>iPhone.</b> Open it in Safari. Tap Share, then Add to Home Screen.</li>
+          <li><b>Android.</b> Open it in Chrome. Tap the menu, then Install app.</li>
         </ul>
-        <p>You still need a connection. NicoDesk does not keep your tasks on the phone.</p>
       </section>
 
       <section id="feedback" aria-labelledby="g-feedback">
         <h2 id="g-feedback">{title('feedback')}</h2>
-        <p>Tell the pilot lead what is confusing, missing or wrong. A short note is enough. This team&rsquo;s weeks shape what NicoDesk becomes.</p>
-        <p>Press Feedback at the top right, next to the help button, and write what is working well and what is not. Everyone on the team can read the notes, reply, and mark a note Done, or Not now with a short reason. The writer and everyone who gave it +1 see that on Home. Nothing is sent by email.</p>
+        <p>Press Feedback at the top. Anyone can reply, +1 or mark a note Done. Switch to Resolved to see what is closed.</p>
       </section>
     </article>
   );
