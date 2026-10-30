@@ -169,13 +169,22 @@ describe('+1', () => {
     const id = await noteId();
     expect((await vote(id)).status).toBe(400); // own note
     signIn(ADMIN);
-    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true });
-    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true }); // twice is still once
-    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: true });
+    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true, others: [] });
+    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true, others: [] }); // twice is still once
+    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: true, others: [] });
+    signIn('per_ada');
+    const two = await (await vote(id)).json();
+    expect(two).toMatchObject({ votes: 2, mine: true });
+    expect(two.others).toHaveLength(1); // the admin, by name; the reader is "You" on the page
     signIn(m.id);
-    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: false });
+    const seen = (await (await list()).json())[0];
+    expect(seen).toMatchObject({ votes: 2, mine: false });
+    expect(seen.others).toHaveLength(2); // in the order they agreed
+    expect(seen.others[1]).toBe((await s.listPeople(db, TEAM_ID)).find((p) => p.id === 'per_ada')!.displayName);
+    signIn('per_ada');
+    await unvote(id);
     signIn(ADMIN);
-    expect(await (await unvote(id)).json()).toEqual({ votes: 0, mine: false });
+    expect(await (await unvote(id)).json()).toEqual({ votes: 0, mine: false, others: [] });
     signIn(ADMIN, signView(ADMIN, 'per_ada'));
     expect((await vote(id)).status).toBe(403); // View as writes nothing
   });

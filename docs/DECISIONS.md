@@ -1061,3 +1061,11 @@ In-app only, nothing is emailed. "Not now" was picked over "Won't do", "Parked" 
 Schema: `feedback` gains `status`, `closed_by`, `closed_at`, `closed_note`, and the new `feedback_news` table; the
 hosted database needs `npm run db:upgrade` before the build that carries it is promoted.
 Rollback: git revert the commit; the new columns and table can stay, unused.
+
+## 2026-10-30 · Opus 5.5 · Feedback shows who gave +1
+
+The PM asked to see who agrees with a note. Beside +1 the line now reads "+2 · You and Kabir": the count, then the
+names, "You" first, the rest in the order they agreed. Up to three names show; past that, "and 2 others" opens the
+full list. `listFeedback` and the vote route return `others` (the names, leaving out the reader). Everyone on the team
+already reads who wrote each note, so names on +1 show to everyone too. No schema change.
+Rollback: git revert the commit.

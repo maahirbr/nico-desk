@@ -23,7 +23,7 @@ export default async function Feedback() {
       <section>
         <h2>From the team <span className="count-badge">{rows.length === 0 ? 'none yet' : `${open} open`}</span></h2>
         <FeedbackList meId={me.person.id} hasNews={news.length > 0}
-          rows={rows.map((r) => ({ id: r.id, personId: r.personId, personName: r.personName, stamp: fmtStamp(r.createdAt), path: r.path, body: r.body, images: r.images, votes: r.votes, mine: r.mine,
+          rows={rows.map((r) => ({ id: r.id, personId: r.personId, personName: r.personName, stamp: fmtStamp(r.createdAt), path: r.path, body: r.body, images: r.images, votes: r.votes, mine: r.mine, others: r.others,
             status: r.status, closedByName: r.closedByName, closedAt: r.closedAt ? new Date(r.closedAt).toISOString() : null, closedStamp: r.closedAt ? fmtStamp(r.closedAt) : null, closedNote: r.closedNote,
             replies: r.replies.map((x) => ({ id: x.id, authorName: x.authorName, body: x.body, stamp: fmtStamp(x.createdAt) })) }))} />
       </section>

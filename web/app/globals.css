@@ -1689,6 +1689,7 @@ a.rlink { color: inherit; text-decoration: none; }
 .fb-drag { outline: var(--ring-width) dashed var(--primary); outline-offset: 2px; }
 .fb-votes { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-xs) 0 0; }
 .fb-votes .mini-btn.on { color: var(--primary); border-color: var(--primary); }
+.fb-agreed .linkbtn { font: inherit; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
 /* Replies under a feedback note: indented with a quiet rule, readable by everyone. */
 .fb-replies { list-style: none; margin: var(--space-sm) 0 0; padding: 0 0 0 var(--space-md); border-left: var(--rule) solid var(--line-strong); display: grid; gap: var(--space-sm); }
 /* Done, Not now and Reopen sit beside Reply; a closed note says who closed it, when, and the Not now reason (30 Oct). */

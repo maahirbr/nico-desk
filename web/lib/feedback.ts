@@ -14,7 +14,7 @@ const PATH_MAX = 300;
 
 export type FeedbackReply = { id: string; authorName: string; body: string; createdAt: string };
 export type FeedbackStatus = 'open' | 'done' | 'not_now';
-export type FeedbackView = { id: string; personId: string; personName: string; path: string | null; body: string; createdAt: string; images: number; votes: number; mine: boolean;
+export type FeedbackView = { id: string; personId: string; personName: string; path: string | null; body: string; createdAt: string; images: number; votes: number; mine: boolean; others: string[];
   status: FeedbackStatus; closedByName: string | null; closedAt: string | null; closedNote: string | null; replies: FeedbackReply[] };
 export const CLOSE_NOTE_MAX = 280;
 export const REPLY_MAX = 2000;
@@ -62,13 +62,21 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
        FROM feedback_replies r JOIN people p ON p.id = r.author_id JOIN feedback f ON f.id = r.feedback_id
       WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1)
       ORDER BY r.created_at, r.id`, [me.team.id]);
+  // Who gave +1, in the order they did, leaving out the reader (the page says "You" for them).
+  const votes = await db.query<{ feedback_id: string; name: string }>(
+    `SELECT v.feedback_id, COALESCE(p.nickname, p.display_name) AS name
+       FROM feedback_votes v JOIN people p ON p.id = v.person_id JOIN feedback f ON f.id = v.feedback_id
+      WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1) AND v.person_id <> $2
+      ORDER BY v.created_at, v.person_id`, [me.team.id, me.person.id]);
+  const backers = new Map<string, string[]>();
+  for (const v of votes.rows) backers.set(v.feedback_id, [...(backers.get(v.feedback_id) ?? []), v.name]);
   const byNote = new Map<string, FeedbackReply[]>();
   for (const r of replies.rows) {
     const list = byNote.get(r.feedback_id) ?? [];
     list.push({ id: r.id, authorName: r.author_name, body: r.body, createdAt: r.created_at });
     byNote.set(r.feedback_id, list);
   }
-  return rows.map((r) => ({ id: r.id, personId: r.person_id, personName: r.person_name, path: r.path, body: r.body, createdAt: r.created_at, images: r.images, votes: r.votes, mine: r.mine,
+  return rows.map((r) => ({ id: r.id, personId: r.person_id, personName: r.person_name, path: r.path, body: r.body, createdAt: r.created_at, images: r.images, votes: r.votes, mine: r.mine, others: backers.get(r.id) ?? [],
     status: r.status, closedByName: r.closed_by_name, closedAt: r.closed_at, closedNote: r.closed_note, replies: byNote.get(r.id) ?? [] }));
 }
 
@@ -105,15 +113,17 @@ export async function getFeedbackImage(db: Db, me: Me, id: string, n: number): P
 }
 
 // "+1": on or off, once per person, never on your own note, and only on an open note.
-export async function voteFeedback(db: Db, me: Me, id: string, on: boolean): Promise<{ votes: number; mine: boolean }> {
+export async function voteFeedback(db: Db, me: Me, id: string, on: boolean): Promise<{ votes: number; mine: boolean; others: string[] }> {
   assertNotViewing(me);
   const note = await noteOnTeam(db, me, id);
   if (note.person_id === me.person.id) throw bad('own_note', 'This is your own note.', 'vote');
   if (on && note.status !== 'open') throw bad('note_closed', 'This note is closed. Reopen it to add a +1.', 'vote');
   if (on) await db.query(`INSERT INTO feedback_votes (feedback_id, person_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [id, me.person.id]);
   else await db.query(`DELETE FROM feedback_votes WHERE feedback_id = $1 AND person_id = $2`, [id, me.person.id]);
-  const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM feedback_votes WHERE feedback_id = $1`, [id]);
-  return { votes: rows[0].n, mine: on };
+  const { rows } = await db.query<{ name: string }>(
+    `SELECT COALESCE(p.nickname, p.display_name) AS name FROM feedback_votes v JOIN people p ON p.id = v.person_id
+      WHERE v.feedback_id = $1 AND v.person_id <> $2 ORDER BY v.created_at, v.person_id`, [id, me.person.id]);
+  return { votes: rows.length + (on ? 1 : 0), mine: on, others: rows.map((r) => r.name) };
 }
 
 type NewsKind = 'reply' | 'done' | 'not_now' | 'reopened';

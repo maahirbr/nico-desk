@@ -12,8 +12,24 @@ import { Fold, FoldChev } from './Fold';
 // The team's notes, for everyone. Open notes come first, newest first; Done and Not now fold away under Resolved and
 // stay. Screenshots show as small pictures that open full size. "+1" backs a teammate's open note. Anyone replies, marks
 // a note Done, or Not now with a short reason that shows on the note, and anyone reopens it (the PM's call, 30 Oct).
-// Opening this page marks your feedback news seen, so Home stops showing it.
-export type FeedbackRow = { id: string; personId: string; personName: string; stamp: string; path: string | null; body: string; images: number; votes: number; mine: boolean;
+// Opening this page marks your feedback news seen, so Home stops showing it. Beside +1, the count and who agreed:
+// "+2 · You and Kabir", up to three names, then "and 2 others", which opens the full list.
+
+// "Priya", "Priya and Kabir", "Priya, Kabir and Sam".
+const joinNames = (n: string[]) => n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;
+function Agreed({ votes, names }: { votes: number; names: string[] }) {
+  const [all, setAll] = useState(false);
+  if (votes === 0) return null;
+  const SHOWN = 3;
+  const extra = names.length - SHOWN;
+  return (
+    <span className="small fb-agreed">
+      <b>+{votes}</b><span className="dim"> · </span>
+      {extra <= 0 || all ? joinNames(names) : <>{names.slice(0, SHOWN).join(', ')} and <button type="button" className="linkbtn" onClick={() => setAll(true)}>{extra} {extra === 1 ? 'other' : 'others'}</button></>}
+    </span>
+  );
+}
+export type FeedbackRow = { id: string; personId: string; personName: string; stamp: string; path: string | null; body: string; images: number; votes: number; mine: boolean; others: string[];
   status: 'open' | 'done' | 'not_now'; closedByName: string | null; closedAt: string | null; closedStamp: string | null; closedNote: string | null;
   replies: { id: string; authorName: string; body: string; stamp: string }[] };
 
@@ -50,10 +66,10 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
     } catch (e) { notify((e as Error).message); }
     finally { setMoving(null); }
   }
-  const [vote, setVote] = useState<Record<string, { votes: number; mine: boolean }>>({});
+  const [vote, setVote] = useState<Record<string, { votes: number; mine: boolean; others: string[] }>>({});
   async function toggle(r: FeedbackRow) {
-    const cur = vote[r.id] ?? { votes: r.votes, mine: r.mine };
-    setVote((v) => ({ ...v, [r.id]: { votes: cur.votes + (cur.mine ? -1 : 1), mine: !cur.mine } })); // shows at once
+    const cur = vote[r.id] ?? { votes: r.votes, mine: r.mine, others: r.others };
+    setVote((v) => ({ ...v, [r.id]: { ...cur, votes: cur.votes + (cur.mine ? -1 : 1), mine: !cur.mine } })); // shows at once
     try { const out = await api(`/feedback/${r.id}/vote`, cur.mine ? 'DELETE' : 'POST'); setVote((v) => ({ ...v, [r.id]: out })); }
     catch (e) { setVote((v) => ({ ...v, [r.id]: cur })); notify((e as Error).message); }
   }
@@ -61,8 +77,8 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   const open = rows.filter((r) => r.status === 'open');
   const closed = rows.filter((r) => r.status !== 'open').sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''));
   const item = (r: FeedbackRow) => {
-    const v = vote[r.id] ?? { votes: r.votes, mine: r.mine };
-    const others = v.votes === 1 ? '1 person agrees' : `${v.votes} people agree`;
+    const v = vote[r.id] ?? { votes: r.votes, mine: r.mine, others: r.others };
+    const agreed = <Agreed votes={v.votes} names={[...(v.mine ? ['You'] : []), ...v.others]} />;
     const isOpen = r.status === 'open';
     return (
       <li key={r.id} id={r.id} className={`card card-pad fb-item${isOpen ? '' : ' is-closed'}`}>
@@ -91,9 +107,9 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
         {isOpen && r.personId !== meId && !readOnly ? (
           <div className="fb-votes">
             <button type="button" className={`mini-btn${v.mine ? ' on' : ''}`} aria-pressed={v.mine} aria-label={v.mine ? 'Take back your +1' : '+1, I agree'} onClick={() => void toggle(r)}>{v.mine ? '✓ +1' : '+1'}</button>
-            {v.votes > 0 && <span className="small dim">{others}</span>}
+            {agreed}
           </div>
-        ) : v.votes > 0 && <p className="small dim fb-votes">{others}</p>}
+        ) : v.votes > 0 && <p className="fb-votes">{agreed}</p>}
         {r.replies.length > 0 && (
           <ul className="fb-replies">
             {r.replies.map((x) => (
