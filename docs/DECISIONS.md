@@ -1079,3 +1079,11 @@ blur the box themselves, since they never focus a link on click. The results lis
 the keyboard rule skips, and keeps the box focused on a mouse press anywhere in it. Checked with a real mouse click in
 Chrome and Firefox on a local build (before: nothing; after: the result opens), and by the PM in Safari. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Feedback switches between Open and Resolved at the top
+
+The PM found the Resolved fold at the foot of the list hard to reach. A switch under "From the team" now shows Open
+(newest first) or Resolved (most recently closed first), each with its count, in the same style as the Team page's
+By person / By status. It opens on Open and keeps the choice in the address (`?show=resolved`). The count leaves the
+heading, so it shows once. No schema change.
+Rollback: git revert the commit.

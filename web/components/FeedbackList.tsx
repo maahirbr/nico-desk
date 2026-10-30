@@ -7,10 +7,10 @@ import { api } from './task-ui';
 import { PAGES } from './FeedbackForm';
 import { notify } from './toast';
 import { EmptyMark, ICON } from './icons';
-import { Fold, FoldChev } from './Fold';
+import { useUrlText } from './remember';
 
-// The team's notes, for everyone. Open notes come first, newest first; Done and Not now fold away under Resolved and
-// stay. Screenshots show as small pictures that open full size. "+1" backs a teammate's open note. Anyone replies, marks
+// The team's notes, for everyone. A switch at the top shows Open (newest first) or Resolved (Done and Not now, most
+// recently closed first); it opens on Open and keeps the choice in the address (?show=resolved). Nothing is removed. Screenshots show as small pictures that open full size. "+1" backs a teammate's open note. Anyone replies, marks
 // a note Done, or Not now with a short reason that shows on the note, and anyone reopens it (the PM's call, 30 Oct).
 // Opening this page marks your feedback news seen, so Home stops showing it. Beside +1, the count and who agreed:
 // "+2 · You and Kabir", up to three names, then "and 2 others", which opens the full list.
@@ -42,7 +42,8 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   const [notNow, setNotNow] = useState<string | null>(null); // the note whose Not now reason box is open
   const [reason, setReason] = useState('');
   const [moving, setMoving] = useState<string | null>(null);
-  const [showClosed, setShowClosed] = useState(false);
+  const [show, setShow] = useUrlText('show');
+  const resolved = show === 'resolved';
   // Seeing this page counts as seeing the news on Home.
   useEffect(() => {
     if (readOnly || !hasNews) return;
@@ -151,13 +152,14 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   };
   return (
     <>
-      {open.length > 0 ? <ul className="fb-list">{open.map(item)}</ul> : <p className="small dim">Nothing open. Every note is resolved.</p>}
-      {closed.length > 0 && (<>
-        <button type="button" className="log-toggle small-toggle fb-resolved" aria-expanded={showClosed} onClick={() => setShowClosed(!showClosed)}>
-          <FoldChev /> Resolved <span className="count-badge">{closed.length}</span>
-        </button>
-        <Fold open={showClosed}><ul className="fb-list">{closed.map(item)}</ul></Fold>
-      </>)}
+      <span className="seg fb-switch" role="group" aria-label="Show">
+        <button type="button" aria-pressed={!resolved} onClick={() => setShow('')}>Open <span className="count-badge">{open.length}</span></button>
+        <button type="button" aria-pressed={resolved} onClick={() => setShow('resolved')}>Resolved <span className="count-badge">{closed.length}</span></button>
+      </span>
+      {resolved
+        ? (closed.length > 0 ? <ul className="fb-list">{closed.map(item)}</ul> : <p className="small dim">Nothing resolved yet.</p>)
+        : (open.length > 0 ? <ul className="fb-list">{open.map(item)}</ul>
+          : <p className="small dim">Nothing open. Every note is resolved. <button type="button" className="linkbtn" onClick={() => setShow('resolved')}>See resolved</button></p>)}
     </>
   );
 }
