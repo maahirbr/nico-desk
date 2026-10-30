@@ -214,11 +214,13 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   most 1600px and under 600 KB (`components/shrinkImage.ts`) before upload, and `feedback_images` keeps them (bytea, RLS
   on). Only the writer adds them, the server checks the first bytes, and any teammate opens them
   (`/api/v1/feedback/[id]/images/[n]`, private cache). "+1" (`feedback_votes`) backs a teammate's note once per
-  person, never your own, and shows the count. Notes pile up; nothing marks them read. Replies (`feedback_replies`) come only from
-  people with the Roster switch "Can reply to feedback" (`people.replies_feedback`); everyone reads them, and the writer
-  sees new ones on Home until they open Feedback or press Mark seen. The `feedback` table (`lib/schema.ts`
-  and `upgrade()`, RLS on) holds the notes. `POST` and `GET /api/v1/feedback` are open to anyone signed in on the team,
-  `PATCH /api/v1/feedback/[id]` (mark read) is admin only, and View as refuses every write. Nothing is emailed.
+  person, never your own, and only on an open note. Anyone replies (`feedback_replies`), and anyone marks a note Done,
+  or Not now with a short reason that shows on the note, or reopens it (`POST /api/v1/feedback/[id]/status`; `feedback`
+  keeps `status`, `closed_by`, `closed_at`, `closed_note`). Closed notes fold under Resolved and are never removed. Each
+  reply, Done, Not now and Reopen tells the writer and everyone who gave +1 (`feedback_news`, RLS on), never the person
+  who did it; they see it on Home under Feedback updates until they open Feedback or press Mark seen. The `feedback`
+  table (`lib/schema.ts` and `upgrade()`, RLS on) holds the notes. Every route is open to anyone signed in on the team,
+  and View as refuses every write. Nothing is emailed.
   Test: `tests/feedback.test.ts`.
 - **Your profile** (`/me/profile`, from the account menu and Edit profile on your own page): your name, a nickname, a
   phone number and a photo. A nickname (up to 40 characters, `people.nickname`) shows in place of the name everywhere;

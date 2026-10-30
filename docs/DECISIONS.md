@@ -1048,3 +1048,16 @@ The PM asked to remove the Team page's "Added any time" menu (last hour, last 2 
 menu, its `?added=` reading in `app/team/page.tsx`, its help word and its README entry go. `addedSince` in
 `lib/derive.ts` and its test stay, unused by any page, so the menu can come back in one change. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Feedback: anyone replies, marks a note Done or Not now, and the +1s hear of it
+
+The PM's call. Anyone on the team now replies to a note (the Roster's "Can reply to feedback" tick goes; the
+`people.replies_feedback` column stays, unused). Anyone marks a note Done in one click, or Not now with a short reason
+(2 to 280 characters) that shows on the note, and anyone reopens it. The note says who closed it and when, so a wrong
+close is plain. Closed notes fold under Resolved and are never removed, and a closed note takes no new +1. Each reply,
+Done, Not now and Reopen goes to the writer and everyone who gave +1, never the person who did it, as a "Feedback
+updates" card on Home (`feedback_news`, RLS on, fenced by person and note) until they open Feedback or press Mark seen.
+In-app only, nothing is emailed. "Not now" was picked over "Won't do", "Parked" and "Not planned".
+Schema: `feedback` gains `status`, `closed_by`, `closed_at`, `closed_note`, and the new `feedback_news` table; the
+hosted database needs `npm run db:upgrade` before the build that carries it is promoted.
+Rollback: git revert the commit; the new columns and table can stay, unused.

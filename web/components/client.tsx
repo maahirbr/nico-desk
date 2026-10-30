@@ -453,7 +453,7 @@ export function AddPeopleForm({ teamId }: { teamId: string }) {
 
 // An admin edits a roster row in one window: name, job title, email and access. The row keeps Copy invite.
 // The server holds the same rules (patchPerson): admin only, no one removes their own admin or changes their own email.
-type RosterPerson = { id: string; name: string; role: string; email: string; active: boolean; roles: string[]; repliesFeedback: boolean };
+type RosterPerson = { id: string; name: string; role: string; email: string; active: boolean; roles: string[] };
 export function PersonControls({ person: p, self }: { person: RosterPerson; self: boolean }) {
   const [open, setOpen] = useState(false);
   return (
@@ -467,7 +467,7 @@ export function PersonControls({ person: p, self }: { person: RosterPerson; self
 
 function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: boolean; onClose: () => void }) {
   const { busy, error, run } = useSubmit();
-  const [f, setF] = useState({ name: p.name, role: p.role, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin'), replies: p.repliesFeedback });
+  const [f, setF] = useState({ name: p.name, role: p.role, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin') });
   const emailChanged = f.email.trim().toLowerCase() !== p.email.toLowerCase();
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -476,7 +476,6 @@ function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: 
     if (f.role.trim() !== p.role) body.role = f.role.trim();
     if (emailChanged) body.email = f.email.trim();
     if (f.active !== p.active) body.active = f.active;
-    if (f.replies !== p.repliesFeedback) body.repliesFeedback = f.replies;
     if (f.lead !== p.roles.includes('lead') || f.admin !== p.roles.includes('admin')) body.appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
     if (Object.keys(body).length === 0) { onClose(); return; }
     if (await run(`/people/${p.id}`, 'PATCH', body)) { notify(`Saved ${f.name.trim()}`); onClose(); }
@@ -494,7 +493,6 @@ function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: 
           <label className="check"><input type="checkbox" checked={f.active} disabled={self} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Active</label>
           <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
           <label className="check"><input type="checkbox" checked={f.admin} disabled={self} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
-          <label className="check"><input type="checkbox" checked={f.replies} onChange={(e) => setF({ ...f, replies: e.target.checked })} /> Can reply to feedback</label>
         </fieldset>
         <Err e={error} />
         <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>

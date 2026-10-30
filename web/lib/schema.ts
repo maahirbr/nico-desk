@@ -188,7 +188,7 @@ CREATE TABLE comments (
 CREATE INDEX comments_subject ON comments (subject_kind, subject_id, created_at);
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
--- Pilot feedback sent from inside the app. Any person writes a note, only an admin reads the list. Nothing is emailed.
+-- Pilot feedback sent from inside the app. Any person writes a note and everyone on the team reads it. Nothing is emailed.
 -- path is an in-app path (no query string), kept only when the person ticked "about this page".
 CREATE TABLE feedback (
   id          text PRIMARY KEY,
@@ -196,7 +196,12 @@ CREATE TABLE feedback (
   path        text,
   body        text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 4000),
   created_at  timestamptz NOT NULL DEFAULT now(),
-  read_at     timestamptz
+  read_at     timestamptz,
+  -- 30 Oct: anyone marks a note Done, or Not now with a short reason; anyone reopens it.
+  status      text NOT NULL DEFAULT 'open' CHECK (status IN ('open','done','not_now')),
+  closed_by   text REFERENCES people(id),
+  closed_at   timestamptz,
+  closed_note text CHECK (char_length(closed_note) BETWEEN 1 AND 280)
 );
 CREATE INDEX feedback_created ON feedback (created_at DESC);
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
@@ -217,7 +222,7 @@ CREATE TABLE feedback_votes (
   PRIMARY KEY (feedback_id, person_id)
 );
 ALTER TABLE feedback_votes ENABLE ROW LEVEL SECURITY;
--- 14 Oct: replies to a note, only from people with people.replies_feedback. Everyone reads them; the writer sees new ones on Home.
+-- 14 Oct: replies to a note (anyone since 30 Oct). Everyone reads them; feedback_news tells the writer and the +1s.
 CREATE TABLE feedback_replies (
   id          text PRIMARY KEY,
   feedback_id text NOT NULL REFERENCES feedback(id),
@@ -228,6 +233,21 @@ CREATE TABLE feedback_replies (
 );
 CREATE INDEX feedback_replies_note ON feedback_replies (feedback_id, created_at);
 ALTER TABLE feedback_replies ENABLE ROW LEVEL SECURITY;
+-- 30 Oct: what changed on a note, for its writer and everyone who gave it +1, never the person who did it. Shown on
+-- Home until they open Feedback or press Mark seen. In-app only.
+CREATE TABLE feedback_news (
+  id          text PRIMARY KEY,
+  person_id   text NOT NULL REFERENCES people(id),
+  feedback_id text NOT NULL REFERENCES feedback(id),
+  kind        text NOT NULL CHECK (kind IN ('reply','done','not_now','reopened')),
+  actor_id    text NOT NULL REFERENCES people(id),
+  reply_id    text REFERENCES feedback_replies(id),
+  reason      text,                          -- the Not now reason as it was then
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  seen_at     timestamptz
+);
+CREATE INDEX feedback_news_person ON feedback_news (person_id, created_at DESC);
+ALTER TABLE feedback_news ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE comment_refs (
   comment_id  text NOT NULL REFERENCES comments(id),
@@ -546,6 +566,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   feedback_images: inFeedback,
   feedback_votes: inFeedback,
   feedback_replies: inFeedback,
+  feedback_news: `${ON_TEAM} AND ${inFeedback}`,
 };
 
 export const TEAM_FENCE = `
