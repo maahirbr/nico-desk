@@ -1031,3 +1031,51 @@ pilot from 58 to 68 of 77 heard spellings. The misses left change the vowel itse
 cannot meet without merging different names. An au-to-o rule was tried and dropped: it turned "Roll" into a roster name.
 One new test.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · An admin edits a roster row: name, job title, email and access
+
+The PM asked to edit people on the Roster. Each row's Mark inactive, Make lead, Make admin and feedback replies buttons
+become one Edit window (name, job title, email, and Active, Lead, Admin, Can reply to feedback ticks); Copy invite stays on
+the row. `patchPerson` now also takes `displayName` and `email`, admin only as before. A new email becomes the sign-in
+address and the old one moves to `alt_emails`, so a typo or a slow switch never locks the person out; an email already on
+the roster is refused, and an admin cannot change their own email, Active or Admin. The person's own nickname still shows
+in place of the roster name. No schema change. 2 new tests.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The Team page loses its "Added since" menu
+
+The PM asked to remove the Team page's "Added any time" menu (last hour, last 2 hours, today, or an exact time). The
+menu, its `?added=` reading in `app/team/page.tsx`, its help word and its README entry go. `addedSince` in
+`lib/derive.ts` and its test stay, unused by any page, so the menu can come back in one change. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Feedback: anyone replies, marks a note Done or Not now, and the +1s hear of it
+
+The PM's call. Anyone on the team now replies to a note (the Roster's "Can reply to feedback" tick goes; the
+`people.replies_feedback` column stays, unused). Anyone marks a note Done in one click, or Not now with a short reason
+(2 to 280 characters) that shows on the note, and anyone reopens it. The note says who closed it and when, so a wrong
+close is plain. Closed notes fold under Resolved and are never removed, and a closed note takes no new +1. Each reply,
+Done, Not now and Reopen goes to the writer and everyone who gave +1, never the person who did it, as a "Feedback
+updates" card on Home (`feedback_news`, RLS on, fenced by person and note) until they open Feedback or press Mark seen.
+In-app only, nothing is emailed. "Not now" was picked over "Won't do", "Parked" and "Not planned".
+Schema: `feedback` gains `status`, `closed_by`, `closed_at`, `closed_note`, and the new `feedback_news` table; the
+hosted database needs `npm run db:upgrade` before the build that carries it is promoted.
+Rollback: git revert the commit; the new columns and table can stay, unused.
+
+## 2026-10-30 · Opus 5.5 · Feedback shows who gave +1
+
+The PM asked to see who agrees with a note. Beside +1 the line now reads "+2 · You and Kabir": the count, then the
+names, "You" first, the rest in the order they agreed. Up to three names show; past that, "and 2 others" opens the
+full list. `listFeedback` and the vote route return `others` (the names, leaving out the reader). Everyone on the team
+already reads who wrote each note, so names on +1 show to everyone too. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A search result opens with a mouse click
+
+Feedback from the team: in the top search, a result opened with the arrow keys and Enter but not with a click. The
+mobile keyboard rule (`KeyboardDismiss`) blurs a focused text field on any press outside one, so pressing a result
+blurred the search box, its blur closed the list, and the click landed on nothing. Safari and Firefox on a Mac also
+blur the box themselves, since they never focus a link on click. The results list now carries `data-keep-focus`, which
+the keyboard rule skips, and keeps the box focused on a mouse press anywhere in it. Checked with a real mouse click in
+Chrome and Firefox on a local build (before: nothing; after: the result opens), and by the PM in Safari. No schema change.
+Rollback: git revert the commit.

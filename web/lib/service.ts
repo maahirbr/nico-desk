@@ -798,7 +798,8 @@ export async function addPeople(
 }
 
 export async function patchPerson(
-  db: Db, meId: string, teamId: string, personId: string, input: { active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean; repliesFeedback?: boolean },
+  db: Db, meId: string, teamId: string, personId: string,
+  input: { displayName?: string; email?: string; active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean; repliesFeedback?: boolean },
 ): Promise<Person> {
   await db.transaction(async (tx) => {
     await requireAdmin(tx, teamId, meId);
@@ -806,6 +807,20 @@ export async function patchPerson(
     if (!p || p.appRoles.length === 0) throw notFound('No such person on this team.');
     if (personId === meId && (input.active === false || (input.appRoles && !input.appRoles.includes('admin'))))
       throw bad('invalid_body', 'You cannot remove your own admin access.');
+    if (input.displayName !== undefined) await tx.query(`UPDATE people SET display_name = $2 WHERE id = $1`, [personId, input.displayName.trim()]);
+    // A new sign-in address. The old one stays as a second address (alt_emails), so a typo or a slow switch never locks
+    // the person out; it can be cleared later. An admin cannot change their own, for the same reason.
+    const email = input.email?.trim().toLowerCase();
+    if (email && email !== p.email.toLowerCase()) {
+      if (personId === meId) throw bad('invalid_body', 'Ask another admin to change your own email.', 'email');
+      const taken = await findPersonByEmail(tx, email);
+      if (taken && taken.id !== personId) throw bad('invalid_body', 'That email is already on the roster.', 'email');
+      await tx.query(
+        `UPDATE people SET email = $2,
+           alt_emails = array_append(array_remove(alt_emails, $2), lower(email)) WHERE id = $1`,
+        [personId, email],
+      );
+    }
     if (input.active !== undefined) await tx.query(`UPDATE people SET active = $2 WHERE id = $1`, [personId, input.active]);
     if (input.role !== undefined) await tx.query(`UPDATE people SET role = $2 WHERE id = $1`, [personId, input.role.trim()]);
     if (input.department !== undefined) await tx.query(`UPDATE people SET department = $2 WHERE id = $1`, [personId, input.department.trim()]);

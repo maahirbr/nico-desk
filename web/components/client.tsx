@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
-import { CopyInvite, DoneTick } from './CopyLink';
+import { CopyInvite } from './CopyLink';
 import { DateField } from './DateField';
 import { ICON, Icon } from './icons';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
@@ -14,7 +14,8 @@ import { Select } from './Select';
 import { playFor } from './sound';
 import { SlideInd } from './motion-ui';
 import { StatusNudge } from './StatusNudge';
-import { moveWithWords, type StatusKey } from './task-ui';
+import { Modal, moveWithWords, type StatusKey } from './task-ui';
+import { notify } from './toast';
 import { FoldChev } from './Fold';
 
 // Client pieces. Every write goes to /api/v1, so the same rules apply as for any other caller.
@@ -450,35 +451,56 @@ export function AddPeopleForm({ teamId }: { teamId: string }) {
   );
 }
 
-export function PersonControls({ id, active, roles, self, email, repliesFeedback }: { id: string; active: boolean; roles: string[]; self: boolean; email: string; repliesFeedback: boolean }) {
-  const { busy, error, run } = useSubmit();
-  // The button whose change just landed draws a tick before its new label, for as long as "Copied" shows.
-  const [done, setDone] = useState('');
-  useEffect(() => {
-    if (!done) return;
-    const t = setTimeout(() => setDone(''), 1600);
-    return () => clearTimeout(t);
-  }, [done]);
-  const act = async (key: string, body: unknown) => { if (await run(`/people/${id}`, 'PATCH', body)) setDone(key); };
-  const tick = (key: string) => done === key && <DoneTick />;
-  const toggle = (r: string) => (roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r]).filter((x) => x !== 'member');
+// An admin edits a roster row in one window: name, job title, email and access. The row keeps Copy invite.
+// The server holds the same rules (patchPerson): admin only, no one removes their own admin or changes their own email.
+type RosterPerson = { id: string; name: string; role: string; email: string; active: boolean; roles: string[] };
+export function PersonControls({ person: p, self }: { person: RosterPerson; self: boolean }) {
+  const [open, setOpen] = useState(false);
   return (
     <span className="row" style={{ gap: 12 }}>
-      <button className="act" disabled={busy || self} onClick={() => act('active', { active: !active })}>
-        {tick('active')}{active ? 'Mark inactive' : 'Mark active'}
-      </button>
-      <button className="act" disabled={busy} onClick={() => act('lead', { appRoles: toggle('lead') })}>
-        {tick('lead')}{roles.includes('lead') ? 'Remove lead' : 'Make lead'}
-      </button>
-      <button className="act" disabled={busy || self} onClick={() => act('admin', { appRoles: toggle('admin') })}>
-        {tick('admin')}{roles.includes('admin') ? 'Remove admin' : 'Make admin'}
-      </button>
-      <button className="act" disabled={busy} onClick={() => act('replies', { repliesFeedback: !repliesFeedback })}>
-        {tick('replies')}{repliesFeedback ? 'Stop feedback replies' : 'Can reply to feedback'}
-      </button>
-      {active && <CopyInvite email={email} />}
-      <Err e={error} />
+      <button className="act" onClick={() => setOpen(true)} aria-label={`Edit ${p.name}`}>Edit</button>
+      {p.active && <CopyInvite email={p.email} />}
+      {open && <EditPerson person={p} self={self} onClose={() => setOpen(false)} />}
     </span>
+  );
+}
+
+function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: boolean; onClose: () => void }) {
+  const { busy, error, run } = useSubmit();
+  const [f, setF] = useState({ name: p.name, role: p.role, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin') });
+  const emailChanged = f.email.trim().toLowerCase() !== p.email.toLowerCase();
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const body: Record<string, unknown> = {};
+    if (f.name.trim() !== p.name) body.displayName = f.name.trim();
+    if (f.role.trim() !== p.role) body.role = f.role.trim();
+    if (emailChanged) body.email = f.email.trim();
+    if (f.active !== p.active) body.active = f.active;
+    if (f.lead !== p.roles.includes('lead') || f.admin !== p.roles.includes('admin')) body.appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
+    if (Object.keys(body).length === 0) { onClose(); return; }
+    if (await run(`/people/${p.id}`, 'PATCH', body)) { notify(`Saved ${f.name.trim()}`); onClose(); }
+  }
+  return (
+    <Modal title="Edit Person" onClose={onClose}>
+      <form className="stack" onSubmit={save}>
+        <label className="f"><span>Name</span><input required minLength={2} maxLength={80} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+        <label className="f"><span>Job Title</span><input required minLength={2} maxLength={80} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} /></label>
+        <label className="f"><span>Email</span>
+          <input type="email" required value={f.email} disabled={self} onChange={(e) => setF({ ...f, email: e.target.value })} />
+        </label>
+        <p className="hint" style={{ margin: 0 }}>{self ? 'Ask another admin to change your own email.' : emailChanged ? 'They sign in with this address from now on. The old one keeps working as a second address.' : 'The address they sign in with.'}</p>
+        <fieldset className="f edit-access"><legend>Access</legend>
+          <label className="check"><input type="checkbox" checked={f.active} disabled={self} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Active</label>
+          <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
+          <label className="check"><input type="checkbox" checked={f.admin} disabled={self} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
+        </fieldset>
+        <Err e={error} />
+        <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>
+          <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

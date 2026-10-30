@@ -13,12 +13,13 @@ vi.mock('../lib/db', async (orig) => ({ ...(await orig<typeof import('../lib/db'
 
 import { COOKIE, VIEW_COOKIE, signSession, signView } from '../lib/auth';
 import { openDb, upgrade, FEEDBACK_UPGRADE, type Db } from '../lib/db';
-import { cleanPath, FEEDBACK_MAX, newRepliesForMe } from '../lib/feedback';
+import { cleanPath, FEEDBACK_MAX, feedbackNewsForMe } from '../lib/feedback';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
 import { GET as listRoute, POST as sendRoute } from '../app/api/v1/feedback/route';
 import { POST as imageRoute } from '../app/api/v1/feedback/[id]/images/route';
 import { POST as replyRoute } from '../app/api/v1/feedback/[id]/replies/route';
+import { POST as statusRoute } from '../app/api/v1/feedback/[id]/status/route';
 import { POST as seenRoute } from '../app/api/v1/me/feedback-replies/seen/route';
 import { GET as getImageRoute } from '../app/api/v1/feedback/[id]/images/[n]/route';
 import { DELETE as unvoteRoute, POST as voteRoute } from '../app/api/v1/feedback/[id]/vote/route';
@@ -168,13 +169,22 @@ describe('+1', () => {
     const id = await noteId();
     expect((await vote(id)).status).toBe(400); // own note
     signIn(ADMIN);
-    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true });
-    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true }); // twice is still once
-    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: true });
+    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true, others: [] });
+    expect(await (await vote(id)).json()).toEqual({ votes: 1, mine: true, others: [] }); // twice is still once
+    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: true, others: [] });
+    signIn('per_ada');
+    const two = await (await vote(id)).json();
+    expect(two).toMatchObject({ votes: 2, mine: true });
+    expect(two.others).toHaveLength(1); // the admin, by name; the reader is "You" on the page
     signIn(m.id);
-    expect((await (await list()).json())[0]).toMatchObject({ votes: 1, mine: false });
+    const seen = (await (await list()).json())[0];
+    expect(seen).toMatchObject({ votes: 2, mine: false });
+    expect(seen.others).toHaveLength(2); // in the order they agreed
+    expect(seen.others[1]).toBe((await s.listPeople(db, TEAM_ID)).find((p) => p.id === 'per_ada')!.displayName);
+    signIn('per_ada');
+    await unvote(id);
     signIn(ADMIN);
-    expect(await (await unvote(id)).json()).toEqual({ votes: 0, mine: false });
+    expect(await (await unvote(id)).json()).toEqual({ votes: 0, mine: false, others: [] });
     signIn(ADMIN, signView(ADMIN, 'per_ada'));
     expect((await vote(id)).status).toBe(403); // View as writes nothing
   });
@@ -191,50 +201,83 @@ const meAs = async (id: string) => {
   return { person, realPerson: person, viewingAs: false, team: { id: TEAM_ID, name: 'Team', teamType: 'department' as const } };
 };
 
+const statusReq = (id: string, body: unknown) => statusRoute(
+  new Request(`http://localhost/api/v1/feedback/${id}/status`, { method: 'POST', headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' }, body: JSON.stringify(body) }),
+  { params: Promise.resolve({ id }) });
+const news = async (id: string) => (await feedbackNewsForMe(db, await meAs(id))).map((n) => [n.kind, n.text]);
+
 describe('replies', () => {
-  it('an admin, or someone the Roster lets reply, can reply; everyone reads replies; the writer sees new ones until seen', async () => {
+  it('anyone can reply; everyone reads replies; the writer and the +1s see it until seen, never the one who wrote it', async () => {
     const m = await member();
     signIn(m.id);
     await send({ body: 'the date picker is small on a phone' });
     const id = await noteId();
-    signIn(ADMIN); // an admin replies without the Roster switch (15 Oct)
+    signIn('per_ada');
+    await vote(id);
+    signIn(ADMIN);
     expect((await replyReq(id, { body: 'Fixed in today\'s update, thanks!' })).status).toBe(200);
     expect((await replyReq(id, { body: '   ' })).status).toBe(400);
-
-    signIn('per_ada'); // a teammate who is neither writer nor replier still reads it
     const out = await (await list()).json();
     expect(out[0].replies).toEqual([expect.objectContaining({ body: 'Fixed in today\'s update, thanks!' })]);
-    expect((await replyReq(id, { body: 'me as well' })).status).toBe(403);
 
-    expect((await newRepliesForMe(db, await meAs(m.id))).map((r) => r.body)).toEqual(['Fixed in today\'s update, thanks!']);
-    expect(await newRepliesForMe(db, await meAs('per_ada'))).toEqual([]); // not their note
+    expect(await news(m.id)).toEqual([['reply', 'Fixed in today\'s update, thanks!']]);
+    expect(await news('per_ada')).toEqual([['reply', 'Fixed in today\'s update, thanks!']]); // gave +1
+    expect(await news(ADMIN)).toEqual([]); // wrote the reply
     signIn(m.id);
     expect((await seenReq()).status).toBe(200);
-    expect(await newRepliesForMe(db, await meAs(m.id))).toEqual([]);
+    expect(await news(m.id)).toEqual([]);
+    expect(await news('per_ada')).toHaveLength(1); // seen is per person
 
-    await s.patchPerson(db, ADMIN, TEAM_ID, 'per_ada', { repliesFeedback: true }); // not an admin, but switched on
-    signIn('per_ada');
-    expect((await replyReq(id, { body: 'me as well' })).status).toBe(200);
+    expect((await replyReq(id, { body: 'still small for me' })).status).toBe(200); // the writer, with no Roster switch
+    expect(await news(m.id)).toEqual([]);
   });
 
-  it('counts a reply on your own note as seen, refuses replies and seen marks under View as, and only an admin sets the switch', async () => {
-    await s.patchPerson(db, ADMIN, TEAM_ID, ADMIN, { repliesFeedback: true });
+  it('refuses replies, status changes and seen marks under View as', async () => {
     signIn(ADMIN);
     await send({ body: 'my own note' });
     const id = await noteId();
-    expect((await replyReq(id, { body: 'adding detail' })).status).toBe(200);
-    expect(await newRepliesForMe(db, await meAs(ADMIN))).toEqual([]);
     const m = await member();
     signIn(ADMIN, signView(ADMIN, m.id));
     expect((await replyReq(id, { body: 'as someone else' })).status).toBe(403);
+    expect((await statusReq(id, { status: 'done' })).status).toBe(403);
     expect((await seenReq()).status).toBe(403);
-    await expect(s.patchPerson(db, m.id, TEAM_ID, m.id, { repliesFeedback: true })).rejects.toMatchObject({ status: 403 });
+  });
+});
+
+describe('done and not now', () => {
+  it('lets anyone mark a note done, or not now with a reason that shows, and reopen it; the writer and the +1s hear of each', async () => {
+    const m = await member();
+    signIn(m.id);
+    await send({ body: 'add a dark skin for the ledger' });
+    const id = await noteId();
+    signIn(ADMIN);
+    await vote(id);
+
+    signIn('per_ada'); // neither writer nor admin
+    expect((await statusReq(id, { status: 'not_now' })).status).toBe(400); // a reason is needed
+    expect((await statusReq(id, { status: 'not_now', reason: 'x' })).status).toBe(400);
+    expect((await statusReq(id, { status: 'not_now', reason: 'Not for the pilot, maybe later' })).status).toBe(200);
+    expect((await (await list()).json())[0]).toMatchObject({ status: 'not_now', closedNote: 'Not for the pilot, maybe later', closedByName: expect.any(String) });
+    expect(await news(m.id)).toEqual([['not_now', 'Not for the pilot, maybe later']]);
+    expect(await news(ADMIN)).toEqual([['not_now', 'Not for the pilot, maybe later']]);
+    expect(await news('per_ada')).toEqual([]);
+
+    signIn(ADMIN);
+    expect((await vote(id)).status).toBe(400); // closed: no new +1
+    expect((await statusReq(id, { status: 'open' })).status).toBe(200);
+    expect((await (await list()).json())[0]).toMatchObject({ status: 'open', closedNote: null, closedByName: null });
+    expect((await statusReq(id, { status: 'done' })).status).toBe(200);
+    expect((await statusReq(id, { status: 'done' })).status).toBe(200); // twice is one notice
+    expect((await (await list()).json())[0]).toMatchObject({ status: 'done', closedNote: null });
+    expect((await news(m.id)).map(([k]) => k)).toEqual(['done', 'reopened', 'not_now']);
+    expect(await news(ADMIN)).toEqual([['not_now', 'Not for the pilot, maybe later']]); // own changes are not news
+    expect((await statusReq(id, { status: 'closed' })).status).toBe(400);
   });
 });
 
 describe('the upgrade', () => {
   it('adds the table with RLS on to an older database, and runs again safely', async () => {
-    await db.exec('DROP TABLE feedback_replies, feedback_votes, feedback_images, feedback');
+    await db.exec('DROP TABLE feedback_news, feedback_replies, feedback_votes, feedback_images, feedback');
     await upgrade(db);
     await upgrade(db);
     await db.exec(FEEDBACK_UPGRADE);
@@ -246,7 +289,7 @@ describe('the upgrade', () => {
 
   it('is in the fresh schema with RLS on and the same columns', async () => {
     const { rows } = await db.query<{ column_name: string }>(`SELECT column_name FROM information_schema.columns WHERE table_name = 'feedback' ORDER BY ordinal_position`);
-    expect(rows.map((r) => r.column_name)).toEqual(['id', 'person_id', 'path', 'body', 'created_at', 'read_at']);
+    expect(rows.map((r) => r.column_name)).toEqual(['id', 'person_id', 'path', 'body', 'created_at', 'read_at', 'status', 'closed_by', 'closed_at', 'closed_note']);
     const rls = await db.query<{ relrowsecurity: boolean }>(`SELECT relrowsecurity FROM pg_class WHERE relname = 'feedback'`);
     expect(rls.rows[0].relrowsecurity).toBe(true);
   });

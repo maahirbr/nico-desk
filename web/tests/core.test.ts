@@ -244,4 +244,25 @@ describe('roster (FR-55)', () => {
       ['bulk.a@example.test', ['member']], ['bulk.b@example.test', ['member']], ['bulk.c@example.test', ['member']],
     ]);
   });
+
+  it('lets the admin edit a name, title and email, keeping the old email as a second sign-in', async () => {
+    const p = await s.addPerson(db, ADMIN, TEAM_ID, { displayName: 'Edit Me', role: 'Tester', department: 'Digital', email: 'old@example.test', appRoles: [] });
+    expect(await code(s.patchPerson(db, LEAD, TEAM_ID, p.id, { displayName: 'Nope' }))).toBe('403 not_allowed');
+    const out = await s.patchPerson(db, ADMIN, TEAM_ID, p.id, { displayName: 'Edited Name', role: 'Lead Tester', email: 'New@Example.test' });
+    expect([out.displayName, out.role, out.email]).toEqual(['Edited Name', 'Lead Tester', 'new@example.test']);
+    expect((await s.findPersonByEmail(db, 'old@example.test'))?.id).toBe(p.id);
+    expect((await s.findPersonByEmail(db, 'new@example.test'))?.id).toBe(p.id);
+    // Back to the old address: it leaves the second list, so the list never holds the main address.
+    await s.patchPerson(db, ADMIN, TEAM_ID, p.id, { email: 'old@example.test' });
+    const { rows } = await db.query<{ alt_emails: string[] }>(`SELECT alt_emails FROM people WHERE id = $1`, [p.id]);
+    expect(rows[0].alt_emails).toEqual(['new@example.test']);
+  });
+
+  it('refuses an email someone else has, and an admin changing their own', async () => {
+    const a = await s.addPerson(db, ADMIN, TEAM_ID, { displayName: 'Person A', role: 'Tester', department: 'Digital', email: 'a@example.test', appRoles: [] });
+    await s.addPerson(db, ADMIN, TEAM_ID, { displayName: 'Person B', role: 'Tester', department: 'Digital', email: 'b@example.test', appRoles: [] });
+    expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, a.id, { email: 'B@example.test' }))).toBe('400 invalid_body');
+    expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, ADMIN, { email: 'me@example.test' }))).toBe('400 invalid_body');
+    expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, ADMIN, { displayName: 'Admin Renamed' }))).toBe('ok');
+  });
 });
