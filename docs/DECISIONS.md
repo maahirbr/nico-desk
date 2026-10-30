@@ -1203,3 +1203,9 @@ and Google Meet notes, and the dictation-app mention are gone. The status words 
 plain-words test still holds. The dictation test now looks for Quick Add's "Type or say it" line, since the app's own mic
 replaces the dictation app the old line named. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The welcome note points to "the quick guide"
+
+The note for someone new now reads "New here? Read the quick guide." in place of "the two-minute guide", since the
+shorter Guide says one minute. No other change.
+Rollback: git revert the commit.
