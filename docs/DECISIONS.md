@@ -1069,3 +1069,13 @@ names, "You" first, the rest in the order they agreed. Up to three names show; p
 full list. `listFeedback` and the vote route return `others` (the names, leaving out the reader). Everyone on the team
 already reads who wrote each note, so names on +1 show to everyone too. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A search result opens with a mouse click
+
+Feedback from the team: in the top search, a result opened with the arrow keys and Enter but not with a click. The
+mobile keyboard rule (`KeyboardDismiss`) blurs a focused text field on any press outside one, so pressing a result
+blurred the search box, its blur closed the list, and the click landed on nothing. Safari and Firefox on a Mac also
+blur the box themselves, since they never focus a link on click. The results list now carries `data-keep-focus`, which
+the keyboard rule skips, and keeps the box focused on a mouse press anywhere in it. Checked with a real mouse click in
+Chrome and Firefox on a local build (before: nothing; after: the result opens), and by the PM in Safari. No schema change.
+Rollback: git revert the commit.

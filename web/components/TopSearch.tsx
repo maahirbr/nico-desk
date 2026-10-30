@@ -120,18 +120,20 @@ export function TopSearch() {
   };
   const addChip = (c: string) => { setQ((v) => `${v.trim()}${v.trim() ? ' ' : ''}${c}`); setSel(0); };
   const forget = () => { clearRecent(meId); setRecent([]); };
-  // Keep the box focused when a row inside the list is pressed with a mouse or a finger, so nothing jumps and the
-  // keyboard state stays as the person left it.
+  // Keep the box focused when anything inside the list is pressed with a mouse or a finger, so nothing jumps and the
+  // keyboard state stays as the person left it. It sits on the whole list: Safari and Firefox on a Mac never focus a
+  // link or a button on click, so the box's blur closed the list before a result's click landed. data-keep-focus does
+  // the same for the app's keyboard rule (KeyboardDismiss), which blurred the box on the press in every browser (30 Oct).
   const keepFocus = (e: MouseEvent) => e.preventDefault();
   const idx = (r: Row) => rows.indexOf(r);
 
   const body = !term ? (
     <>
       {recent.length > 0 && (
-        <div className="ts-head"><span><Help term="search_recent">Recent</Help></span><button type="button" className="ts-clear" onMouseDown={keepFocus} onClick={forget}>Clear</button></div>
+        <div className="ts-head"><span><Help term="search_recent">Recent</Help></span><button type="button" className="ts-clear" onClick={forget}>Clear</button></div>
       )}
       {rows.filter((r) => r.type === 'recent').map((r) => r.type === 'recent' && (
-        <button key={r.key} type="button" role="option" aria-selected={idx(r) === at} className="ts-hit ts-plain" onMouseDown={keepFocus} onMouseEnter={() => setSel(idx(r))} onClick={() => act(r)}>
+        <button key={r.key} type="button" role="option" aria-selected={idx(r) === at} className="ts-hit ts-plain" onMouseEnter={() => setSel(idx(r))} onClick={() => act(r)}>
           <span className="ts-kind">Recent</span><span className="ts-main"><b>{r.q}</b></span>
         </button>
       ))}
@@ -143,7 +145,7 @@ export function TopSearch() {
       ))}
       <div className="ts-head"><span><Help term="search_filters">Filters</Help></span></div>
       <div className="ts-chips">
-        {CHIPS.map((c) => <button key={c} type="button" className="ts-chip" onMouseDown={keepFocus} onClick={() => addChip(c)}>{c}</button>)}
+        {CHIPS.map((c) => <button key={c} type="button" className="ts-chip" onClick={() => addChip(c)}>{c}</button>)}
       </div>
     </>
   ) : (
@@ -187,7 +189,7 @@ export function TopSearch() {
           if (e.key === 'Escape') { setOpen(false); box.current?.blur(); }
         }} />
       <kbd className="kbd">{mac ? '⌘K' : 'Ctrl K'}</kbd>
-      {open && <div className="ts-drop" role="listbox">{body}</div>}
+      {open && <div className="ts-drop" role="listbox" data-keep-focus onMouseDown={keepFocus}>{body}</div>}
     </div>
   );
 }

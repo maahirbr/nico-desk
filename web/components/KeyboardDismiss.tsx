@@ -22,11 +22,13 @@ function blurActive() {
 
 export function KeyboardDismiss() {
   useEffect(() => {
-    // Tap or click anywhere that is not a text field (or the label for one).
+    // Tap or click anywhere that is not a text field (or the label for one), or a field's own dropdown. A dropdown
+    // that belongs to the focused field carries data-keep-focus (the top search's results): blurring there closed the
+    // list on the press, before the click landed, so a result opened by keyboard but not by mouse (30 Oct).
     const onDown = (e: PointerEvent) => {
       const t = e.target as Element | null;
       if (!isTextField(document.activeElement)) return;
-      if (t && (t.closest('input, textarea, [contenteditable="true"]') || t.closest('label'))) return;
+      if (t && (t.closest('input, textarea, [contenteditable="true"]') || t.closest('label') || t.closest('[data-keep-focus]'))) return;
       blurActive();
     };
     // Return or Done on a single-line field. A textarea keeps return for a new line.
