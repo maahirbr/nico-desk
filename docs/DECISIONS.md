@@ -1124,3 +1124,9 @@ The PM picked new words for the line under Quick Add: "Type or say it the way yo
 or paste a WhatsApp chat." (without the last part where the form takes no chat). Replaces "Type it, or tap the mic and
 say it the way you'd tell someone. One task or several. You can also paste a WhatsApp chat." No other change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The task form's Note loses "(optional)"
+
+With required fields marked *, an unmarked field is optional, so "Note (optional)" becomes "Note" (the PM's call).
+Other forms keep "(optional)" until they move to the * rule. No other change.
+Rollback: git revert the commit.
