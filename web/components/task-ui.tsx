@@ -106,15 +106,22 @@ export function flagOf(t: Task, today: string): Flag | null {
 
 // hideLate: the row already says "3 days late" in red, so most skins do not say Late a second time.
 // Skin W, the PM's build, does: the flag is rendered with flag-again and tokens.css shows it there only.
-// A finished task also shows the day it was done or dropped, next to its flag and outside it, small and quiet, as an
-// aside: "AHEAD 12 Oct" (the PM's call, 30 Oct). Not "Done 12 Oct": the status beside it already says Done.
+// A finished task says a little more beside its flag, small and quiet (the PM's call, 30 Oct): Ahead shows the day it was
+// done ("AHEAD 12 Oct"), Late shows how late against the first date ("LATE 3 days"), On time shows nothing more, since
+// that is the due date itself. A dropped task, which has no flag, shows the day it was dropped.
 export function FlagChip({ t, today, hideLate = false }: { t: Task; today: string; hideLate?: boolean }) {
   const help = useHelpOn(); // in help mode the tooltip carries the reason, so the native title steps aside
   const f = flagOf(t, today);
-  const ended = t.statusCategory !== 'open' && t.endedAt ? fmtDate(istDate(t.endedAt)) : null;
-  const day = ended && <span className="flag-day" title={`${t.statusCategory === 'dropped' ? 'Dropped' : 'Done'} on ${ended}`}>{ended}</span>;
+  const endedOn = t.statusCategory !== 'open' && t.endedAt ? istDate(t.endedAt) : null;
+  const ended = endedOn ? fmtDate(endedOn) : null;
+  const lateBy = endedOn && f?.key === 'late' ? daysTo(endedOn, t.firstDueOn) : 0;
+  const aside = !f ? ended && { text: ended, title: `Dropped on ${ended}` }
+    : f.key === 'ahead' ? ended && { text: ended, title: `Done on ${ended}` }
+    : f.key === 'late' && lateBy > 0 ? { text: `${lateBy} ${lateBy === 1 ? 'day' : 'days'}`, title: `Done on ${ended}, ${lateBy} ${lateBy === 1 ? 'day' : 'days'} after ${fmtDate(t.firstDueOn)}` }
+    : null;
+  const day = aside && <span className="flag-day" title={aside.title}>{aside.text}</span>;
   if (!f) return day || null;
-  const chip = <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' && !ended ? ' flag-again' : ''}`} title={help ? undefined : f.why}><Help term={f.key} note={f.why}>{f.word}</Help></span>;
+  const chip = <span className={`flag tone-${f.tone}${hideLate && f.key === 'late' && !day ? ' flag-again' : ''}`} title={help ? undefined : f.why}><Help term={f.key} note={f.why}>{f.word}</Help></span>;
   return day ? <span className="flag-with-day">{chip}{day}</span> : chip;
 }
 

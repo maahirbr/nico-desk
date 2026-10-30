@@ -1148,3 +1148,10 @@ status beside it says so. A dropped task, which has no flag, shows the day alone
 (project lists and the Done tile, Home, Team, the task drawer). The day comes from `endedAt`, read in India time.
 No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A finished task's aside: the day for Ahead, how late for Late
+
+Refines the entry above (the PM's call). Ahead keeps the day it was done ("AHEAD 12 Oct"). Late shows how many days after
+the first date it was done ("LATE 3 days"). On time shows nothing more, since that day is the due date. A dropped task
+still shows the day it was dropped. No schema change.
+Rollback: git revert the commit.
