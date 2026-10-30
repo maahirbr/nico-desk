@@ -6,7 +6,8 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { DitherArt } from './DitherArt';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
-import { fmtDate } from '@/lib/time';
+import { fmtDate, isDate, istInstant } from '@/lib/time';
+import { AddedSince, sinceWords } from './AddedSince';
 import { Person, PersonLink } from './chips';
 import { TaskLinkChips } from './TaskLinks';
 import { IMPORT_EVENT } from './MeetingSection';
@@ -27,7 +28,7 @@ import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
 import { endedSortOf, oneOf } from '@/lib/remember';
-import { useRemembered } from './remember';
+import { useRemembered, useUrlText } from './remember';
 import { TaskLink } from './TaskLink';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
@@ -104,6 +105,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const setWho = (v: string | null) => keep('who', v);
   const setWs = (v: string) => keep('ws', v);
   const setClosedSort = (v: EndedSort) => keep('closedSort', v);
+  // "Added since" lives in the address only (?added=YYYY-MM-DD), never remembered: a meeting's review is for that day.
+  const [addedRaw, setAdded] = useUrlText('added');
+  const added = isDate(addedRaw) && addedRaw <= today ? addedRaw : null;
+  const cutoff = added ? istInstant(`${added}T00:00`)!.getTime() : null;
+  const inAdded = (t: Task) => cutoff === null || (t.statusCategory !== 'dropped' && new Date(t.createdAt).getTime() >= cutoff);
   const [importOpen, setImportOpen] = useState(false);
   // The Meeting section's "Write the minutes" and the setup list's "Import minutes" open the import panel below and
   // bring it into view. The scroll waits for the render that adds the panel: a frame alone can run before it.
@@ -158,13 +164,16 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     { key: 'done', label: 'Done', help: 'status_done' as const, n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
   ];
   const inWs = (t: Task, k: string) => k === 'All' || (k === '__none' ? !t.workstream : t.workstream === k);
-  const visible = tasks.filter((t) => (!who || t.ownerId === who) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)));
+  const visible = tasks.filter((t) => (!who || t.ownerId === who) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
   const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn);
-  const openRows = visible.filter((t) => t.statusCategory === 'open').sort(byDue);
+  // With "added since", the order they were added, so a meeting reads its to-dos back in the order it agreed them.
+  const byAdded = (a: Task, b: Task) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  const openRows = visible.filter((t) => t.statusCategory === 'open').sort(cutoff === null ? byDue : byAdded);
   const closedRows = sortEnded(visible.filter((t) => t.statusCategory !== 'open'), closedSort);
   const involved = people.filter((p) => tasks.some((t) => t.ownerId === p.id));
-  const filtered = !!(tile || who || ws !== 'All');
+  const filtered = !!(tile || who || ws !== 'All' || added);
+  const clearAll = () => { setTile(null); setWho(null); setWs('All'); setAdded(''); };
 
   // undoSpec: the task before and the fields the change touched, so its toast can offer Undo (lib/undo.ts).
   const undo = useUndo();
@@ -287,14 +296,16 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       {!readOnly && proposals.length > 0 && <Inbox mode="tasks" projectId={projectId} proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
 
       <div className="pills">
+        <AddedSince value={added} today={today} onChange={(d) => setAdded(d ?? '')} />
         <button className="pill" aria-pressed={!who} onClick={() => setWho(null)}>Everyone ({open.length})</button>
         {involved.map((p) => (
           <button key={p.id} className="pill" aria-pressed={who === p.id} onClick={() => setWho(who === p.id ? null : p.id)}>
             {p.name.split(' ')[0]} ({open.filter((t) => t.ownerId === p.id).length})
           </button>
         ))}
-        {filtered && <button className="act" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button>}
+        {filtered && <button className="act" onClick={clearAll}>Clear filters</button>}
       </div>
+      {added && <p className="small dim since-count" role="status">{visible.length} {visible.length === 1 ? 'task' : 'tasks'} {added === today ? 'added today' : `added since ${sinceWords(added, today)}`}</p>}
 
       <div className={wsList.length ? 'ws-layout' : ''}>
         {wsList.length > 0 && (
@@ -311,7 +322,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         )}
         <div style={{ minWidth: 0 }}>
           {table(openRows, filtered
-            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
+            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>
             : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
           {closedRows.length > 0 && tile !== 'done' && (
             <>

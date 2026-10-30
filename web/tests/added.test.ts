@@ -63,3 +63,14 @@ describe('who sees what', () => {
     expect(await ids(await meAs(DEE))).not.toContain(hidden.id);
   });
 });
+
+describe('"Added since" on a project', () => {
+  it('names the day the way the pill reads it, Monday first and in the calendar day', async () => {
+    const { sinceWords } = await import('../components/AddedSince');
+    expect(sinceWords('2026-10-30', '2026-10-30')).toBe('today');
+    expect(sinceWords('2026-10-05', '2026-10-30')).toBe('Mon 5 Oct');
+    expect(sinceWords('2026-10-04', '2026-10-30')).toBe('Sun 4 Oct');
+    // 12 am India time on the day picked is the cutoff, the same rule the Team menu used.
+    expect(istInstant('2026-10-05T00:00')!.toISOString()).toBe('2026-10-04T18:30:00.000Z');
+  });
+});

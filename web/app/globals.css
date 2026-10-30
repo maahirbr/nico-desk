@@ -382,6 +382,26 @@ button.stat[aria-pressed="true"] .stat-n, button.stat[aria-pressed="true"] .stat
 .pill:hover { background: var(--sunk); color: var(--ink); }
 .pill:active { transform: scale(var(--press-scale)); }
 .pill[aria-pressed="true"] { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+/* "Added since" on a project's tasks: a pill that pops a small month calendar open, with Today on top (30 Oct). */
+.since { position: relative; display: inline-flex; margin-right: var(--space-xs); padding-right: var(--space-sm); border-right: var(--rule) solid var(--hairline); }
+.since .pill, .since-open { display: inline-flex; align-items: center; gap: var(--space-xxs); }
+.since-ico { flex: none; }
+@media (max-width: 600px) { .since { border-right: 0; padding-right: 0; margin-right: 0; } }
+.since-on { display: inline-flex; align-items: center; gap: var(--space-xxs); padding-right: var(--space-xxs); background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+.since-on button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+.since-x { width: 24px; height: 24px; border-radius: 50%; }
+.since-pop { position: absolute; top: calc(100% + var(--space-xxs)); left: 0; z-index: 55; width: 272px; max-width: calc(100vw - 2 * var(--space-md)); background: var(--surface);
+  border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--shadow-1); padding: var(--space-sm); display: flex; flex-direction: column; gap: var(--space-sm); }
+.since-today { width: 100%; justify-content: center; }
+.since-head { display: flex; align-items: center; justify-content: space-between; }
+.since-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.since-dow { font: var(--type-small); color: var(--ink-3); padding: var(--space-xxs) 0; }
+.since-day { font: var(--type-small); height: 32px; border: 0; border-radius: var(--radius-control); background: none; color: var(--ink); cursor: pointer; }
+.since-day:hover:not(:disabled) { background: var(--sunk); }
+.since-day:disabled { color: var(--ink-3); opacity: .45; cursor: default; }
+.since-day[data-today] { box-shadow: inset 0 0 0 var(--rule) var(--line-strong); }
+.since-day[aria-pressed="true"] { background: var(--ink); color: var(--canvas); }
+.since-count { margin: 0 0 var(--space-sm); }
 .banner { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); background: var(--sunk); margin: 0 0 var(--space-md); }
 .muted-h { color: var(--ink-3); }
 

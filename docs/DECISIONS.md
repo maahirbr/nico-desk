@@ -1087,3 +1087,14 @@ The PM found the Resolved fold at the foot of the list hard to reach. A switch u
 By person / By status. It opens on Open and keeps the choice in the address (`?show=resolved`). The count leaves the
 heading, so it shows once. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · "Added since" on every project's tasks
+
+A teammate asked to close each meeting by reviewing the to-dos its note-taker entered during it. The PM wanted it inside
+projects, with a date, not a time. The first pill in a project's filter row, "Added since…", pops a small month calendar
+open with a Today button on top; future days cannot be picked. Picking a day lists the project's tasks made from 12 am
+India time that day, oldest first (the order the meeting agreed them), with a count line ("5 tasks added today") and ✕
+to clear. It combines with the person pills and Clear filters; dropped tasks are left out. The day lives only in the
+address (`?added=`), never in the remembered filters, so tomorrow does not open on yesterday's review. Partner plan
+boards do not have it yet. This replaces the Team page's hour-based menu removed earlier today. No schema change.
+Rollback: git revert the commit.

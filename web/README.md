@@ -301,6 +301,10 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   count from the deploy that adds the table. Optional `NICO_ACTIVITY_EMAILS` (comma list) narrows the page to the
   admins named there. Needs `npm run db:upgrade` once before the first deploy that carries it. "Changes" counts
   events made in the app or through Claude, not sheet or Granola imports.
+- Added since, on a project's tasks (`components/AddedSince.tsx`, `?added=YYYY-MM-DD`): the first pill in the filter
+  row pops a month calendar open, with Today on top. Picking a day lists the project's tasks made from 12 am India time
+  that day, in the order they were made, so a meeting can close by reading back its to-dos. It works with the person
+  pills; dropped tasks are left out; it is kept in the address only, never remembered. No schema change.
 - Production builds from `main` on each push. Work goes on `maahir/mvp` (each push makes a preview), then merges into
   `main`. A schema change needs `npm run db:upgrade` before that merge.
 - Vercel project `nico-desk-v2` serves branch `maahir/mvp-v2` at https://nico-desk-v2.vercel.app on PGlite, since its
