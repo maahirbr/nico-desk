@@ -216,7 +216,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   (`/api/v1/feedback/[id]/images/[n]`, private cache). "+1" (`feedback_votes`) backs a teammate's note once per
   person, never your own, and only on an open note. Anyone replies (`feedback_replies`), and anyone marks a note Done,
   or Not now with a short reason that shows on the note, or reopens it (`POST /api/v1/feedback/[id]/status`; `feedback`
-  keeps `status`, `closed_by`, `closed_at`, `closed_note`). Closed notes fold under Resolved and are never removed. Each
+  keeps `status`, `closed_by`, `closed_at`, `closed_note`). A switch at the top shows Open or Resolved notes (`?show=resolved`); nothing is removed. Each
   reply, Done, Not now and Reopen tells the writer and everyone who gave +1 (`feedback_news`, RLS on), never the person
   who did it; they see it on Home under Feedback updates until they open Feedback or press Mark seen. The `feedback`
   table (`lib/schema.ts` and `upgrade()`, RLS on) holds the notes. Every route is open to anyone signed in on the team,
