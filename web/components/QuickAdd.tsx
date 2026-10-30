@@ -135,7 +135,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       </div>
       <p className="hint" aria-live="polite" style={{ margin: 0 }}>
         {done ?? (listening ? 'Say what needs doing, who does it and by when. Pause as long as you need. It fills in when you stop talking, or tap the mic.'
-          : `Type it, or tap the mic and say it the way you'd tell someone. One task or several.${onChat ? ' You can also paste a WhatsApp chat.' : ''}`)}
+          : `Type or say it the way you'd tell someone. Add one task or a few${onChat ? ', or paste a WhatsApp chat.' : '.'}`)}
       </p>
     </>
   );

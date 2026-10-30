@@ -1117,3 +1117,10 @@ forms (New Task and a project's Add task) a required field's label ends in a * i
 Date), "Details (if any)" becomes "Details", and the Task box has no example text. An empty owner with no project now
 reads "Choose a person", as it does on a project, in place of the first name on the list. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Quick Add's hint in plainer words
+
+The PM picked new words for the line under Quick Add: "Type or say it the way you'd tell someone. Add one task or a few,
+or paste a WhatsApp chat." (without the last part where the form takes no chat). Replaces "Type it, or tap the mic and
+say it the way you'd tell someone. One task or several. You can also paste a WhatsApp chat." No other change.
+Rollback: git revert the commit.
