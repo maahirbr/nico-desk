@@ -6,7 +6,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { DitherArt } from './DitherArt';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
-import { fmtDate, isDate, istInstant } from '@/lib/time';
+import { addDays, fmtDate, isDate, istInstant } from '@/lib/time';
 import { AddedSince, sinceWords } from './AddedSince';
 import { Person, PersonLink } from './chips';
 import { TaskLinkChips } from './TaskLinks';
@@ -45,7 +45,7 @@ import { Fold, FoldChev } from './Fold';
 // row; edits open in the row; the side panel has the full detail. Every change goes through /api/v1.
 
 type P = { id: string; name: string; role: string; department: string };
-type LogItem = { id: string; at: string; who: string; whoId?: string | null; text: string; task: string; taskId: string | null; reason: string | null };
+type LogItem = { id: string; at: string; day: string; who: string; whoId?: string | null; text: string; task: string; taskId: string | null; reason: string | null };
 
 async function call(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
@@ -95,6 +95,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  // The Update log shows the last 15 days; older entries stay and open with Show older (the PM's call, 30 Oct).
+  const [olderOpen, setOlderOpen] = useState(false);
   // The filters come back the next time this project is opened in this browser (components/remember.ts).
   const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All', closedSort: 'recent' as EndedSort }, (raw) => ({
     closedSort: endedSortOf(raw.closedSort),
@@ -349,23 +351,37 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         </div>
       </div>
 
-      <button className="log-toggle" aria-expanded={logOpen} onClick={() => setLogOpen(!logOpen)}>
-        <FoldChev /> Update log <span className="count-badge">{log.length}</span>
-      </button>
-      <Fold open={logOpen}>
-        <div className="card card-pad">
-          {log.length === 0 ? <p className="empty">No updates logged yet.</p> : (
-            <ol className="log">
-              {log.map((e) => (
-                <li key={e.id}>
-                  <span className="when">{e.at} · {e.taskId ? <Link href={`/tasks/${e.taskId}`}>{e.task}</Link> : <span>{e.task}</span>}</span>
-                  <span><PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      </Fold>
+      {(() => {
+        const since = addDays(today, -14);
+        const recent = log.filter((e) => e.day >= since), older = log.filter((e) => e.day < since);
+        const list = (items: LogItem[]) => (
+          <ol className="log">
+            {items.map((e) => (
+              <li key={e.id}>
+                <span className="when">{e.at} · {e.taskId ? <Link href={`/tasks/${e.taskId}`}>{e.task}</Link> : <span>{e.task}</span>}</span>
+                <span><PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
+              </li>
+            ))}
+          </ol>
+        );
+        return (<>
+          <button className="log-toggle" aria-expanded={logOpen} onClick={() => setLogOpen(!logOpen)}>
+            <FoldChev /> Update log <span className="count-badge">{recent.length} in the last 15 days</span>
+          </button>
+          <Fold open={logOpen}>
+            <div className="card card-pad">
+              {log.length === 0 ? <p className="empty">No updates logged yet.</p> : (<>
+                {recent.length > 0 ? list(recent) : <p className="empty">Nothing in the last 15 days.</p>}
+                {older.length > 0 && (olderOpen ? (<>
+                  <p className="small dim log-older-h">Older</p>
+                  {list(older)}
+                  <button type="button" className="mini-btn" onClick={() => setOlderOpen(false)}>Hide older</button>
+                </>) : <button type="button" className="mini-btn log-older" onClick={() => setOlderOpen(true)}>Show older ({older.length})</button>)}
+              </>)}
+            </div>
+          </Fold>
+        </>);
+      })()}
 
       {openId && (
         <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList}

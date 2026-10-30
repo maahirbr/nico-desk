@@ -1734,3 +1734,6 @@ a.rlink { color: inherit; text-decoration: none; }
 .flag-with-day { display: inline-flex; align-items: center; gap: var(--space-xs); white-space: nowrap; margin-top: var(--space-xxs); }
 .flag-with-day .flag { margin-top: 0; }
 .flag-day { font: var(--type-state); font-size: 11px; color: var(--ink-3); white-space: nowrap; font-feature-settings: var(--features-date); }
+/* The Update log's Show older button and the Older heading above what it opens (30 Oct). */
+.log-older { margin-top: var(--space-sm); }
+.log-older-h { margin: var(--space-md) 0 var(--space-xs); }

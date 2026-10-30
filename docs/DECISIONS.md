@@ -1155,3 +1155,11 @@ Refines the entry above (the PM's call). Ahead keeps the day it was done ("AHEAD
 the first date it was done ("LATE 3 days"). On time shows nothing more, since that day is the due date. A dropped task
 still shows the day it was dropped. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A project's Update log shows the last 15 days
+
+The PM's call. The Update log on a project lists the last 15 days (India time), with the count in its heading ("3 in
+the last 15 days"). Older entries open with "Show older (N)" and close with "Hide older". Nothing is deleted: the events
+stay append-only and keep feeding task History, the Ledger, Updates for you and Undo. The page now reads the latest 500
+entries in place of 60, so Show older reaches further back. No schema change.
+Rollback: git revert the commit.

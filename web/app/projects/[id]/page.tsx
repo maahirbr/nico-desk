@@ -9,7 +9,7 @@ import { ReadOnlyProvider } from '@/components/readonly';
 import { projectLog, projectTasks } from '@/lib/service';
 import { setupState } from '@/lib/setup';
 import { projectFor } from '@/lib/visibility';
-import { fmtStamp, today } from '@/lib/time';
+import { fmtStamp, istDate, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
@@ -63,8 +63,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           today={now}
           workstreams={p.workstreams}
           proposals={await pendingProposals(d, p.id)}
-          log={groupLog(await projectLog(d, p.id, 60), names, { [p.id]: p.name }).map((e) => ({
-            id: e.key, at: fmtStamp(e.at), whoId: e.actor_id, who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
+          log={groupLog(await projectLog(d, p.id, 500), names, { [p.id]: p.name }).map((e) => ({
+            id: e.key, at: fmtStamp(e.at), day: istDate(e.at), whoId: e.actor_id, who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),
             text: e.text, task: e.taskTitle, taskId: e.entity_type === 'project' ? null : e.entity_id, reason: null,
           }))}
         />
