@@ -1097,3 +1097,15 @@ closed before teams share people). Names, titles and roles still change as befor
 with the old one kept as a second address. The one way round it is to remove the role first, change the email, then
 give the role back. That is the known gap, and it is not logged today. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-31 · Opus 5.5 · The email lock lives in the database, so removing a role does not reopen it
+
+The guard above had two holes. An admin could take the role away, change the email, then give the role back. And the
+other-team check read `team_members` as `nico_app`, which the team fence limits to the caller's own team, so in the app
+it never saw the other team (the test passed only because it runs as the owner). Both checks are now one column,
+`people.email_locked`, set by an `email_lock` trigger on `team_members` when a person is given the lead or admin role or
+joins a second team. The trigger runs as the owner (SECURITY DEFINER), so the fence does not hide the other team from it.
+The lock never clears in the app: an address for someone who has been a lead or admin is changed by whoever set the app
+up. `upgrade()` adds the column and backfills it, so the hosted database needs `npm run db:upgrade` before this deploys.
+Rollback: git revert the commit, then on the hosted database DROP TRIGGER email_lock ON team_members and
+DROP FUNCTION email_lock(); the column can stay.

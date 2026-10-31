@@ -73,4 +73,11 @@ describe('the team fence', () => {
     expect(rows[0].u).toBe('postgres');
     expect(rows[0].t || null).toBeNull();
   });
+
+  it('locks the email of a person who joins a second team, though the fence hides the first', async () => {
+    const locked = async () => (await db.query<{ email_locked: boolean }>(`SELECT email_locked FROM people WHERE id = 'per_out'`)).rows[0].email_locked;
+    expect(await locked()).toBe(false);
+    await scoped(db, TEAM_ID).query(`INSERT INTO team_members VALUES ($1, 'per_out', 'member')`, [TEAM_ID]);
+    expect(await locked()).toBe(true);
+  });
 });

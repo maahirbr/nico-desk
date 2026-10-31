@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PLAN_ACTIVITY_GUARD, PUBLIC_API_LOCK, SCHEMA, TEAM_FENCE } from './schema';
+import { EMAIL_LOCK, PLAN_ACTIVITY_GUARD, PUBLIC_API_LOCK, SCHEMA, TEAM_FENCE } from './schema';
 import { jobSecret } from './jobs';
 import { loadLocalProjects, loadRosterOverlay, seed } from './seed';
 
@@ -116,6 +116,8 @@ export async function upgrade(db: Db) {
   await db.exec(MCP_ORIGIN_UPGRADE);
   // 28 Oct: the activity log. The days each person opened the app.
   await db.exec(VISIT_DAYS_UPGRADE);
+  // 31 Oct: a lead's, an admin's or a two-team person's sign-in email is locked against an admin's edit.
+  await db.exec(EMAIL_LOCK);
   // 19 Oct: the public API roles get no rights and a deny policy on every table. Last, so it covers new tables.
   await db.exec(PUBLIC_API_LOCK);
   // 21 Oct: the team fence (nico_app and one policy per table). Last too, so it covers new tables.

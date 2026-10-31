@@ -278,5 +278,8 @@ describe('roster (FR-55)', () => {
       expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, p.id, { displayName: 'Still Editable' }))).toBe('ok');
     }
     expect((await s.findPersonByEmail(db, 'taken.over@example.test'))).toBeNull();
+    // Taking the role away first does not reopen the address.
+    await s.patchPerson(db, ADMIN, TEAM_ID, lead.id, { appRoles: [] });
+    expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, lead.id, { email: 'taken.over@example.test' }))).toBe('400 invalid_body');
   });
 });

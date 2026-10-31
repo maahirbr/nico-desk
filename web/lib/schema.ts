@@ -13,6 +13,27 @@ DROP TRIGGER IF EXISTS plan_activity_no_change ON plan_activity;
 CREATE TRIGGER plan_activity_no_change BEFORE UPDATE OR DELETE ON plan_activity
   FOR EACH ROW EXECUTE FUNCTION plan_activity_guard();`;
 
+// The sign-in email is the key to the account, so an admin may move only a plain member's (patchPerson). Once a person
+// is made a lead or admin, or joins a second team, the lock is set and never cleared: taking the role away first no
+// longer reopens the address. It runs as the owner (SECURITY DEFINER) because the team fence hides other teams'
+// rows from nico_app. Idempotent, with a backfill: upgrade() runs it too.
+// Rollback: DROP TRIGGER email_lock ON team_members; DROP FUNCTION email_lock(); the column can stay.
+export const EMAIL_LOCK = `
+ALTER TABLE people ADD COLUMN IF NOT EXISTS email_locked boolean NOT NULL DEFAULT false;
+CREATE OR REPLACE FUNCTION email_lock() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS
+$$ BEGIN
+  IF NEW.app_role IN ('lead','admin')
+    OR EXISTS (SELECT 1 FROM team_members WHERE person_id = NEW.person_id AND team_id <> NEW.team_id) THEN
+    UPDATE people SET email_locked = true WHERE id = NEW.person_id AND NOT email_locked;
+  END IF;
+  RETURN NULL;
+END $$;
+DROP TRIGGER IF EXISTS email_lock ON team_members;
+CREATE TRIGGER email_lock AFTER INSERT ON team_members FOR EACH ROW EXECUTE FUNCTION email_lock();
+UPDATE people SET email_locked = true WHERE NOT email_locked AND id IN (
+  SELECT person_id FROM team_members GROUP BY person_id
+  HAVING bool_or(app_role IN ('lead','admin')) OR count(DISTINCT team_id) > 1);`;
+
 export const SCHEMA = `
 SET TIME ZONE 'UTC';
 
@@ -54,6 +75,7 @@ CREATE TABLE team_members (
   app_role   text NOT NULL CHECK (app_role IN ('member','lead','admin')),
   PRIMARY KEY (team_id, person_id, app_role)
 );
+${EMAIL_LOCK}
 
 CREATE TABLE projects (
   id          text PRIMARY KEY,
