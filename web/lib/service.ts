@@ -813,6 +813,11 @@ export async function patchPerson(
     const email = input.email?.trim().toLowerCase();
     if (email && email !== p.email.toLowerCase()) {
       if (personId === meId) throw bad('invalid_body', 'Ask another admin to change your own email.', 'email');
+      // The sign-in address is the key to the account. One admin moving another lead's or admin's address would take over
+      // that account, and a person on a second team would be taken over there too. Those stay with whoever set the app up.
+      if (isLeadOrAdmin(p.appRoles)) throw bad('invalid_body', "A lead's or admin's email cannot be changed here. Ask whoever set up nico-desk.", 'email');
+      const { rows: other } = await tx.query(`SELECT 1 FROM team_members WHERE person_id = $1 AND team_id <> $2 LIMIT 1`, [personId, teamId]);
+      if (other.length) throw bad('invalid_body', 'This person is also on another team, so their email cannot be changed here.', 'email');
       const taken = await findPersonByEmail(tx, email);
       if (taken && taken.id !== personId) throw bad('invalid_body', 'That email is already on the roster.', 'email');
       await tx.query(

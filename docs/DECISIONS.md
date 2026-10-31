@@ -1087,3 +1087,13 @@ The PM found the Resolved fold at the foot of the list hard to reach. A switch u
 By person / By status. It opens on Open and keeps the choice in the address (`?show=resolved`). The count leaves the
 heading, so it shows once. No schema change.
 Rollback: git revert the commit.
+
+## 2026-10-31 · Opus 5.5 · An admin cannot move a lead's or admin's sign-in email
+
+A security read of the roster edit found that one admin could change another admin's or a lead's email to an address
+they control on the company domain, then sign in as that person. `patchPerson` now refuses an email change when the
+person holds the lead or admin role, and when the person is also on another team (not reachable today with one team,
+closed before teams share people). Names, titles and roles still change as before, and a member's email still moves
+with the old one kept as a second address. The one way round it is to remove the role first, change the email, then
+give the role back. That is the known gap, and it is not logged today. No schema change.
+Rollback: git revert the commit.

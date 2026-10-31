@@ -265,4 +265,18 @@ describe('roster (FR-55)', () => {
     expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, ADMIN, { email: 'me@example.test' }))).toBe('400 invalid_body');
     expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, ADMIN, { displayName: 'Admin Renamed' }))).toBe('ok');
   });
+
+  it("refuses to move a lead's or admin's email, or that of a person on another team", async () => {
+    const add = (n: string, appRoles: ('lead' | 'admin')[]) =>
+      s.addPerson(db, ADMIN, TEAM_ID, { displayName: `Person ${n}`, role: 'Tester', department: 'Digital', email: `${n}@example.test`, appRoles });
+    const lead = await add('lead2', ['lead']);
+    const admin = await add('admin2', ['admin']);
+    const both = await add('both', []);
+    await db.exec(`INSERT INTO teams VALUES ('team_other', 'Other team', 'run'); INSERT INTO team_members VALUES ('team_other', '${both.id}', 'member');`);
+    for (const p of [lead, admin, both]) {
+      expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, p.id, { email: 'taken.over@example.test' }))).toBe('400 invalid_body');
+      expect(await code(s.patchPerson(db, ADMIN, TEAM_ID, p.id, { displayName: 'Still Editable' }))).toBe('ok');
+    }
+    expect((await s.findPersonByEmail(db, 'taken.over@example.test'))).toBeNull();
+  });
 });
