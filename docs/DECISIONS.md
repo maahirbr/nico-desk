@@ -1209,3 +1209,12 @@ Rollback: git revert the commit.
 The note for someone new now reads "New here? Read the quick guide." in place of "the two-minute guide", since the
 shorter Guide says one minute. No other change.
 Rollback: git revert the commit.
+
+## 2026-10-31 · Opus 5.5 · Your profile shows your email, job title and department
+
+The PM's call. Your profile now reads Name *, Nickname, Email *, Phone, Job Title *, Department *. Email (the address
+you sign in with), job title and department are shown filled in and read-only, since an admin sets them on the Roster;
+the * says they are always there. The hints under Nickname and Phone go, the email hint reads "The address you sign
+in with." and the one under job title and department reads "Set by admin." Saving still changes only name, nickname
+and phone. No schema change.
+Rollback: git revert the commit.

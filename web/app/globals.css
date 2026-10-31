@@ -1741,3 +1741,5 @@ a.rlink { color: inherit; text-decoration: none; }
 .today-clear { margin: var(--space-md) 0; padding: var(--space-md) var(--card-pad); border: var(--rule) dashed var(--line-strong); border-radius: var(--radius-card); text-align: center; }
 .today-clear-line { margin: 0; font: var(--type-body); color: var(--ink); }
 .today-clear-next { margin: var(--space-xxs) 0 0; font: var(--type-small); color: var(--ink-3); }
+/* A field shown but not edited here (the profile's email, job title, department): quieter, and no text cursor. */
+.ro-field { background: var(--sunk); color: var(--ink-2); cursor: default; }

@@ -894,14 +894,15 @@ export async function setNames(db: Db, meId: string, input: { name?: string; nic
   });
 }
 
-export type MyProfile = { name: string; nickname: string | null; phone: string | null; hasPhoto: boolean };
+// Email, job title and department show on the profile read-only: the sign-in address and what an admin set on the Roster.
+export type MyProfile = { name: string; nickname: string | null; phone: string | null; hasPhoto: boolean; email: string; role: string; department: string };
 
 export async function myProfile(db: Db, meId: string): Promise<MyProfile> {
-  const { rows } = await db.query<{ display_name: string; nickname: string | null; phone: string | null; has_photo: boolean }>(
-    `SELECT p.display_name, p.nickname, p.phone, EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id) AS has_photo
+  const { rows } = await db.query<{ display_name: string; nickname: string | null; phone: string | null; has_photo: boolean; email: string; role: string; department: string }>(
+    `SELECT p.display_name, p.nickname, p.phone, p.email, p.role, p.department, EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id) AS has_photo
      FROM people p WHERE p.id = $1`, [meId]);
   const r = rows[0];
-  return { name: r.display_name, nickname: r.nickname, phone: r.phone, hasPhoto: r.has_photo };
+  return { name: r.display_name, nickname: r.nickname, phone: r.phone, hasPhoto: r.has_photo, email: r.email, role: r.role, department: r.department };
 }
 
 export async function savePhoto(db: Db, meId: string, bytes: Uint8Array, claimedMime: string): Promise<void> {
