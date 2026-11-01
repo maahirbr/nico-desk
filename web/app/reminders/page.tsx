@@ -35,7 +35,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   return (
     <>
       <h1>Reminders</h1>
-      <p className="lede">One draft email per person. Opens a draft in your Gmail, from your address. You press Send.</p>
+      <p className="lede">One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing is sent until you check it and press Send.</p>
       <form className="bar" action="/reminders" method="get">
         <span className="seg" role="group" aria-label="What to include">
           <Link href={q({ mode: 'overdue' })} className={`seg-link${mode === 'overdue' ? ' on' : ''}`}>Overdue only</Link>

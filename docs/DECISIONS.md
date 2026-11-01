@@ -1252,3 +1252,9 @@ Deadline becomes Due Date or End Date; Internal reads "A task board the Nico Tri
 Schema: `tasks.partner_owner`, `owner_id` nullable and the `tasks_has_owner` check (PARTNER_OWNER_UPGRADE); the hosted
 database needs `npm run db:upgrade` before the build that carries it is promoted.
 Rollback: git revert the commit; the new column and check can stay, but owner_id must be filled again before NOT NULL.
+
+## 2026-11-02 · Opus 5.5 · The Reminders line says which address the drafts come from
+
+The PM's wording: "One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing is
+sent until you check it and press Send." No other change.
+Rollback: git revert the commit.
