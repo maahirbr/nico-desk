@@ -1279,3 +1279,10 @@ a person by name covers the person view. By status still shows this week only, w
 Finished section repeated the top tiles and the people cards, so it goes; the five top tiles stay, and the Closed late
 tile's list now opens with the most-late tasks first. Definitions stay at the foot. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · The Ledger loses its Definitions box
+
+The PM's call. Every word it defined (ahead, on time, late, flagged early, missed, open, past due, slipped silently, moved
+in time, moved late) is already explained in help mode on the same page, and the Guide covers late and at risk, so the
+box goes. No schema change.
+Rollback: git revert the commit.

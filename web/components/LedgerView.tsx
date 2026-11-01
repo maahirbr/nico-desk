@@ -188,36 +188,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         </div>
       )}
 
-      <details className="breakdown">
-        <summary>Definitions</summary>
-      <div className="card defs">
-        <div>
-          <h3>Finished</h3>
-          <dl>
-            <dt><Help term="ahead">Ahead</Help></dt><dd>Done before the first date.</dd>
-            <dt><Help term="on_time">On time</Help></dt><dd>Done on the first date.</dd>
-            <dt><Help term="late">Late</Help></dt><dd>Done after the first date, even if the date was moved.</dd>
-            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>Late, but the date was moved before it passed.</dd>
-            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>Late, and the date passed with no move.</dd>
-          </dl>
-        </div>
-        <div>
-          <h3>Still open</h3>
-          <dl>
-            <dt>Open</dt><dd>Not done or dropped yet.</dd>
-            <dt>Past due</dt><dd>Open, and today is after its date.</dd>
-            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Went past its date with no new date set first. Target: 0.</dd>
-          </dl>
-        </div>
-        <div>
-          <h3>Date changes</h3>
-          <dl>
-            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>New date set before the old one passed.</dd>
-            <dt><Help term="moved_late">Moved late</Help></dt><dd>New date set after the old one passed.</dd>
-          </dl>
-        </div>
-      </div>
-      </details>
 
       {drill && <DrillPanel drill={drill} hidden={hidden} plain={plain} names={names} projectNames={projectNames} today={today} by={kept.drillSort} setBy={(v) => keep('drillSort', v)} onClose={() => setDrill(null)} />}
     </>
