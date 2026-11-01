@@ -172,8 +172,19 @@ export async function getTask(db: Tx, id: string, today = todayIst()): Promise<T
   return t;
 }
 
-export async function teamTasks(db: Tx, teamId: string, today = todayIst()): Promise<Task[]> {
-  return loadTasks(db, 'team_id = $1', [teamId], today);
+// Tasks with a Nicobar owner. A task only a partner owns shows on its project page (projectTasks) and in the ledger
+// (withPartnerOnly), nowhere else (the PM's call, 1 Nov).
+export async function teamTasks(db: Tx, teamId: string, today = todayIst(), withPartnerOnly = false): Promise<Task[]> {
+  return loadTasks(db, withPartnerOnly ? 'team_id = $1' : 'team_id = $1 AND owner_id IS NOT NULL', [teamId], today);
+}
+
+// A partner owner must be one of the partner project's people.
+async function checkPartnerOwner(tx: Tx, projectId: string | null, name: string) {
+  const { rows } = projectId ? await tx.query<{ partner_name: string | null; partner_people: string[] | null }>(
+    `SELECT partner_name, partner_people FROM projects WHERE id = $1`, [projectId]) : { rows: [] };
+  const p = rows[0];
+  if (!p?.partner_name) throw bad('invalid_body', 'Only a partner project has partner owners.', 'partnerOwner');
+  if (!(p.partner_people ?? []).includes(name)) throw bad('invalid_body', `${name} is not on the partner team.`, 'partnerOwner');
 }
 
 export type LogLine = EventRow & { actorName: string | null };
@@ -216,7 +227,7 @@ async function notice(tx: Tx, personId: string, taskId: string, kind: string, fo
 
 // Fields written in this order, so the Red rule logs health before due_on (SPEC.md 3.5).
 const ORDER: (keyof TaskRow)[] = [
-  'title', 'description', 'note', 'project_id', 'workstream', 'owner_id', 'health', 'due_on', 'status', 'status_category', 'closed_at',
+  'title', 'description', 'note', 'project_id', 'workstream', 'partner_owner', 'owner_id', 'health', 'due_on', 'status', 'status_category', 'closed_at',
   'blocked_on_id', 'blocked_ask', 'blocked_at', 'priority', 'priority_set_by', 'priority_set_at',
 ];
 // Columns that are bookkeeping for another field, not events of their own.
@@ -239,7 +250,11 @@ async function mutate(
     if (roles.size === 0) throw forbidden('You are not on this task’s team.');
     if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
     if (row.version !== version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
-    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId, isLead: isLeadOrAdmin(roles) };
+    // A task only a partner owns (partner projects) is looked after by anyone on its project (the PM's call, 1 Nov).
+    const onProject = !row.owner_id && row.project_id ? (await tx.query(
+      `SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2) UNION SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`,
+      [row.project_id, meId])).rows.length > 0 : false;
+    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles) };
     if (!allow(ctx)) throw forbidden();
     const change = build(ctx);
     const at = new Date().toISOString();
@@ -264,7 +279,7 @@ async function mutate(
 }
 
 // ownerRole: set when the owner is being added to the project as the task is assigned ("+ Add someone to this project").
-export type CreateInput = { teamId: string; title: string; description?: string | null; ownerId: string; dueOn: string; projectId?: string | null; workstream?: string | null; note?: string | null; ownerRole?: string };
+export type CreateInput = { teamId: string; title: string; description?: string | null; ownerId?: string | null; dueOn: string; projectId?: string | null; workstream?: string | null; note?: string | null; ownerRole?: string; partnerOwner?: string | null };
 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
@@ -290,33 +305,37 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
   await db.transaction(async (tx) => {
     const roles = await rolesIn(tx, input.teamId, meId);
     if (roles.size === 0) throw forbidden('You are not on this team.');
-    await activeMember(tx, input.teamId, input.ownerId, 'ownerId');
+    // A task needs an owner: a Nicobar person, or on a partner project a partner person, or both (1 Nov).
+    const partnerOwner = input.partnerOwner?.trim() || null;
+    if (!input.ownerId && !partnerOwner) throw bad('invalid_body', 'Pick at least one owner.', 'ownerId');
+    if (input.ownerId) await activeMember(tx, input.teamId, input.ownerId, 'ownerId');
+    if (partnerOwner) await checkPartnerOwner(tx, input.projectId ?? null, partnerOwner);
     if (input.projectId) {
       const { rows } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, input.teamId]);
       if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
       if (rows[0].archived_at) throw bad('project_archived', 'This project is archived. Restore it to add tasks.', 'projectId');
-      await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
+      if (input.ownerId) await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
     const at = new Date().toISOString();
     const row = {
-      title: input.title.trim(), description: input.description?.trim() || null, owner_id: input.ownerId, project_id: input.projectId ?? null, workstream: input.workstream?.trim() || null,
+      title: input.title.trim(), description: input.description?.trim() || null, owner_id: input.ownerId || null, project_id: input.projectId ?? null, workstream: input.workstream?.trim() || null,
       first_due_on: input.dueOn, due_on: input.dueOn, note: input.note?.trim() || null, health: 'not_started',
-      status: 'open', status_category: 'open', origin: 'app',
+      status: 'open', status_category: 'open', origin: 'app', partner_owner: partnerOwner,
     };
     await tx.query(
       `INSERT INTO tasks (id, team_id, title, description, owner_id, project_id, workstream, first_due_on, due_on, note, health, status,
-         status_category, origin, created_by, created_at)
-       VALUES ($1,$2,$3,$16,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+         status_category, origin, created_by, created_at, partner_owner)
+       VALUES ($1,$2,$3,$16,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$17)`,
       [id, input.teamId, row.title, row.owner_id, row.project_id, row.workstream, row.first_due_on, row.due_on, row.note, row.health,
-        row.status, row.status_category, row.origin, meId, at, row.description],
+        row.status, row.status_category, row.origin, meId, at, row.description, row.partner_owner],
     );
     await insertEvent(tx, { entityId: id, field: '_created', before: null, after: row, actorId: meId, at });
-    if (input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', today);
+    if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', today);
   });
   return getTask(db, id);
 }
 
-export type EditInput = { version: number; title?: string; description?: string | null; note?: string | null; projectId?: string | null; workstream?: string | null; ownerId?: string; ownerRole?: string };
+export type EditInput = { version: number; title?: string; description?: string | null; note?: string | null; projectId?: string | null; workstream?: string | null; ownerId?: string | null; ownerRole?: string; partnerOwner?: string | null };
 
 export async function editTask(db: Db, meId: string, id: string, input: EditInput): Promise<Task> {
   return mutate(
@@ -334,24 +353,29 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
       if (input.note !== undefined) set.note = input.note?.trim() || null;
       if (input.projectId !== undefined) set.project_id = input.projectId;
       if (input.workstream !== undefined) set.workstream = input.workstream?.trim() || null;
-      if (input.ownerId !== undefined) set.owner_id = input.ownerId;
+      if (input.partnerOwner !== undefined) set.partner_owner = input.partnerOwner?.trim() || null;
+      if (input.ownerId !== undefined) set.owner_id = input.ownerId || null;
+      const owner = set.owner_id !== undefined ? set.owner_id : c.row.owner_id;
+      const partner = set.partner_owner !== undefined ? set.partner_owner : c.row.partner_owner;
+      if (!owner && !partner) throw bad('invalid_body', 'Pick at least one owner.', 'ownerId');
       return { set };
     },
     async (tx, c) => {
-      if (input.ownerId !== undefined && input.ownerId !== c.row.owner_id) {
-        await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
-        if (input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
+      if (input.ownerId !== undefined && (input.ownerId || null) !== c.row.owner_id) {
+        if (input.ownerId) await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
+        if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
         // The person who had the task hears it moved, in the app only. Not when they moved it themselves.
-        if (c.row.owner_id !== meId) await notice(tx, c.row.owner_id, id, 'reassigned_away', todayIst());
+        if (c.row.owner_id && c.row.owner_id !== meId) await notice(tx, c.row.owner_id, id, 'reassigned_away', todayIst());
       }
+      if (input.partnerOwner) await checkPartnerOwner(tx, input.projectId !== undefined ? input.projectId : c.row.project_id, input.partnerOwner.trim());
       if (input.projectId) {
         const { rows } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, c.row.team_id]);
         if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
         if (rows[0].archived_at && input.projectId !== c.row.project_id) throw bad('project_archived', 'That project is archived. Restore it to move a task into it.', 'projectId');
       }
       const projectId = input.projectId !== undefined ? input.projectId : c.row.project_id;
-      const ownerId = input.ownerId ?? c.row.owner_id;
-      if (projectId && (projectId !== c.row.project_id || ownerId !== c.row.owner_id)) await joinProject(tx, projectId, ownerId, input.ownerRole, meId, c.isLead);
+      const ownerId = input.ownerId !== undefined ? input.ownerId || null : c.row.owner_id;
+      if (projectId && ownerId && (projectId !== c.row.project_id || ownerId !== c.row.owner_id)) await joinProject(tx, projectId, ownerId, input.ownerRole, meId, c.isLead);
     },
   );
 }

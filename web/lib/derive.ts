@@ -14,9 +14,10 @@ export type TaskRow = {
   team_id: string;
   title: string;
   description: string | null;
-  owner_id: string;
+  owner_id: string | null; // empty on a partner project task that only a partner owns
   project_id: string | null;
   workstream: string | null;
+  partner_owner?: string | null;
   first_due_on: string;
   due_on: string;
   note: string | null;
@@ -57,9 +58,10 @@ export type Task = {
   teamId: string;
   title: string;
   description: string | null;
-  ownerId: string;
+  ownerId: string; // '' when only a partner owns it (partner projects); such tasks show on their project page only
   projectId: string | null;
   workstream: string | null;
+  partnerOwner: string | null; // on a partner project, the partner person who owns it
   firstDueOn: string;
   dueOn: string;
   dateMoves: number;
@@ -141,10 +143,11 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     id: row.id,
     teamId: row.team_id,
     title: row.title,
-    ownerId: row.owner_id,
+    ownerId: row.owner_id ?? '',
     projectId: row.project_id,
     description: row.description ?? null,
     workstream: row.workstream ?? null,
+    partnerOwner: row.partner_owner ?? null,
     firstDueOn: row.first_due_on,
     dueOn: row.due_on,
     dateMoves: reneg.length,

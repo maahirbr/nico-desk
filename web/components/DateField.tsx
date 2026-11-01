@@ -11,7 +11,8 @@ import { useViewer } from './viewer';
 // as if the person had typed it. Dates are 'YYYY-MM-DD' in the app's local day. The shortcuts count from the
 // same "today" the rest of the app uses (the viewer's, which the server pins for a demo), not the browser clock.
 
-export function DateField({ className = '', onChange, ...rest }: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+// noQuick: the calendar only, no Today / Tomorrow / Friday buttons (a project's date is weeks away, the PM's call, 2 Nov).
+export function DateField({ className = '', onChange, noQuick = false, ...rest }: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & { noQuick?: boolean }) {
   const input = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState(String(rest.defaultValue ?? ''));
   const { today: appToday } = useViewer();
@@ -39,7 +40,7 @@ export function DateField({ className = '', onChange, ...rest }: Omit<React.Inpu
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(el, v);
     el.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  const chips = from ? quickChips(from, rest.min ? String(rest.min) : '', rest.max ? String(rest.max) : '') : [];
+  const chips = from && !noQuick ? quickChips(from, rest.min ? String(rest.min) : '', rest.max ? String(rest.max) : '') : [];
   return (
     <span className={`datefield ${className}`.trim()}>
       <input aria-label={name} {...rest} ref={input} type="date" onChange={(e) => { setTyped(e.target.value); onChange?.(e); }} />

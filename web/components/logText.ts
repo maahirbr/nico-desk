@@ -130,6 +130,8 @@ export function actionText(events: LogLine[], names: Names, projects: Names): st
   if (proj) { used.add('project_id'); out.push(set(proj.after) ? `Moved to project ${show('project_id', proj.after, names, projects)}` : 'Taken out of its project'); }
   const ws = by.get('workstream');
   if (ws) { used.add('workstream'); out.push(set(ws.after) ? `Sub-project set to ${ws.after}` : 'Sub-project cleared'); }
+  const wp = by.get('partner_owner');
+  if (wp) { used.add('partner_owner'); out.push(set(wp.after) ? `Now with ${wp.after}` : 'No longer with a partner'); }
   const desc = by.get('description');
   if (desc) { used.add('description'); out.push(set(desc.after) ? 'Description updated' : 'Description cleared'); }
   const note = by.get('note');

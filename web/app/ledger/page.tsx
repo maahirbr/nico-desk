@@ -25,8 +25,8 @@ export default async function Ledger({ searchParams }: { searchParams: SP }) {
     <LedgerView
       weeks={weeks} from={from} to={to} today={today()} rows={l.rows} tasks={l.tasks} prev={l.prev}
       openNow={l.openNow} waitingOn={l.waitingOn} countOnly={l.countOnly} noLink={l.noLink}
-      people={shown.map((p) => ({ id: p.id, name: p.displayName, role: p.role }))}
-      names={names} projectNames={pNames} seeAll={l.all}
+      people={[...shown.map((p) => ({ id: p.id, name: p.displayName, role: p.role })), ...(one(sp.person) ? [] : l.partners)]}
+      names={{ ...names, ...Object.fromEntries(l.partners.map((p) => [p.id, `${p.name} · ${p.role}`])) }} projectNames={pNames} seeAll={l.all}
     />
   );
 }

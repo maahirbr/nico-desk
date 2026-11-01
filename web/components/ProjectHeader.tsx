@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { isPartnerProject } from '@/lib/planUtil';
 import { useEffect, useState } from 'react';
 import { countdown, membersExceptLead } from '@/lib/planUtil';
 import type { Member, Project } from '@/lib/plan';
@@ -79,11 +80,11 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
         <p className="phead-meta">
           {p.launchOn && <span><b>{label}</b> {fmtDate(p.launchOn)} <span className={cd?.past ? 'late-text' : 'dim'}>· {left}</span></span>}
           {p.phase && <span><b>Phase</b> {p.phase}</span>}
-          {p.kind === 'plan' && p.partnerName && !p.partnerPeople.length && <span><b>Partner</b> {p.partnerName}</span>}
+          {isPartnerProject(p) && p.partnerName && !p.partnerPeople.length && <span><b>Partner</b> {p.partnerName}</span>}
         </p>
         {p.archivedAt && <p className="archived-note">Archived. Its tasks stay readable and no new tasks can be added.</p>}
         {p.intro && <p className="phead-goal">{p.intro}</p>}
-        {p.kind === 'plan' ? (
+        {isPartnerProject(p) ? (
           <div className="phead-sides">
             <span className="side-name">Nicobar</span>
             <div className="phead-team">{team}</div>

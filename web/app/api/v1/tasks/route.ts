@@ -6,10 +6,11 @@ import { assertSeesProject } from '@/lib/visibility';
 const Body = z.object({
   teamId: z.string().optional(),
   title: z.string().trim().min(3).max(200),
-  ownerId: z.string(),
+  ownerId: z.string().nullable().optional(), // empty only when a partner owns it, on a partner project
   dueOn: zDate,
   projectId: z.string().nullable().optional(),
   workstream: z.string().trim().max(60).nullable().optional(),
+  partnerOwner: z.string().trim().max(60).nullable().optional(),
   description: z.string().max(600).nullable().optional(),
   note: z.string().max(140).nullable().optional(),
   ownerRole: z.string().max(60).optional(),

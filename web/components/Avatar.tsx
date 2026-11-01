@@ -23,7 +23,8 @@ export function Avatar({ name, id, lg = false, you = false }: { name: string; id
   const photos = useContext(Photos);
   const src = id ? photoSrc(id, photos[id]) : null;
   const [failed, setFailed] = useState<string | null>(null);
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  // Letters only, so "Asha (Studio)" reads AS, not A(.
+  const initials = name.split(/\s+/).map((w) => w.replace(/[^\p{L}\p{N}]/gu, '')).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   let h = 0;
   for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
   const showPhoto = !!src && failed !== src;

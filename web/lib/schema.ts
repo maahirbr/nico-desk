@@ -94,9 +94,11 @@ CREATE TABLE tasks (
   team_id          text NOT NULL REFERENCES teams(id),
   title            text NOT NULL CHECK (char_length(title) BETWEEN 3 AND 200),
   description      text CHECK (char_length(description) <= 600),  -- what the task is about, in a line or two
-  owner_id         text NOT NULL REFERENCES people(id),
+  owner_id         text REFERENCES people(id),  -- the Nicobar owner; on a partner project it may be empty when a partner owns it
   project_id       text REFERENCES projects(id),
   workstream       text CHECK (char_length(workstream) <= 60),
+  partner_owner    text CHECK (char_length(partner_owner) <= 60),  -- 1 Nov: on a partner project, the partner person who owns it
+  CONSTRAINT tasks_has_owner CHECK (owner_id IS NOT NULL OR partner_owner IS NOT NULL),
   first_due_on     date NOT NULL,
   due_on           date NOT NULL,
   note             text CHECK (char_length(note) <= 140),

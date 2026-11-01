@@ -111,6 +111,7 @@ export function GuideView() {
           <li>Press a tile, like Late or Done, to filter the list.</li>
           <li><b>Added since.</b> Pick Today to review everything added in a meeting.</li>
           <li><b>Done.</b> See finished tasks and when they were done.</li>
+          <li><b>Partner projects.</b> The same board, shared with an outside partner. Each task has a Nicobar owner, a partner owner, or both.</li>
         </ul>
       </section>
 

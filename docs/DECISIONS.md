@@ -1232,3 +1232,23 @@ reply, a comment or chat line, updates marked seen, or a nickname, phone or phot
 from the old tracker under people's names, so they do not count. Someone who signed in between 11 and 28 Oct, set no
 photo and changed nothing can read as Never; Google Workspace's OAuth log would close that gap. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · Partner projects are task boards with a partner, and a task can have a partner owner
+
+The PM's call, with the repo owner's agreement. A new partner project is a task board like an internal one (tiles, Added
+since, people pills, the task list, Completed, Update log), plus the partner's name and team: the header shows a Nicobar
+row and a partner row, and `isPartnerProject` (planUtil) treats an old plan board or a task board with a partner named as
+a partner project. Old plan boards keep their own page until their lines are moved, if ever. On a partner project a task
+has a Nicobar Owner, a "<Partner> Owner" (a name from the partner team, `tasks.partner_owner`), or both; one is needed
+(`tasks_has_owner`), so `tasks.owner_id` may now be empty. The list shows both owner columns, and partner people get
+people pills. A task only a partner owns shows on its project page only (`teamTasks` leaves it out unless asked), anyone
+on the project may look after it, and the ledger counts partner owners like members for leads and admins (a partner
+section may come later). Partner people are names, not accounts: Step 2 (partner sign-in, seeing only Home, their
+projects and Feedback unless admin) and a second owner for signed-in partners come later. The project form is regrouped:
+name, the Internal or Partner cards, description, category, date type and date on one row (calendar only), People (Project
+Owner, Team Members), Partner (Partner Name *, Partner Team), and More options (Viewer, Sub-Projects), open in Settings.
+Deadline becomes Due Date or End Date; Internal reads "A task board the Nico Tribe runs."; the partner name's example is
+"TheCRUX", the PM's choice. Avatar initials skip brackets. The Guide's Projects section gains a partner line.
+Schema: `tasks.partner_owner`, `owner_id` nullable and the `tasks_has_owner` check (PARTNER_OWNER_UPGRADE); the hosted
+database needs `npm run db:upgrade` before the build that carries it is promoted.
+Rollback: git revert the commit; the new column and check can stay, but owner_id must be filled again before NOT NULL.

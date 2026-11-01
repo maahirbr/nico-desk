@@ -8,7 +8,7 @@ import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
 import { addDays, fmtDate, isDate, istInstant } from '@/lib/time';
 import { AddedSince, sinceWords } from './AddedSince';
-import { Person, PersonLink } from './chips';
+import { Avatar, Person, PersonLink } from './chips';
 import { TaskLinkChips } from './TaskLinks';
 import { IMPORT_EVENT } from './MeetingSection';
 import { OPEN_ADD_EVENT } from './setupEvents';
@@ -85,9 +85,10 @@ function bringIntoView(selector: string) {
 }
 const importIntoView = () => bringIntoView('.imp-panel');
 
-export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, today, log, workstreams = [], proposals = [] }: {
+export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, today, log, workstreams = [], proposals = [], partnerPeople = [], partnerName = null }: {
   projectId: string; tasks: Task[]; people: P[]; names: Record<string, string>; projectNames?: Record<string, string>;
   meId: string; isLead: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
+  partnerPeople?: string[]; partnerName?: string | null; // a partner project (1 Nov): tasks have a Nicobar owner, a partner owner, or both
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<string | null>(null);
@@ -100,7 +101,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   // The filters come back the next time this project is opened in this browser (components/remember.ts).
   const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All', closedSort: 'recent' as EndedSort }, (raw) => ({
     closedSort: endedSortOf(raw.closedSort),
-    tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, people.map((p) => p.id), null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
+    tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, [...people.map((p) => p.id), ...partnerPeople.map((n) => `partner:${n}`)], null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
   }), ['tile', 'who', 'ws', 'closedSort']);
   const { tile, who, ws, closedSort } = kept;
   const setTile = (v: string | null) => keep('tile', v);
@@ -166,7 +167,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     { key: 'done', label: 'Done', help: 'status_done' as const, n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
   ];
   const inWs = (t: Task, k: string) => k === 'All' || (k === '__none' ? !t.workstream : t.workstream === k);
-  const visible = tasks.filter((t) => (!who || t.ownerId === who) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
+  const byWho = (t: Task) => !who || (who.startsWith('partner:') ? t.partnerOwner === who.slice(8) : t.ownerId === who);
+  const visible = tasks.filter((t) => byWho(t) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
   const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn);
   // With "added since", the order they were added, so a meeting reads its to-dos back in the order it agreed them.
@@ -198,7 +200,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   }
 
   const row = (t: Task) => {
-    if (editing === t.id) return <EditRow key={t.id} t={t} people={people} workstreams={wsList} today={today} busy={busy} canReassign={t.ownerId === meId || isLead}
+    if (editing === t.id) return <EditRow key={t.id} t={t} people={people} partnerPeople={partnerPeople} partnerName={partnerName} workstreams={wsList} today={today} busy={busy} canReassign={t.ownerId === meId || isLead}
       onCancel={() => setEditing(null)} onSave={(body, due) => run(async () => {
         let v = t.version;
         if (due) v = (await call(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, ...due })).version;
@@ -223,7 +225,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             {t.blocked && <div className="sub blocked-line">{t.blocked.onId ? <><Help term="blocked_on">Waiting on</Help> <PersonLink id={t.blocked.onId}>{names[t.blocked.onId]}</PersonLink>: </> : <><Help term="status_blocked">Blocked</Help>: </>}{t.blocked.ask}</div>}
             {t.links.length > 0 && <div className="sub"><TaskLinkChips links={t.links} onMore={() => { setOpenId(t.id); setStartStatus(undefined); }} /></div>}
           </td>
-          <td data-label="Owner"><Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /></td>
+          <td data-label={partnerName ? 'Nicobar Owner' : 'Owner'}>{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /> : <span className="dim">—</span>}</td>
+          {partnerName && <td data-label={`${partnerName} Owner`}>{t.partnerOwner ? <span className="person-cell"><Avatar name={t.partnerOwner} />{t.partnerOwner}</span> : <span className="dim">—</span>}</td>}
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
             <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
             {t.dateMoves > 0 && t.statusCategory === 'open' && (
@@ -264,8 +267,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const table = (rows: Task[], empty: React.ReactNode) => (
     <div className="card table-card">
       <table className="stacked board sticky-head">
-        <thead><tr><th aria-label="Done" /><th>Task</th><th>Owner</th><th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
-        <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={6} className="empty-cell">{empty}</td></tr>}</tbody>
+        <thead><tr><th aria-label="Done" /><th>Task</th>{partnerName ? <><th>Nicobar Owner</th><th>{partnerName} Owner</th></> : <th>Owner</th>}<th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
+        <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={7} className="empty-cell">{empty}</td></tr>}</tbody>
       </table>
     </div>
   );
@@ -293,7 +296,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       </div>
 
       {importOpen && <ImportPanel what="tasks" busy={busy} today={today} onRead={async (b) => { if (await planOp({ op: 'importMinutes', ...b })) setImportOpen(false); }} />}
-      {addOpen && <AddTask projectId={projectId} people={people} meId={meId} today={today} workstreams={wsList} defaultWs={ws !== 'All' && ws !== '__none' ? ws : ''} onDone={() => setAddOpen(false)} />}
+      {addOpen && <AddTask projectId={projectId} people={people} partnerPeople={partnerPeople} partnerName={partnerName} meId={meId} today={today} workstreams={wsList} defaultWs={ws !== 'All' && ws !== '__none' ? ws : ''} onDone={() => setAddOpen(false)} />}
       {(error || note) && <p className={error ? 'err banner' : 'ok banner'} role={error ? 'alert' : 'status'}>{error ?? note}</p>}
       {!readOnly && proposals.length > 0 && <Inbox mode="tasks" projectId={projectId} proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
 
@@ -303,6 +306,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         {involved.map((p) => (
           <button key={p.id} className="pill" aria-pressed={who === p.id} onClick={() => setWho(who === p.id ? null : p.id)}>
             {p.name.split(' ')[0]} ({open.filter((t) => t.ownerId === p.id).length})
+          </button>
+        ))}
+        {partnerPeople.filter((n) => tasks.some((t) => t.partnerOwner === n)).map((n) => (
+          <button key={n} className="pill pill-partner" aria-pressed={who === `partner:${n}`} onClick={() => setWho(who === `partner:${n}` ? null : `partner:${n}`)}>
+            {n} ({open.filter((t) => t.partnerOwner === n).length})
           </button>
         ))}
         {filtered && <button className="act" onClick={clearAll}>Clear filters</button>}
@@ -406,7 +414,7 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
   const ok = text.trim().length > 0;
   return (
     <tr className="prompt-row">
-      <td colSpan={6}>
+      <td colSpan={7}>
         <div className="prompt">
           <div className="small">{label}</div>
           <div className="row">
@@ -435,32 +443,42 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
   );
 }
 
-function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, onSave }: {
-  t: Task; people: P[]; workstreams: string[]; today: string; busy: boolean; canReassign: boolean; onCancel: () => void;
+function EditRow({ t, people, partnerPeople, partnerName, workstreams, today, busy, canReassign, onCancel, onSave }: {
+  t: Task; people: P[]; partnerPeople: string[]; partnerName: string | null; workstreams: string[]; today: string; busy: boolean; canReassign: boolean; onCancel: () => void;
   onSave: (body: Record<string, unknown>, due: { newDueOn: string; reason: string } | null) => void;
 }) {
-  const [f, setF] = useState({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined as string | undefined, dueOn: t.dueOn, reason: '', workstream: t.workstream ?? '' });
+  const [f, setF] = useState({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined as string | undefined, dueOn: t.dueOn, reason: '', workstream: t.workstream ?? '', partnerOwner: t.partnerOwner ?? '' });
   const moved = f.dueOn !== t.dueOn;
   const body: Record<string, unknown> = {};
   if (f.title !== t.title) body.title = f.title;
   if (f.description !== (t.description ?? '')) body.description = f.description || null;
   if (f.note !== (t.note ?? '')) body.note = f.note || null;
-  if (f.ownerId !== t.ownerId) Object.assign(body, ownerFields(f.ownerId, f.ownerRole));
+  if (f.ownerId !== t.ownerId) Object.assign(body, f.ownerId ? ownerFields(f.ownerId, f.ownerRole) : { ownerId: null });
   if (f.workstream !== (t.workstream ?? '')) body.workstream = f.workstream || null;
-  const ok = f.title.trim().length >= 3 && ownerReady(f.ownerId, f.ownerRole) && (!moved || f.reason.trim().length > 0) && (moved || Object.keys(body).length > 0);
+  if (f.partnerOwner !== (t.partnerOwner ?? '')) body.partnerOwner = f.partnerOwner || null;
+  const owned = partnerName ? (!!f.partnerOwner || (!!f.ownerId && ownerReady(f.ownerId, f.ownerRole))) : ownerReady(f.ownerId, f.ownerRole);
+  const ok = f.title.trim().length >= 3 && owned && (!moved || f.reason.trim().length > 0) && (moved || Object.keys(body).length > 0);
   return (
     <tr className="editing-row">
-      <td colSpan={6}>
+      <td colSpan={7}>
         <div className="edit-grid">
           <label className="f wide"><span>Task</span><input value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           <label className="f wide"><span>What it’s about</span><textarea rows={2} value={f.description} maxLength={600} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
-          <label className="f"><span>Owner</span>
+          <label className="f"><span>{partnerName ? 'Nicobar Owner' : 'Owner'}</span>
             <OwnerPicker projectId={t.projectId} value={f.ownerId} people={people} disabled={!canReassign} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
           </label>
+          {partnerName && f.ownerId && canReassign && <button type="button" className="mini-btn" onClick={() => setF({ ...f, ownerId: '', ownerRole: undefined })}>No Nicobar owner</button>}
           {workstreams.length > 0 && (
             <label className="f"><span>Sub-project</span>
               <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
+              </Select>
+            </label>
+          )}
+          {(partnerPeople.length > 0 || t.partnerOwner) && (
+            <label className="f"><span>{partnerName ?? 'Partner'} Owner</span>
+              <Select value={f.partnerOwner} onChange={(v) => setF({ ...f, partnerOwner: v })}>
+                <option value="">No one</option>{[...new Set([...partnerPeople, ...(t.partnerOwner ? [t.partnerOwner] : [])])].map((n) => <option key={n}>{n}</option>)}
               </Select>
             </label>
           )}
@@ -481,12 +499,12 @@ function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, o
   );
 }
 
-function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDone }: {
-  projectId: string; people: P[]; meId: string; today: string; workstreams: string[]; defaultWs: string; onDone: () => void;
+function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, workstreams, defaultWs, onDone }: {
+  projectId: string; people: P[]; partnerPeople: string[]; partnerName: string | null; meId: string; today: string; workstreams: string[]; defaultWs: string; onDone: () => void;
 }) {
   const router = useRouter();
   const inProject = (useProjectPeople()[projectId] ?? []).includes(meId);
-  const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs };
+  const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs, partnerOwner: '' };
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -511,7 +529,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     <form className="card add-form" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError(null);
       try {
-        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null });
+        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...(f.ownerId ? ownerFields(f.ownerId, f.ownerRole) : { ownerId: null }), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null, partnerOwner: f.partnerOwner || null });
         if (made?.id) arrivals.add(made.id);
         notify('Task added');
         setF(blank); router.refresh(); onDone();
@@ -522,9 +540,16 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
       <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
-        <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
+        <label className="f"><span>{partnerName ? 'Nicobar Owner' : <>Owner <span className="req" aria-hidden="true">*</span></>}</span>
           <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
+        {partnerName && (
+          <label className="f"><span>{partnerName} Owner</span>
+            <Select value={f.partnerOwner} onChange={(v) => setF({ ...f, partnerOwner: v })}>
+              <option value="">No one</option>{partnerPeople.map((n) => <option key={n}>{n}</option>)}
+            </Select>
+          </label>
+        )}
         {workstreams.length > 0 && (
           <label className="f"><span>Sub-Project</span>
             <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
@@ -534,10 +559,11 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
         )}
         <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
+      {partnerName && <p className="hint" style={{ margin: 0 }}>Pick at least one owner.</p>}
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button>
+        <button className="btn" disabled={busy || !(partnerName ? (!!f.partnerOwner || (!!f.ownerId && ownerReady(f.ownerId, f.ownerRole))) : ownerReady(f.ownerId, f.ownerRole))}>Add task</button>
       </div>
     </form>
   );

@@ -62,6 +62,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           isLead={isLead}
           today={now}
           workstreams={p.workstreams}
+          partnerPeople={p.partnerName ? p.partnerPeople : []}
+          partnerName={p.partnerName}
           proposals={await pendingProposals(d, p.id)}
           log={groupLog(await projectLog(d, p.id, 500), names, { [p.id]: p.name }).map((e) => ({
             id: e.key, at: fmtStamp(e.at), day: istDate(e.at), whoId: e.actor_id, who: e.actorName ?? (e.origin === 'sheet' ? 'Sheet reader' : 'System'),

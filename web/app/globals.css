@@ -897,11 +897,22 @@ td .flag { margin-top: var(--space-xxs); }
 .pform .target-date-pair .datefield { flex: 1 1 100%; min-width: 0; }
 @media (max-width: 600px) { .pform .target-date { flex-basis: 100%; } }
 .pform .pform-side { font: var(--type-heading); color: var(--ink); margin-top: var(--space-xs); }
-.pform .pform-sub { font: var(--type-state); color: var(--ink-2); margin-top: var(--space-xs); }
+.pform .pform-sub { font: var(--type-label); color: var(--ink-2); margin-top: var(--space-xs); }
 .pform .pform-note { margin: calc(-1 * var(--space-xs)) 0 0; }
 .pform .pform-actions { justify-content: flex-end; align-items: center; }
 .pform .pform-why { margin: 0; text-align: right; }
 .pform .pform-setup { margin-right: auto; color: var(--ink-2); }
+.pform .pform-group > legend { font: var(--type-heading); color: var(--ink); margin-bottom: var(--space-xs); }
+.pform .pform-group + .pform-group, .pform .pform-more { padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
+.pform .pform-date { align-items: flex-end; }
+.pform .pform-date > .pform-date-type { flex: 0 1 200px; }
+.pform .pform-date > .f:last-child { flex: 1 1 200px; }
+.pform .pform-more-in { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-md) 2px 2px; }
+/* Every label in More options reads like the rest of the form: the same size, colour and gap to its field. */
+.pform .pform-more-in > .f { display: flex; flex-direction: column; gap: var(--space-xxs); }
+.pform .pform-more-in > .f > span { font: var(--type-label); color: var(--ink-2); }
+.pform .pform-more-in .pform-note { margin: 0 0 var(--space-xxs); }
+.pform .pform-more-in .sel-btn { width: 100%; }
 .kind-pick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
 .kind-pick button { font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: var(--space-xxs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); border: var(--rule) solid var(--line-strong); background: var(--surface); color: var(--ink);
   transition: background var(--dur-state) var(--ease); }

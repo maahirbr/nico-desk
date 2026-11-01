@@ -56,7 +56,7 @@ export { Avatar };
 
 // A person's name or mark that opens their page (/people/[id]). Without an id it is plain text.
 export function PersonLink({ id, className, children }: { id?: string | null; className?: string; children: React.ReactNode }) {
-  if (!id) return <span className={className}>{children}</span>;
+  if (!id || id.startsWith('partner:')) return <span className={className}>{children}</span>; // a partner person has no page
   return <Link href={`/people/${id}`} className={`plink${className ? ` ${className}` : ''}`}>{children}</Link>;
 }
 

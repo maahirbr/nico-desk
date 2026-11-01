@@ -102,6 +102,8 @@ export async function upgrade(db: Db) {
   await db.exec(FEEDBACK_EXTRAS_UPGRADE);
   // 30 Oct: Done and Not now on a note, and news of it for the writer and the +1s.
   await db.exec(FEEDBACK_RESOLVE_UPGRADE);
+  // 1 Nov: on a partner project, a partner person can own a task, with or without a Nicobar owner; one of the two is needed.
+  await db.exec(PARTNER_OWNER_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
@@ -191,6 +193,16 @@ CREATE TABLE IF NOT EXISTS feedback_replies (
 );
 CREATE INDEX IF NOT EXISTS feedback_replies_note ON feedback_replies (feedback_id, created_at);
 ALTER TABLE feedback_replies ENABLE ROW LEVEL SECURITY;`;
+
+// Idempotent: a partner owner on tasks, the Nicobar owner optional when there is one. The same as lib/schema.ts.
+export const PARTNER_OWNER_UPGRADE = `
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS partner_owner text CHECK (char_length(partner_owner) <= 60);
+ALTER TABLE tasks ALTER COLUMN owner_id DROP NOT NULL;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_constraint WHERE conname = 'tasks_has_owner') THEN
+    ALTER TABLE tasks ADD CONSTRAINT tasks_has_owner CHECK (owner_id IS NOT NULL OR partner_owner IS NOT NULL);
+  END IF;
+END $$;`;
 
 // Idempotent: a note's state (open, done, not now) and feedback_news (RLS on). The same SQL as lib/schema.ts.
 export const FEEDBACK_RESOLVE_UPGRADE = `

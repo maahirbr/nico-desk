@@ -3,7 +3,7 @@ import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { projectCounts, projectMembers } from '@/lib/plan';
 import { seenProjects } from '@/lib/visibility';
-import { countdown } from '@/lib/planUtil';
+import { countdown, isPartnerProject } from '@/lib/planUtil';
 import { meetsWords } from '@/lib/meetDates';
 import { fmtDate, today } from '@/lib/time';
 import { Avatar } from '@/components/chips';
@@ -40,7 +40,7 @@ export default async function Projects() {
           {p.archivedAt ? <Help term="project_archived" host><span className="st st-status tone-idle">Archived</span></Help> : <Help term={st.help} host><span className={`st st-status tone-${st.tone}`}>{st.word}</span></Help>}
         </div>
         <div className="kind-tag">
-          <Help term={p.kind === 'plan' ? 'project_partner' : 'project_internal'} host><span className="kind-word">{p.kind === 'plan' ? `Partner · ${p.partnerName ?? 'partner'}` : 'Internal'}</span></Help>
+          <Help term={isPartnerProject(p) ? 'project_partner' : 'project_internal'} host><span className="kind-word">{isPartnerProject(p) ? `Partner · ${p.partnerName ?? 'partner'}` : 'Internal'}</span></Help>
           {p.eyebrow && <span className="kind-eyebrow">{p.eyebrow}</span>}
         </div>
         {p.intro && <p className="pcard-goal">{p.intro}</p>}

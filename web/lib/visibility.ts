@@ -65,13 +65,29 @@ export type LedgerData = {
   all: boolean; people: Set<string> | null; rows: LedgerRow[]; tasks: Task[]; prev: Task[]; openNow: Task[]; waitingOn: Task[];
   countOnly: string[]; // stripped: a member may not open these
   noLink: string[];    // shown in full to a lead or admin, but outside the projects they may open
+  partners: { id: string; name: string; role: string }[]; // partner owners, counted like members (1 Nov)
 };
 
+// A partner owner's ledger id: partner people are names on a partner project, not accounts.
+export const partnerKey = (partnerName: string, person: string) => `partner:${partnerName}:${person}`;
+
 export async function ledgerFor(db: Tx, me: Me, w: { from: string; to: string; prevFrom: string; prevTo: string; personId?: string; today?: string }): Promise<LedgerData> {
-  const [sight, team] = await Promise.all([sightFor(db, me), teamTasks(db, me.team.id, w.today)]);
+  const [sight, everything, projects] = await Promise.all([sightFor(db, me), teamTasks(db, me.team.id, w.today, true), teamProjects(db, me.team.id)]);
   const all = isLeadOrAdmin(me.person.appRoles);
+  // Partner owners are counted like members for now (the PM's call, 1 Nov): each task a partner owns also counts once
+  // under that partner person, whether or not a Nicobar person owns it too. Leads and admins see them.
+  const partnerOf = new Map(projects.filter((p) => p.partnerName).map((p) => [p.id, p.partnerName!]));
+  const partnerCopies = all ? everything.flatMap((t) => {
+    const firm = t.partnerOwner && t.projectId ? partnerOf.get(t.projectId) : undefined;
+    return firm ? [{ ...t, ownerId: partnerKey(firm, t.partnerOwner!) }] : [];
+  }) : [];
+  const team = [...everything.filter((t) => t.ownerId), ...partnerCopies];
+  const partners = [...new Map(partnerCopies.map((t) => {
+    const [, firm, name] = t.ownerId.split(':');
+    return [t.ownerId, { id: t.ownerId, name, role: firm }];
+  })).values()].sort((a, b) => a.name.localeCompare(b.name));
   const people = all ? null : await workingWith(db, me.team.id, me.person.id);
-  const inScope = (id: string | null | undefined) => !!id && (!people || people.has(id));
+  const inScope = (id: string | null | undefined) => !!id && (!people || people.has(id) || id.startsWith('partner:'));
   const personId = w.personId && inScope(w.personId) ? w.personId : undefined;
   const scoped = team.filter((t) => inScope(t.ownerId));
   const unseen = new Set<string>();
@@ -88,5 +104,5 @@ export async function ledgerFor(db: Tx, me: Me, w: { from: string; to: string; p
     // Open tasks waiting on someone in view, for their "others waiting on them" count.
     waitingOn: shape(team.filter((t) => t.statusCategory === 'open' && inScope(t.blocked?.onId))),
   };
-  return { all, people, ...data, countOnly: all ? [] : [...unseen], noLink: all ? [...unseen] : [] };
+  return { all, people, ...data, partners, countOnly: all ? [] : [...unseen], noLink: all ? [...unseen] : [] };
 }
