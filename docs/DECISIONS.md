@@ -1218,3 +1218,17 @@ the * says they are always there. The hints under Nickname and Phone go, the ema
 in with." and the one under job title and department reads "Set by admin." Saving still changes only name, nickname
 and phone. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-01 · Opus 5.5 · Activity shows who is using NicoDesk in the pilot
+
+The PM's call: the Activity page (admins only, under More) answers who signed in, who uses it daily and who has gone
+quiet. Four coloured tiles count and filter (`?status=`), each with a one-line meaning: Daily (opened on all 5 weekdays,
+Mon to Fri, of the 7 days before today), Some days (opened at least once in the last 7 days), Gone quiet (signed in
+before, not in the last 7 days) and Never signed in. The table shows status, last active, a dot per day for the last 14
+(weekends lighter), changes in the last 7 days, and Copy invite for someone who never signed in. The Chat, Comments and
+"Last change or comment" columns go. Visit days start on 28 Oct, so "ever signed in" also takes older traces from the
+live pilot on (11 Oct): the Google photo saved at sign-in, a change in the app or through Claude, feedback, a +1 or
+reply, a comment or chat line, updates marked seen, or a nickname, phone or photo set. Older changes are tasks loaded
+from the old tracker under people's names, so they do not count. Someone who signed in between 11 and 28 Oct, set no
+photo and changed nothing can read as Never; Google Workspace's OAuth log would close that gap. No schema change.
+Rollback: git revert the commit.
