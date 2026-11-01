@@ -289,8 +289,38 @@ describe('the upgrade', () => {
 
   it('is in the fresh schema with RLS on and the same columns', async () => {
     const { rows } = await db.query<{ column_name: string }>(`SELECT column_name FROM information_schema.columns WHERE table_name = 'feedback' ORDER BY ordinal_position`);
-    expect(rows.map((r) => r.column_name)).toEqual(['id', 'person_id', 'path', 'body', 'created_at', 'read_at', 'status', 'closed_by', 'closed_at', 'closed_note']);
+    expect(rows.map((r) => r.column_name)).toEqual(['id', 'person_id', 'path', 'body', 'created_at', 'read_at', 'status', 'closed_by', 'closed_at', 'closed_note', 'kind', 'working_by', 'working_at']);
     const rls = await db.query<{ relrowsecurity: boolean }>(`SELECT relrowsecurity FROM pg_class WHERE relname = 'feedback'`);
     expect(rls.rows[0].relrowsecurity).toBe(true);
+  });
+});
+
+describe('working on it, and working well', () => {
+  it('shows who is working on an open note, tells no one, and clears when it closes', async () => {
+    const { setFeedbackWorking, setFeedbackStatus, listFeedback, feedbackNewsForMe } = await import('../lib/feedback');
+    const m = await member();
+    signIn(m.id);
+    await send({ body: 'the ledger is slow' });
+    const id = await noteId();
+    await setFeedbackWorking(db, await meAs(ADMIN), id, true);
+    expect((await listFeedback(db, await meAs(m.id)))[0]).toMatchObject({ workingById: ADMIN, workingByName: expect.any(String) });
+    expect(await feedbackNewsForMe(db, await meAs(m.id))).toEqual([]); // no news for it
+    await setFeedbackWorking(db, await meAs('per_ada'), id, true); // someone takes it over
+    expect((await listFeedback(db, await meAs(m.id)))[0].workingById).toBe('per_ada');
+    await setFeedbackStatus(db, await meAs('per_ada'), id, 'done');
+    expect((await listFeedback(db, await meAs(m.id)))[0]).toMatchObject({ status: 'done', workingById: null });
+  });
+
+  it('sends praise straight to working well, and moves a note between kinds', async () => {
+    const { setFeedbackKind, setFeedbackWorking, listFeedback } = await import('../lib/feedback');
+    signIn((await member()).id);
+    expect((await send({ body: 'Quick Add is lovely', kind: 'praise' })).status).toBe(200);
+    const id = await noteId();
+    const row = async () => (await listFeedback(db, await meAs(ADMIN))).find((r) => r.id === id)!;
+    expect((await row()).kind).toBe('praise');
+    await setFeedbackKind(db, await meAs(ADMIN), id, 'fix');
+    await setFeedbackWorking(db, await meAs(ADMIN), id, true);
+    await setFeedbackKind(db, await meAs(ADMIN), id, 'praise');
+    expect(await row()).toMatchObject({ kind: 'praise', status: 'open', workingById: null });
   });
 });

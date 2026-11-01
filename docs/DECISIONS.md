@@ -1258,3 +1258,16 @@ Rollback: git revert the commit; the new column and check can stay, but owner_id
 The PM's wording: "One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing is
 sent until you check it and press Send." No other change.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · Feedback: Working on it, and Working well for praise
+
+The PM's call. On an open note to fix, anyone can press Working on it: the note shows "Sam is working on it" (or
+"You are working on it"), sends no news, can be taken over by someone else or stopped, and clears on Done or Not now
+(`feedback.working_by`, `working_at`). The buttons read Working on it, Not now, Done. A note is written as something to
+fix or improve, or something working well, chosen with two small radio buttons above the box (`feedback.kind`); praise goes
+straight to a third view, so the switch reads Open, Resolved, Working well. Praise can be +1'd and replied to, has nothing
+to close, and can be moved back to Open; there is no button to move a note to Working well. The page line reads "You're one
+of NicoDesk's first users, and we'd love your thoughts." The Guide's Feedback line mentions both. No praise had been sent
+on live yet, so nothing needed moving. Schema: `feedback.kind`, `working_by`, `working_at` (FEEDBACK_KIND_UPGRADE); the
+hosted database needs `npm run db:upgrade` before the build that carries it is promoted.
+Rollback: git revert the commit; the new columns can stay.

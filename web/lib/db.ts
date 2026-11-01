@@ -102,6 +102,8 @@ export async function upgrade(db: Db) {
   await db.exec(FEEDBACK_EXTRAS_UPGRADE);
   // 30 Oct: Done and Not now on a note, and news of it for the writer and the +1s.
   await db.exec(FEEDBACK_RESOLVE_UPGRADE);
+  // 2 Nov: a note is praise or something to fix, and someone can say they are working on it.
+  await db.exec(FEEDBACK_KIND_UPGRADE);
   // 1 Nov: on a partner project, a partner person can own a task, with or without a Nicobar owner; one of the two is needed.
   await db.exec(PARTNER_OWNER_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
@@ -203,6 +205,12 @@ DO $$ BEGIN
     ALTER TABLE tasks ADD CONSTRAINT tasks_has_owner CHECK (owner_id IS NOT NULL OR partner_owner IS NOT NULL);
   END IF;
 END $$;`;
+
+// Idempotent: a note's kind (fix or praise) and who is working on it. The same SQL as lib/schema.ts.
+export const FEEDBACK_KIND_UPGRADE = `
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'fix' CHECK (kind IN ('fix','praise'));
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS working_by text REFERENCES people(id);
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS working_at timestamptz;`;
 
 // Idempotent: a note's state (open, done, not now) and feedback_news (RLS on). The same SQL as lib/schema.ts.
 export const FEEDBACK_RESOLVE_UPGRADE = `

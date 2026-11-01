@@ -203,7 +203,11 @@ CREATE TABLE feedback (
   status      text NOT NULL DEFAULT 'open' CHECK (status IN ('open','done','not_now')),
   closed_by   text REFERENCES people(id),
   closed_at   timestamptz,
-  closed_note text CHECK (char_length(closed_note) BETWEEN 1 AND 280)
+  closed_note text CHECK (char_length(closed_note) BETWEEN 1 AND 280),
+  -- 2 Nov: praise (working well) or something to fix, and who has picked a fix up (no news is sent for that).
+  kind        text NOT NULL DEFAULT 'fix' CHECK (kind IN ('fix','praise')),
+  working_by  text REFERENCES people(id),
+  working_at  timestamptz
 );
 CREATE INDEX feedback_created ON feedback (created_at DESC);
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;

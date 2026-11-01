@@ -143,7 +143,7 @@ export function GuideView() {
 
       <section id="feedback" aria-labelledby="g-feedback">
         <h2 id="g-feedback">{title('feedback')}</h2>
-        <p>Press Feedback at the top. Anyone can reply, +1 or mark a note Done. Switch to Resolved to see what is closed.</p>
+        <p>Press Feedback at the top. Share what to fix, and what works well. Anyone can reply, +1, say they are working on it, or mark a note Done.</p>
       </section>
     </article>
   );

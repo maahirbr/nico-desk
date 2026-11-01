@@ -9,8 +9,9 @@ import { notify } from './toast';
 import { EmptyMark, ICON } from './icons';
 import { useUrlText } from './remember';
 
-// The team's notes, for everyone. A switch at the top shows Open (newest first) or Resolved (Done and Not now, most
-// recently closed first); it opens on Open and keeps the choice in the address (?show=resolved). Nothing is removed. Screenshots show as small pictures that open full size. "+1" backs a teammate's open note. Anyone replies, marks
+// The team's notes, for everyone. A switch at the top shows Open (newest first), Resolved (Done and Not now, most recently
+// closed first) or Working well (praise, 2 Nov); it opens on Open and keeps the choice in the address (?show=). Anyone can
+// say they are working on an open note, which shows their name and tells no one. Nothing is removed. Screenshots show as small pictures that open full size. "+1" backs a teammate's open note. Anyone replies, marks
 // a note Done, or Not now with a short reason that shows on the note, and anyone reopens it (the PM's call, 30 Oct).
 // Opening this page marks your feedback news seen, so Home stops showing it. Beside +1, the count and who agreed:
 // "+2 · You and Kabir", up to three names, then "and 2 others", which opens the full list.
@@ -30,6 +31,7 @@ function Agreed({ votes, names }: { votes: number; names: string[] }) {
   );
 }
 export type FeedbackRow = { id: string; personId: string; personName: string; stamp: string; path: string | null; body: string; images: number; votes: number; mine: boolean; others: string[];
+  kind: 'fix' | 'praise'; workingById: string | null; workingByName: string | null;
   status: 'open' | 'done' | 'not_now'; closedByName: string | null; closedAt: string | null; closedStamp: string | null; closedNote: string | null;
   replies: { id: string; authorName: string; body: string; stamp: string }[] };
 
@@ -43,7 +45,7 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   const [reason, setReason] = useState('');
   const [moving, setMoving] = useState<string | null>(null);
   const [show, setShow] = useUrlText('show');
-  const resolved = show === 'resolved';
+  const view = show === 'resolved' ? 'resolved' : show === 'praise' ? 'praise' : 'open';
   // Seeing this page counts as seeing the news on Home.
   useEffect(() => {
     if (readOnly || !hasNews) return;
@@ -55,6 +57,14 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
     try { await api(`/feedback/${id}/replies`, 'POST', { body: draft.trim() }); setDraft(''); setReplying(null); router.refresh(); }
     catch (e) { notify((e as Error).message); }
     finally { setSending(false); }
+  }
+  async function working(id: string, on: boolean) {
+    try { await api(`/feedback/${id}/working`, on ? 'POST' : 'DELETE'); router.refresh(); }
+    catch (e) { notify((e as Error).message); }
+  }
+  async function setKind(id: string, kind: 'fix' | 'praise') {
+    try { await api(`/feedback/${id}/kind`, 'POST', { kind }); notify(kind === 'praise' ? 'Moved to Working well' : 'Moved to Open'); router.refresh(); }
+    catch (e) { notify((e as Error).message); }
   }
   async function move(id: string, status: FeedbackRow['status'], why?: string) {
     if (moving) return;
@@ -75,8 +85,10 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
     catch (e) { setVote((v) => ({ ...v, [r.id]: cur })); notify((e as Error).message); }
   }
   if (rows.length === 0) return <div className="empty-state"><EmptyMark d={ICON['/feedback']} /><p>No feedback yet.</p></div>;
-  const open = rows.filter((r) => r.status === 'open');
-  const closed = rows.filter((r) => r.status !== 'open').sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''));
+  // Open and Resolved hold notes to fix; Working well holds praise, which has nothing to close (2 Nov).
+  const praise = rows.filter((r) => r.kind === 'praise');
+  const open = rows.filter((r) => r.kind !== 'praise' && r.status === 'open');
+  const closed = rows.filter((r) => r.kind !== 'praise' && r.status !== 'open').sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''));
   const item = (r: FeedbackRow) => {
     const v = vote[r.id] ?? { votes: r.votes, mine: r.mine, others: r.others };
     const agreed = <Agreed votes={v.votes} names={[...(v.mine ? ['You'] : []), ...v.others]} />;
@@ -87,6 +99,7 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
           <b>{r.personName}</b><span className="dim">{r.stamp}</span>
           {r.path && <span className="dim">about {PAGES.find(([p]) => p === r.path)?.[1] ?? r.path}</span>}
         </div>
+        {r.kind === 'fix' && isOpen && r.workingByName && <p className="fb-working small">{r.workingById === meId ? 'You are' : `${r.workingByName} is`} working on it</p>}
         <p className="fb-body">{r.body}</p>
         {r.images > 0 && (
           <div className="fb-shots">
@@ -141,9 +154,14 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
         ) : (
           <div className="fb-actions">
             <button type="button" className="linkbtn" onClick={() => { setReplying(r.id); setDraft(''); setNotNow(null); }}>Reply</button>
-            {isOpen ? (<>
-              <button type="button" className="mini-btn fb-done" disabled={moving === r.id} onClick={() => void move(r.id, 'done')}>✓ Done</button>
+            {r.kind === 'praise' ? (
+              <button type="button" className="mini-btn" onClick={() => void setKind(r.id, 'fix')}>Move to Open</button>
+            ) : isOpen ? (<>
+              {r.workingById === meId
+                ? <button type="button" className="mini-btn" onClick={() => void working(r.id, false)}>Stop working on it</button>
+                : <button type="button" className="mini-btn" onClick={() => void working(r.id, true)}>Working on it</button>}
               <button type="button" className="mini-btn" disabled={moving === r.id} onClick={() => { setNotNow(r.id); setReason(''); setReplying(null); }}>Not now</button>
+              <button type="button" className="mini-btn fb-done" disabled={moving === r.id} onClick={() => void move(r.id, 'done')}>✓ Done</button>
             </>) : <button type="button" className="mini-btn" disabled={moving === r.id} onClick={() => void move(r.id, 'open')}>Reopen</button>}
           </div>
         ))}
@@ -153,13 +171,16 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   return (
     <>
       <span className="seg fb-switch" role="group" aria-label="Show">
-        <button type="button" aria-pressed={!resolved} onClick={() => setShow('')}>Open <span className="count-badge">{open.length}</span></button>
-        <button type="button" aria-pressed={resolved} onClick={() => setShow('resolved')}>Resolved <span className="count-badge">{closed.length}</span></button>
+        <button type="button" aria-pressed={view === 'open'} onClick={() => setShow('')}>Open <span className="count-badge">{open.length}</span></button>
+        <button type="button" aria-pressed={view === 'resolved'} onClick={() => setShow('resolved')}>Resolved <span className="count-badge">{closed.length}</span></button>
+        <button type="button" aria-pressed={view === 'praise'} onClick={() => setShow('praise')}>Working well <span className="count-badge">{praise.length}</span></button>
       </span>
-      {resolved
+      {view === 'resolved'
         ? (closed.length > 0 ? <ul className="fb-list">{closed.map(item)}</ul> : <p className="small dim">Nothing resolved yet.</p>)
-        : (open.length > 0 ? <ul className="fb-list">{open.map(item)}</ul>
-          : <p className="small dim">Nothing open. Every note is resolved. <button type="button" className="linkbtn" onClick={() => setShow('resolved')}>See resolved</button></p>)}
+        : view === 'praise'
+          ? (praise.length > 0 ? <ul className="fb-list">{praise.map(item)}</ul> : <p className="small dim">No praise yet. When something works well, say so!</p>)
+          : (open.length > 0 ? <ul className="fb-list">{open.map(item)}</ul>
+            : <p className="small dim">Nothing open. Every note is resolved. <button type="button" className="linkbtn" onClick={() => setShow('resolved')}>See resolved</button></p>)}
     </>
   );
 }

@@ -6,6 +6,6 @@ import { readBody, route } from '@/lib/http';
 export const GET = route(({ me, db }) => listFeedback(db, me));
 
 export const POST = route(async ({ req, me, db }) => {
-  const input = await readBody(req, z.object({ body: z.string().max(FEEDBACK_MAX + 200), path: z.string().max(500).nullish() }).strict());
+  const input = await readBody(req, z.object({ body: z.string().max(FEEDBACK_MAX + 200), path: z.string().max(500).nullish(), kind: z.enum(['fix', 'praise']).optional() }).strict());
   return sendFeedback(db, me, input);
 });
