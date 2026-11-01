@@ -1271,3 +1271,11 @@ of NicoDesk's first users, and we'd love your thoughts." The Guide's Feedback li
 on live yet, so nothing needed moving. Schema: `feedback.kind`, `working_by`, `working_at` (FEEDBACK_KIND_UPGRADE); the
 hosted database needs `npm run db:upgrade` before the build that carries it is promoted.
 Rollback: git revert the commit; the new columns can stay.
+
+## 2026-11-02 · Opus 5.5 · Team opens on By status, and the Ledger loses its Finished section
+
+The PM's call. The Team page opens on By status (By person is one click away, and the choice is kept as before); finding
+a person by name covers the person view. By status still shows this week only, with no Later group. On the Ledger, the
+Finished section repeated the top tiles and the people cards, so it goes; the five top tiles stay, and the Closed late
+tile's list now opens with the most-late tasks first. Definitions stay at the foot. No schema change.
+Rollback: git revert the commit.
