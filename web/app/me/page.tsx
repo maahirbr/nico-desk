@@ -7,6 +7,7 @@ import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
 import { feedbackNewsForMe } from '@/lib/feedback';
 import { HomeView } from '@/components/HomeView';
+import { firstSeenDay } from '@/lib/activity';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,9 @@ function greeting(): string {
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const me = await requireMe();
+  const sp = await searchParams;
   const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
@@ -24,6 +26,18 @@ export default async function Home() {
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
     myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me),
   ]);
+  // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
+  const first = await firstSeenDay(d, me.realPerson.id);
+  const isNew = sp.welcome === '1' || !first || first >= addDays(t, -6);
+  const { rows: [prof] } = isNew ? await d.query<{ done: boolean }>(
+    `SELECT (photo_url IS NOT NULL OR nickname IS NOT NULL OR phone IS NOT NULL OR EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id)) AS done
+       FROM people p WHERE id = $1`, [me.person.id]) : { rows: [] as { done: boolean }[] };
+  const open = [...mine.assigned, ...mine.tasks];
+  const welcome = isNew && !me.viewingAs ? {
+    firstName: me.person.displayName.split(' ')[0], projects: onProjects.map((p) => p.name), waiting: open.length,
+    late: open.filter((x) => x.dueOn < t).length, dueToday: open.filter((x) => x.dueOn === t).length, profileDone: !!prof?.done,
+    firstTaskId: [...open].sort((a, b) => a.dueOn.localeCompare(b.dueOn))[0]?.id ?? null,
+  } : null;
   const weekStart = mondayOf(t);
   const doneThisWeek = all.filter((x) => x.ownerId === me.person.id && x.statusCategory === 'done' && x.closedAt && istDate(x.closedAt) >= weekStart).sort(latestEndedFirst);
   // Dropped tasks fold away under Home's own collapsed list. A drop sets no closed_at, so all of them show there.
@@ -57,6 +71,7 @@ export default async function Home() {
       projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       myProjects={onProjects}
+      welcome={welcome}
     />
   );
 }

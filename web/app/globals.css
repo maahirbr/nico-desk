@@ -1786,3 +1786,17 @@ a.rlink { color: inherit; text-decoration: none; }
 .fb-kind input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
 /* Read aloud, not shown. */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Home's welcome for someone in their first week (components/WelcomeCard.tsx, 2 Nov). */
+.welcome { margin: var(--space-md) 0; border-color: color-mix(in srgb, var(--primary) 30%, var(--hairline)); }
+.welcome-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); }
+.welcome-head h2 { margin: 0; font: var(--type-heading); }
+.welcome-x { border: 0; background: none; color: var(--ink-3); cursor: pointer; font-size: 14px; padding: var(--space-xxs); }
+.welcome-facts { margin: var(--space-sm) 0; padding-left: var(--space-md); display: grid; gap: var(--space-xxs); }
+.welcome-lede { margin: var(--space-sm) 0 var(--space-xs); }
+.welcome-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
+.welcome-steps li { display: flex; align-items: center; gap: var(--space-xs); }
+.welcome-steps li.done a, .welcome-steps li.done .linkbtn { color: var(--ink-3); text-decoration: line-through; }
+.welcome-steps a, .welcome-steps .linkbtn { margin: 0; border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--primary); text-decoration: none; }
+.welcome-steps a:hover, .welcome-steps .linkbtn:hover { text-decoration: underline; }
+.welcome-tick { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: var(--rule) solid var(--line-strong); font-size: 11px; color: var(--canvas); flex: none; }
+.welcome-steps li.done .welcome-tick { background: var(--status-done-fg); border-color: var(--status-done-fg); }

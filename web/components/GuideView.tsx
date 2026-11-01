@@ -1,5 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useViewer } from './viewer';
+import { markWelcomeStep } from './WelcomeCard';
+
 import '../app/guide.css';
 import { HELP, type HelpTerm } from './help';
 import { SHORTCUTS } from './keys';
@@ -39,6 +43,8 @@ const FLAGS: { term: HelpTerm; word: string }[] = [
 ];
 
 export function GuideView() {
+  const { meId } = useViewer();
+  useEffect(() => { if (meId) markWelcomeStep(meId, 'guide'); }, [meId]); // ticks the welcome card's first step
   return (
     <article className="guide calm">
       <header className="page-head">

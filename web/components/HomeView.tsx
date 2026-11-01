@@ -18,6 +18,7 @@ import { FeedbackRepliesCard, type HomeReply } from './FeedbackRepliesCard';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { NewNotices } from './NewNotices';
 import { UpdatesCard } from './UpdatesCard';
+import { WelcomeCard, markWelcomeStep, type Welcome } from './WelcomeCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
@@ -45,11 +46,12 @@ export function clearLine(personId: string, day: string): string {
   return CLEAR_LINES[h % CLEAR_LINES.length];
 }
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
+  welcome?: Welcome | null; // someone's first week (components/WelcomeCard.tsx)
 }) {
   const readOnly = useReadOnly();
   const [openId, setOpenId] = useOpenTask();
@@ -104,6 +106,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const nextLater = mine.filter((t) => t.dueOn > weekEnd).length;
   const nextUp = nextWeek ? `Next up: ${nextWeek} ${nextWeek === 1 ? 'task' : 'tasks'} this week` : nextLater ? `Next up: ${nextLater} ${nextLater === 1 ? 'task' : 'tasks'} later` : '';
   const open = (id: string, s?: RowAction) => {
+    markWelcomeStep(meId, 'task');
     setOpenId(id); setStartStatus(s);
     if (assignedNotice[id] && !readOnly) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
   };
@@ -123,6 +126,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         </div>
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
+
+      {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
 
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 

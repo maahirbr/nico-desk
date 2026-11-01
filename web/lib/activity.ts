@@ -87,3 +87,16 @@ export async function teamAdoption(db: Db, teamId: string): Promise<AdoptionRow[
     }))
     .sort((a, b) => RANK[a.status] - RANK[b.status] || (b.lastActive ?? '').localeCompare(a.lastActive ?? '') || a.name.localeCompare(b.name));
 }
+
+// The first day this person used NicoDesk (India time): their first visit, or an older trace of them signed in, from the
+// live pilot on (see teamAdoption). Null if none yet. Home's welcome card shows for the first 7 days (2 Nov).
+export async function firstSeenDay(db: Db, personId: string): Promise<string | null> {
+  const { rows } = await db.query<{ first: string | null }>(`
+    SELECT min(d)::text AS first FROM (
+      SELECT day AS d FROM visit_days WHERE person_id = $1
+      UNION ALL SELECT (at AT TIME ZONE 'Asia/Kolkata')::date FROM events WHERE actor_id = $1 AND origin IN ('app','claude')
+      UNION ALL SELECT (created_at AT TIME ZONE 'Asia/Kolkata')::date FROM feedback WHERE person_id = $1
+      UNION ALL SELECT (seen_at AT TIME ZONE 'Asia/Kolkata')::date FROM update_seen WHERE person_id = $1
+    ) t WHERE d >= $2`, [personId, LIVE_SINCE]);
+  return rows[0]?.first ?? null;
+}

@@ -1286,3 +1286,14 @@ The PM's call. Every word it defined (ahead, on time, late, flagged early, misse
 in time, moved late) is already explained in help mode on the same page, and the Guide covers late and at risk, so the
 box goes. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · A proper first day: a welcome card on Home
+
+The PM's call. For someone in their first 7 days on NicoDesk (their first visit, or an older trace of them since the live
+pilot, as on Activity: `firstSeenDay`), Home opens with a welcome card: their name, the projects they are on, the tasks
+waiting for them (how many late, how many due today), and three steps that tick themselves (read the quick guide, add a
+photo or nickname, open their first task, or add one if they have none). All three done, it says "You're all set" and
+goes; ✕ closes it for good; View as never shows it. No step-by-step tour, by choice. What was done and closed is kept per
+person in the browser (localStorage); the profile step reads the server. `?welcome=1` shows the card any time, to
+preview. The old "New here?" line (GuideNote) was never shown on any page; the card takes its place. No schema change.
+Rollback: git revert the commit.
