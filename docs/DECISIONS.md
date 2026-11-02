@@ -1342,3 +1342,8 @@ Rollback: `vercel promote nico-desk-8t1r2go1f-maahirbharatram-3547s-projects.ver
 
 Pilot users had to sign in again almost every day, because a sign-in lasted a fixed 12 hours. It now lasts a fixed 30 days, the same as the Claude connection's refresh token. It does not renew with use, so each person goes back through Google once a month. View as stays at 12 hours. Activity counts the first signed-in request of a day, not a sign-in, so its numbers stay valid, but more people may get in when the sign-in page no longer stops them. The cost: a lost or shared laptop stays signed in for up to 30 days, and Sign out clears only that browser. Marking a person inactive still ends their access on the next request. The security audit must cover this. Sessions made before this build keep their 12 hours.
 Rollback: `vercel promote nico-desk-kk7urrl04-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. Cookies already issued stay valid until their 30 days end, unless `NICO_SESSION_SECRET` is changed, which signs everyone out.
+
+## 2026-11-02 · Opus 5.5 · A sign-in lasts 7 days, not 30
+
+The repo owner chose a week soon after the 30-day build went live. Each person goes back through Google once a week, and a lost or shared laptop stays signed in for at most 7 days. It still does not renew with use, and View as stays at 12 hours. A cookie issued by the 30-day build keeps its 30 days, because the expiry is inside the signed token.
+Rollback: `vercel promote nico-desk-5e6ein2rp-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.

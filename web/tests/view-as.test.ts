@@ -194,10 +194,10 @@ describe('how long a cookie lasts', () => {
   const later = (ms: number) => { const t = Date.now() + ms; vi.spyOn(Date, 'now').mockReturnValue(t); };
   afterEach(() => { vi.restoreAllMocks(); });
 
-  it('keeps a sign-in for 30 days, then ends it', async () => {
-    expect(cookieOptions.maxAge).toBe(30 * 24 * 3600);
+  it('keeps a sign-in for 7 days, then ends it', async () => {
+    expect(cookieOptions.maxAge).toBe(7 * 24 * 3600);
     signIn(LEAD);
-    later(29 * DAY);
+    later(6 * DAY);
     expect((await currentMe())?.person.id).toBe(LEAD);
     later(2 * DAY);
     expect(await currentMe()).toBeNull();

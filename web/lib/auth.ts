@@ -13,7 +13,7 @@ import { noteVisit } from './activity';
 // NICO_DEV_SIGNIN=1. Either way the person must be on the roster, active, and on the allowed email domain.
 
 export const COOKIE = 'nd_session';
-const MAX_AGE_S = 60 * 60 * 24 * 30;
+const MAX_AGE_S = 60 * 60 * 24 * 7;
 const VIEW_MAX_AGE_S = 60 * 60 * 12;
 
 // person is who the pages and rules treat as the signed-in user. When an admin is "viewing as" someone,
