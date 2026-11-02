@@ -367,7 +367,10 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
         // The person who had the task hears it moved, in the app only. Not when they moved it themselves.
         if (c.row.owner_id && c.row.owner_id !== meId) await notice(tx, c.row.owner_id, id, 'reassigned_away', todayIst());
       }
-      if (input.partnerOwner) await checkPartnerOwner(tx, input.projectId !== undefined ? input.projectId : c.row.project_id, input.partnerOwner.trim());
+      // A move counts too: a partner owner who stays must be on the new project's partner team.
+      const partner = input.partnerOwner !== undefined ? input.partnerOwner?.trim() || null : c.row.partner_owner;
+      const nextProject = input.projectId !== undefined ? input.projectId : c.row.project_id;
+      if (partner && (input.partnerOwner || nextProject !== c.row.project_id)) await checkPartnerOwner(tx, nextProject, partner);
       if (input.projectId) {
         const { rows } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, c.row.team_id]);
         if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');

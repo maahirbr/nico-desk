@@ -44,4 +44,26 @@ describe('partner projects', () => {
     expect(moved.title).toBe('Pack the first 200 hampers');
     expect(await code(s.editTask(db, MEMBER, t.id, { version: moved.version, partnerOwner: null }))).toBe('400 invalid_body'); // would leave no owner
   });
+
+  it('refuse a project change that leaves a partner owner off the new project\'s partner team', async () => {
+    const p = await partnerProject();
+    const other = await createProject(db, ME, TEAM_ID, {
+      name: 'Print run', kind: 'tasks', ownerId: ME, goal: 'A second studio', workstreams: [], members: [], partnerName: 'Press', partnerPeople: ['Asha'],
+    });
+    const plain = await createProject(db, ME, TEAM_ID, { name: 'Window display', kind: 'tasks', ownerId: ME, goal: 'No partner here', workstreams: [], members: [] });
+    const base = { teamId: TEAM_ID, dueOn: '2026-10-20', projectId: p.id };
+    const theirs = await s.createTask(db, ME, { ...base, title: 'Pack the hampers', ownerId: null, partnerOwner: 'Ravi' });
+    const both = await s.createTask(db, ME, { ...base, title: 'Box design sign-off', ownerId: ME, partnerOwner: 'Asha' });
+
+    expect(await code(s.editTask(db, ME, theirs.id, { version: theirs.version, projectId: null }))).toBe('400 invalid_body');
+    expect(await code(s.editTask(db, ME, theirs.id, { version: theirs.version, projectId: plain.id }))).toBe('400 invalid_body');
+    expect(await code(s.editTask(db, ME, theirs.id, { version: theirs.version, projectId: other.id }))).toBe('400 invalid_body');
+    expect(await code(s.editTask(db, ME, both.id, { version: both.version, projectId: plain.id }))).toBe('400 invalid_body');
+    expect((await s.getTask(db, theirs.id)).projectId).toBe(p.id);
+
+    // The partner is on the new project's team, or leaves in the same edit: both are fine.
+    expect((await s.editTask(db, ME, both.id, { version: both.version, projectId: other.id })).projectId).toBe(other.id);
+    const moved = await s.getTask(db, both.id);
+    expect(await s.editTask(db, ME, both.id, { version: moved.version, projectId: plain.id, partnerOwner: null })).toMatchObject({ projectId: plain.id, partnerOwner: null });
+  });
 });

@@ -1318,3 +1318,12 @@ goes; ✕ closes it for good; View as never shows it. No step-by-step tour, by c
 person in the browser (localStorage); the profile step reads the server. `?welcome=1` shows the card any time, to
 preview. The old "New here?" line (GuideNote) was never shown on any page; the card takes its place. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · A project change must keep the partner owner valid
+
+`editTask` checked a partner owner only when the edit named one, so a project change alone skipped the check. A
+partner-only task could lose its project and then show on no page, with a member's edit refused. A task could also keep
+a partner who is not on its new project. Now the check runs on a project change whenever a partner owner stays. The
+edit is refused with the existing message. Moving is still allowed if the partner is on the new project's partner team,
+or leaves in the same edit. A task already in this state is not repaired. No schema change.
+Rollback: git revert the commit.
