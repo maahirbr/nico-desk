@@ -8,7 +8,7 @@ import { Avatar } from './chips';
 import { CopyInvite } from './CopyLink';
 import { DateField } from './DateField';
 import { ICON, Icon } from './icons';
-import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
+import { OwnerPicker, ownerFields, ownerOk, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { Select } from './Select';
 import { playFor } from './sound';
@@ -361,7 +361,7 @@ function EditForm({ t, people, projects, canReassign }: { t: Task; people: Opt[]
           </label>
         )}
       </div>
-      <div><button className="btn" disabled={busy || Object.keys(body).length === 1 || !ownerReady(f.ownerId, f.ownerRole)}>Save</button></div>
+      <div><button className="btn" disabled={busy || Object.keys(body).length === 1 || !ownerOk(t.ownerId, f.ownerId, f.ownerRole)}>Save</button></div>
       <Err e={error} />
     </form>
   );

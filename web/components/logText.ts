@@ -29,7 +29,7 @@ function show(field: string, v: unknown, names: Names, projects: Names): string 
 export function logLine(e: LogLine, names: Names, projects: Names) {
   if (e.field === '_created') {
     const a = e.after as Record<string, string>;
-    return `Created for ${names[a.owner_id] ?? a.owner_id}, due ${a.due_on ? fmtDate(a.due_on) : '?'}`;
+    return `Created for ${names[a.owner_id] ?? a.owner_id ?? a.partner_owner}, due ${a.due_on ? fmtDate(a.due_on) : '?'}`;
   }
   if (e.field === '_update') return String(e.after);
   if (e.field === '_archived') return 'Archived the project';

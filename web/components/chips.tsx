@@ -63,3 +63,13 @@ export function PersonLink({ id, className, children }: { id?: string | null; cl
 export function Person({ name, id }: { name: string; id?: string }) {
   return <PersonLink id={id} className="person-cell"><Avatar name={name} id={id} />{name}</PersonLink>;
 }
+
+// The owner lines of a task's facts. A partner-only task has no Nicobar owner, so that line goes.
+export function TaskOwners({ t, names }: { t: Pick<Task, 'ownerId' | 'partnerOwner'>; names: Record<string, string> }) {
+  return (
+    <>
+      {t.ownerId && <><dt>Owner</dt><dd><Person name={names[t.ownerId] ?? t.ownerId} id={t.ownerId} /></dd></>}
+      {t.partnerOwner && <><dt>Partner owner</dt><dd><Person name={t.partnerOwner} /></dd></>}
+    </>
+  );
+}

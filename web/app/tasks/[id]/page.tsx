@@ -6,7 +6,7 @@ import { markAssignedSeen, taskLog } from '@/lib/service';
 import { taskFor } from '@/lib/visibility';
 import { fmtDate, fmtStamp, today } from '@/lib/time';
 import Link from 'next/link';
-import { Person, PersonLink, StatusChips, dueLine } from '@/components/chips';
+import { PersonLink, StatusChips, TaskOwners, dueLine } from '@/components/chips';
 import { TaskActions } from '@/components/client';
 import { TaskLinkChips } from '@/components/TaskLinks';
 import { groupLog } from '@/components/logText';
@@ -64,7 +64,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           <div className="card card-pad">
             <p className="section-title">Details</p>
             <dl className="facts">
-              <dt>Owner</dt><dd><Person name={names[t.ownerId]} id={t.ownerId} /></dd>
+              <TaskOwners t={t} names={names} />
               <dt>Due</dt><dd>{dueLine(t)}</dd>
               {t.renegotiations.length > 0 && (<><dt>Moves</dt><dd className="small">
                 {t.renegotiations.map((r) => (

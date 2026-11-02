@@ -78,7 +78,7 @@ export async function upgrade(db: Db) {
   END $$;`);
   // 12 Oct: a task's owner is one of the project's people. Owners of open tasks who are not yet on the project join as Member.
   await db.exec(`INSERT INTO project_members (project_id, person_id, project_role)
-    SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND status_category = 'open'
+    SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND owner_id IS NOT NULL AND status_category = 'open'
     ON CONFLICT (project_id, person_id) DO NOTHING;`);
   // 12 Oct: links on a task. The same statements are in scripts/upgrade-task-links.ts for the hosted database.
   await db.exec(TASK_LINKS_UPGRADE);

@@ -1,5 +1,11 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { openDb, type Db } from '../lib/db';
+import type { Task } from '../lib/derive';
+import { TaskOwners } from '../components/chips';
+import { groupLog } from '../components/logText';
+import { ownerOk } from '../components/OwnerPicker';
+import { openDb, upgrade, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { createProject } from '../lib/plan';
 import { TEAM_ID } from '../lib/seed';
@@ -65,5 +71,30 @@ describe('partner projects', () => {
     expect((await s.editTask(db, ME, both.id, { version: both.version, projectId: other.id })).projectId).toBe(other.id);
     const moved = await s.getTask(db, both.id);
     expect(await s.editTask(db, ME, both.id, { version: moved.version, projectId: plain.id, partnerOwner: null })).toMatchObject({ projectId: plain.id, partnerOwner: null });
+  });
+
+  it('name the right owners on the task page, and its edit form saves a partner-only task', async () => {
+    const p = await partnerProject();
+    const base = { teamId: TEAM_ID, dueOn: '2026-10-20', projectId: p.id };
+    const names = { [ME]: 'Ada', [MEMBER]: 'Bo' };
+    const facts = (t: Task) => renderToStaticMarkup(createElement(TaskOwners, { t, names })).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const theirs = await s.createTask(db, ME, { ...base, title: 'Pack the hampers', ownerId: null, partnerOwner: 'Ravi' });
+    const both = await s.createTask(db, ME, { ...base, title: 'Box design sign-off', ownerId: ME, partnerOwner: 'Asha' });
+    const ours = await s.createTask(db, ME, { ...base, title: 'Write the card', ownerId: ME });
+    expect(facts(theirs)).toBe('Partner owner R Ravi');
+    expect(facts(both)).toBe('Owner A Ada Partner owner A Asha');
+    expect(facts(ours)).toBe('Owner A Ada');
+    expect(groupLog(await s.taskLog(db, theirs.id), names, {}).at(-1)?.text).toContain('Created for Ravi');
+
+    expect(ownerOk('', '', undefined)).toBe(true); // partner-only, and stays so
+    expect(ownerOk('', ME, undefined)).toBe(true);
+    expect(ownerOk(ME, '', undefined)).toBe(false); // the form never drops a Nicobar owner by itself
+    expect(ownerOk(ME, MEMBER, 'x')).toBe(false); // joining the project needs a role
+  });
+
+  it('do not stop the database upgrade', async () => {
+    const p = await partnerProject();
+    await s.createTask(db, ME, { teamId: TEAM_ID, dueOn: '2026-10-20', projectId: p.id, title: 'Pack the hampers', ownerId: null, partnerOwner: 'Ravi' });
+    await expect(upgrade(db)).resolves.toBeUndefined();
   });
 });

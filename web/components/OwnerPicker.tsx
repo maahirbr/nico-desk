@@ -67,5 +67,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
 // The fields to send with a task: the owner, plus their role only when they are joining the project.
 export const ownerFields = (ownerId: string, role: string | undefined) => (role !== undefined ? { ownerId, ownerRole: role } : { ownerId });
 // Ready to send: someone is chosen, and a person joining the project has a role.
+// The edit form's rule. A partner-only task stays without a Nicobar owner, and any other task must keep one.
+export const ownerOk = (saved: string, ownerId: string, role?: string) => (!saved && !ownerId) || ownerReady(ownerId, role);
 export const ownerReady = (ownerId: string, role: string | undefined) => !!ownerId && (role === undefined || role.trim().length >= 2);
 export const useProjectPeople = () => useContext(ProjectPeople);

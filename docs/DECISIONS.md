@@ -1327,3 +1327,8 @@ a partner who is not on its new project. Now the check runs on a project change 
 edit is refused with the existing message. Moving is still allowed if the partner is on the new project's partner team,
 or leaves in the same edit. A task already in this state is not repaired. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · A partner-only task opens, saves and upgrades cleanly
+
+A partner-only task has no Nicobar owner, and three places assumed one. Its own page crashed on the missing name. Its edit form kept Save off. The 12 Oct step in `upgrade()` tried to add a null person to the project, which stopped every later step, on a restart and in `npm run db:upgrade`. The page now shows the owner lines that exist, so a task with both owners also names its partner. Save stays off when a task that had a Nicobar owner loses it, because that means a project move needs a new owner choice.
+Rollback: git revert the commit.
