@@ -56,7 +56,8 @@ export function Popover({ anchor, onClose, align = 'start', matchWidth, sheet, c
       const t = e.target as Node;
       if (!panel.current?.contains(t) && !anchor.current?.contains(t)) close.current();
     };
-    const shut = (e: Event) => { if (!panel.current?.contains(e.target as Node)) close.current(); };
+    // A resize's target is the window, which is not a Node.
+    const shut = (e: Event) => { if (!(e.target instanceof Node) || !panel.current?.contains(e.target)) close.current(); };
     document.addEventListener('pointerdown', away);
     if (!phone) { window.addEventListener('scroll', shut, true); window.addEventListener('resize', shut); }
     return () => { document.removeEventListener('pointerdown', away); window.removeEventListener('scroll', shut, true); window.removeEventListener('resize', shut); };
