@@ -1347,3 +1347,8 @@ Rollback: `vercel promote nico-desk-kk7urrl04-maahirbharatram-3547s-projects.ver
 
 The repo owner chose a week soon after the 30-day build went live. Each person goes back through Google once a week, and a lost or shared laptop stays signed in for at most 7 days. It still does not renew with use, and View as stays at 12 hours. A cookie issued by the 30-day build keeps its 30 days, because the expiry is inside the signed token.
 Rollback: `vercel promote nico-desk-5e6ein2rp-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
+## 2026-11-02 · Opus 5.5 · The launch QA fixes
+
+The repo owner asked for the fixes the 29 Oct launch QA proposed. A task from a Sheet no longer offers a tick or the status menu in any list, so nobody meets the 403, and a row's error now shows in the error colour and wraps. The minutes badge names only what is missing. Moving a status back says who sees the reason: "anyone who can see this task", not "the team" as the QA proposed, because sight has followed projects since 15 Oct. The Guide gains "Who sees what", written from the 15 Oct rules, and its wording waits for the repo owner's OK. The moved-date mark gets `role="img"`, the pages link `/icon.svg`, and Projects has an empty state and a correct plural. The add, bulk add and edit routes for people share `lib/personFields.ts`, so a wrong field reads in plain words. That also raises the edit route's department limit from 60 to 80, the same as the add routes. A bulk add error does not say which line it means. The QA's due date fix was already in the form. The deferred QA items stay deferred.
+Rollback: `vercel promote nico-desk-qqxtm495i-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. No schema change.

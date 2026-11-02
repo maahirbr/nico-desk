@@ -22,6 +22,7 @@ export const GUIDE_SECTIONS = [
   { id: 'rule', title: 'The one rule' },
   { id: 'blocked', title: 'When you are blocked' },
   { id: 'projects', title: 'Projects' },
+  { id: 'sees', title: 'Who sees what' },
   { id: 'leads', title: 'For leads and admins' },
   { id: 'help', title: 'Help and shortcuts' },
   { id: 'phone', title: 'On your phone' },
@@ -118,6 +119,18 @@ export function GuideView() {
           <li><b>Added since.</b> Pick Today to review everything added in a meeting.</li>
           <li><b>Done.</b> See finished tasks and when they were done.</li>
           <li><b>Partner projects.</b> The same board, shared with an outside partner. Each task has a Nicobar owner, a partner owner, or both.</li>
+        </ul>
+      </section>
+
+      <section id="sees" aria-labelledby="g-sees">
+        <h2 id="g-sees">{title('sees')}</h2>
+        <ul className="guide-list">
+          <li><b>Projects.</b> You see the projects you own, lead or are on, or were added to as a viewer. Admins see every project.</li>
+          <li><b>Tasks.</b> You see the tasks on those projects, tasks you own, tasks waiting on you, and tasks you made with no project.</li>
+          <li><b>Minutes.</b> Anyone on a project can bring minutes into it. Nothing becomes a task until someone accepts it.</li>
+          <li><b>Ledger.</b> Leads and admins see everyone&rsquo;s record. You see yours and the records of people you work with.</li>
+          <li><b>Undo.</b> Press Undo in the short message after a change. It makes a new change, so the history keeps both.</li>
+          <li><b>Via Claude.</b> A change made through Claude shows &ldquo;via Claude&rdquo; in the history.</li>
         </ul>
       </section>
 

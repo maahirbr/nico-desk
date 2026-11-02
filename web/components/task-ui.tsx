@@ -198,7 +198,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
   const undo = useUndo();
   // Viewing as someone else: look, do not change. No checkbox and no empty gutter where it was, so rows still line up.
   const readOnly = useReadOnly();
-  if (readOnly) { canTick = false; onStatus = undefined; }
+  if (readOnly || t.readOnly) { canTick = false; onStatus = undefined; } // a task from a Sheet changes in the Sheet
   const [ticked, setTicked] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const due = dueText(t, today);
@@ -234,7 +234,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
-        {t.dateMoves > 0 && !closed && <Help term="moved_date"><span className="moved" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span></Help>}
+        {t.dateMoves > 0 && !closed && <Help term="moved_date"><span className="moved" role="img" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span></Help>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
@@ -499,7 +499,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
-                <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop?`, blocked: 'Why is it blocked? A block reason is needed.', date: 'Move the date. The first date stays on record. Moving it before the date passes counts as moved in time.', drop: 'Drop this task. A reason is needed, and it stays on record.', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
+                <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked? A block reason is needed.', date: 'Move the date. The first date stays on record. Moving it before the date passes counts as moved in time.', drop: 'Drop this task. A reason is needed, and it stays on record.', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
                 <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'}</span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />

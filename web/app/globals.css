@@ -712,6 +712,7 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .trow-title { font: var(--type-line); overflow-wrap: anywhere; }
 .trow-main:hover .trow-title { color: var(--primary); }
 .trow-sub { font: var(--type-small); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root[data-skin] .trow-sub.err { color: var(--late); white-space: normal; }
 .trow-owner { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-small); color: var(--ink-2); min-width: 0; white-space: nowrap; }
 .trow-due { font: var(--type-meta); color: var(--ink-2); font-feature-settings: var(--features-date); white-space: nowrap; }
 .trow-due.late { color: var(--late); font-weight: 500; }

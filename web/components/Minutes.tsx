@@ -237,6 +237,10 @@ export function Inbox({ mode, proposals, lines = [], people = [], workstreams = 
   );
 }
 
+// What a task proposal still lacks, in the badge's words. Null when it is ready.
+export const proposalGap = (ownerId: string, dueOn: string | null | undefined): string | null =>
+  !ownerId && !dueOn ? 'Needs owner and date' : !ownerId ? 'Needs an owner' : !dueOn ? 'Needs a date' : null;
+
 function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editing, onEdit, op, notes = [] }: {
   notes?: string[]; mode: 'plan' | 'tasks'; p: Proposal; lines: PlanLine[]; people: { id: string; name: string }[]; workstreams: string[];
   busy: boolean; today: string; editing: boolean; onEdit: () => void; op: Op;
@@ -245,11 +249,12 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
   const [ownerId, setOwnerId] = useState(p.ownerId ?? '');
   const [ws, setWs] = useState(p.workstream ?? '');
   const [f, setF] = useState({ task: p.task, ownerName: p.ownerName, ownerWith: p.ownerWith, dueOn: p.dueOn ?? '' });
-  const unsure = mode === 'plan' ? p.confidence !== 'sure' || !p.lineId : !ownerId || !(editing ? f.dueOn : p.dueOn);
+  const gap = proposalGap(ownerId, editing ? f.dueOn : p.dueOn);
+  const unsure = mode === 'plan' ? p.confidence !== 'sure' || !p.lineId : !!gap;
   return (
     <div className={`pc${unsure ? ' unsure' : ''}`}>
       <div className="pc-top">
-        <span className={`pc-badge${unsure ? ' unsure' : ''}`}><Help term={unsure ? 'proposal_unsure' : 'proposal_sure'}>{unsure ? (mode === 'plan' ? 'Check the line' : 'Needs owner and date') : mode === 'plan' ? 'Sure' : 'Ready'}</Help></span>
+        <span className={`pc-badge${unsure ? ' unsure' : ''}`}><Help term={unsure ? 'proposal_unsure' : 'proposal_sure'}>{unsure ? (mode === 'plan' ? 'Check the line' : gap) : mode === 'plan' ? 'Sure' : 'Ready'}</Help></span>
         {mode === 'plan' ? (
           <Select className="pc-line" value={lineId} aria-label="Line for this action" onChange={setLineId}>
             <option value="">Other actions (no line)</option>

@@ -1,12 +1,9 @@
 import { z } from 'zod';
 import { readBody, route, sameTeam } from '@/lib/http';
+import { personFields } from '@/lib/personFields';
 import { addPerson } from '@/lib/service';
 
-const Body = z.object({
-  displayName: z.string().trim().min(2).max(80),
-  role: z.string().trim().min(2).max(80),
-  department: z.string().trim().min(2).max(80),
-  email: z.email(),
+const Body = personFields.extend({
   appRoles: z.array(z.enum(['member', 'lead', 'admin'])).default([]),
 }).strict();
 

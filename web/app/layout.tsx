@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   description: 'Where a Nicobar team runs its week.',
   // Home-screen install: iOS reads these tags, Android reads app/manifest.ts.
   appleWebApp: { capable: true, title: 'NicoDesk', statusBarStyle: 'default' },
-  icons: { apple: '/icons/apple-touch-icon.png' },
+  icons: { icon: '/icon.svg', apple: '/icons/apple-touch-icon.png' },
 };
 // Browser bar colour: skin W canvas, day and night.
 export const viewport: Viewport = {

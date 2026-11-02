@@ -67,12 +67,16 @@ export default async function Projects() {
   return (
     <div className="calm">
       <header className="page-head">
-        <div><h1>Projects</h1><p className="summary">{live.length} projects · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
+        <div><h1>Projects</h1><p className="summary">{live.length} project{live.length === 1 ? '' : 's'} · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
         {!readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
-      <Stagger id="projects" className="pcards">
-        {live.map(card)}
-      </Stagger>
+      {live.length === 0 ? (
+        <div className="empty-state"><p>No projects yet.{!readOnly && ' Start one with + New project.'}</p></div>
+      ) : (
+        <Stagger id="projects" className="pcards">
+          {live.map(card)}
+        </Stagger>
+      )}
       {archived.length > 0 && (
         <details className="archived-group">
           <summary><Help term="project_archived" host><span>Archived</span></Help> <span className="count-badge">{archived.length}</span></summary>
