@@ -1335,5 +1335,5 @@ Rollback: git revert the commit.
 
 ## 2026-11-02 · Opus 5.5 · The 30 Oct to 2 Nov work goes to production
 
-The repo owner said yes. A backup was taken first, then `npm run db:upgrade` added `tasks.partner_owner`, `tasks_has_owner` and the `feedback` columns on the hosted database. Row counts did not change. Then `maahir/mvp` was pushed into `main`, which builds production. The office network blocks database ports 5432 and 6543, so these steps need another network.
-Rollback: `vercel promote nico-desk-8t1r2go1f-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The database changes can stay, because the older build ignores them.
+The repo owner said yes. A backup was taken first, then `npm run db:upgrade` added `tasks.partner_owner`, `tasks_has_owner` and `feedback.kind` on the hosted database. Row counts did not change. Then `maahir/mvp` was pushed into `main`, which builds production. The first network timed out on outbound ports 5432 and 6543, so the upgrade ran after the repo owner switched networks.
+Rollback: `vercel promote nico-desk-8t1r2go1f-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The database changes can stay, but the older build was not tested signed in against them, and it may not handle a task with only a partner owner.
