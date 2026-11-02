@@ -1332,3 +1332,8 @@ Rollback: git revert the commit.
 
 A partner-only task has no Nicobar owner, and three places assumed one. Its own page crashed on the missing name. Its edit form kept Save off. The 12 Oct step in `upgrade()` tried to add a null person to the project, which stopped every later step, on a restart and in `npm run db:upgrade`. The page now shows the owner lines that exist, so a task with both owners also names its partner. Save stays off when a task that had a Nicobar owner loses it, because that means a project move needs a new owner choice.
 Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · The 30 Oct to 2 Nov work goes to production
+
+The repo owner said yes. A backup was taken first, then `npm run db:upgrade` added `tasks.partner_owner`, `tasks_has_owner` and the `feedback` columns on the hosted database. Row counts did not change. Then `maahir/mvp` was pushed into `main`, which builds production. The office network blocks database ports 5432 and 6543, so these steps need another network.
+Rollback: `vercel promote nico-desk-8t1r2go1f-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The database changes can stay, because the older build ignores them.
