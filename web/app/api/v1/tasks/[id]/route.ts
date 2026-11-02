@@ -19,7 +19,8 @@ const Body = z.object({
   ownerRole: z.string().max(60).optional(),
   projectId: z.string().nullable().optional(),
   workstream: z.string().trim().max(60).nullable().optional(),
-  ownerId: z.string().optional(),
+  partnerOwner: z.string().trim().max(60).nullable().optional(),
+  ownerId: z.string().nullable().optional(),
 }).strict();
 
 export const PATCH = route<P>(async ({ req, params, me, db }) => {

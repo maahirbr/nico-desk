@@ -5,7 +5,7 @@ import { myProfile } from '@/lib/service';
 import { ProfileForm } from '@/components/EditProfile';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Your profile · Nico Desk' };
+export const metadata: Metadata = { title: 'Your profile · NicoDesk' };
 
 // Your own name, nickname, phone and photo, reached from the account menu and from Edit profile on your page.
 export default async function Profile() {

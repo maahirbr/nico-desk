@@ -674,7 +674,7 @@ function clean(input: ProjectInput) {
   const leadId = input.leadId && input.leadId !== input.ownerId ? input.leadId : null;
   const members = input.members.filter((m) => m.personId && m.personId !== input.ownerId && m.personId !== leadId);
   for (const m of members) if (m.role.trim().length < 2) throw bad('invalid_body', 'Give each person on the project a role.', 'members');
-  const label = (input.targetLabel ?? '').trim() || 'Deadline';
+  const label = (input.targetLabel ?? '').trim() || 'Due Date';
   const pills = [
     ...(input.launchOn ? [{ label, value: longDate(input.launchOn) }] : []),
     ...(input.phase?.trim() ? [{ label: 'Phase', value: input.phase.trim() }] : []),
@@ -712,8 +712,9 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
        VALUES ($1,$2,$3,$4,$5,'on_track',now(),$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb,$15::jsonb,$16,$17,$18)`,
       [id, teamId, c.name, dept[0]?.department ?? 'Team', input.ownerId, input.kind, input.eyebrow?.trim() || null, input.phase?.trim() || null, c.goal,
         input.launchOn || null, JSON.stringify(c.pills), JSON.stringify(input.kind === 'plan' ? (c.ws.length ? c.ws.map((w, i) => ({ key: slug(w, i), label: w })) : [GENERAL]) : []),
-        input.kind === 'plan' ? input.partnerName?.trim() || 'Partner' : null,
-        JSON.stringify(input.kind === 'plan' ? (input.partnerPeople ?? []).map((x) => x.trim()).filter(Boolean) : []),
+        // A partner project (1 Nov) is a task board with a partner: its name and people are kept for either kind.
+        input.kind === 'plan' ? input.partnerName?.trim() || 'Partner' : input.partnerName?.trim() || null,
+        JSON.stringify((input.kind === 'plan' || input.partnerName?.trim()) ? (input.partnerPeople ?? []).map((x) => x.trim()).filter(Boolean) : []),
         JSON.stringify(input.kind === 'tasks' ? c.ws : []), c.label, meId, c.leadId],
     );
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);
@@ -840,12 +841,15 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
       const { rows: used } = await tx.query<{ pillar: string }>(`SELECT DISTINCT pillar FROM plan_lines WHERE project_id = $1 AND NOT removed`, [id]);
       if (used.some((u) => !keep.has(u.pillar))) throw bad('invalid_body', 'A sub-project that still has lines cannot be removed. Move its lines first.', 'workstreams');
     }
+    // A partner stays a partner: the old plan boards always have one, a partner task board keeps its own.
+    const partnerName = p.kind === 'plan' ? input.partnerName?.trim() || p.partnerName
+      : input.partnerName !== undefined ? input.partnerName.trim() || null : p.partnerName;
     await tx.query(
       `UPDATE projects SET name=$2, owner_id=$3, eyebrow=$4, phase=$5, intro=$6, launch_on=$7, pills=$8::jsonb, pillars=$9::jsonb,
          partner_name=$10, partner_people=$11::jsonb, workstreams=$12::jsonb, target_label=$13, lead_id=$14 WHERE id=$1`,
       [id, c.name, input.ownerId, input.eyebrow?.trim() || null, input.phase?.trim() || null, c.goal, input.launchOn || null, JSON.stringify(c.pills),
-        JSON.stringify(pillars), p.kind === 'plan' ? input.partnerName?.trim() || p.partnerName : null,
-        JSON.stringify(p.kind === 'plan' ? (input.partnerPeople ?? []).map((x) => x.trim()).filter(Boolean) : []),
+        JSON.stringify(pillars), partnerName,
+        JSON.stringify(partnerName ? (input.partnerPeople ?? p.partnerPeople).map((x) => x.trim()).filter(Boolean) : []),
         JSON.stringify(p.kind === 'tasks' ? c.ws : []), c.label, c.leadId],
     );
     // Someone who still owns open tasks here stays on the project until those tasks move to someone else.

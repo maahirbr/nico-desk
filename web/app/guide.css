@@ -10,10 +10,6 @@
 .guide-rule { font: var(--type-line); font-weight: 600; color: var(--ink); }
 
 /* A week: the moment on the left, what to do on the right */
-.guide-week { list-style: none; margin: 0; padding: 0; }
-.guide-week li { display: grid; grid-template-columns: calc(var(--label-col) + var(--space-lg)) minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-sm) 0; border-top: var(--rule) solid var(--hairline); }
-.guide-week li:last-child { border-bottom: var(--rule) solid var(--hairline); }
-.guide-week b { font-weight: 600; }
 
 /* A word and what it means: the five statuses, then late and at risk */
 .guide-defs { margin: 0 0 var(--space-md); }

@@ -18,6 +18,7 @@ import { FeedbackRepliesCard, type HomeReply } from './FeedbackRepliesCard';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { NewNotices } from './NewNotices';
 import { UpdatesCard } from './UpdatesCard';
+import { WelcomeCard, markWelcomeStep, type Welcome } from './WelcomeCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
 import { AddTaskForm, Modal, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
@@ -29,11 +30,28 @@ const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', wee
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects }: {
+// Once today is clear, Home cheers a little (the PM's call, 30 Oct): nothing late and nothing due today, not counting a
+// task blocked on someone else, since that wait is theirs. One of these lines shows, the same all day for a person and a
+// new one the next day. Tasks due later stay listed below it. The rest of the app keeps no emoji; this moment does.
+export const CLEAR_LINES = [
+  'All clear for today! Time for a slow chai ☕',
+  'Clean desk, clear skies. Nothing due today ✨',
+  'Island time! Today’s list is done 🏝️',
+  'Today’s done, zero worries. Treat yourself 🍪',
+  'All done for today. Slow down, it’s a Nicobar kind of day 🌿',
+];
+export function clearLine(personId: string, day: string): string {
+  let h = 0;
+  for (const c of `${personId}|${day}`) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return CLEAR_LINES[h % CLEAR_LINES.length];
+}
+
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
+  welcome?: Welcome | null; // someone's first week (components/WelcomeCard.tsx)
 }) {
   const readOnly = useReadOnly();
   const [openId, setOpenId] = useOpenTask();
@@ -82,7 +100,13 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
     { key: 'later', label: 'Later', items: mine.filter((t) => t.dueOn > weekEnd) },
   ].filter((g) => g.items.length);
   const overdue = mine.filter((t) => t.dueOn < today).length;
+  // Today is clear when nothing late or due today is left that is yours to do.
+  const todayClear = !mine.some((t) => t.dueOn <= today && !t.blocked);
+  const nextWeek = mine.filter((t) => t.dueOn > today && t.dueOn <= weekEnd).length;
+  const nextLater = mine.filter((t) => t.dueOn > weekEnd).length;
+  const nextUp = nextWeek ? `Next up: ${nextWeek} ${nextWeek === 1 ? 'task' : 'tasks'} this week` : nextLater ? `Next up: ${nextLater} ${nextLater === 1 ? 'task' : 'tasks'} later` : '';
   const open = (id: string, s?: RowAction) => {
+    markWelcomeStep(meId, 'task');
     setOpenId(id); setStartStatus(s);
     if (assignedNotice[id] && !readOnly) fetch(`/api/v1/me/notices/${assignedNotice[id]}/read`, { method: 'POST' }).catch(() => {});
   };
@@ -103,6 +127,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
 
+      {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
+
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 
       <FeedbackRepliesCard items={feedbackReplies} />
@@ -111,11 +137,15 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       <WaitingCard tasks={waiting} names={names} projectNames={projectNames} now={updates.now} onOpen={(id) => open(id)} />
 
-      {groups.length === 0 && (
+      {groups.length === 0 ? (
         <div className="empty-state">
           <DitherArt field="hill" className="dither-empty" fade />
-          <p>You’re clear. Nothing open on your side.</p>
-          {!readOnly && <button className="btn" onClick={() => setAdding(true)}>Add a task</button>}
+          <p>{clearLine(meId, today)}</p>
+        </div>
+      ) : todayClear && (
+        <div className="today-clear" role="status">
+          <p className="today-clear-line">{clearLine(meId, today)}</p>
+          {nextUp && <p className="today-clear-next">{nextUp}</p>}
         </div>
       )}
 

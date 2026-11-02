@@ -1,4 +1,4 @@
-// Nico Desk service worker. Kept small on purpose.
+// NicoDesk service worker. Kept small on purpose.
 // Rules:
 //  - Never cache /api/ or anything that carries a session. Page HTML holds private data, so it is never cached either.
 //  - Static assets (/_next/static, /icons, fonts) are cache-first: their names change when their content changes.

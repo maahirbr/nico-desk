@@ -79,7 +79,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
               {t.links.length > 0 && (<><dt>Links</dt><dd><TaskLinkChips links={t.links} max={t.links.length} /></dd></>)}
               {t.note && (<><dt>Note</dt><dd>{t.note}</dd></>)}
               {t.priority && (<><dt>Priority</dt><dd>{t.priority.value}, set by {names[t.priority.setBy]} on {fmtStamp(t.priority.setAt)}</dd></>)}
-              <dt>Origin</dt><dd>{t.origin === 'app' ? 'Made in Nico Desk' : t.origin === 'sheet' ? 'Read from a Sheet. Edit it there.' : 'From a meeting note'}</dd>
+              <dt>Origin</dt><dd>{t.origin === 'app' ? 'Made in NicoDesk' : t.origin === 'sheet' ? 'Read from a Sheet. Edit it there.' : 'From a meeting note'}</dd>
               {t.createdBy && t.createdBy !== t.ownerId && (<><dt>Assigned by</dt><dd><PersonLink id={t.createdBy}>{names[t.createdBy]}</PersonLink></dd></>)}
             </dl>
           </div>

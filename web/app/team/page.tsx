@@ -26,7 +26,7 @@ export default async function Team({ searchParams }: { searchParams: SP }) {
   const later = all.filter((x) => x.statusCategory === 'open' && x.dueOn > weekEnd);
   return (
     <TeamView
-      tasks={tasks} later={later} weekStart={weekStart} thisWeek={mondayOf(t)} today={t} view={one(sp.view) === 'status' ? 'status' : 'person'}
+      tasks={tasks} later={later} weekStart={weekStart} thisWeek={mondayOf(t)} today={t} view={one(sp.view) === 'person' ? 'person' : 'status'} // By status first (the PM's call, 2 Nov)
       people={people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName, role: p.role }))}
       names={names} projectNames={projectNames} projects={projects.filter((p) => !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}

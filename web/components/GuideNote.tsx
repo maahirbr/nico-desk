@@ -29,7 +29,7 @@ export function GuideNote() {
   if (!show) return null;
   return (
     <p className="guide-note">
-      <span>New here? <Link href="/guide" onClick={dismiss}>Read the two-minute guide.</Link></span>
+      <span>New here? <Link href="/guide" onClick={dismiss}>Read the quick guide.</Link></span>
       <button type="button" className="guide-note-x" aria-label="Dismiss the guide note" onClick={dismiss}>
         <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6" /></svg>
       </button>

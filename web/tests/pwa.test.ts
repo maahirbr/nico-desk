@@ -116,7 +116,7 @@ describe('the service worker', () => {
 describe('the web app manifest', () => {
   const m = manifest();
   it('names the app and opens it standalone from the start page', () => {
-    expect(m).toMatchObject({ name: 'Nico Desk', short_name: 'Nico Desk', start_url: '/', display: 'standalone' });
+    expect(m).toMatchObject({ name: 'NicoDesk', short_name: 'NicoDesk', start_url: '/', display: 'standalone' });
     expect((m.short_name ?? '').length).toBeLessThanOrEqual(12);
   });
 

@@ -1,6 +1,6 @@
-# Nico Desk design guide
+# NicoDesk design guide
 
-This is the short, plain-language guide to how Nico Desk looks and reads. The PM edits it directly on GitHub.
+This is the short, plain-language guide to how NicoDesk looks and reads. The PM edits it directly on GitHub.
 
 `DESIGN.md` is the full engineering file. It stays as it is and still outranks everything visual. This guide says what the team wants. The repo owner then carries the changes into `DESIGN.md` and `web/app/tokens.css`.
 
@@ -8,7 +8,7 @@ Token names are in `[brackets]` so engineers can find the value. The PM can igno
 
 ## 1. What it should feel like
 
-Nico Desk is a calm desk for a small team's week. It shows who owes what, by when, and what moved. A new person should understand their own week in ten seconds, with no help text.
+NicoDesk is a calm desk for a small team's week. It shows who owes what, by when, and what moved. A new person should understand their own week in ten seconds, with no help text.
 
 It should feel warm, plain and quiet. It looks like paper and ink, not a dashboard. The date is the first thing the eye finds. Nothing shouts, nothing decorates, and nothing moves on its own.
 
@@ -123,7 +123,7 @@ Banned patterns:
 - Rules: it only offers. Nothing changes until the person clicks. It uses the normal status rules, so Blocked still asks for a reason. It never shows a text field. It stays quiet when it is not sure.
 
 ### Guide page (`/guide`)
-- What: a short page for the team. What Nico Desk is for, a week in it, the five statuses, the one rule, when you are blocked, what leads see, help mode and shortcuts, and where to give feedback.
+- What: a short page for the team. What NicoDesk is for, a week in it, the five statuses, the one rule, when you are blocked, what leads see, help mode and shortcuts, and where to give feedback.
 - Where: in the account menu, and in a note on the first visit to Home that the person can dismiss.
 - Rules: one screen per idea. Plain words. No eyebrows. The one rule: move a date before it passes, and say why.
 

@@ -173,3 +173,7 @@ export function personCounts(open: { dueOn: string }[], comingUp: unknown[], tod
 
 // The project lead is shown once, as "Project lead", so their project_members row is left out of the member list.
 export const membersExceptLead = <M extends { personId: string }>(members: M[], ownerId: string): M[] => members.filter((m) => m.personId !== ownerId);
+
+// A partner project: an old plan board, or (since 1 Nov) a task board with a partner named. Both show Nicobar and Partner
+// people in the header; only the old kind shows the plan board.
+export const isPartnerProject = (p: { kind: string; partnerName: string | null }) => p.kind === 'plan' || !!p.partnerName;

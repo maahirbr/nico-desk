@@ -252,7 +252,7 @@ describe('starting a project', () => {
     const bare = await createProject(db, ME, TEAM_ID, { ...base, name: 'Collab', kind: 'plan', workstreams: [] });
     expect(bare.pillars).toEqual([{ key: 'general', label: 'General' }]);
     expect(bare.targetLabel).toBe('Launch');
-    expect((await createProject(db, ME, TEAM_ID, { ...base, name: 'No label', targetLabel: '' })).targetLabel).toBe('Deadline');
+    expect((await createProject(db, ME, TEAM_ID, { ...base, name: 'No label', targetLabel: '' })).targetLabel).toBe('Due Date');
     const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Studio', kind: 'plan', workstreams: ['Foundations'], partnerName: 'Loom', partnerPeople: ['Tanvi'] });
     const key = p.pillars[0].key;
     const u = await updateProject(db, ME, p.id, { ...base, name: 'Studio', kind: 'plan', workstreams: ['Groundwork'], partnerName: 'Loom', partnerPeople: ['Tanvi'] });

@@ -6,8 +6,9 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { DitherArt } from './DitherArt';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import type { Proposal } from '@/lib/planUtil';
-import { fmtDate } from '@/lib/time';
-import { Person, PersonLink } from './chips';
+import { addDays, fmtDate, isDate, istInstant } from '@/lib/time';
+import { AddedSince, sinceWords } from './AddedSince';
+import { Avatar, Person, PersonLink } from './chips';
 import { TaskLinkChips } from './TaskLinks';
 import { IMPORT_EVENT } from './MeetingSection';
 import { OPEN_ADD_EVENT } from './setupEvents';
@@ -27,7 +28,7 @@ import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
 import { endedSortOf, oneOf } from '@/lib/remember';
-import { useRemembered } from './remember';
+import { useRemembered, useUrlText } from './remember';
 import { TaskLink } from './TaskLink';
 import type { QuickParse } from '@/lib/quickadd';
 import { QuickAddField } from './QuickAdd';
@@ -44,7 +45,7 @@ import { Fold, FoldChev } from './Fold';
 // row; edits open in the row; the side panel has the full detail. Every change goes through /api/v1.
 
 type P = { id: string; name: string; role: string; department: string };
-type LogItem = { id: string; at: string; who: string; whoId?: string | null; text: string; task: string; taskId: string | null; reason: string | null };
+type LogItem = { id: string; at: string; day: string; who: string; whoId?: string | null; text: string; task: string; taskId: string | null; reason: string | null };
 
 async function call(path: string, method: string, body?: unknown) {
   const res = await fetch(`/api/v1${path}`, {
@@ -84,9 +85,10 @@ function bringIntoView(selector: string) {
 }
 const importIntoView = () => bringIntoView('.imp-panel');
 
-export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, today, log, workstreams = [], proposals = [] }: {
+export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, today, log, workstreams = [], proposals = [], partnerPeople = [], partnerName = null }: {
   projectId: string; tasks: Task[]; people: P[]; names: Record<string, string>; projectNames?: Record<string, string>;
   meId: string; isLead: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
+  partnerPeople?: string[]; partnerName?: string | null; // a partner project (1 Nov): tasks have a Nicobar owner, a partner owner, or both
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<string | null>(null);
@@ -94,16 +96,23 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  // The Update log shows the last 15 days; older entries stay and open with Show older (the PM's call, 30 Oct).
+  const [olderOpen, setOlderOpen] = useState(false);
   // The filters come back the next time this project is opened in this browser (components/remember.ts).
   const [kept, keep] = useRemembered(`project:${projectId}`, { tile: null as string | null, who: null as string | null, ws: 'All', closedSort: 'recent' as EndedSort }, (raw) => ({
     closedSort: endedSortOf(raw.closedSort),
-    tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, people.map((p) => p.id), null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
+    tile: oneOf(raw.tile, TILE_KEYS, null), who: oneOf(raw.who, [...people.map((p) => p.id), ...partnerPeople.map((n) => `partner:${n}`)], null), ws: oneOf(raw.ws, ['All', '__none', ...workstreams, ...tasks.map((t) => t.workstream ?? '').filter(Boolean)], 'All'),
   }), ['tile', 'who', 'ws', 'closedSort']);
   const { tile, who, ws, closedSort } = kept;
   const setTile = (v: string | null) => keep('tile', v);
   const setWho = (v: string | null) => keep('who', v);
   const setWs = (v: string) => keep('ws', v);
   const setClosedSort = (v: EndedSort) => keep('closedSort', v);
+  // "Added since" lives in the address only (?added=YYYY-MM-DD), never remembered: a meeting's review is for that day.
+  const [addedRaw, setAdded] = useUrlText('added');
+  const added = isDate(addedRaw) && addedRaw <= today ? addedRaw : null;
+  const cutoff = added ? istInstant(`${added}T00:00`)!.getTime() : null;
+  const inAdded = (t: Task) => cutoff === null || (t.statusCategory !== 'dropped' && new Date(t.createdAt).getTime() >= cutoff);
   const [importOpen, setImportOpen] = useState(false);
   // The Meeting section's "Write the minutes" and the setup list's "Import minutes" open the import panel below and
   // bring it into view. The scroll waits for the render that adds the panel: a frame alone can run before it.
@@ -158,13 +167,17 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     { key: 'done', label: 'Done', help: 'status_done' as const, n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
   ];
   const inWs = (t: Task, k: string) => k === 'All' || (k === '__none' ? !t.workstream : t.workstream === k);
-  const visible = tasks.filter((t) => (!who || t.ownerId === who) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)));
+  const byWho = (t: Task) => !who || (who.startsWith('partner:') ? t.partnerOwner === who.slice(8) : t.ownerId === who);
+  const visible = tasks.filter((t) => byWho(t) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
   const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn);
-  const openRows = visible.filter((t) => t.statusCategory === 'open').sort(byDue);
+  // With "added since", the order they were added, so a meeting reads its to-dos back in the order it agreed them.
+  const byAdded = (a: Task, b: Task) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  const openRows = visible.filter((t) => t.statusCategory === 'open').sort(cutoff === null ? byDue : byAdded);
   const closedRows = sortEnded(visible.filter((t) => t.statusCategory !== 'open'), closedSort);
   const involved = people.filter((p) => tasks.some((t) => t.ownerId === p.id));
-  const filtered = !!(tile || who || ws !== 'All');
+  const filtered = !!(tile || who || ws !== 'All' || added);
+  const clearAll = () => { setTile(null); setWho(null); setWs('All'); setAdded(''); };
 
   // undoSpec: the task before and the fields the change touched, so its toast can offer Undo (lib/undo.ts).
   const undo = useUndo();
@@ -187,7 +200,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   }
 
   const row = (t: Task) => {
-    if (editing === t.id) return <EditRow key={t.id} t={t} people={people} workstreams={wsList} today={today} busy={busy} canReassign={t.ownerId === meId || isLead}
+    if (editing === t.id) return <EditRow key={t.id} t={t} people={people} partnerPeople={partnerPeople} partnerName={partnerName} workstreams={wsList} today={today} busy={busy} canReassign={t.ownerId === meId || isLead}
       onCancel={() => setEditing(null)} onSave={(body, due) => run(async () => {
         let v = t.version;
         if (due) v = (await call(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, ...due })).version;
@@ -212,7 +225,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             {t.blocked && <div className="sub blocked-line">{t.blocked.onId ? <><Help term="blocked_on">Waiting on</Help> <PersonLink id={t.blocked.onId}>{names[t.blocked.onId]}</PersonLink>: </> : <><Help term="status_blocked">Blocked</Help>: </>}{t.blocked.ask}</div>}
             {t.links.length > 0 && <div className="sub"><TaskLinkChips links={t.links} onMore={() => { setOpenId(t.id); setStartStatus(undefined); }} /></div>}
           </td>
-          <td data-label="Owner"><Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /></td>
+          <td data-label={partnerName ? 'Nicobar Owner' : 'Owner'}>{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /> : <span className="dim">—</span>}</td>
+          {partnerName && <td data-label={`${partnerName} Owner`}>{t.partnerOwner ? <span className="person-cell"><Avatar name={t.partnerOwner} />{t.partnerOwner}</span> : <span className="dim">—</span>}</td>}
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
             <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
             {t.dateMoves > 0 && t.statusCategory === 'open' && (
@@ -253,8 +267,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const table = (rows: Task[], empty: React.ReactNode) => (
     <div className="card table-card">
       <table className="stacked board sticky-head">
-        <thead><tr><th aria-label="Done" /><th>Task</th><th>Owner</th><th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
-        <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={6} className="empty-cell">{empty}</td></tr>}</tbody>
+        <thead><tr><th aria-label="Done" /><th>Task</th>{partnerName ? <><th>Nicobar Owner</th><th>{partnerName} Owner</th></> : <th>Owner</th>}<th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
+        <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={7} className="empty-cell">{empty}</td></tr>}</tbody>
       </table>
     </div>
   );
@@ -282,19 +296,26 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       </div>
 
       {importOpen && <ImportPanel what="tasks" busy={busy} today={today} onRead={async (b) => { if (await planOp({ op: 'importMinutes', ...b })) setImportOpen(false); }} />}
-      {addOpen && <AddTask projectId={projectId} people={people} meId={meId} today={today} workstreams={wsList} defaultWs={ws !== 'All' && ws !== '__none' ? ws : ''} onDone={() => setAddOpen(false)} />}
+      {addOpen && <AddTask projectId={projectId} people={people} partnerPeople={partnerPeople} partnerName={partnerName} meId={meId} today={today} workstreams={wsList} defaultWs={ws !== 'All' && ws !== '__none' ? ws : ''} onDone={() => setAddOpen(false)} />}
       {(error || note) && <p className={error ? 'err banner' : 'ok banner'} role={error ? 'alert' : 'status'}>{error ?? note}</p>}
       {!readOnly && proposals.length > 0 && <Inbox mode="tasks" projectId={projectId} proposals={proposals} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList} busy={busy} today={today} op={planOp} />}
 
       <div className="pills">
+        <AddedSince value={added} today={today} onChange={(d) => setAdded(d ?? '')} />
         <button className="pill" aria-pressed={!who} onClick={() => setWho(null)}>Everyone ({open.length})</button>
         {involved.map((p) => (
           <button key={p.id} className="pill" aria-pressed={who === p.id} onClick={() => setWho(who === p.id ? null : p.id)}>
             {p.name.split(' ')[0]} ({open.filter((t) => t.ownerId === p.id).length})
           </button>
         ))}
-        {filtered && <button className="act" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button>}
+        {partnerPeople.filter((n) => tasks.some((t) => t.partnerOwner === n)).map((n) => (
+          <button key={n} className="pill pill-partner" aria-pressed={who === `partner:${n}`} onClick={() => setWho(who === `partner:${n}` ? null : `partner:${n}`)}>
+            {n} ({open.filter((t) => t.partnerOwner === n).length})
+          </button>
+        ))}
+        {filtered && <button className="act" onClick={clearAll}>Clear filters</button>}
       </div>
+      {added && <p className="small dim since-count" role="status">{visible.length} {visible.length === 1 ? 'task' : 'tasks'} {added === today ? 'added today' : `added since ${sinceWords(added, today)}`}</p>}
 
       <div className={wsList.length ? 'ws-layout' : ''}>
         {wsList.length > 0 && (
@@ -310,40 +331,65 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </aside>
         )}
         <div style={{ minWidth: 0 }}>
-          {table(openRows, filtered
-            ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={() => { setTile(null); setWho(null); setWs('All'); }}>Clear filters</button></div>
-            : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
-          {closedRows.length > 0 && tile !== 'done' && (
+          {tile === 'done' ? (
+            // The Done tile shows the finished tasks in place of the open list, open and ready to read (the PM's call, 30 Oct).
             <>
-              <div className="list-head" style={{ marginTop: 22 }}>
-                <button className="log-toggle small-toggle" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
-                  <FoldChev /> Completed tasks <span className="count-badge">{closedRows.length}</span>
-                </button>
-                {doneOpen && closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
+              <div className="list-head">
+                <span className="small-toggle">Completed tasks <span className="count-badge">{closedRows.length}</span></span>
+                {closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
               </div>
-              <Fold open={doneOpen}>{table(closedRows, '')}</Fold>
+              {table(closedRows, <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No completed tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>)}
             </>
-          )}
+          ) : (<>
+            {table(openRows, filtered
+              ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>
+              : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
+            {closedRows.length > 0 && (
+              <>
+                <div className="list-head" style={{ marginTop: 22 }}>
+                  <button className="log-toggle small-toggle" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}>
+                    <FoldChev /> Completed tasks <span className="count-badge">{closedRows.length}</span>
+                  </button>
+                  {doneOpen && closedRows.length > 1 && <SortPick value={closedSort} onChange={setClosedSort} />}
+                </div>
+                <Fold open={doneOpen}>{table(closedRows, '')}</Fold>
+              </>
+            )}
+          </>)}
         </div>
       </div>
 
-      <button className="log-toggle" aria-expanded={logOpen} onClick={() => setLogOpen(!logOpen)}>
-        <FoldChev /> Update log <span className="count-badge">{log.length}</span>
-      </button>
-      <Fold open={logOpen}>
-        <div className="card card-pad">
-          {log.length === 0 ? <p className="empty">No updates logged yet.</p> : (
-            <ol className="log">
-              {log.map((e) => (
-                <li key={e.id}>
-                  <span className="when">{e.at} · {e.taskId ? <Link href={`/tasks/${e.taskId}`}>{e.task}</Link> : <span>{e.task}</span>}</span>
-                  <span><PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      </Fold>
+      {(() => {
+        const since = addDays(today, -14);
+        const recent = log.filter((e) => e.day >= since), older = log.filter((e) => e.day < since);
+        const list = (items: LogItem[]) => (
+          <ol className="log">
+            {items.map((e) => (
+              <li key={e.id}>
+                <span className="when">{e.at} · {e.taskId ? <Link href={`/tasks/${e.taskId}`}>{e.task}</Link> : <span>{e.task}</span>}</span>
+                <span><PersonLink id={e.whoId}><b>{e.who}</b></PersonLink> {e.text}{e.reason && <div className="why">Reason: {e.reason}</div>}</span>
+              </li>
+            ))}
+          </ol>
+        );
+        return (<>
+          <button className="log-toggle" aria-expanded={logOpen} onClick={() => setLogOpen(!logOpen)}>
+            <FoldChev /> Update log <span className="count-badge">{recent.length} in the last 15 days</span>
+          </button>
+          <Fold open={logOpen}>
+            <div className="card card-pad">
+              {log.length === 0 ? <p className="empty">No updates logged yet.</p> : (<>
+                {recent.length > 0 ? list(recent) : <p className="empty">Nothing in the last 15 days.</p>}
+                {older.length > 0 && (olderOpen ? (<>
+                  <p className="small dim log-older-h">Older</p>
+                  {list(older)}
+                  <button type="button" className="mini-btn" onClick={() => setOlderOpen(false)}>Hide older</button>
+                </>) : <button type="button" className="mini-btn log-older" onClick={() => setOlderOpen(true)}>Show older ({older.length})</button>)}
+              </>)}
+            </div>
+          </Fold>
+        </>);
+      })()}
 
       {openId && (
         <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList}
@@ -368,7 +414,7 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
   const ok = text.trim().length > 0;
   return (
     <tr className="prompt-row">
-      <td colSpan={6}>
+      <td colSpan={7}>
         <div className="prompt">
           <div className="small">{label}</div>
           <div className="row">
@@ -397,32 +443,42 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
   );
 }
 
-function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, onSave }: {
-  t: Task; people: P[]; workstreams: string[]; today: string; busy: boolean; canReassign: boolean; onCancel: () => void;
+function EditRow({ t, people, partnerPeople, partnerName, workstreams, today, busy, canReassign, onCancel, onSave }: {
+  t: Task; people: P[]; partnerPeople: string[]; partnerName: string | null; workstreams: string[]; today: string; busy: boolean; canReassign: boolean; onCancel: () => void;
   onSave: (body: Record<string, unknown>, due: { newDueOn: string; reason: string } | null) => void;
 }) {
-  const [f, setF] = useState({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined as string | undefined, dueOn: t.dueOn, reason: '', workstream: t.workstream ?? '' });
+  const [f, setF] = useState({ title: t.title, description: t.description ?? '', note: t.note ?? '', ownerId: t.ownerId, ownerRole: undefined as string | undefined, dueOn: t.dueOn, reason: '', workstream: t.workstream ?? '', partnerOwner: t.partnerOwner ?? '' });
   const moved = f.dueOn !== t.dueOn;
   const body: Record<string, unknown> = {};
   if (f.title !== t.title) body.title = f.title;
   if (f.description !== (t.description ?? '')) body.description = f.description || null;
   if (f.note !== (t.note ?? '')) body.note = f.note || null;
-  if (f.ownerId !== t.ownerId) Object.assign(body, ownerFields(f.ownerId, f.ownerRole));
+  if (f.ownerId !== t.ownerId) Object.assign(body, f.ownerId ? ownerFields(f.ownerId, f.ownerRole) : { ownerId: null });
   if (f.workstream !== (t.workstream ?? '')) body.workstream = f.workstream || null;
-  const ok = f.title.trim().length >= 3 && ownerReady(f.ownerId, f.ownerRole) && (!moved || f.reason.trim().length > 0) && (moved || Object.keys(body).length > 0);
+  if (f.partnerOwner !== (t.partnerOwner ?? '')) body.partnerOwner = f.partnerOwner || null;
+  const owned = partnerName ? (!!f.partnerOwner || (!!f.ownerId && ownerReady(f.ownerId, f.ownerRole))) : ownerReady(f.ownerId, f.ownerRole);
+  const ok = f.title.trim().length >= 3 && owned && (!moved || f.reason.trim().length > 0) && (moved || Object.keys(body).length > 0);
   return (
     <tr className="editing-row">
-      <td colSpan={6}>
+      <td colSpan={7}>
         <div className="edit-grid">
           <label className="f wide"><span>Task</span><input value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           <label className="f wide"><span>What it’s about</span><textarea rows={2} value={f.description} maxLength={600} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
-          <label className="f"><span>Owner</span>
+          <label className="f"><span>{partnerName ? 'Nicobar Owner' : 'Owner'}</span>
             <OwnerPicker projectId={t.projectId} value={f.ownerId} people={people} disabled={!canReassign} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
           </label>
+          {partnerName && f.ownerId && canReassign && <button type="button" className="mini-btn" onClick={() => setF({ ...f, ownerId: '', ownerRole: undefined })}>No Nicobar owner</button>}
           {workstreams.length > 0 && (
             <label className="f"><span>Sub-project</span>
               <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
+              </Select>
+            </label>
+          )}
+          {(partnerPeople.length > 0 || t.partnerOwner) && (
+            <label className="f"><span>{partnerName ?? 'Partner'} Owner</span>
+              <Select value={f.partnerOwner} onChange={(v) => setF({ ...f, partnerOwner: v })}>
+                <option value="">No one</option>{[...new Set([...partnerPeople, ...(t.partnerOwner ? [t.partnerOwner] : [])])].map((n) => <option key={n}>{n}</option>)}
               </Select>
             </label>
           )}
@@ -443,12 +499,12 @@ function EditRow({ t, people, workstreams, today, busy, canReassign, onCancel, o
   );
 }
 
-function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDone }: {
-  projectId: string; people: P[]; meId: string; today: string; workstreams: string[]; defaultWs: string; onDone: () => void;
+function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, workstreams, defaultWs, onDone }: {
+  projectId: string; people: P[]; partnerPeople: string[]; partnerName: string | null; meId: string; today: string; workstreams: string[]; defaultWs: string; onDone: () => void;
 }) {
   const router = useRouter();
   const inProject = (useProjectPeople()[projectId] ?? []).includes(meId);
-  const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs };
+  const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs, partnerOwner: '' };
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -473,7 +529,7 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     <form className="card add-form" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError(null);
       try {
-        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...ownerFields(f.ownerId, f.ownerRole), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null });
+        const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...(f.ownerId ? ownerFields(f.ownerId, f.ownerRole) : { ownerId: null }), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null, partnerOwner: f.partnerOwner || null });
         if (made?.id) arrivals.add(made.id);
         notify('Task added');
         setF(blank); router.refresh(); onDone();
@@ -481,12 +537,19 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
     }}>
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
       <div className="form-split"><span>Fill It In Yourself</span></div>
-      <label className="f"><span>Task</span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} placeholder="e.g. Approve hamper samples" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-      <label className="f"><span>Details (if any)</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
+      <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+      <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
       <div className="row">
-        <label className="f"><span>Owner</span>
+        <label className="f"><span>{partnerName ? 'Nicobar Owner' : <>Owner <span className="req" aria-hidden="true">*</span></>}</span>
           <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
         </label>
+        {partnerName && (
+          <label className="f"><span>{partnerName} Owner</span>
+            <Select value={f.partnerOwner} onChange={(v) => setF({ ...f, partnerOwner: v })}>
+              <option value="">No one</option>{partnerPeople.map((n) => <option key={n}>{n}</option>)}
+            </Select>
+          </label>
+        )}
         {workstreams.length > 0 && (
           <label className="f"><span>Sub-Project</span>
             <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
@@ -494,12 +557,13 @@ function AddTask({ projectId, people, meId, today, workstreams, defaultWs, onDon
             </Select>
           </label>
         )}
-        <label className="f"><span>Due Date</span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
+        <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
+      {partnerName && <p className="hint" style={{ margin: 0 }}>Pick at least one owner.</p>}
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn" disabled={busy || !ownerReady(f.ownerId, f.ownerRole)}>Add task</button>
+        <button className="btn" disabled={busy || !(partnerName ? (!!f.partnerOwner || (!!f.ownerId && ownerReady(f.ownerId, f.ownerRole))) : ownerReady(f.ownerId, f.ownerRole))}>Add task</button>
       </div>
     </form>
   );

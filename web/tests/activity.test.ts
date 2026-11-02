@@ -12,7 +12,7 @@ vi.mock('next/headers', () => ({
 vi.mock('../lib/db', async (orig) => ({ ...(await orig<typeof import('../lib/db')>()), db: async () => state.testDb }));
 
 import { COOKIE, currentMe, resolveMe, signSession, type Me } from '../lib/auth';
-import { mayReadActivity, noteVisit, teamActivity } from '../lib/activity';
+import { mayReadActivity, noteVisit, statusOf, teamAdoption } from '../lib/activity';
 import { openDb, scoped, upgrade, type Db } from '../lib/db';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
@@ -31,7 +31,7 @@ beforeAll(async () => {
 });
 
 const meOf = async (id: string) => (await resolveMe(db, id)) as Me;
-const rowOf = async (id: string) => (await teamActivity(scoped(db, TEAM_ID), TEAM_ID)).rows.find((r) => r.id === id)!;
+const rowOf = async (id: string) => (await teamAdoption(scoped(db, TEAM_ID), TEAM_ID)).find((r) => r.id === id)!;
 
 describe('who may read the activity log', () => {
   it('lets an admin in and keeps a member out', async () => {
@@ -68,27 +68,41 @@ describe('visits', () => {
   });
 });
 
-describe('the counts', () => {
-  it('splits the last 7 and 30 Kolkata days, and leaves out removed comments', async () => {
-    const before = await rowOf(member);
+describe('who is using the app', () => {
+  it('reads Daily from all 5 weekdays before today, Some days from any day this week, Gone quiet from an older trace, else Never', () => {
+    expect([statusOf(5, 5, true), statusOf(4, 6, true), statusOf(0, 1, false), statusOf(0, 0, true), statusOf(0, 0, false)]).toEqual(['daily', 'some', 'some', 'quiet', 'never']);
+  });
+
+  it('moves a new person from Never to Gone quiet, This week and Daily as their traces come in', async () => {
+    const add = (n: string) => s.addPerson(db, ADMIN, TEAM_ID, { displayName: `Pilot ${n}`, role: 'Tester', department: 'Digital', email: `pilot.${n}@example.test`, appRoles: [] });
+    const a = await add('a'), b = await add('b'), c = await add('c');
+    expect((await rowOf(a.id)).status).toBe('never');
+    expect((await rowOf(a.id)).lastActive).toBeNull();
+    // A Google sign-in before visits were kept left only its photo: that counts as signed in.
+    await db.query(`UPDATE people SET photo_url = 'https://example.test/a.png' WHERE id = $1`, [a.id]);
+    expect((await rowOf(a.id)).status).toBe('quiet');
+    // A change from before the live pilot (a task loaded from the old tracker under their name) is not a sign-in.
     const [task] = await s.teamTasks(db, TEAM_ID);
-    await db.exec(`
-      INSERT INTO comments (id, subject_kind, subject_id, author_id, body, created_at) VALUES
-        ('cmt_a1', 'task', '${task.id}', '${member}', 'today', '2026-10-09T10:00:00+05:30'),
-        ('cmt_a2', 'task', '${task.id}', '${member}', 'last month', '2026-09-20T10:00:00+05:30'),
-        ('cmt_a3', 'task', '${task.id}', '${member}', '', '2026-10-08T10:00:00+05:30');
-      UPDATE comments SET deleted_at = now() WHERE id = 'cmt_a3';
-      INSERT INTO visit_days VALUES ('${member}', '2026-10-01'), ('${member}', '2026-09-01');`);
-    const after = await rowOf(member);
-    expect(after.comments.week - before.comments.week).toBe(1);
-    expect(after.comments.month - before.comments.month).toBe(2);
-    expect(after.days).toEqual({ week: 1, month: 2 }); // 9 Oct and 1 Oct; 1 Sep is past 30 days
-    expect(after.lastVisit).toBe('2026-10-09');
-    expect(after.lastAction).not.toBeNull();
+    await db.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at)
+      VALUES ('evt_old_b', 'task', $1, 'title', null, '"old title"', $2, 'app', '2026-09-01T10:00:00+05:30')`, [task.id, b.id]);
+    expect((await rowOf(b.id)).status).toBe('never');
+    // A visit three weeks ago: signed in, gone quiet, and outside the 14 dots.
+    await db.exec(`INSERT INTO visit_days VALUES ('${b.id}', '2026-09-18')`);
+    expect(await rowOf(b.id)).toMatchObject({ status: 'quiet', days: [], opened7: 0 });
+    await db.exec(`INSERT INTO visit_days VALUES ('${b.id}', '2026-10-07')`);
+    expect(await rowOf(b.id)).toMatchObject({ status: 'some', days: ['2026-10-07'], opened7: 1 });
+    // Today is Fri 9 Oct, so Daily asks for Fri 2, Mon 5, Tue 6, Wed 7 and Thu 8. The weekend and today are not needed.
+    await db.exec(`INSERT INTO visit_days VALUES ('${c.id}', '2026-10-02'), ('${c.id}', '2026-10-05'), ('${c.id}', '2026-10-06'), ('${c.id}', '2026-10-07')`);
+    expect(await rowOf(c.id)).toMatchObject({ status: 'some', weekdays: 4 });
+    await db.exec(`INSERT INTO visit_days VALUES ('${c.id}', '2026-10-08')`);
+    expect(await rowOf(c.id)).toMatchObject({ status: 'daily', weekdays: 5 });
+    const rows = await teamAdoption(scoped(db, TEAM_ID), TEAM_ID);
+    const at = (id: string) => rows.findIndex((r) => r.id === id);
+    expect(at(c.id)).toBeLessThan(at(b.id)); // Daily before Some days before the rest
   });
 
   it('lists only active people of the team', async () => {
-    const { rows } = await teamActivity(scoped(db, TEAM_ID), TEAM_ID);
+    const rows = await teamAdoption(scoped(db, TEAM_ID), TEAM_ID);
     const team = (await s.listPeople(db, TEAM_ID)).filter((p) => p.active).map((p) => p.id).sort();
     expect(rows.map((r) => r.id).sort()).toEqual(team);
   });

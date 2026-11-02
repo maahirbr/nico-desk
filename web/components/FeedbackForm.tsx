@@ -19,7 +19,7 @@ export const FEEDBACK_LIMIT = 4000;
 const MAX_SHOTS = 3;
 
 export const PAGES: [string, string][] = [
-  ['', 'Not about one page'], ['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/tasks/new', 'New Task'],
+  ['', 'Select a page'], ['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/tasks/new', 'New Task'],
   ['/ledger', 'Ledger'], ['/reminders', 'Reminders'], ['/admin', 'Roster'], ['/guide', 'Guide'],
 ];
 
@@ -28,6 +28,7 @@ export function FeedbackForm() {
   const readOnly = useReadOnly();
   const [text, setText] = useState('');
   const [page, setPage] = useState('');
+  const [kind, setKind] = useState<'fix' | 'praise'>('fix'); // praise goes straight to Working well (2 Nov)
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [shots, setShots] = useState<{ blob: Blob; url: string }[]>([]);
@@ -52,7 +53,7 @@ export function FeedbackForm() {
     if (!ok) return;
     setBusy(true); setErr(null);
     try {
-      const { id } = await api('/feedback', 'POST', { body: text.trim(), path: page || null });
+      const { id } = await api('/feedback', 'POST', { body: text.trim(), path: page || null, kind });
       let failed = 0;
       for (const x of shots) {
         const r = await fetch(`/api/v1/feedback/${id}/images`, { method: 'POST', headers: { 'content-type': x.blob.type }, body: x.blob }).catch(() => null);
@@ -60,7 +61,7 @@ export function FeedbackForm() {
       }
       notify(failed ? `Sent, but ${failed} picture${failed === 1 ? '' : 's'} did not upload.` : 'Sent. Thank you, the team can read it now.');
       shots.forEach((x) => URL.revokeObjectURL(x.url));
-      setText(''); setPage(''); setShots([]);
+      setText(''); setPage(''); setShots([]); setKind('fix');
       router.refresh();
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
@@ -71,8 +72,13 @@ export function FeedbackForm() {
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDrag(true); } }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); void addShots(Array.from(e.dataTransfer.files)); }}>
+      <fieldset className="fb-kind">
+        <legend className="sr-only">What is the note about</legend>
+        <label className="check"><input type="radio" name="fb-kind" checked={kind === 'fix'} onChange={() => setKind('fix')} /> Something to fix or improve</label>
+        <label className="check"><input type="radio" name="fb-kind" checked={kind === 'praise'} onChange={() => setKind('praise')} /> Something working well 👍</label>
+      </fieldset>
       <label className="f">
-        <span>Your Experience</span>
+        <span>Your Experience <span className="req" aria-hidden="true">*</span></span>
         <textarea rows={5} maxLength={FEEDBACK_LIMIT} value={text} aria-required="true" placeholder="What is working well? What is confusing, missing or wrong?"
           onChange={(e) => setText(e.target.value)}
           onPaste={(e) => {
@@ -99,7 +105,7 @@ export function FeedbackForm() {
         <span className="hint">or paste one into the box</span>
       </div>
       <label className="f">
-        <span><Help term="feedback_page">Page (optional)</Help></span>
+        <span><Help term="feedback_page">Page</Help></span>
         <Select value={page} onChange={setPage}>{PAGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
       </label>
       {err && <p className="err" role="alert">{err}</p>}

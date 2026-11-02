@@ -1109,3 +1109,212 @@ The lock never clears in the app: an address for someone who has been a lead or 
 up. `upgrade()` adds the column and backfills it, so the hosted database needs `npm run db:upgrade` before this deploys.
 Rollback: git revert the commit, then on the hosted database DROP TRIGGER email_lock ON team_members and
 DROP FUNCTION email_lock(); the column can stay.
+## 2026-10-30 · Opus 5.5 · "Added since" on every project's tasks
+
+A teammate asked to close each meeting by reviewing the to-dos its note-taker entered during it. The PM wanted it inside
+projects, with a date, not a time. The first pill in a project's filter row, "Added since…", pops a small month calendar
+open with a Today button on top; future days cannot be picked. Picking a day lists the project's tasks made from 12 am
+India time that day, oldest first (the order the meeting agreed them), with a count line ("5 tasks added today") and ✕
+to clear. It combines with the person pills and Clear filters; dropped tasks are left out. The day lives only in the
+address (`?added=`), never in the remembered filters, so tomorrow does not open on yesterday's review. Partner plan
+boards do not have it yet. This replaces the Team page's hour-based menu removed earlier today. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A project's Done tile shows the completed tasks
+
+On a project, the Done tile filtered the open-task list to finished tasks, which it never holds, and hid Completed tasks
+while it was on, so pressing it showed an empty table. The PM's call: Done now shows the completed tasks in place of the
+open list, open and sortable, straight under the tiles, and works with the person pills and Added since. Pressing it again
+or Clear filters goes back. The other tiles are unchanged. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · New Task takes several tasks at once, and required fields carry a *
+
+The PM's call. Under Note in the New Task form, "+ Add another task" adds a full task block (Task, Details, Owner, Due
+Date, Project, Sub-Project, Note; no Quick Add), each starting empty with nothing carried over, headed "Task 2", "Task 3"
+with a Remove button. The button counts ("Add 3 tasks") and adds them in order through the normal task route; a missing
+owner stops all of them, and if the server refuses one, those before it stay added and leave the form. In both task
+forms (New Task and a project's Add task) a required field's label ends in a * in the accent colour (Task, Owner, Due
+Date), "Details (if any)" becomes "Details", and the Task box has no example text. An empty owner with no project now
+reads "Choose a person", as it does on a project, in place of the first name on the list. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Quick Add's hint in plainer words
+
+The PM picked new words for the line under Quick Add: "Type or say it the way you'd tell someone. Add one task or a few,
+or paste a WhatsApp chat." (without the last part where the form takes no chat). Replaces "Type it, or tap the mic and
+say it the way you'd tell someone. One task or several. You can also paste a WhatsApp chat." No other change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The task form's Note loses "(optional)"
+
+With required fields marked *, an unmarked field is optional, so "Note (optional)" becomes "Note" (the PM's call).
+Other forms keep "(optional)" until they move to the * rule. No other change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The app is called NicoDesk, one word
+
+The PM's call: the name is written NicoDesk everywhere it shows (tab title, sidebar, sign-in and connect pages, the
+installed app's name, the offline page, the invite text, the Guide, the Feedback page line, a task's origin), in the
+README and in the current docs (DESIGN-GUIDE, the guide and demo pages). This replaces the 12 Oct spelling "Nico Desk",
+which was the repo owner's call. The repo, package, Vercel project and URL keep `nico-desk`. Older entries in this log
+and the 13 Oct plan keep the old spelling as they were written. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A finished task shows the day it was finished
+
+The PM asked to see when a task was completed, not only Ahead, On time or Late. Beside the flag, outside the chip, the
+day it was done or dropped now shows small and in a quiet colour: "AHEAD 12 Oct". It does not repeat "Done", since the
+status beside it says so. A dropped task, which has no flag, shows the day alone. It shows wherever the flag does
+(project lists and the Done tile, Home, Team, the task drawer). The day comes from `endedAt`, read in India time.
+No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A finished task's aside: the day for Ahead, how late for Late
+
+Refines the entry above (the PM's call). Ahead keeps the day it was done ("AHEAD 12 Oct"). Late shows how many days after
+the first date it was done ("LATE 3 days"). On time shows nothing more, since that day is the due date. A dropped task
+still shows the day it was dropped. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · A project's Update log shows the last 15 days
+
+The PM's call. The Update log on a project lists the last 15 days (India time), with the count in its heading ("3 in
+the last 15 days"). Older entries open with "Show older (N)" and close with "Hide older". Nothing is deleted: the events
+stay append-only and keep feeding task History, the Ledger, Updates for you and Undo. The page now reads the latest 500
+entries in place of 60, so Show older reaches further back. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The profile form follows the * rule
+
+The PM's call. On Your profile, Name (required) ends in a *, "Nickname (optional)" and "Phone (optional)" become
+"Nickname" and "Phone", and the line under the photo buttons ("It is cropped to a square and shrunk on your device.
+Teammates can see it.") is removed. No other change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Home cheers when nothing is open, and Feedback follows the * rule
+
+The PM's call. With nothing open, Home's empty state shows one of five lines, the same all day for a person and another
+the next day: "All clear! Nothing on your plate. Time for a slow chai ☕", "Clean desk, clear skies. Nothing waiting on
+you ✨", "Island time! Not a single task in sight 🏝️", "Zero tasks, zero worries. Treat yourself 🍪" and "All done. Slow
+down, it's a Nicobar kind of day 🌿". It replaces "You're clear. Nothing open on your side." and the Add a task button
+under it. These are the only emoji on the app's screens. On the Feedback form, "Your Experience" ends in a *, "Page
+(optional)" becomes "Page", and the page list's empty choice reads "Select a page" in place of "Not about one page".
+No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · Home cheers once today is clear, not only when nothing is open
+
+Refines the entry above (the PM's call): almost everyone has tasks due later, so the cheer line now shows once nothing is
+late and nothing is due today, not counting a task blocked on someone else, since that wait is theirs. It sits in a
+dashed box at the top of the list with "Next up: N tasks this week" (or later), and the tasks to come stay listed below.
+With no open tasks at all, the hill and the line show as before. The five lines now speak of today: "All clear for
+today! Time for a slow chai ☕", "Clean desk, clear skies. Nothing due today ✨", "Island time! Today's list is done 🏝️",
+"Today's done, zero worries. Treat yourself 🍪", "All done for today. Slow down, it's a Nicobar kind of day 🌿".
+No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The Guide, shorter and up to date
+
+The PM asked for a Guide that is quick to read. It now has 11 short sections: what NicoDesk is for, adding tasks (Quick
+Add, + Add another task), your Home (including the cheer once today is done), the five statuses with Late and At risk,
+the one rule, when you are blocked, projects (tiles, Added since, Done), leads and admins (Team, Ledger, Reminders,
+Roster), help and shortcuts, your phone, and feedback (reply, +1, Done, Resolved). "A week in NicoDesk", the setup list
+and Google Meet notes, and the dictation-app mention are gone. The status words still come from the help text, and the
+plain-words test still holds. The dictation test now looks for Quick Add's "Type or say it" line, since the app's own mic
+replaces the dictation app the old line named. No schema change.
+Rollback: git revert the commit.
+
+## 2026-10-30 · Opus 5.5 · The welcome note points to "the quick guide"
+
+The note for someone new now reads "New here? Read the quick guide." in place of "the two-minute guide", since the
+shorter Guide says one minute. No other change.
+Rollback: git revert the commit.
+
+## 2026-10-31 · Opus 5.5 · Your profile shows your email, job title and department
+
+The PM's call. Your profile now reads Name *, Nickname, Email *, Phone, Job Title *, Department *. Email (the address
+you sign in with), job title and department are shown filled in and read-only, since an admin sets them on the Roster;
+the * says they are always there. The hints under Nickname and Phone go, the email hint reads "The address you sign
+in with." and the one under job title and department reads "Set by admin." Saving still changes only name, nickname
+and phone. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-01 · Opus 5.5 · Activity shows who is using NicoDesk in the pilot
+
+The PM's call: the Activity page (admins only, under More) answers who signed in, who uses it daily and who has gone
+quiet. Four coloured tiles count and filter (`?status=`), each with a one-line meaning: Daily (opened on all 5 weekdays,
+Mon to Fri, of the 7 days before today), Some days (opened at least once in the last 7 days), Gone quiet (signed in
+before, not in the last 7 days) and Never signed in. The table shows status, last active, a dot per day for the last 14
+(weekends lighter), changes in the last 7 days, and Copy invite for someone who never signed in. The Chat, Comments and
+"Last change or comment" columns go. Visit days start on 28 Oct, so "ever signed in" also takes older traces from the
+live pilot on (11 Oct): the Google photo saved at sign-in, a change in the app or through Claude, feedback, a +1 or
+reply, a comment or chat line, updates marked seen, or a nickname, phone or photo set. Older changes are tasks loaded
+from the old tracker under people's names, so they do not count. Someone who signed in between 11 and 28 Oct, set no
+photo and changed nothing can read as Never; Google Workspace's OAuth log would close that gap. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · Partner projects are task boards with a partner, and a task can have a partner owner
+
+The PM's call, with the repo owner's agreement. A new partner project is a task board like an internal one (tiles, Added
+since, people pills, the task list, Completed, Update log), plus the partner's name and team: the header shows a Nicobar
+row and a partner row, and `isPartnerProject` (planUtil) treats an old plan board or a task board with a partner named as
+a partner project. Old plan boards keep their own page until their lines are moved, if ever. On a partner project a task
+has a Nicobar Owner, a "<Partner> Owner" (a name from the partner team, `tasks.partner_owner`), or both; one is needed
+(`tasks_has_owner`), so `tasks.owner_id` may now be empty. The list shows both owner columns, and partner people get
+people pills. A task only a partner owns shows on its project page only (`teamTasks` leaves it out unless asked), anyone
+on the project may look after it, and the ledger counts partner owners like members for leads and admins (a partner
+section may come later). Partner people are names, not accounts: Step 2 (partner sign-in, seeing only Home, their
+projects and Feedback unless admin) and a second owner for signed-in partners come later. The project form is regrouped:
+name, the Internal or Partner cards, description, category, date type and date on one row (calendar only), People (Project
+Owner, Team Members), Partner (Partner Name *, Partner Team), and More options (Viewer, Sub-Projects), open in Settings.
+Deadline becomes Due Date or End Date; Internal reads "A task board the Nico Tribe runs."; the partner name's example is
+"TheCRUX", the PM's choice. Avatar initials skip brackets. The Guide's Projects section gains a partner line.
+Schema: `tasks.partner_owner`, `owner_id` nullable and the `tasks_has_owner` check (PARTNER_OWNER_UPGRADE); the hosted
+database needs `npm run db:upgrade` before the build that carries it is promoted.
+Rollback: git revert the commit; the new column and check can stay, but owner_id must be filled again before NOT NULL.
+
+## 2026-11-02 · Opus 5.5 · The Reminders line says which address the drafts come from
+
+The PM's wording: "One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing is
+sent until you check it and press Send." No other change.
+Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · Feedback: Working on it, and Working well for praise
+
+The PM's call. On an open note to fix, anyone can press Working on it: the note shows "Sam is working on it" (or
+"You are working on it"), sends no news, can be taken over by someone else or stopped, and clears on Done or Not now
+(`feedback.working_by`, `working_at`). The buttons read Working on it, Not now, Done. A note is written as something to
+fix or improve, or something working well, chosen with two small radio buttons above the box (`feedback.kind`); praise goes
+straight to a third view, so the switch reads Open, Resolved, Working well. Praise can be +1'd and replied to, has nothing
+to close, and can be moved back to Open; there is no button to move a note to Working well. The page line reads "You're one
+of NicoDesk's first users, and we'd love your thoughts." The Guide's Feedback line mentions both. No praise had been sent
+on live yet, so nothing needed moving. Schema: `feedback.kind`, `working_by`, `working_at` (FEEDBACK_KIND_UPGRADE); the
+hosted database needs `npm run db:upgrade` before the build that carries it is promoted.
+Rollback: git revert the commit; the new columns can stay.
+
+## 2026-11-02 · Opus 5.5 · Team opens on By status, and the Ledger loses its Finished section
+
+The PM's call. The Team page opens on By status (By person is one click away, and the choice is kept as before); finding
+a person by name covers the person view. By status still shows this week only, with no Later group. On the Ledger, the
+Finished section repeated the top tiles and the people cards, so it goes; the five top tiles stay, and the Closed late
+tile's list now opens with the most-late tasks first. Definitions stay at the foot. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · The Ledger loses its Definitions box
+
+The PM's call. Every word it defined (ahead, on time, late, flagged early, missed, open, past due, slipped silently, moved
+in time, moved late) is already explained in help mode on the same page, and the Guide covers late and at risk, so the
+box goes. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-02 · Opus 5.5 · A proper first day: a welcome card on Home
+
+The PM's call. For someone in their first 7 days on NicoDesk (their first visit, or an older trace of them since the live
+pilot, as on Activity: `firstSeenDay`), Home opens with a welcome card: their name, the projects they are on, the tasks
+waiting for them (how many late, how many due today), and three steps that tick themselves (read the quick guide, add a
+photo or nickname, open their first task, or add one if they have none). All three done, it says "You're all set" and
+goes; ✕ closes it for good; View as never shows it. No step-by-step tour, by choice. What was done and closed is kept per
+person in the browser (localStorage); the profile step reads the server. `?welcome=1` shows the card any time, to
+preview. The old "New here?" line (GuideNote) was never shown on any page; the card takes its place. No schema change.
+Rollback: git revert the commit.

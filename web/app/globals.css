@@ -382,6 +382,26 @@ button.stat[aria-pressed="true"] .stat-n, button.stat[aria-pressed="true"] .stat
 .pill:hover { background: var(--sunk); color: var(--ink); }
 .pill:active { transform: scale(var(--press-scale)); }
 .pill[aria-pressed="true"] { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+/* "Added since" on a project's tasks: a pill that pops a small month calendar open, with Today on top (30 Oct). */
+.since { position: relative; display: inline-flex; margin-right: var(--space-xs); padding-right: var(--space-sm); border-right: var(--rule) solid var(--hairline); }
+.since .pill, .since-open { display: inline-flex; align-items: center; gap: var(--space-xxs); }
+.since-ico { flex: none; }
+@media (max-width: 600px) { .since { border-right: 0; padding-right: 0; margin-right: 0; } }
+.since-on { display: inline-flex; align-items: center; gap: var(--space-xxs); padding-right: var(--space-xxs); background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+.since-on button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+.since-x { width: 24px; height: 24px; border-radius: 50%; }
+.since-pop { position: absolute; top: calc(100% + var(--space-xxs)); left: 0; z-index: 55; width: 272px; max-width: calc(100vw - 2 * var(--space-md)); background: var(--surface);
+  border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--shadow-1); padding: var(--space-sm); display: flex; flex-direction: column; gap: var(--space-sm); }
+.since-today { width: 100%; justify-content: center; }
+.since-head { display: flex; align-items: center; justify-content: space-between; }
+.since-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.since-dow { font: var(--type-small); color: var(--ink-3); padding: var(--space-xxs) 0; }
+.since-day { font: var(--type-small); height: 32px; border: 0; border-radius: var(--radius-control); background: none; color: var(--ink); cursor: pointer; }
+.since-day:hover:not(:disabled) { background: var(--sunk); }
+.since-day:disabled { color: var(--ink-3); opacity: .45; cursor: default; }
+.since-day[data-today] { box-shadow: inset 0 0 0 var(--rule) var(--line-strong); }
+.since-day[aria-pressed="true"] { background: var(--ink); color: var(--canvas); }
+.since-count { margin: 0 0 var(--space-sm); }
 .banner { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); background: var(--sunk); margin: 0 0 var(--space-md); }
 .muted-h { color: var(--ink-3); }
 
@@ -877,11 +897,22 @@ td .flag { margin-top: var(--space-xxs); }
 .pform .target-date-pair .datefield { flex: 1 1 100%; min-width: 0; }
 @media (max-width: 600px) { .pform .target-date { flex-basis: 100%; } }
 .pform .pform-side { font: var(--type-heading); color: var(--ink); margin-top: var(--space-xs); }
-.pform .pform-sub { font: var(--type-state); color: var(--ink-2); margin-top: var(--space-xs); }
+.pform .pform-sub { font: var(--type-label); color: var(--ink-2); margin-top: var(--space-xs); }
 .pform .pform-note { margin: calc(-1 * var(--space-xs)) 0 0; }
 .pform .pform-actions { justify-content: flex-end; align-items: center; }
 .pform .pform-why { margin: 0; text-align: right; }
 .pform .pform-setup { margin-right: auto; color: var(--ink-2); }
+.pform .pform-group > legend { font: var(--type-heading); color: var(--ink); margin-bottom: var(--space-xs); }
+.pform .pform-group + .pform-group, .pform .pform-more { padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
+.pform .pform-date { align-items: flex-end; }
+.pform .pform-date > .pform-date-type { flex: 0 1 200px; }
+.pform .pform-date > .f:last-child { flex: 1 1 200px; }
+.pform .pform-more-in { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-md) 2px 2px; }
+/* Every label in More options reads like the rest of the form: the same size, colour and gap to its field. */
+.pform .pform-more-in > .f { display: flex; flex-direction: column; gap: var(--space-xxs); }
+.pform .pform-more-in > .f > span { font: var(--type-label); color: var(--ink-2); }
+.pform .pform-more-in .pform-note { margin: 0 0 var(--space-xxs); }
+.pform .pform-more-in .sel-btn { width: 100%; }
 .kind-pick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
 .kind-pick button { font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: var(--space-xxs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); border: var(--rule) solid var(--line-strong); background: var(--surface); color: var(--ink);
   transition: background var(--dur-state) var(--ease); }
@@ -1694,7 +1725,7 @@ a.rlink { color: inherit; text-decoration: none; }
 .fb-replies { list-style: none; margin: var(--space-sm) 0 0; padding: 0 0 0 var(--space-md); border-left: var(--rule) solid var(--line-strong); display: grid; gap: var(--space-sm); }
 /* Done, Not now and Reopen sit beside Reply; a closed note says who closed it, when, and the Not now reason (30 Oct). */
 .fb-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-top: var(--space-sm); }
-.fb-actions .linkbtn { margin-right: auto; }
+.fb-actions .linkbtn { margin-right: auto; border: 0; background: none; padding: 0; cursor: pointer; }
 .fb-outcome { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); margin-top: var(--space-sm); }
 .fb-reason { flex: 1 0 100%; margin: 0; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
 .fb-item.is-closed .fb-body { color: var(--ink-2); }
@@ -1702,3 +1733,70 @@ a.rlink { color: inherit; text-decoration: none; }
 .fb-switch .count-badge { color: inherit; opacity: .75; margin-left: var(--space-xxs); }
 .fb-reply-form { margin-top: var(--space-sm); }
 .remind-find { display: block; margin: 0 0 var(--space-md); }
+
+/* New Task: "+ Add another task" adds full task blocks under the first (30 Oct). */
+.task-more { display: flex; flex-direction: column; gap: var(--space-sm); padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
+.task-more-head { display: flex; align-items: center; justify-content: space-between; }
+.task-more-h { font: var(--type-label); font-weight: 600; color: var(--ink); margin: 0; }
+.task-more-add { align-self: flex-start; margin-left: 0; border: 0; background: none; padding: 0; cursor: pointer; }
+/* A required field's label ends in *, in the accent colour; optional fields carry no mark (the PM's call, 30 Oct). */
+.req { color: var(--primary); font-weight: 600; }
+/* The day a finished task was done or dropped, beside its flag at the flag's size, in a quiet colour (30 Oct). */
+.flag-with-day { display: inline-flex; align-items: center; gap: var(--space-xs); white-space: nowrap; margin-top: var(--space-xxs); }
+.flag-with-day .flag { margin-top: 0; }
+.flag-day { font: var(--type-state); font-size: 11px; color: var(--ink-3); white-space: nowrap; font-feature-settings: var(--features-date); }
+/* The Update log's Show older button and the Older heading above what it opens (30 Oct). */
+.log-older { margin-top: var(--space-sm); }
+.log-older-h { margin: var(--space-md) 0 var(--space-xs); }
+/* Home, once today is clear: the cheer line above the tasks still to come (30 Oct). */
+.today-clear { margin: var(--space-md) 0; padding: var(--space-md) var(--card-pad); border: var(--rule) dashed var(--line-strong); border-radius: var(--radius-card); text-align: center; }
+.today-clear-line { margin: 0; font: var(--type-body); color: var(--ink); }
+.today-clear-next { margin: var(--space-xxs) 0 0; font: var(--type-small); color: var(--ink-3); }
+/* A field shown but not edited here (the profile's email, job title, department): quieter, and no text cursor. */
+.ro-field { background: var(--sunk); color: var(--ink-2); cursor: default; }
+/* Activity (30 Oct): status tiles that filter, and a dot per day for the last 14, filled when the person opened the app. */
+.act-tiles { margin-bottom: var(--space-md); }
+.act-tiles .stat { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; }
+/* Each tile wears its status colour, the same tokens as the status pill below it, so every skin and dark mode match.
+   Pressed keeps the colour and adds a ring, in place of the dark fill other tiles use. */
+.act-daily { --act-bg: var(--status-done-bg); --act-fg: var(--status-done-fg); }
+.act-some { --act-bg: var(--status-doing-bg); --act-fg: var(--status-doing-fg); }
+.act-quiet { --act-bg: var(--late-soft); --act-fg: var(--late); }
+.act-never { --act-bg: var(--status-todo-bg); --act-fg: var(--status-todo-fg); }
+.act-tiles button.stat { background: var(--act-bg); border-color: color-mix(in srgb, var(--act-fg) 22%, transparent); }
+.act-tiles button.stat:hover { background: color-mix(in srgb, var(--act-bg) 85%, var(--act-fg)); }
+.act-tiles button.stat .stat-n, .act-tiles button.stat .stat-l { color: var(--act-fg); }
+.act-tiles button.stat .stat-l { font-weight: 600; }
+.act-tiles button.stat .act-help { color: var(--ink-2); }
+.act-tiles button.stat[aria-pressed="true"] { background: var(--act-bg); border-color: var(--act-fg); box-shadow: inset 0 0 0 1px var(--act-fg); }
+.act-tiles button.stat[aria-pressed="true"] .stat-n, .act-tiles button.stat[aria-pressed="true"] .stat-l { color: var(--act-fg); }
+.act-tiles button.stat[aria-pressed="true"] .act-help { color: var(--ink-2); }
+.act-showing { margin: 0 0 var(--space-sm); }
+.act-showing .linkbtn { border: 0; background: none; padding: 0; min-height: 0; margin-left: var(--space-xxs); cursor: pointer; }
+.act-dots { display: inline-flex; gap: 3px; align-items: center; }
+.act-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sunk); box-shadow: inset 0 0 0 var(--rule) var(--line-strong); }
+.act-dot.on { background: var(--status-done-fg); box-shadow: none; }
+.act-dot.wkend { opacity: .4; }
+.act-help { font: var(--type-small); color: var(--ink-3); margin-top: var(--space-xxs); text-align: left; }
+.act-table td { vertical-align: middle; }
+.fb-working { margin: var(--space-xs) 0 0; color: var(--primary); font-weight: 500; }
+/* Feedback: what the note is about, two small radio choices on one line (2 Nov). */
+.fb-kind { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); }
+.fb-kind .check { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-label); color: var(--ink); cursor: pointer; }
+.fb-kind input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
+/* Read aloud, not shown. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Home's welcome for someone in their first week (components/WelcomeCard.tsx, 2 Nov). */
+.welcome { margin: var(--space-md) 0; border-color: color-mix(in srgb, var(--primary) 30%, var(--hairline)); }
+.welcome-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); }
+.welcome-head h2 { margin: 0; font: var(--type-heading); }
+.welcome-x { border: 0; background: none; color: var(--ink-3); cursor: pointer; font-size: 14px; padding: var(--space-xxs); }
+.welcome-facts { margin: var(--space-sm) 0; padding-left: var(--space-md); display: grid; gap: var(--space-xxs); }
+.welcome-lede { margin: var(--space-sm) 0 var(--space-xs); }
+.welcome-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
+.welcome-steps li { display: flex; align-items: center; gap: var(--space-xs); }
+.welcome-steps li.done a, .welcome-steps li.done .linkbtn { color: var(--ink-3); text-decoration: line-through; }
+.welcome-steps a, .welcome-steps .linkbtn { margin: 0; border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--primary); text-decoration: none; }
+.welcome-steps a:hover, .welcome-steps .linkbtn:hover { text-decoration: underline; }
+.welcome-tick { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: var(--rule) solid var(--line-strong); font-size: 11px; color: var(--canvas); flex: none; }
+.welcome-steps li.done .welcome-tick { background: var(--status-done-fg); border-color: var(--status-done-fg); }

@@ -46,7 +46,6 @@ function keptOf(ts: Task[]) {
 }
 
 const ATTN_SHOWN = 8;
-const FIN_SHOWN = 5;
 
 type Drill = { title: string; tasks: Task[] } | null;
 
@@ -70,9 +69,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
   const period = weeks === 1 ? 'this week' : `last ${weeks} weeks`;
   const pastDue = tasks.filter(MATCH.pastdue);
   const silent = tasks.filter(MATCH.silent);
-  const lateDone = tasks.filter(MATCH.late);
-  const keptDone = tasks.filter(MATCH.kept);
-  const closed = tasks.filter((t) => t.outcome);
   // Blocked tasks come from the open list, so a block shows even when its first date is outside the window.
   const attention = attentionList([...tasks, ...openNow.filter((t) => t.blocked)].filter(shown), names, today);
   const byId = new Map([...tasks, ...openNow].map((t) => [t.id, t]));
@@ -89,7 +85,7 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         <Help term="ledger_closed_ok" host><button className="card stat" onClick={() => show(`Closed on time or ahead, ${period}`, tasks.filter(MATCH.kept))}>
           <div className="stat-n"><CountUp id="ledger-closed-ok" value={tasks.filter(MATCH.kept).length} /></div><div className="stat-l">Closed on time or ahead</div>
         </button></Help>
-        <Help term="ledger_closed_late" host><button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late))}>
+        <Help term="ledger_closed_late" host><button className="card stat" onClick={() => show(`Closed late, ${period}`, tasks.filter(MATCH.late).sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)))}>
           <div className="stat-n"><CountUp id="ledger-closed-late" value={tasks.filter(MATCH.late).length} /></div><div className="stat-l">Closed late</div>
         </button></Help>
         <Help term="ledger_pastdue" host><button className={`card stat${tasks.some(MATCH.pastdue) ? ' warn' : ''}`} onClick={() => show(`Open, past due, ${period}`, tasks.filter(MATCH.pastdue))}>
@@ -192,58 +188,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
         </div>
       )}
 
-      <h2>{weeks === 1 ? 'Finished this week' : 'Finished'} <span className="count-badge">{period}</span></h2>
-      <div className="card card-pad finished">
-        {closed.length === 0 ? <p className="empty">Nothing finished in this view.</p> : (
-          <>
-            <p className="summary">
-              <N n={`${keptDone.length} on time or ahead`} title={`Closed on time or ahead, ${period}`} list={keptDone} /> ({tasks.filter(MATCH.ahead).length} ahead, {tasks.filter(MATCH.ontime).length} on time)
-              {' · '}<N n={`${lateDone.length} late`} title={`Closed late, ${period}`} list={lateDone} warn={lateDone.length > 0} /> ({tasks.filter(MATCH.flagged).length} <Help term="flagged_early">flagged early</Help>, {tasks.filter(MATCH.missed).length} <Help term="missed">missed</Help>)
-            </p>
-            {lateDone.length > 0 && (
-              <ul className="fin-list">
-                {lateDone.filter(shown).sort((x, y) => days(y.firstDueOn, closedOn(y)!) - days(x.firstDueOn, closedOn(x)!)).slice(0, FIN_SHOWN).map((t) => (
-                  <li key={t.id}>
-                    <TaskName id={t.id} title={t.title} plain={plain} />
-                    <span className="small dim"> · <PersonLink id={t.ownerId}>{names[t.ownerId]}</PersonLink> · <span className="late-text">{days(t.firstDueOn, closedOn(t)!)} day{days(t.firstDueOn, closedOn(t)!) === 1 ? '' : 's'} late</span> · {t.lateKind === 'flagged_early' ? <Help term="flagged_early">flagged early</Help> : <Help term="missed">missed</Help>}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-      </div>
-
-      <details className="breakdown">
-        <summary>Definitions</summary>
-      <div className="card defs">
-        <div>
-          <h3>Finished</h3>
-          <dl>
-            <dt><Help term="ahead">Ahead</Help></dt><dd>Done before the first date.</dd>
-            <dt><Help term="on_time">On time</Help></dt><dd>Done on the first date.</dd>
-            <dt><Help term="late">Late</Help></dt><dd>Done after the first date, even if the date was moved.</dd>
-            <dt className="sub-def"><Help term="flagged_early">Flagged early</Help></dt><dd>Late, but the date was moved before it passed.</dd>
-            <dt className="sub-def"><Help term="missed">Missed</Help></dt><dd>Late, and the date passed with no move.</dd>
-          </dl>
-        </div>
-        <div>
-          <h3>Still open</h3>
-          <dl>
-            <dt>Open</dt><dd>Not done or dropped yet.</dd>
-            <dt>Past due</dt><dd>Open, and today is after its date.</dd>
-            <dt><Help term="slipped_silently">Slipped silently</Help></dt><dd>Went past its date with no new date set first. Target: 0.</dd>
-          </dl>
-        </div>
-        <div>
-          <h3>Date changes</h3>
-          <dl>
-            <dt><Help term="moved_in_time">Moved in time</Help></dt><dd>New date set before the old one passed.</dd>
-            <dt><Help term="moved_late">Moved late</Help></dt><dd>New date set after the old one passed.</dd>
-          </dl>
-        </div>
-      </div>
-      </details>
 
       {drill && <DrillPanel drill={drill} hidden={hidden} plain={plain} names={names} projectNames={projectNames} today={today} by={kept.drillSort} setBy={(v) => keep('drillSort', v)} onClose={() => setDrill(null)} />}
     </>

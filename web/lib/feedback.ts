@@ -14,8 +14,10 @@ const PATH_MAX = 300;
 
 export type FeedbackReply = { id: string; authorName: string; body: string; createdAt: string };
 export type FeedbackStatus = 'open' | 'done' | 'not_now';
+export type FeedbackKind = 'fix' | 'praise';
 export type FeedbackView = { id: string; personId: string; personName: string; path: string | null; body: string; createdAt: string; images: number; votes: number; mine: boolean; others: string[];
-  status: FeedbackStatus; closedByName: string | null; closedAt: string | null; closedNote: string | null; replies: FeedbackReply[] };
+  status: FeedbackStatus; closedByName: string | null; closedAt: string | null; closedNote: string | null; replies: FeedbackReply[];
+  kind: FeedbackKind; workingById: string | null; workingByName: string | null };
 export const CLOSE_NOTE_MAX = 280;
 export const REPLY_MAX = 2000;
 
@@ -30,18 +32,19 @@ export function cleanPath(raw: string | null | undefined): string | null {
   return p;
 }
 
-export async function sendFeedback(db: Db, me: Me, input: { body: string; path?: string | null }): Promise<{ id: string }> {
+export async function sendFeedback(db: Db, me: Me, input: { body: string; path?: string | null; kind?: FeedbackKind }): Promise<{ id: string }> {
   assertNotViewing(me);
   const body = input.body.trim();
   if (!body) throw bad('invalid_body', 'Write a note first.', 'body');
   if (body.length > FEEDBACK_MAX) throw bad('invalid_body', `A note holds ${FEEDBACK_MAX} characters. This one has ${body.length}.`, 'body');
   const id = newId('fbk');
-  await db.query(`INSERT INTO feedback (id, person_id, path, body) VALUES ($1,$2,$3,$4)`, [id, me.person.id, cleanPath(input.path), body]);
+  await db.query(`INSERT INTO feedback (id, person_id, path, body, kind) VALUES ($1,$2,$3,$4,$5)`, [id, me.person.id, cleanPath(input.path), body, input.kind ?? 'fix']);
   return { id };
 }
 
 type Row = { id: string; person_id: string; person_name: string; path: string | null; body: string; created_at: string; images: number; votes: number; mine: boolean;
-  status: FeedbackStatus; closed_by_name: string | null; closed_at: string | null; closed_note: string | null };
+  status: FeedbackStatus; closed_by_name: string | null; closed_at: string | null; closed_note: string | null;
+  kind: FeedbackKind; working_by: string | null; working_by_name: string | null };
 
 
 // Everyone on the team reads every note, whatever their role (the PM's call, 14 Oct).
@@ -49,10 +52,11 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
   const { rows } = await db.query<Row>(
     `SELECT f.id, f.person_id, COALESCE(p.nickname, p.display_name) AS person_name, f.path, f.body, f.created_at,
             f.status, COALESCE(c.nickname, c.display_name) AS closed_by_name, f.closed_at, f.closed_note,
+            f.kind, f.working_by, COALESCE(w.nickname, w.display_name) AS working_by_name,
             (SELECT count(*)::int FROM feedback_images i WHERE i.feedback_id = f.id) AS images,
             (SELECT count(*)::int FROM feedback_votes v WHERE v.feedback_id = f.id) AS votes,
             EXISTS (SELECT 1 FROM feedback_votes v WHERE v.feedback_id = f.id AND v.person_id = $2) AS mine
-       FROM feedback f JOIN people p ON p.id = f.person_id LEFT JOIN people c ON c.id = f.closed_by
+       FROM feedback f JOIN people p ON p.id = f.person_id LEFT JOIN people c ON c.id = f.closed_by LEFT JOIN people w ON w.id = f.working_by
       WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1)
       ORDER BY f.created_at DESC, f.id DESC`,
     [me.team.id, me.person.id],
@@ -77,7 +81,8 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
     byNote.set(r.feedback_id, list);
   }
   return rows.map((r) => ({ id: r.id, personId: r.person_id, personName: r.person_name, path: r.path, body: r.body, createdAt: r.created_at, images: r.images, votes: r.votes, mine: r.mine, others: backers.get(r.id) ?? [],
-    status: r.status, closedByName: r.closed_by_name, closedAt: r.closed_at, closedNote: r.closed_note, replies: byNote.get(r.id) ?? [] }));
+    status: r.status, closedByName: r.closed_by_name, closedAt: r.closed_at, closedNote: r.closed_note, replies: byNote.get(r.id) ?? [],
+    kind: r.kind, workingById: r.working_by, workingByName: r.working_by_name }));
 }
 
 
@@ -165,11 +170,33 @@ export async function setFeedbackStatus(db: Db, me: Me, id: string, status: Feed
     const { rows } = await tx.query<{ status: FeedbackStatus }>(`SELECT status FROM feedback WHERE id = $1 FOR UPDATE`, [id]);
     if (rows[0].status === status && status !== 'not_now') return; // already so: no second notice
     if (status === 'open') await tx.query(`UPDATE feedback SET status = 'open', closed_by = NULL, closed_at = NULL, closed_note = NULL WHERE id = $1`, [id]);
-    else await tx.query(`UPDATE feedback SET status = $2, closed_by = $3, closed_at = now(), closed_note = $4 WHERE id = $1`,
+    else await tx.query(`UPDATE feedback SET status = $2, closed_by = $3, closed_at = now(), closed_note = $4, working_by = NULL, working_at = NULL WHERE id = $1`,
       [id, status, me.person.id, status === 'not_now' ? note : null]);
     await tell(tx, id, me.person.id, status === 'open' ? 'reopened' : status, status === 'not_now' ? { reason: note } : {});
   });
   return { status };
+}
+
+// "Working on it" (2 Nov): anyone marks an open note to fix as theirs, or takes it over, or lets it go. The note shows
+// who; nobody is told, so it sends no news.
+export async function setFeedbackWorking(db: Db, me: Me, id: string, on: boolean): Promise<{ ok: true }> {
+  assertNotViewing(me);
+  const note = await noteOnTeam(db, me, id);
+  if (on && note.status !== 'open') throw bad('note_closed', 'This note is closed. Reopen it first.', 'working');
+  await db.query(on ? `UPDATE feedback SET working_by = $2, working_at = now() WHERE id = $1 AND kind = 'fix'` : `UPDATE feedback SET working_by = NULL, working_at = NULL WHERE id = $1`,
+    on ? [id, me.person.id] : [id]);
+  return { ok: true };
+}
+
+// Moves a note between "working well" and "to fix", for a note written as the wrong kind. Praise has nothing to close, so
+// it goes back to open and loses anyone working on it.
+export async function setFeedbackKind(db: Db, me: Me, id: string, kind: FeedbackKind): Promise<{ ok: true }> {
+  assertNotViewing(me);
+  await noteOnTeam(db, me, id);
+  await db.query(kind === 'praise'
+    ? `UPDATE feedback SET kind = 'praise', status = 'open', closed_by = NULL, closed_at = NULL, closed_note = NULL, working_by = NULL, working_at = NULL WHERE id = $1`
+    : `UPDATE feedback SET kind = 'fix' WHERE id = $1`, [id]);
+  return { ok: true };
 }
 
 // What changed on notes I wrote or gave +1, not seen yet, newest first: the "Feedback updates" card on Home.

@@ -104,21 +104,27 @@ export function ProfileForm({ personId, profile }: { personId: string; profile: 
                 <button className="mini-btn" type="button" onClick={() => { setPicked(null); setRemove(hasPhoto); }}>Remove photo</button>
               )}
             </div>
-            <p className="hint" style={{ margin: 0 }}>It is cropped to a square and shrunk on your device. Teammates can see it.</p>
           </div>
         </div>
-        <label className="f"><span>Name</span>
+        <label className="f"><span>Name <span className="req" aria-hidden="true">*</span></span>
           <input required minLength={2} maxLength={80} autoComplete="name" enterKeyHint="next" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
-        <label className="f"><span>Nickname (optional)</span>
+        <label className="f"><span>Nickname</span>
           <input maxLength={40} autoComplete="nickname" enterKeyHint="next" value={nick} onChange={(e) => setNick(e.target.value)} />
         </label>
-        <p className="hint" style={{ margin: 0 }}>Set a nickname and the app shows it in place of your name. The Roster shows both.</p>
-        <label className="f"><span>Phone (optional)</span>
+        <label className="f"><span>Email <span className="req" aria-hidden="true">*</span></span>
+          <input value={profile.email} readOnly aria-readonly="true" className="ro-field" />
+        </label>
+        <p className="hint" style={{ margin: 0 }}>The address you sign in with.</p>
+        <label className="f"><span>Phone</span>
           <input type="tel" inputMode="tel" enterKeyHint="done" autoComplete="tel" maxLength={20} value={num} placeholder="+91 90000 00000"
             onChange={(e) => setNum(e.target.value)} />
         </label>
-        <p className="hint" style={{ margin: 0 }}>Only people on your team can see your phone number.</p>
+        <div className="row">
+          <label className="f"><span>Job Title <span className="req" aria-hidden="true">*</span></span><input value={profile.role} readOnly aria-readonly="true" className="ro-field" /></label>
+          <label className="f"><span>Department <span className="req" aria-hidden="true">*</span></span><input value={profile.department} readOnly aria-readonly="true" className="ro-field" /></label>
+        </div>
+        <p className="hint" style={{ margin: 0 }}>Set by admin.</p>
         {err && <p className="err" role="alert">{err}</p>}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn" disabled={busy}>Save</button>

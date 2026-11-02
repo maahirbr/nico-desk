@@ -28,7 +28,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   const google = googleSignInEnabled();
   const dev = devSignInEnabled();
   const art = <DitherArt field="glow" cols={56} rows={14} className="dither-signin" />;
-  const brand = <div className="signin-brand"><Wordmark className="signin-logo" /><span className="mark-name">Nico Desk</span></div>;
+  const brand = <div className="signin-brand"><Wordmark className="signin-logo" /><span className="mark-name">NicoDesk</span></div>;
   const notice = message && <p className="err" role="alert" style={{ marginBottom: 'var(--space-sm)' }}>{message}</p>;
 
   if (!google && !dev) {

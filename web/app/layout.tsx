@@ -37,10 +37,10 @@ import './tokens.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Nico Desk',
+  title: 'NicoDesk',
   description: 'Where a Nicobar team runs its week.',
   // Home-screen install: iOS reads these tags, Android reads app/manifest.ts.
-  appleWebApp: { capable: true, title: 'Nico Desk', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'NicoDesk', statusBarStyle: 'default' },
   icons: { apple: '/icons/apple-touch-icon.png' },
 };
 // Browser bar colour: skin W canvas, day and night.
@@ -101,7 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link className="mark" href="/me">
                 <span className="mark-logo" aria-hidden>n</span>
                 <span className="mark-text">
-                  <span className="mark-name">Nico Desk</span>
+                  <span className="mark-name">NicoDesk</span>
                   <span className="mark-sub mark-wordmark" role="img" aria-label="Nicobar" />
                 </span>
               </Link>
