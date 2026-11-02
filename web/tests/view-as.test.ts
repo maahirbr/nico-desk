@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // "View as": an admin reviews the site as another person, read-only. These tests cover the cookie, who may use
 // it, and the guard every /api/v1 write goes through. Request cookies and the database are stubbed.
@@ -11,7 +11,7 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('../lib/db', async (orig) => ({ ...(await orig<typeof import('../lib/db')>()), db: async () => state.testDb }));
 
-import { VIEW_COOKIE, COOKIE, resolveMe, signSession, signView, verifyView } from '../lib/auth';
+import { VIEW_COOKIE, COOKIE, cookieOptions, currentMe, resolveMe, signSession, signView, verifyView } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import { assertNotViewing, route } from '../lib/http';
 import * as s from '../lib/service';
@@ -186,5 +186,39 @@ describe('POST /api/v1/session/view', () => {
     signIn(ADMIN);
     const bad = new Request('http://localhost/api/v1/session/view', { method: 'POST', headers: { origin: 'http://evil.test', host: 'localhost', 'content-type': 'application/json' }, body: JSON.stringify({ personId: LEAD }) });
     expect((await viewPost(bad)).status).toBe(403);
+  });
+});
+
+describe('how long a cookie lasts', () => {
+  const HOUR = 3_600_000, DAY = 24 * HOUR;
+  const later = (ms: number) => { const t = Date.now() + ms; vi.spyOn(Date, 'now').mockReturnValue(t); };
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('keeps a sign-in for 30 days, then ends it', async () => {
+    expect(cookieOptions.maxAge).toBe(30 * 24 * 3600);
+    signIn(LEAD);
+    later(29 * DAY);
+    expect((await currentMe())?.person.id).toBe(LEAD);
+    later(2 * DAY);
+    expect(await currentMe()).toBeNull();
+  });
+
+  it('still ends a sign-in as soon as the person goes inactive', async () => {
+    signIn(LEAD);
+    expect((await currentMe())?.person.id).toBe(LEAD);
+    await db.query('UPDATE people SET active = false WHERE id = $1', [LEAD]);
+    expect(await currentMe()).toBeNull();
+  });
+
+  it('keeps View as to 12 hours, in the token and in the cookie', async () => {
+    const t = signView(ADMIN, LEAD);
+    later(11 * HOUR);
+    expect(verifyView(t, ADMIN)).toBe(LEAD);
+    later(2 * HOUR);
+    expect(verifyView(t, ADMIN)).toBeNull();
+    vi.restoreAllMocks();
+    signIn(ADMIN);
+    const res = await viewPost(post('/api/v1/session/view', { personId: LEAD }));
+    expect(res.headers.get('set-cookie')).toContain(`Max-Age=${12 * 3600}`);
   });
 });

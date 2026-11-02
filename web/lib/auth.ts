@@ -13,7 +13,8 @@ import { noteVisit } from './activity';
 // NICO_DEV_SIGNIN=1. Either way the person must be on the roster, active, and on the allowed email domain.
 
 export const COOKIE = 'nd_session';
-const MAX_AGE_S = 60 * 60 * 12;
+const MAX_AGE_S = 60 * 60 * 24 * 30;
+const VIEW_MAX_AGE_S = 60 * 60 * 12;
 
 // person is who the pages and rules treat as the signed-in user. When an admin is "viewing as" someone,
 // person is that someone and viewingAs is true; realPerson is always the signed-in session person. Audit and
@@ -59,7 +60,7 @@ function verify(token: string | undefined): string | null {
 export const VIEW_COOKIE = 'nd_view';
 
 export function signView(realId: string, targetId: string): string {
-  const payload = `${realId}.${targetId}.${Math.floor(Date.now() / 1000) + MAX_AGE_S}`;
+  const payload = `${realId}.${targetId}.${Math.floor(Date.now() / 1000) + VIEW_MAX_AGE_S}`;
   return `${payload}.${mac(`view:${payload}`)}`;
 }
 
@@ -99,7 +100,7 @@ export function unseal<T extends Record<string, unknown>>(label: string, token: 
   }
 }
 
-export const cookieOptions = { maxAge: MAX_AGE_S };
+export const cookieOptions = { maxAge: MAX_AGE_S, viewMaxAge: VIEW_MAX_AGE_S };
 
 // Secure whenever the request came over HTTPS, so plain http://localhost still works.
 export function isHttps(req: Request): boolean {

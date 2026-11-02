@@ -1337,3 +1337,8 @@ Rollback: git revert the commit.
 
 The repo owner said yes. A backup was taken first, then `npm run db:upgrade` added `tasks.partner_owner`, `tasks_has_owner` and `feedback.kind` on the hosted database. Row counts did not change. Then `maahir/mvp` was pushed into `main`, which builds production. The first network timed out on outbound ports 5432 and 6543, so the upgrade ran after the repo owner switched networks.
 Rollback: `vercel promote nico-desk-8t1r2go1f-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The database changes can stay, but the older build was not tested signed in against them, and it may not handle a task with only a partner owner.
+
+## 2026-11-02 · Opus 5.5 · A sign-in lasts 30 days
+
+Pilot users had to sign in again almost every day, because a sign-in lasted a fixed 12 hours. It now lasts a fixed 30 days, the same as the Claude connection's refresh token. It does not renew with use, so each person goes back through Google once a month. View as stays at 12 hours. Activity counts the first signed-in request of a day, not a sign-in, so its numbers stay valid, but more people may get in when the sign-in page no longer stops them. The cost: a lost or shared laptop stays signed in for up to 30 days, and Sign out clears only that browser. Marking a person inactive still ends their access on the next request. The security audit must cover this. Sessions made before this build keep their 12 hours.
+Rollback: `vercel promote nico-desk-kk7urrl04-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. Cookies already issued stay valid until their 30 days end, unless `NICO_SESSION_SECRET` is changed, which signs everyone out.

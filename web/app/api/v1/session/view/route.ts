@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
     const target = await getPerson(scoped(await db(), me.team.id), me.team.id, personId);
     if (!target?.active) throw new ApiError(404, 'not_found', 'That person is not on the active roster.');
-    res.headers.append('Set-Cookie', cookie(signView(me.realPerson.id, target.id), cookieOptions.maxAge, isHttps(req), VIEW_COOKIE));
+    res.headers.append('Set-Cookie', cookie(signView(me.realPerson.id, target.id), cookieOptions.viewMaxAge, isHttps(req), VIEW_COOKIE));
     return res;
   } catch (e) {
     return errorResponse(e);
