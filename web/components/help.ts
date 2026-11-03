@@ -50,6 +50,8 @@ export const HELP = {
   waiting_on_you: 'Waiting on you. Someone else is blocked until you do something. A block stays here until it is cleared.',
   updates_for_you: 'Updates for you. Changes to your tasks and projects since you last looked, such as a new owner or a moved date.',
   mark_seen: 'Mark seen. Removes the update from this list on every device. The change stays in the update log.',
+  update_asked: 'Update asked. Someone asked for an update on your task. Reply opens it: add an update, or change its status or date, and they see your answer.',
+  ask_update: 'Ask for update. Asks the owner how this task is going. They see it on their Home, and you see their answer in Updates for you. Nothing is emailed.',
   waiting_done: 'Done. Clears the block on this task. You write a few words on what you did, and the owner sees them.',
   your_projects: 'Your projects. The projects where you are the owner, the lead, or a member.',
   done_this_week: 'Done this week. Tasks finished since Monday. The task finished most recently is on top.',

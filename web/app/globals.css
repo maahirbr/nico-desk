@@ -651,6 +651,10 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
 .remind-items li { display: flex; gap: var(--space-sm); align-items: flex-start; }
 .remind-items li .trow-check { flex: none; margin-top: 2px; }
 .remind-items li.out .remind-item-text > span:first-child { color: var(--ink-3); }
+/* Waiting on a reply (asks for an update): the text takes the row, the button sits at its end. */
+.ask-remind li { align-items: center; }
+.ask-remind li .remind-item-text { flex: 1; min-width: 0; }
+.ask-remind li .mini-btn { flex: none; }
 .remind-flag { display: block; color: var(--ink-2); }
 a.btn { text-decoration: none; }
 a.btn.disabled { opacity: .45; cursor: not-allowed; }
@@ -1176,6 +1180,7 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .st-opt .st-icon { color: var(--sf, var(--tone-fg, var(--ink-3))); }
 .st-opt[aria-checked="true"] { background: var(--sunk); font-weight: 600; }
 .st-act { color: var(--ink-2); }
+.menu > .st-act:disabled, .menu > .st-act:disabled:hover { color: var(--ink-3); background: none; cursor: default; } /* ✓ Asked: already asked for an update */
 .menu > .st-menu-sep { height: var(--rule); padding: 0; margin: var(--space-xxs) var(--space-xs); background: var(--hairline); cursor: default; }
 .menu > .st-menu-sep:hover { background: var(--hairline); }
 .ask-unblock { display: flex; gap: var(--space-xs); margin-top: var(--space-sm); }

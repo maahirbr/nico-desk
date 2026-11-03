@@ -209,6 +209,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     const s = statusKey(t);
     const st = STATUS[s];
     const can = may(t);
+    const askable = !readOnly && !t.readOnly && !!t.ownerId && t.ownerId !== meId; // Ask for update… in the row menu
     const p = prompt && prompt.t.id === t.id ? prompt : null;
     return (
       <Fragment key={t.id}>
@@ -237,9 +238,10 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             )}
           </td>
           <td>
-            {can && t.statusCategory === 'open' ? (
-              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead))} canReassign={isLead}
-                onPick={(a) => (a === 'date' || a === 'reassign' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
+            {(can || askable) && t.statusCategory === 'open' ? (
+              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && isLead}
+                canAsk={askable} askOnly={!can}
+                onPick={(a) => (a === 'date' || a === 'reassign' || a === 'ask' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
             ) : <span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span>}
             <div><FlagChip t={t} today={today} /></div>
           </td>

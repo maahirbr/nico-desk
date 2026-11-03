@@ -106,6 +106,8 @@ export async function upgrade(db: Db) {
   await db.exec(FEEDBACK_KIND_UPGRADE);
   // 1 Nov: on a partner project, a partner person can own a task, with or without a Nicobar owner; one of the two is needed.
   await db.exec(PARTNER_OWNER_UPGRADE);
+  // 3 Nov: "Ask for an update" on a task.
+  await db.exec(UPDATE_ASKS_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
@@ -207,6 +209,19 @@ DO $$ BEGIN
     ALTER TABLE tasks ADD CONSTRAINT tasks_has_owner CHECK (owner_id IS NOT NULL OR partner_owner IS NOT NULL);
   END IF;
 END $$;`;
+
+// Idempotent: asks for an update on a task (RLS on). The same SQL as lib/schema.ts.
+export const UPDATE_ASKS_UPGRADE = `
+CREATE TABLE IF NOT EXISTS update_asks (
+  id          text PRIMARY KEY,
+  task_id     text NOT NULL REFERENCES tasks(id),
+  asker_id    text NOT NULL REFERENCES people(id),
+  question    text CHECK (char_length(question) BETWEEN 1 AND 140),
+  asked_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS update_asks_task ON update_asks (task_id, asked_at);
+CREATE INDEX IF NOT EXISTS update_asks_asker ON update_asks (asker_id, asked_at);
+ALTER TABLE update_asks ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: a note's kind (fix or praise) and who is working on it. The same SQL as lib/schema.ts.
 export const FEEDBACK_KIND_UPGRADE = `

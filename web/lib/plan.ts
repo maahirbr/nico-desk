@@ -801,6 +801,7 @@ export async function deleteProject(db: Db, meId: string, id: string, confirmNam
     // Children before parents, so no foreign key is left pointing at a deleted row.
     const steps: [string, unknown[]][] = [
       [`DELETE FROM notices WHERE task_id = ANY($1::text[]) OR comment_id = ANY($2::text[]) OR message_id = ANY($3::text[])`, [tasks, comments, messages]],
+      [`DELETE FROM update_asks WHERE task_id = ANY($1::text[])`, [tasks]],
       [`DELETE FROM chat_task_links WHERE task_id = ANY($1::text[]) OR message_id = ANY($2::text[])`, [tasks, messages]],
       [`DELETE FROM chat_refs WHERE message_id = ANY($1::text[]) OR (ref_kind = 'task' AND ref_id = ANY($2::text[])) OR (ref_kind = 'project' AND ref_id = $3)`, [messages, tasks, id]],
       [`DELETE FROM comment_refs WHERE comment_id = ANY($1::text[]) OR (ref_kind = 'task' AND ref_id = ANY($2::text[])) OR (ref_kind = 'project' AND ref_id = $3)`, [comments, tasks, id]],

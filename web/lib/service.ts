@@ -1057,15 +1057,19 @@ export async function updatesView(
     db.query<EventRow>(
       `SELECT e.* FROM events e JOIN tasks t ON t.id = e.entity_id
        WHERE e.entity_type = 'task' AND t.team_id = $1 AND e.at >= $2
-         AND e.field IN ('_created','owner_id','due_on','blocked_ask','blocked_on_id','status_category','title')`,
+         AND e.field IN ('_created','owner_id','due_on','blocked_ask','blocked_on_id','status_category','title','_update','health','_reopened')`,
       [teamId, since],
     ),
     db.query<{ id: string; owner_id: string; lead_id: string | null }>(`SELECT id, owner_id, lead_id FROM projects WHERE team_id = $1`, [teamId]),
   ]);
+  // My asks for an update from the last fortnight (lib/asks.ts): their answers show here.
+  const { rows: asks } = await db.query<{ task_id: string; asked_at: string | Date }>(
+    `SELECT task_id, asked_at FROM update_asks WHERE asker_id = $1 AND asked_at >= $2`, [meId, new Date(now.getTime() - 14 * 86_400_000).toISOString()]);
   const tasks = all.filter((t) => seesTask(sight, t));
   const seen = new Set(tasks.map((t) => t.id));
   const items = buildUpdates({
     events: events.rows.filter((e) => seen.has(e.entity_id)), tasks, leadOf: Object.fromEntries(projects.rows.map((p) => [p.id, [p.owner_id, ...(p.lead_id ? [p.lead_id] : [])]])), names, viewerId: meId, now, seenAt,
+    asks: asks.map((a) => ({ taskId: a.task_id, askedAt: new Date(a.asked_at).toISOString() })),
   }).filter((i) => !seenByTask[i.taskId] || i.at > seenByTask[i.taskId]);
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
 }

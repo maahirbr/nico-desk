@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/derive';
 import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flags';
 import type { LogLine } from '@/lib/service';
+import type { Ask } from '@/lib/asks';
+import { ago } from '@/lib/updates';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
@@ -34,6 +36,7 @@ import { PasteChat } from './PasteChat';
 import { TaskDrafts } from './TaskDrafts';
 import type { SentenceRead } from '@/lib/sentence';
 import { Count } from './LimitNotice';
+import { isRealEnter } from './ime';
 import { Fold, FoldChev } from './Fold';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
@@ -87,7 +90,7 @@ export function CheckTick() {
 }
 
 // What a row's status menu can ask the side panel to open: a status that needs words, a date move, or a new owner.
-export type RowAction = StatusKey | 'date' | 'reassign';
+export type RowAction = StatusKey | 'date' | 'reassign' | 'ask';
 
 export const statusKey: (t: Task) => StatusKey = statusOf; // lib/flags.ts, shared with the search filters
 
@@ -190,8 +193,8 @@ export async function api(path: string, method: string, body?: unknown) {
 
 // onStatus, when given, turns the status word into a menu. One-click moves happen in place;
 // blocked, dropped, going back to not started, a date move and a new owner open the side panel.
-export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, onOpen, onStatus }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void;
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void;
 }) {
   const desc = t.description;
   const router = useRouter();
@@ -239,9 +242,9 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
           <StatusMenu t={t} current={key} disabled={ticked} set={stateFrom !== undefined}
-            statuses={PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked')} canReassign={canReassign}
+            statuses={PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked')} canReassign={canReassign} canAsk={canAsk}
             onPick={async (a) => {
-              if (a === 'date' || a === 'reassign') return onStatus(a);
+              if (a === 'date' || a === 'reassign' || a === 'ask') return onStatus(a);
               if (a === key) return;
               if (formFor(t, a)) return onStatus(a);
               if (a === 'done') setTicked(true);
@@ -249,6 +252,8 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               try { await quickMove(t, a); undo.announce(t.blocked && a === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[a].word}`, t, statusFields(t, a)); router.refresh(); }
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }} />
+        ) : onStatus && !closed && canAsk ? (
+          <StatusMenu t={t} current={key} disabled={false} set={stateFrom !== undefined} statuses={[]} canReassign={false} canAsk askOnly onPick={(a) => onStatus(a)} />
         ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
@@ -257,13 +262,22 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 }
 
 // The row's status as a menu button: the statuses, each with its icon and colour, then Unblock when
-// blocked, Move date… and, for leads and admins, Reassign…. Arrow keys move, Enter picks, Esc closes.
-export function StatusMenu({ t, current, statuses, canReassign, disabled, set, onPick }: {
-  t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; disabled: boolean; set: boolean; onPick: (a: RowAction) => void;
+// blocked, Move date… and, for leads and admins, Reassign…, then Ask for update… on someone else's task. askOnly: a
+// task that is not mine to change, so the menu holds Ask for update… alone. Arrow keys move, Enter picks, Esc closes.
+export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, askOnly = false, disabled, set, onPick }: {
+  t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; canAsk?: boolean; askOnly?: boolean; disabled: boolean; set: boolean; onPick: (a: RowAction) => void;
 }) {
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const pick = (a: RowAction) => { setOpen(false); btn.current?.focus(); onPick(a); };
+  // Whether I already asked for an update on this task, read when the menu opens: then the item says when, and is off.
+  const [asked, setAsked] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open || !canAsk) return;
+    let live = true;
+    api(`/tasks/${t.id}/ask`, 'GET').then((all: Ask[]) => { if (live) setAsked(all.find((a) => a.mine)?.askedAt ?? null); }).catch(() => {});
+    return () => { live = false; };
+  }, [open, canAsk, t.id]);
   return (
     <span className="menu-wrap st-menu-wrap">
       <Help term={`status_${current}`} host><button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
@@ -274,16 +288,21 @@ export function StatusMenu({ t, current, statuses, canReassign, disabled, set, o
       </button></Help>
       <AnimatePresence>
         {open && (
-          <Popover anchor={btn} onClose={() => setOpen(false)} align="end" role="menu" label="Status" className="menu st-menu">
+          <Popover anchor={btn} onClose={() => setOpen(false)} align="end" role="menu" label="Status" className="menu st-menu" max={440}>
             {statuses.map((s) => (
               <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
                 <StatusIcon s={s} /><span>{STATUS[s].word}</span>
               </button>
             ))}
-            <span className="st-menu-sep" role="separator" />
-            {t.blocked && <Help term="unblock" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button></Help>}
-            <Help term="move_date" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button></Help>
-            {canReassign && <Help term="reassign" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button></Help>}
+            {!askOnly && <>
+              <span className="st-menu-sep" role="separator" />
+              {t.blocked && <Help term="unblock" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('doing')}>Unblock</button></Help>}
+              <Help term="move_date" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('date')}>Move date…</button></Help>
+              {canReassign && <Help term="reassign" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('reassign')}>Reassign…</button></Help>}
+            </>}
+            {canAsk && (asked
+              ? <button type="button" role="menuitem" className="st-act" disabled>✓ Update asked {ago(asked, new Date())}</button>
+              : <Help term="ask_update" host><button type="button" role="menuitem" className="st-act" onClick={() => pick('ask')}>Ask for update…</button></Help>)}
           </Popover>
         )}
       </AnimatePresence>
@@ -330,14 +349,17 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const [unNote, setUnNote] = useState('');
   const [nudge, setNudge] = useState<{ status: StatusKey; word: string; note: string } | null>(null); // Jev's offer after a note
   const [linkForm, setLinkForm] = useState({ url: '', label: '' });
+  const [asks, setAsks] = useState<Ask[]>([]); // open asks for an update on this task (lib/asks.ts)
+  const [asking, setAsking] = useState<string | null>(null); // the question being written, while the Ask box is open
+  const [reply, setReply] = useState('');
   const [closing, close] = useClosing(onClose);
   const undo = useUndo();
   const { markSeen } = useViewer();
   useEffect(() => { markSeen(id); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps -- opening a task is looking at it (a no-op while viewing as someone)
 
   async function load() {
-    const [task, lines] = await Promise.all([api(`/tasks/${id}`, 'GET'), api(`/tasks/${id}/log?limit=100`, 'GET')]);
-    setT(task); setLog(lines);
+    const [task, lines, open] = await Promise.all([api(`/tasks/${id}`, 'GET'), api(`/tasks/${id}/log?limit=100`, 'GET'), api(`/tasks/${id}/ask`, 'GET').catch(() => [])]);
+    setT(task); setLog(lines); setAsks(Array.isArray(open) ? open : []);
     setEdit({ title: task.title, description: task.description ?? '', note: task.note ?? '', ownerId: task.ownerId, ownerRole: undefined, workstream: task.workstream ?? '' });
     setPickKey((k) => k + 1);
   }
@@ -394,6 +416,24 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const canEdit = !readOnly && !!t && !t.readOnly && (can || t.createdBy === meId);
   const open = t?.statusCategory === 'open';
   const key = t ? statusKey(t) : 'todo';
+  // Ask for an update: anyone but the owner, on an open task with a Nicobar owner. One open ask each.
+  const myAsk = asks.find((a) => a.askerId === meId);
+  const mayAsk = !readOnly && !!t && open && !t.readOnly && !!t.ownerId && t.ownerId !== meId;
+  const askedOfMe = t && t.ownerId === meId && open ? asks.filter((a) => a.askerId !== meId) : [];
+  async function sendAsk() {
+    if (!t) return;
+    setBusy(true); setErr(null);
+    try {
+      await api(`/tasks/${t.id}/ask`, 'POST', { question: asking?.trim() || null });
+      notify(`Asked ${(names[t.ownerId] ?? 'the owner').split(' ')[0]} for an update`); setAsking(null); await load(); router.refresh();
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
+  async function sendReply() {
+    if (!t || !reply.trim()) return;
+    setBusy(true); setErr(null);
+    try { await api(`/tasks/${t.id}/updates`, 'POST', { text: reply.trim() }); notify('Update sent'); setReply(''); await load(); router.refresh(); }
+    catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
 
   function setStatus(s: StatusKey) {
     if (!t || s === key) return;
@@ -407,6 +447,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   useEffect(() => {
     if (!t || started || !startStatus) return;
     setStarted(true);
+    if (startStatus === 'ask') { if (mayAsk && !myAsk) setAsking(''); return; }
     if (startStatus === 'date' || startStatus === 'reassign') { if (can && open) setMode(startStatus); return; }
     if (startStatus === key) return;
     const f = formFor(t, startStatus);
@@ -482,6 +523,39 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 <StatusLabel t={t} />
                 {t.outcome && <span className="small dim">{t.outcome === 'late' ? 'Closed late' : t.outcome === 'ahead' ? 'Closed ahead' : 'Closed on time'}, judged against {fmtDate(t.firstDueOn)}</span>}
               </div>
+            )}
+
+            {askedOfMe.length > 0 && !readOnly && (
+              <div className="drawer-form ask-reply" aria-label="Update asked">
+                {askedOfMe.map((a) => (
+                  <div key={a.id} className="small"><b>{(names[a.askerId] ?? 'Someone').split(' ')[0]}</b> asked for an update{a.question ? <>: &ldquo;{a.question}&rdquo;</> : ''} <span className="dim">· {ago(a.askedAt, new Date())}</span></div>
+                ))}
+                <label className="f"><span>Your update</span>
+                  <textarea rows={2} maxLength={280} value={reply} placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} />
+                  <Count value={reply} max={280} />
+                </label>
+                <div className="row" style={{ alignItems: 'center' }}>
+                  <button className="btn" disabled={busy || !reply.trim()} onClick={sendReply}>Send update</button>
+                  <span className="small dim">Or change the status above.</span>
+                </div>
+              </div>
+            )}
+            {mayAsk && t.ownerId && (
+              myAsk ? <div className="small dim ask-sent">✓ You asked for an update {ago(myAsk.askedAt, new Date())}. Waiting on {(names[t.ownerId] ?? 'the owner').split(' ')[0]}.</div>
+              : asking === null ? <div><Help term="ask_update" host><button className="mini-btn" type="button" onClick={() => setAsking('')}>Ask for update</button></Help></div>
+              : (
+                <div className="drawer-form">
+                  <div className="small"><b>Ask {(names[t.ownerId] ?? 'the owner').split(' ')[0]} for an update</b></div>
+                  <label className="f"><span>Question</span>
+                    <input maxLength={140} value={asking} placeholder="What would you like to know?" autoFocus onChange={(e) => setAsking(e.target.value)}
+                      onKeyDown={(e) => { if (isRealEnter(e)) { e.preventDefault(); sendAsk(); } }} />
+                  </label>
+                  <div className="row">
+                    <button className="btn" disabled={busy} onClick={sendAsk}>Ask</button>
+                    <button className="btn ghost" onClick={() => setAsking(null)}>Cancel</button>
+                  </div>
+                </div>
+              )
             )}
 
             {mode === 'reassign' && (
