@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { MyProfile } from '@/lib/service';
 import { Avatar } from './Avatar';
+import { markWelcomeStep } from './WelcomeCard';
 import { useReadOnly } from './readonly';
 import { notify } from './toast';
 
@@ -39,6 +40,8 @@ export async function squarePhoto(file: File): Promise<Blob> {
 export function ProfileForm({ personId, profile }: { personId: string; profile: MyProfile }) {
   const router = useRouter();
   const readOnly = useReadOnly();
+  // Opening the profile ticks the welcome card's step (not while viewing as someone).
+  useEffect(() => { if (!readOnly) markWelcomeStep(personId, 'profile'); }, [personId, readOnly]);
   const [name, setName] = useState(profile.name);
   const [nick, setNick] = useState(profile.nickname ?? '');
   const [num, setNum] = useState(profile.phone ?? '');

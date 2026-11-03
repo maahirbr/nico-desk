@@ -1523,3 +1523,10 @@ Rollback: git revert the commit.
 At the PM's call. On the Roster, Email invite shows only beside someone who has never signed in (the same test as
 Activity's "Never signed in"); once they have, it goes. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · The welcome card's profile step ticks when the profile is opened
+
+At the PM's call. The step reads "Add a photo, nickname or phone number", and opening the profile ticks it (kept in the
+browser, like the Guide step), as none of the three is required. Saving any of them ticks it too, as before. No schema
+change.
+Rollback: git revert the commit.
