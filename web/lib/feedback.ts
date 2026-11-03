@@ -200,16 +200,23 @@ export async function setFeedbackKind(db: Db, me: Me, id: string, kind: Feedback
 }
 
 // What changed on notes I wrote or gave +1, not seen yet, newest first: the "Feedback updates" card on Home.
-export type FeedbackNews = { id: string; kind: NewsKind; actorName: string; note: string; text: string | null; createdAt: string };
+// href: where the note sits on the Feedback page (its tab), at the reply itself when there is one, so a click reads it whole.
+export type FeedbackNews = { id: string; kind: NewsKind; actorName: string; note: string; text: string | null; createdAt: string; href: string };
 export async function feedbackNewsForMe(db: Db, me: Me): Promise<FeedbackNews[]> {
-  const { rows } = await db.query<{ id: string; kind: NewsKind; actor_name: string; note: string; text: string | null; created_at: string }>(
-    `SELECT n.id, n.kind, COALESCE(p.nickname, p.display_name) AS actor_name, f.body AS note, n.created_at,
+  const { rows } = await db.query<{ id: string; kind: NewsKind; actor_name: string; note: string; text: string | null; created_at: string;
+    feedback_id: string; reply_id: string | null; f_kind: string; f_status: string }>(
+    `SELECT n.id, n.kind, COALESCE(p.nickname, p.display_name) AS actor_name, f.body AS note, n.created_at, n.feedback_id, n.reply_id,
+            f.kind AS f_kind, f.status AS f_status,
             CASE n.kind WHEN 'reply' THEN r.body WHEN 'not_now' THEN n.reason END AS text
        FROM feedback_news n JOIN feedback f ON f.id = n.feedback_id JOIN people p ON p.id = n.actor_id
        LEFT JOIN feedback_replies r ON r.id = n.reply_id
       WHERE n.person_id = $1 AND n.seen_at IS NULL
       ORDER BY n.created_at DESC, n.id DESC LIMIT 20`, [me.person.id]);
-  return rows.map((r) => ({ id: r.id, kind: r.kind, actorName: r.actor_name, note: r.note, text: r.text, createdAt: r.created_at }));
+  return rows.map((r) => {
+    const tab = r.f_kind === 'praise' ? '?show=praise' : r.f_status === 'open' ? '' : '?show=resolved';
+    const href = `/feedback${tab}#${r.kind === 'reply' && r.reply_id ? `reply-${r.reply_id}` : r.feedback_id}`;
+    return { id: r.id, kind: r.kind, actorName: r.actor_name, note: r.note, text: r.text, createdAt: r.created_at, href };
+  });
 }
 
 // Marks my feedback news seen: all of it, or the ones given. Nothing is written under View as.

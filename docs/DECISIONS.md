@@ -1313,3 +1313,11 @@ sent, no bell. View as cannot ask. New table `update_asks` (RLS on, fenced by it
 database needs `npm run db:upgrade`. The status menu may now grow to 440px so every item shows. The status menu, Home
 and Reminders were checked in the browser on a demo copy as a member and a lead.
 Rollback: git revert the commit; the `update_asks` table can stay (nothing reads it) or be dropped.
+
+## 2026-11-03 · Opus 5.5 · A feedback reply on Home opens where it sits
+
+At the PM's call. In "Feedback updates" on Home, a reply is cut short. The reply text and the note's name now link to
+the Feedback page, in the note's tab (Open, Resolved or Working well), at the reply itself (`#reply-<id>`), or at the note
+for a Done, Not now or Reopen. The page scrolls it into view and marks it in a soft colour, so the whole reply can be
+read. `feedbackNewsForMe` returns the link (`href`). No schema change. Checked in the browser on a demo copy.
+Rollback: git revert the commit.

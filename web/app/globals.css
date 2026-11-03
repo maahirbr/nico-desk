@@ -1728,6 +1728,9 @@ a.rlink { color: inherit; text-decoration: none; }
 .fb-agreed .linkbtn { font: inherit; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
 /* Replies under a feedback note: indented with a quiet rule, readable by everyone. */
 .fb-replies { list-style: none; margin: var(--space-sm) 0 0; padding: 0 0 0 var(--space-md); border-left: var(--rule) solid var(--line-strong); display: grid; gap: var(--space-sm); }
+/* Opened from a Feedback update on Home (components/FeedbackList.tsx): the reply or the note it points at, marked. */
+.fb-replies > li.is-target { background: var(--primary-soft); border-radius: var(--radius-control); padding: var(--space-xs); margin-left: calc(var(--space-xs) * -1); }
+.fb-item.is-target { outline: var(--rule) solid var(--line-strong); }
 /* Done, Not now and Reopen sit beside Reply; a closed note says who closed it, when, and the Not now reason (30 Oct). */
 .fb-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-top: var(--space-sm); }
 .fb-actions .linkbtn { margin-right: auto; border: 0; background: none; padding: 0; cursor: pointer; }

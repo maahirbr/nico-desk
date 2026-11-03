@@ -221,6 +221,9 @@ describe('replies', () => {
     expect(out[0].replies).toEqual([expect.objectContaining({ body: 'Fixed in today\'s update, thanks!' })]);
 
     expect(await news(m.id)).toEqual([['reply', 'Fixed in today\'s update, thanks!']]);
+    // The update links to the reply itself on the Feedback page, so a click reads it whole.
+    const [first] = await feedbackNewsForMe(db, await meAs(m.id));
+    expect(first.href).toBe(`/feedback#reply-${out[0].replies[0].id}`);
     expect(await news('per_ada')).toEqual([['reply', 'Fixed in today\'s update, thanks!']]); // gave +1
     expect(await news(ADMIN)).toEqual([]); // wrote the reply
     signIn(m.id);
