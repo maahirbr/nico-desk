@@ -9,17 +9,22 @@ import { fmtDate } from './time';
 //   project lead         -> due_on moved (with its reason), blocked_ask set, dropped, owner_id changed
 //   owner and lead       -> someone else cleared the block, with what they did
 //   nobody               -> sees their own actions (actor_id = viewer)
+//   asker                -> the first answer to an "Ask for an update" (lib/asks.ts): the update written, or the change made
 
 export type UpdateEvent = {
   id: string; entity_id: string; field: string; before: unknown; after: unknown; reason: string | null; actor_id: string | null; at: string | Date;
 };
 export type UpdateTask = { id: string; title: string; ownerId: string; projectId: string | null; blocked: { onId: string | null } | null; dueOn?: string; statusCategory?: string };
-export type UpdateKind = 'assigned' | 'due_moved' | 'blocked' | 'unblocked' | 'dropped' | 'done' | 'renamed' | 'reassigned';
+export type UpdateKind = 'assigned' | 'due_moved' | 'blocked' | 'unblocked' | 'dropped' | 'done' | 'renamed' | 'reassigned' | 'replied';
 // text: the full sentence. who + clause: the same change as a short phrase about "it", for one line per task.
 // fold: a change the grouped view leaves out (a small rename, or a tidy-up right after assigning).
 export type UpdateItem = { id: string; taskId: string; projectId: string | null; kind: UpdateKind; text: string; at: string; who: string; clause: string; fold?: boolean };
 
 export const UPDATE_DAYS = 7;
+// The events that answer an "Ask for an update" (lib/asks.ts): a written update, a status move (health, done, dropped,
+// reopen), a block or unblock, a new date.
+export const ANSWER_FIELDS = ['_update', 'health', 'status_category', '_reopened', 'blocked_ask', 'due_on'];
+const ANSWERS = new Set(ANSWER_FIELDS);
 const DAY = 86_400_000;
 const iso = (at: string | Date) => new Date(at).toISOString();
 const q = (s: string) => `“${s}”`;
@@ -34,6 +39,7 @@ export function buildUpdates(input: {
   now: string | Date;
   seenAt?: string | null; // show only items after this moment
   days?: number; // how far back to look; a week unless a caller asks for more (the meeting agenda)
+  asks?: { taskId: string; askedAt: string }[]; // the viewer's own asks for an update (lib/asks.ts)
 }): UpdateItem[] {
   const { events, tasks, leadOf, names, viewerId } = input;
   const now = new Date(input.now).getTime();
@@ -95,6 +101,37 @@ export function buildUpdates(input: {
       const tidy = events.some((x) => x.entity_id === e.entity_id && x.actor_id === e.actor_id && x.field === '_created' && new Date(x.at).getTime() <= ms);
       item('renamed', `${who} renamed your task ${q(str(e.before))} to ${q(str(e.after))}`, 'renamed it', tidy || smallEdit(str(e.before), str(e.after)));
     }
+  }
+
+  // The answer to each of the viewer's asks: the first action after it by someone else that answers it. One line,
+  // unless that action already made one above (a lead sees a drop or a moved date anyway).
+  const made = new Set(out.map((i) => i.id));
+  for (const a of input.asks ?? []) {
+    const t = task.get(a.taskId);
+    if (!t) continue;
+    const after = events.filter((e) => e.entity_id === a.taskId && e.actor_id !== viewerId && ANSWERS.has(e.field) && iso(e.at) > a.askedAt)
+      .sort((x, y) => (iso(x.at) < iso(y.at) ? -1 : 1));
+    if (!after.length) continue;
+    const at = iso(after[0].at);
+    const ms = new Date(at).getTime();
+    if (ms > now || ms < now - window || (!Number.isNaN(seen) && ms <= seen)) continue;
+    const action = after.filter((e) => iso(e.at) === at && e.actor_id === after[0].actor_id);
+    if (action.some((e) => made.has(`${e.id}:${viewerId}`))) continue;
+    const by = (f: string) => action.find((e) => e.field === f);
+    const who = first(after[0].actor_id);
+    const upd = by('_update'), cat = by('status_category'), block = by('blocked_ask'), health = by('health'), due = by('due_on');
+    const clause = upd ? `replied: “${str(upd.after)}”`
+      : cat?.after === 'done' ? 'marked it done'
+      : cat?.after === 'dropped' ? `dropped it${cat.reason ? `: “${cat.reason}”` : ''}`
+      : cat?.after === 'open' || by('_reopened') ? 'reopened it'
+      : block?.after ? `marked it blocked: “${str(block.after)}”`
+      : block ? 'cleared the block'
+      : health ? (health.after === 'not_started' ? 'moved it to Not started' : 'moved it to In progress')
+      : due ? `moved it to ${fmtDate(str(due.after))}${due.reason ? `: “${due.reason}”` : ''}`
+      : 'updated it';
+    const e = upd ?? cat ?? block ?? health ?? due ?? action[0];
+    made.add(`${e.id}:${viewerId}`);
+    out.push({ id: `${e.id}:${viewerId}`, taskId: t.id, projectId: t.projectId, kind: 'replied', text: upd ? `${who} replied on ${q(t.title)}: “${str(upd.after)}”` : `${who} ${clause.replace(/\bit\b/, q(t.title))}`, at, who, clause });
   }
 
   // Newest first.

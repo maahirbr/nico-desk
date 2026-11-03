@@ -321,6 +321,19 @@ CREATE TABLE notices (
   UNIQUE (person_id, task_id, kind, for_date)
 );
 
+-- 3 Nov: "Ask for an update". Someone asks a task's owner for an update. An ask is answered by any update or change to the
+-- task by someone else after it (lib/asks.ts), so it keeps no answered flag of its own.
+CREATE TABLE update_asks (
+  id          text PRIMARY KEY,
+  task_id     text NOT NULL REFERENCES tasks(id),
+  asker_id    text NOT NULL REFERENCES people(id),
+  question    text CHECK (char_length(question) BETWEEN 1 AND 140),
+  asked_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX update_asks_task ON update_asks (task_id, asked_at);
+CREATE INDEX update_asks_asker ON update_asks (asker_id, asked_at);
+ALTER TABLE update_asks ENABLE ROW LEVEL SECURITY;
+
 -- Links on a task (Docs, Sheets, Figma, decks, any web page). The task keeps its own version; a link change is logged as an event.
 CREATE TABLE task_links (
   id          text PRIMARY KEY,
@@ -558,6 +571,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   plan_activity: inProject('project_id'),
   plan_checkpoints: `line_id IN (SELECT id FROM plan_lines)`,
   task_links: inTask('task_id'),
+  update_asks: inTask('task_id'),
   events: kindOf('entity_type', 'entity_id'),
   comments: kindOf('subject_kind', 'subject_id'),
   comment_refs: `comment_id IN (SELECT id FROM comments)`,

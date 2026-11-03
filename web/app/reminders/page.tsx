@@ -6,6 +6,8 @@ import { lookups, one, type SP } from '@/lib/page';
 import { seenProjects } from '@/lib/visibility';
 import { seesProject } from '@/lib/sight';
 import { reminderDrafts } from '@/lib/reminders';
+import { staleAsks, ASK_STALE_DAYS } from '@/lib/asks';
+import { AskReminders } from '@/components/AskReminders';
 import { ReminderCards } from '@/components/Reminders';
 import { Select } from '@/components/Select';
 
@@ -13,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
-  const { d, sight, isLead, isAdmin } = await lookups(me);
+  const { d, sight, isLead, isAdmin, names } = await lookups(me);
   if (!isLead && !isAdmin) return (<><h1>Reminders</h1><p className="lede">Only a lead drafts reminders.</p></>);
   const sp = await searchParams;
   const mode = one(sp.mode) === 'window' ? 'window' : 'overdue';
@@ -22,10 +24,16 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   if (projectId && !seesProject(sight, projectId)) notFound(); // hidden reads as missing
   const h = await headers();
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
-  const [{ drafts, skipped }, projects] = await Promise.all([
+  const [{ drafts, skipped }, projects, asks] = await Promise.all([
     reminderDrafts(d, me.team.id, { mode, days, projectId, sight }, appUrl),
     seenProjects(d, me, sight),
+    staleAsks(d, me, projectId),
   ]);
+  // Who each ask waits on, with the address a draft would go to (the same rule as the reminder drafts).
+  const { rows: owners } = asks.length ? await d.query<{ id: string; email: string; contact_email: string | null }>(
+    `SELECT id, email, contact_email FROM people WHERE id = ANY($1)`, [[...new Set(asks.map((a) => a.ownerId))]]) : { rows: [] };
+  const mail = new Map(owners.map((o) => [o.id, o.contact_email ?? (o.email.endsWith('@example.test') ? null : o.email)]));
+  const first = (id: string) => (names[id] ?? 'Someone').split(' ')[0];
   const q = (o: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     const m = { mode, days: String(days), project: projectId, ...o };
@@ -55,6 +63,9 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
         </label>
         <button className="btn ghost">Apply</button>
       </form>
+      {asks.length > 0 && <AskReminders appUrl={appUrl} days={ASK_STALE_DAYS} items={asks.map((a) => ({
+        id: a.id, taskId: a.taskId, title: a.title, ownerId: a.ownerId, ownerName: first(a.ownerId), askerName: first(a.askerId), question: a.question, days: a.days, to: mail.get(a.ownerId) ?? null,
+      }))} />}
       {skipped.length > 0 && <p className="small dim">Not reminded, by choice: {skipped.join(', ')}.</p>}
       {drafts.length === 0 ? <div className="card"><p className="empty card-pad">Nothing to chase. Everyone is on time for this view.</p></div>
         : <ReminderCards drafts={drafts} appUrl={appUrl} />}

@@ -17,8 +17,8 @@ const MAX = 320;
 
 type Pos = { top: number; left: number; maxHeight: number; minWidth: number; origin: string };
 
-export function Popover({ anchor, onClose, align = 'start', matchWidth, sheet, className = '', role, label, id, children }: {
-  anchor: React.RefObject<HTMLElement | null>; onClose: () => void; align?: 'start' | 'end'; matchWidth?: boolean;
+export function Popover({ anchor, onClose, align = 'start', matchWidth, sheet, className = '', role, label, id, max = MAX, children }: {
+  anchor: React.RefObject<HTMLElement | null>; onClose: () => void; align?: 'start' | 'end'; matchWidth?: boolean; max?: number; // tallest it grows, room permitting
   sheet?: boolean; className?: string; role: 'menu' | 'listbox'; label: string; id?: string; children: React.ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -38,11 +38,11 @@ export function Popover({ anchor, onClose, align = 'start', matchWidth, sheet, c
     const w = Math.max(p.offsetWidth, matchWidth ? r.width : 0), h = p.offsetHeight;
     const below = window.innerHeight - r.bottom - GAP - EDGE, above = r.top - GAP - EDGE;
     const up = h > below && above > below;
-    const maxHeight = Math.min(MAX, up ? above : below);
+    const maxHeight = Math.min(max, up ? above : below);
     const left = Math.min(Math.max(EDGE, align === 'end' ? r.right - w : r.left), window.innerWidth - w - EDGE);
     const ox = Math.min(Math.max(r.left + r.width / 2 - left, 0), w);
     setPos({ top: up ? r.top - GAP - Math.min(h, maxHeight) : r.bottom + GAP, left, maxHeight, minWidth: matchWidth ? r.width : 0, origin: `${ox}px ${up ? '100%' : '0'}` });
-  }, [anchor, align, matchWidth, phone]);
+  }, [anchor, align, matchWidth, phone, max]);
 
   const ready = phone || pos !== null;
   useEffect(() => {

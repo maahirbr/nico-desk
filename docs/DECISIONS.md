@@ -1297,3 +1297,19 @@ goes; ✕ closes it for good; View as never shows it. No step-by-step tour, by c
 person in the browser (localStorage); the profile step reads the server. `?welcome=1` shows the card any time, to
 preview. The old "New here?" line (GuideNote) was never shown on any page; the card takes its place. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Ask for an update
+
+From a pilot teammate's feedback, at the PM's call. Anyone who can see an open task, other than its owner, can ask the
+owner for an update, with an optional question (up to 140 characters). It is on the task panel and in the row status
+menu on Team and project pages as "Ask for update…"; a member, who could not change someone else's status, gets a menu
+with that item alone. Once asked, the menu says "✓ Update asked 2 h ago" and is off, so nobody asks twice. The owner sees an
+"Update asked" card on Home; Reply opens the task with a box for the update, or they change its status or date. Any
+update, status move, block or date change by someone other than the asker answers every open ask on the task, so an ask
+keeps no answered flag and no write path needs a hook (`lib/asks.ts`, read from the events table). The asker reads the
+answer in Updates for you ("Sam replied: …", "moved it to In progress"). An ask with no answer after two days shows on
+Reminders under "Waiting on a reply", with a short draft that opens in the lead's own Gmail. In-app only, nothing is
+sent, no bell. View as cannot ask. New table `update_asks` (RLS on, fenced by its task), in `upgrade()`; the hosted
+database needs `npm run db:upgrade`. The status menu may now grow to 440px so every item shows. The status menu, Home
+and Reminders were checked in the browser on a demo copy as a member and a lead.
+Rollback: git revert the commit; the `update_asks` table can stay (nothing reads it) or be dropped.

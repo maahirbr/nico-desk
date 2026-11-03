@@ -14,6 +14,7 @@ import { Help } from './HelpMode';
 import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
+import { AsksCard, type HomeAsk } from './AsksCard';
 import { FeedbackRepliesCard, type HomeReply } from './FeedbackRepliesCard';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { NewNotices } from './NewNotices';
@@ -46,9 +47,9 @@ export function clearLine(personId: string, day: string): string {
   return CLEAR_LINES[h % CLEAR_LINES.length];
 }
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
   welcome?: Welcome | null; // someone's first week (components/WelcomeCard.tsx)
@@ -128,6 +129,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       </header>
 
       {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
+
+      <AsksCard items={asks} now={updates.now} onOpen={(id) => open(id)} />
 
       <UpdatesCard items={updates.items} groups={updates.groups} meId={meId} now={updates.now} onOpen={(id) => open(id)} />
 

@@ -6,6 +6,7 @@ import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
 import { feedbackNewsForMe } from '@/lib/feedback';
+import { asksForMe } from '@/lib/asks';
 import { HomeView } from '@/components/HomeView';
 import { firstSeenDay } from '@/lib/activity';
 
@@ -22,10 +23,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
-  const [mine, notices, all, projects, onProjects, replies] = await Promise.all([
+  const [mine, notices, all, projects, onProjects, replies, asks] = await Promise.all([
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
-    myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me),
+    myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
+  const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   const first = await firstSeenDay(d, me.realPerson.id);
   const isNew = sp.welcome === '1' || !first || first >= addDays(t, -6);
@@ -62,6 +64,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       noticeIds={notices.map((n) => n.id)}
       movedAway={movedAway}
       feedbackReplies={replies.map((r) => ({ id: r.id, kind: r.kind, authorName: r.actorName, snippet: r.text && r.text.length > 140 ? `${r.text.slice(0, 137)}...` : r.text, note: r.note.length > 60 ? `${r.note.slice(0, 57)}...` : r.note }))}
+      asks={asks.map((a) => ({ id: a.id, taskId: a.taskId, title: a.title, askerName: (names[a.askerId] ?? 'Someone').split(' ')[0], question: a.question, askedAt: a.askedAt,
+        project: projectNames[projectOf.get(a.taskId) ?? ''] ?? null }))}
       waiting={mine.blockedOnMe}
       done={doneThisWeek}
       dropped={dropped}
