@@ -1202,6 +1202,10 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .when-host { display: inline-flex; }
 .when-tip { position: fixed; z-index: 70; white-space: nowrap; pointer-events: none; padding: var(--space-xxs) var(--space-xs);
   background: var(--canvas); color: var(--ink-2); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-small); }
+/* A breakdown (Activity's interactions): one line each, left-aligned. */
+.when-tip.when-list { white-space: pre-line; text-align: left; line-height: 1.5; }
+.when-tap { cursor: default; }
+.act-n { font-variant-numeric: tabular-nums; text-decoration: underline dotted; text-decoration-color: var(--line-strong); text-underline-offset: 3px; cursor: default; }
 /* Who last set the status, and when: the menu's first line, not an item. */
 .menu > .st-menu-when { padding: var(--space-xxs) var(--space-sm); font: var(--type-small); color: var(--ink-3); white-space: nowrap; cursor: default; }
 .menu > .st-menu-when:hover { background: none; }

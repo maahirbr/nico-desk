@@ -3,13 +3,15 @@
 import type { AdoptionRow, AdoptionStatus } from '@/lib/activity';
 import { addDays, fmtDate, istDate } from '@/lib/time';
 import { Person } from './chips';
-import { CopyInvite } from './CopyLink';
+import { InviteMenu } from './CopyLink';
 import { useUrlText } from './remember';
+import { WhenTip } from './WhenTip';
 
 // Who is using Nico Desk during the pilot (30 Oct). Four tiles count each status, say in a line what it means, and filter
 // the table when pressed
 // (kept in the address, ?status=). Each row: the status, when they were last active, a dot per day for the last 14
-// (filled when they opened the app that day) and their changes this week. Never signed in rows offer Copy invite, so an
+// (filled when they opened the app that day) and their interactions this week: one number, its breakdown on hover or tap
+// (4 Nov). Never signed in rows offer Copy invite, so an
 // admin can nudge them by hand; the app sends nothing.
 
 const STATUS: Record<AdoptionStatus, { label: string; tone: string; help: string }> = {
@@ -30,7 +32,7 @@ function ago(at: string | null, today: string): string {
   return n <= 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 30 ? `${n} days ago` : fmtDate(d);
 }
 
-export function ActivityView({ rows, today, readOnly }: { rows: AdoptionRow[]; today: string; readOnly: boolean }) {
+export function ActivityView({ rows, today, readOnly, me }: { rows: AdoptionRow[]; today: string; readOnly: boolean; me: string }) {
   const [raw, setStatus] = useUrlText('status');
   const status = (ORDER as string[]).includes(raw) ? (raw as AdoptionStatus) : null;
   const shown = status ? rows.filter((r) => r.status === status) : rows;
@@ -48,7 +50,7 @@ export function ActivityView({ rows, today, readOnly }: { rows: AdoptionRow[]; t
       </div>
       {status && <p className="small dim act-showing">Showing {STATUS[status].label.toLowerCase()} only. <button type="button" className="linkbtn" onClick={() => setStatus('')}>Show everyone</button></p>}
       <div className="card table-card"><table className="stacked act-table">
-        <thead><tr><th>Name</th><th>Status</th><th>Last active</th><th>Last 14 days</th><th>Changes (7 days)</th></tr></thead>
+        <thead><tr><th>Name</th><th>Status</th><th>Last active</th><th>Last 14 days</th><th>Interactions (7 days)</th></tr></thead>
         <tbody>
           {shown.length === 0 && <tr><td colSpan={5} className="empty-cell">No one here right now.</td></tr>}
           {shown.map((r) => {
@@ -63,8 +65,11 @@ export function ActivityView({ rows, today, readOnly }: { rows: AdoptionRow[]; t
                     {fortnight.map((d) => <span key={d} className={`act-dot${on.has(d) ? ' on' : ''}${isWeekend(d) ? ' wkend' : ''}`} title={`${fmtDate(d)}${on.has(d) ? ': opened' : ''}`} />)}
                   </span>
                 </td>
-                <td data-label={r.status === 'never' ? 'Invite' : 'Changes (7 days)'}>
-                  {r.status === 'never' ? (readOnly ? <span className="dim">—</span> : <CopyInvite email={r.email} />) : r.changes7}
+                <td data-label={r.status === 'never' ? 'Invite' : 'Interactions (7 days)'}>
+                  {r.status === 'never' ? (readOnly ? <span className="dim">—</span> : <InviteMenu email={r.email} name={r.name} from={me} />)
+                    : <WhenTip delay={500} tap side="right" text={r.interactions.total ? r.interactions.parts.map(([w, n]) => `${n} ${w}`).join('\n') : 'Nothing this week'}>
+                        <span className={`act-n${r.interactions.total ? '' : ' dim'}`} aria-label={`${r.interactions.total} interactions: ${r.interactions.parts.map(([w, n]) => `${n} ${w}`).join(', ') || 'none'}`}>{r.interactions.total}</span>
+                      </WhenTip>}
                 </td>
               </tr>
             );

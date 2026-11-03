@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
-import { CopyInvite } from './CopyLink';
+import { CopyInvite, EmailInvite } from './CopyLink';
 import { DateField } from './DateField';
 import { ICON, Icon } from './icons';
 import { OwnerPicker, ownerFields, ownerOk, useProjectPeople } from './OwnerPicker';
@@ -455,12 +455,12 @@ export function AddPeopleForm({ teamId }: { teamId: string }) {
 // The server holds the same rules (patchPerson): admin only, no one removes their own admin or changes their own email.
 type RosterPerson = { id: string; name: string; role: string; department: string; email: string; active: boolean; roles: string[] };
 // others: the active people who could take over this person's work if they are removed.
-export function PersonControls({ person: p, self, others = [] }: { person: RosterPerson; self: boolean; others?: Opt[] }) {
+export function PersonControls({ person: p, self, others = [], me = '' }: { person: RosterPerson; self: boolean; others?: Opt[]; me?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="roster-acts">
       <button className="act" onClick={() => setOpen(true)} aria-label={`Edit ${p.name}`}>Edit</button>
-      {p.active && <CopyInvite email={p.email} />}
+      {p.active && <EmailInvite email={p.email} name={p.name} from={me} />}
       {open && <EditPerson person={p} self={self} others={others} onClose={() => setOpen(false)} />}
     </span>
   );

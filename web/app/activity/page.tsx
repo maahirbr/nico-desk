@@ -17,7 +17,7 @@ export default async function Activity() {
     <>
       <div className="page-head"><h1>Activity</h1></div>
       <p className="lede">{signedIn} of {rows.length} people have signed in. Press a tile to see only those people.</p>
-      <ActivityView rows={rows} today={today()} readOnly={!!me.viewingAs} />
+      <ActivityView rows={rows} today={today()} readOnly={!!me.viewingAs} me={me.person.displayName} />
     </>
   );
 }

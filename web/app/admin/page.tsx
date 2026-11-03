@@ -33,7 +33,7 @@ export default async function Admin() {
                   <div className="small dim">{[r.removed_reason, r.removed_at ? fmtDate(istDate(new Date(r.removed_at).toISOString())) : '', r.removed_by ? `by ${(names[r.removed_by] ?? '').split(' ')[0]}` : ''].filter(Boolean).join(' · ')}</div>
                 ); })()}
               </td>}
-              {isAdmin && <td>{!readOnly && <PersonControls self={p.id === me.person.id} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</td>}
+              {isAdmin && <td>{!readOnly && <PersonControls self={p.id === me.person.id} me={me.person.displayName} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</td>}
             </tr>
           ))}
         </tbody>

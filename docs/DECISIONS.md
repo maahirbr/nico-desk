@@ -1503,3 +1503,17 @@ notice and an "assigned" update, and the project's owner and lead see "reassigne
 Added since button on a project's filter row gets a very faint accent tint, so it reads as a tool beside the person
 pills; turned on, it fills as before. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Activity counts interactions; invites go by email
+
+At the PM's call. Activity's "Changes (7 days)" becomes "Interactions (7 days)": one number for everything a person did
+in the last 7 days, each action once (a change that touches several fields at one moment is one; tasks one person
+created together in one go, such as an import of minutes or a pasted chat, count as one). Opening the app is not
+counted, as the dots show it. Hovering the number for half a second (or tapping it on a phone) shows the breakdown
+beside it, to its right, biggest first: tasks created, updates written, status changes, dates moved, reassigns, edits,
+links, plan board changes, comments and messages, asks for update, feedback. No new tracking: it is read from what is
+already kept. Invites: on Activity, "Invite to join ▾" offers By email (a filled-in email in the admin's own Gmail,
+"Join NicoDesk", greeting, two steps, signed with their name) and Copy for WhatsApp; the Roster has one Email invite
+button. The app sends nothing. The hover label also takes an "off" switch, so a status pill inside it is never rebuilt
+mid-click. No schema change.
+Rollback: git revert the commit.

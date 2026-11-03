@@ -14,3 +14,15 @@ describe('inviteText', () => {
     expect(inviteText('http://localhost:3100', 'a@b.test')).not.toContain('vercel.app');
   });
 });
+
+describe('inviteEmail', () => {
+  it('greets them by first name, gives the two steps and signs off with the admin', async () => {
+    const { inviteEmail } = await import('../lib/invite');
+    const m = inviteEmail('https://desk.example.test', ' Ravi@Example.Test ', 'Ravi Rai', 'Sam Lee');
+    expect(m.subject).toBe('Join NicoDesk');
+    expect(m.body).toContain('Hi Ravi,');
+    expect(m.body).toContain('1. Open https://desk.example.test');
+    expect(m.body).toContain('using this email: ravi@example.test');
+    expect(m.body.trim().endsWith('Sam')).toBe(true);
+  });
+});
