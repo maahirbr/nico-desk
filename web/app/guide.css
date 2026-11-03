@@ -20,6 +20,7 @@
 
 .guide-list { margin: 0 0 var(--space-sm); padding-left: var(--space-lg); }
 .guide-list li { margin-bottom: var(--space-xs); max-width: 68ch; }
+.guide-url { overflow-wrap: anywhere; }
 .guide-keys { margin-top: var(--space-xs); }
 
 /* The date figure: a hairline frame, no fill, drawn from tokens */

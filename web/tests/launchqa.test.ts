@@ -50,6 +50,13 @@ describe('the guide', () => {
     expect(out).toContain('Who sees what');
     expect(out).toContain('via Claude');
   });
+
+  it('gives the steps and the address to connect Claude', () => {
+    const out = renderToStaticMarkup(createElement(GuideView));
+    expect(out).toContain('<h2 id="g-claude">Connect Claude</h2>');
+    expect(out).toContain('Add custom connector');
+    expect(out).toContain('https://nico-desk.vercel.app/api/mcp');
+  });
 });
 
 describe('the roster fields', () => {

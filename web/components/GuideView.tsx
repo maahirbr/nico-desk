@@ -24,10 +24,13 @@ export const GUIDE_SECTIONS = [
   { id: 'projects', title: 'Projects' },
   { id: 'sees', title: 'Who sees what' },
   { id: 'leads', title: 'For leads and admins' },
+  { id: 'claude', title: 'Connect Claude' },
   { id: 'help', title: 'Help and shortcuts' },
   { id: 'phone', title: 'On your phone' },
   { id: 'feedback', title: 'Feedback' },
 ] as const;
+
+const MCP_URL = 'https://nico-desk.vercel.app/api/mcp';
 
 const title = (id: (typeof GUIDE_SECTIONS)[number]['id']) => GUIDE_SECTIONS.find((s) => s.id === id)!.title;
 
@@ -144,6 +147,17 @@ export function GuideView() {
           <li><b>Reminders.</b> Drafts a nudge in your Gmail. You press Send.</li>
           <li><b>Roster.</b> Add and edit people.</li>
         </ul>
+      </section>
+
+      <section id="claude" aria-labelledby="g-claude">
+        <h2 id="g-claude">{title('claude')}</h2>
+        <ol className="guide-list">
+          <li>In Claude, open <b>Settings</b>, then <b>Connectors</b>.</li>
+          <li>Choose <b>Add custom connector</b>. Name it NicoDesk and paste this address: <code className="guide-url">{MCP_URL}</code></li>
+          <li>Press <b>Connect</b>, sign in with the Google account you use for NicoDesk, and approve.</li>
+          <li>Ask Claude: &ldquo;What are my open tasks in NicoDesk?&rdquo;</li>
+        </ol>
+        <p>Claude sees only what you can see. Its changes show &ldquo;via Claude&rdquo; in the history.</p>
       </section>
 
       <section id="help" aria-labelledby="g-help">

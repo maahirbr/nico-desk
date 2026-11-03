@@ -1372,3 +1372,8 @@ sent, no bell. View as cannot ask. New table `update_asks` (RLS on, fenced by it
 database needs `npm run db:upgrade`. The status menu may now grow to 440px so every item shows. The status menu, Home
 and Reminders were checked in the browser on a demo copy as a member and a lead.
 Rollback: git revert the commit; the `update_asks` table can stay (nothing reads it) or be dropped.
+
+## 2026-11-03 · Opus 5.5 · The Guide says how to connect Claude
+
+The repo owner connected Claude to production and asked for simple steps for everyone. The Guide gains "Connect Claude": four steps, the MCP address, and a line that Claude sees only what the person can see. This release also takes Ask for an update to production, so the hosted database took a backup and `npm run db:upgrade` first.
+Rollback: `vercel promote nico-desk-ihre8jgc2-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The `update_asks` table can stay, because the older build does not read it.
