@@ -1484,3 +1484,12 @@ as "(inactive)" by their name. Access shows one word (Admin, Lead or Member) in 
 one line, centred, with Edit and Copy invite side by side; emails use the body font; Lead and Admin sit on one line in
 Edit Person. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Plainer form words, and ✱ on a required reason
+
+At the PM's call. "(optional)" goes from the block and unblock forms and from a link's name, as anything without ✱ is
+optional; so the reason a block, a drop, a move back or a reopen needs now carries ✱. Shorter hints: "Add details" (a
+task's description), "One line note" (its note) and "Search anything" (the search page). Shorter prompts: "Why is it
+blocked?", "Move the date. The first date stays on record. Moving it early counts as on time." and "Reason to drop the
+task". Labels keep their present capitals. No schema change.
+Rollback: git revert the commit.

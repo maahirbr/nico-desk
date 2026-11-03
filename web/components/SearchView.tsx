@@ -48,7 +48,7 @@ export function SearchView({ initial }: { initial: string }) {
   return (
     <div className="calm">
       <header className="page-head"><div><h1>Search</h1><p className="summary">Projects, tasks, plan lines, comments and people. Try is:late, @name or #project.</p></div></header>
-      <input ref={input} type="search" className="big-search" placeholder="Search for a task, project or person" value={q} aria-label="Search"
+      <input ref={input} type="search" className="big-search" placeholder="Search anything" value={q} aria-label="Search"
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); setSel(Math.min(sel + 1, flat.length - 1)); }

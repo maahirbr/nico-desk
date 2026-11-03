@@ -279,8 +279,8 @@ function BlockForm({ t, people }: { t: Task; people: Opt[] }) {
   return (
     <form className="panel stack" onSubmit={(e) => { e.preventDefault(); run(`/tasks/${t.id}/block`, 'POST', { version: t.version, onId: onId || null, ask }); }}>
       <h3>Mark blocked</h3>
-      <label className="f"><span>Block reason</span><textarea required maxLength={280} value={ask} onChange={(e) => setAsk(e.target.value)} /></label>
-      <label className="f"><span>Waiting on someone in the team? (optional)</span>
+      <label className="f"><span>Block reason <span className="req" aria-hidden="true">*</span></span><textarea required maxLength={280} value={ask} onChange={(e) => setAsk(e.target.value)} /></label>
+      <label className="f"><span>Waiting on</span>
         <Select value={onId} onChange={setOn}><option value="">No one, or someone outside</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
       </label>
       <p className="hint">A named person sees it in the app. Nothing is emailed.</p>
@@ -297,7 +297,7 @@ function UnblockForm({ t, needNote }: { t: Task; needNote: boolean }) {
   return (
     <form className="panel stack" onSubmit={(e) => { e.preventDefault(); run(`/tasks/${t.id}/unblock`, 'POST', { version: t.version, note }); }}>
       <h3>Clear the block</h3>
-      <label className="f"><span>{needNote ? 'What did you do?' : 'What unblocked it (optional)'}</span><input maxLength={280} required={needNote} enterKeyHint="done" value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      <label className="f"><span>{needNote ? 'What did you do?' : 'What unblocked it?'}</span><input maxLength={280} required={needNote} enterKeyHint="done" value={note} onChange={(e) => setNote(e.target.value)} /></label>
       <div><button className="btn" disabled={busy || (needNote && !note.trim())}>Clear block</button></div>
       {needNote && !note.trim() && <p className="hint">Say in a few words what you did. The owner sees it.</p>}
       <Err e={error} />

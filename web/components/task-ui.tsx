@@ -518,7 +518,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               ? <textarea className="drawer-title" rows={2} value={edit.title} maxLength={200} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Task" />
               : <h2 className="drawer-title static">{t.title}</h2>}
             {canEdit && open
-              ? <><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="What this task is about. A line or two."
+              ? <><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="Add details"
                   onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" /><Count value={edit.description} max={600} /></>
               : t.description && <p className="drawer-desc static">{t.description}</p>}
 
@@ -586,14 +586,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
-                <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked? A block reason is needed.', date: 'Move the date. The first date stays on record. Moving it before the date passes counts as moved in time.', drop: 'Drop this task. A reason is needed, and it stays on record.', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
+                <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
-                <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'}</span>
+                <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
                   <Count value={form.text} max={280} />
                 </label>
                 {mode === 'blocked' && (
-                  <label className="f"><span>Waiting on someone in the team? (optional)</span>
+                  <label className="f"><span>Waiting on</span>
                     <Select value={form.person} onChange={(v) => setForm({ ...form, person: v })}>
                       <option value="">No one, or someone outside</option>
                       {people.filter((p) => p.id !== t.ownerId).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -625,7 +625,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 <div>{t.blocked.ask}</div>
                 {can && open && (
                   <div className="ask-unblock">
-                    <input value={unNote} maxLength={280} placeholder="What unblocked it? (optional)" aria-label="What unblocked it (optional)" onChange={(e) => setUnNote(e.target.value)} />
+                    <input value={unNote} maxLength={280} placeholder="What unblocked it?" aria-label="What unblocked it?" onChange={(e) => setUnNote(e.target.value)} />
                     <button className="btn" disabled={busy}
                       onClick={() => run((v) => api(`/tasks/${t.id}/unblock`, 'POST', { version: v, resume: true, ...(unNote.trim() ? { note: unNote.trim() } : {}) }), 'Unblocked, in progress', ['blocked', 'health']).then(() => setUnNote(''))}>
                       Unblock
@@ -661,7 +661,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
               <dt>Note</dt>
               <dd>{canEdit && open
-                ? <input value={edit.note} maxLength={140} placeholder="One line: blocker, dependency, who's been chased" onChange={(e) => setEdit({ ...edit, note: e.target.value })} />
+                ? <input value={edit.note} maxLength={140} placeholder="One line note" onChange={(e) => setEdit({ ...edit, note: e.target.value })} />
                 : t.note || <span className="dim">None</span>}</dd>
             </dl>
 
@@ -677,7 +677,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                   <form className="link-add" noValidate onSubmit={(e) => { e.preventDefault(); addLink(); }}>
                     <input type="url" inputMode="url" enterKeyHint="done" autoComplete="off" maxLength={2000} value={linkForm.url} aria-label="Link address"
                       placeholder="Paste a link: Doc, Sheet, Figma…" onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
-                    <input maxLength={80} enterKeyHint="done" autoComplete="off" value={linkForm.label} aria-label="Link name (optional)" placeholder="Name (optional)"
+                    <input maxLength={80} enterKeyHint="done" autoComplete="off" value={linkForm.label} aria-label="Link name" placeholder="Link name"
                       onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} />
                     <button className="btn" disabled={busy || !linkForm.url.trim()}>Add link</button>
                   </form>
