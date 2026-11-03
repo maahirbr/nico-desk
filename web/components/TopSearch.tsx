@@ -177,7 +177,7 @@ export function TopSearch() {
   return (
     <div className="topsearch" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false); }}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.35-4.35" /></svg>
-      <input ref={box} type="search" value={q} placeholder="Search tasks, projects, people" aria-label="Search" enterKeyHint="search" autoComplete="off"
+      <input ref={box} type="search" value={q} placeholder="Search anything" aria-label="Search" enterKeyHint="search" autoComplete="off"
         onFocus={() => { armed.current = false; setOpen(true); }} onChange={(e) => { armed.current = false; setQ(e.target.value); setOpen(true); setSel(0); }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); armed.current = true; setSel(Math.min(at + 1, rows.length - 1)); }

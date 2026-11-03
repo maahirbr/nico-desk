@@ -1456,3 +1456,9 @@ At the PM's call. By status on Team now shows Blocked, Not started and In progre
 count are gone. By person already showed open work only. Finished work stays on project pages (the Done tile) and in
 the Ledger. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · The search box says "Search anything"
+
+At the PM's call: the top search box's placeholder reads "Search anything" in place of "Search tasks, projects,
+people". Shorter, and still tells a first-timer it finds more than tasks. Its label for screen readers stays "Search".
+Rollback: git revert the commit.
