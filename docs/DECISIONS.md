@@ -1517,3 +1517,9 @@ already kept. Invites: on Activity, "Invite to join ▾" offers By email (a fill
 button. The app sends nothing. The hover label also takes an "off" switch, so a status pill inside it is never rebuilt
 mid-click. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Email invite only for people who have not signed in
+
+At the PM's call. On the Roster, Email invite shows only beside someone who has never signed in (the same test as
+Activity's "Never signed in"); once they have, it goes. No schema change.
+Rollback: git revert the commit.

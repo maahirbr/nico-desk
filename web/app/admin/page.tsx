@@ -2,6 +2,7 @@ import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { Person } from '@/components/chips';
 import { fmtDate, istDate } from '@/lib/time';
+import { teamAdoption } from '@/lib/activity';
 import { AddPeopleForm, AddPersonForm, PersonControls } from '@/components/client';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,8 @@ export default async function Admin() {
   const { rows: removed } = isAdmin ? await d.query<{ id: string; removed_reason: string | null; removed_at: string | Date | null; removed_by: string | null }>(
     `SELECT id, removed_reason, removed_at, removed_by FROM people WHERE removed_at IS NOT NULL`) : { rows: [] };
   const why = new Map(removed.map((r) => [r.id, r]));
+  // Email invite only for people who have never signed in (the same test as Activity's "Never signed in", 4 Nov).
+  const notYet = new Set(isAdmin ? (await teamAdoption(d, me.team.id)).filter((r) => r.status === 'never').map((r) => r.id) : []);
   return (
     <>
       <div className="page-head"><h1>Roster</h1></div>
@@ -33,7 +36,7 @@ export default async function Admin() {
                   <div className="small dim">{[r.removed_reason, r.removed_at ? fmtDate(istDate(new Date(r.removed_at).toISOString())) : '', r.removed_by ? `by ${(names[r.removed_by] ?? '').split(' ')[0]}` : ''].filter(Boolean).join(' · ')}</div>
                 ); })()}
               </td>}
-              {isAdmin && <td>{!readOnly && <PersonControls self={p.id === me.person.id} me={me.person.displayName} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</td>}
+              {isAdmin && <td>{!readOnly && <PersonControls self={p.id === me.person.id} me={me.person.displayName} invite={notYet.has(p.id)} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</td>}
             </tr>
           ))}
         </tbody>
