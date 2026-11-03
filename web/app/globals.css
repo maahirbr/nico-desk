@@ -1831,3 +1831,15 @@ a.rlink { color: inherit; text-decoration: none; }
 .welcome-steps a:hover, .welcome-steps .linkbtn:hover { text-decoration: underline; }
 .welcome-tick { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: var(--rule) solid var(--line-strong); font-size: 11px; color: var(--canvas); flex: none; }
 .welcome-steps li.done .welcome-tick { background: var(--status-done-fg); border-color: var(--status-done-fg); }
+
+/* The Roster (3 Nov): one line a person where it fits, everything on the row's middle, actions side by side, the email in
+   the body font. Access shows the one role that matters most (Admin, Lead or Member). */
+table.roster td { vertical-align: middle; }
+table.roster td:not(:last-child) { white-space: nowrap; }
+/* Edit Person opens inside the last cell: it keeps the page's own alignment and wrapping. */
+table.roster .overlay { white-space: normal; text-align: left; }
+table.roster .roster-email { color: var(--ink-2); }
+.roster-acts { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-sm); white-space: nowrap; }
+@media (min-width: 861px) { table.roster th, table.roster td { padding-left: var(--space-sm); padding-right: var(--space-sm); } table.roster th:first-child, table.roster td:first-child { padding-left: var(--space-md); } table.roster td:last-child { padding-right: var(--space-md); } }
+.edit-access { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-lg); }
+.edit-access legend { width: 100%; }

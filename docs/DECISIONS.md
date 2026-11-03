@@ -1475,3 +1475,12 @@ At the PM's call. The line on top reads "You are one of NicoDesk's first users, 
 contractions). The "or paste one into the box" hint beside + Add screenshot is gone; pasting still works. The Page list
 starts on "Select". No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · A tidier Roster, with Department, and Access for admins only
+
+At the PM's call. The Roster shows Department after Job title, and admins can change it in Edit Person (beside Job
+title). Access is for admins only: members and leads see Name, Job title, Department and Email, and a removed person
+as "(inactive)" by their name. Access shows one word (Admin, Lead or Member) in place of the full list. Each row keeps to
+one line, centred, with Edit and Copy invite side by side; emails use the body font; Lead and Admin sit on one line in
+Edit Person. No schema change.
+Rollback: git revert the commit.

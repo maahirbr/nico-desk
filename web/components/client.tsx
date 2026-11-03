@@ -451,14 +451,14 @@ export function AddPeopleForm({ teamId }: { teamId: string }) {
   );
 }
 
-// An admin edits a roster row in one window: name, job title, email and access. The row keeps Copy invite.
+// An admin edits a roster row in one window: name, job title, department, email and access. The row keeps Copy invite.
 // The server holds the same rules (patchPerson): admin only, no one removes their own admin or changes their own email.
-type RosterPerson = { id: string; name: string; role: string; email: string; active: boolean; roles: string[] };
+type RosterPerson = { id: string; name: string; role: string; department: string; email: string; active: boolean; roles: string[] };
 // others: the active people who could take over this person's work if they are removed.
 export function PersonControls({ person: p, self, others = [] }: { person: RosterPerson; self: boolean; others?: Opt[] }) {
   const [open, setOpen] = useState(false);
   return (
-    <span className="row" style={{ gap: 12 }}>
+    <span className="roster-acts">
       <button className="act" onClick={() => setOpen(true)} aria-label={`Edit ${p.name}`}>Edit</button>
       {p.active && <CopyInvite email={p.email} />}
       {open && <EditPerson person={p} self={self} others={others} onClose={() => setOpen(false)} />}
@@ -468,7 +468,7 @@ export function PersonControls({ person: p, self, others = [] }: { person: Roste
 
 function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson; self: boolean; others: Opt[]; onClose: () => void }) {
   const { busy, error, run } = useSubmit();
-  const [f, setF] = useState({ name: p.name, role: p.role, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin') });
+  const [f, setF] = useState({ name: p.name, role: p.role, department: p.department, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin') });
   const first = p.name.split(' ')[0];
   const emailChanged = f.email.trim().toLowerCase() !== p.email.toLowerCase();
   async function save(e: React.FormEvent) {
@@ -476,6 +476,7 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
     const body: Record<string, unknown> = {};
     if (f.name.trim() !== p.name) body.displayName = f.name.trim();
     if (f.role.trim() !== p.role) body.role = f.role.trim();
+    if (f.department.trim() !== p.department) body.department = f.department.trim();
     if (emailChanged) body.email = f.email.trim();
     if (f.active !== p.active) body.active = f.active;
     if (f.lead !== p.roles.includes('lead') || f.admin !== p.roles.includes('admin')) body.appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
@@ -486,7 +487,10 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
     <Modal title="Edit Person" onClose={onClose}>
       <form className="stack" onSubmit={save}>
         <label className="f"><span>Name</span><input required minLength={2} maxLength={80} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
-        <label className="f"><span>Job Title</span><input required minLength={2} maxLength={80} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} /></label>
+        <div className="row">
+          <label className="f"><span>Job Title</span><input required minLength={2} maxLength={80} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} /></label>
+          <label className="f"><span>Department</span><input required minLength={2} maxLength={80} value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></label>
+        </div>
         <label className="f"><span>Email</span>
           <input type="email" required value={f.email} disabled={self} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </label>
