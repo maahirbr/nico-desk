@@ -1486,10 +1486,13 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 .callout-row.moved-row:hover { color: inherit; }
 .moved-text { min-width: 0; overflow-wrap: anywhere; }
 .upd-project-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); }
-.upd-seen { font: var(--type-small); color: var(--ink-3); background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
-.upd-seen:hover { color: var(--primary); }
-.callout-row.upd-row { display: flex; align-items: flex-start; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); }
-.upd-group .upd-row:first-of-type { border-top: 0; }
+.callout-row.upd-row { display: flex; flex: 1; min-width: 0; align-items: flex-start; gap: var(--space-sm); padding: var(--space-xs) 0; }
+/* One update line: the task link, then the ✓ that marks it seen (3 Nov). */
+.upd-line { display: flex; align-items: center; gap: var(--space-xs); border-top: var(--rule) solid var(--hairline); }
+.upd-group .upd-line:first-of-type { border-top: 0; }
+.seen-tick { flex: none; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; font: var(--type-small); color: var(--ink-3);
+  background: none; border: var(--rule) solid transparent; border-radius: var(--radius-pill); cursor: pointer; transition: background var(--dur-state) var(--ease), color var(--dur-state) var(--ease); }
+.seen-tick:hover, .seen-tick:focus-visible { color: var(--primary); background: var(--sunk); border-color: var(--hairline); }
 .upd-row:hover .upd-title { color: var(--primary); }
 .upd-mark { flex: none; width: 1em; text-align: center; color: var(--primary); font-size: 10px; line-height: 20px; }
 .upd-row.is-closed .upd-mark { color: var(--ink-3); font-size: 12px; }

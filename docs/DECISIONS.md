@@ -1409,3 +1409,12 @@ Rollback: git revert the commit.
 
 The repo owner asked to deploy them. No schema change, so no `db:upgrade`. Typecheck, 891 tests and the build pass.
 Rollback: `vercel promote nico-desk-mbqjqzast-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. This returns the code to the build before this merge.
+
+## 2026-11-03 · Opus 5.5 · A ✓ to mark one update seen
+
+At the PM's call. In "Updates for you" a single update cleared only by opening its task, which nobody could tell, and
+"Feedback updates" cleared only all at once. Each line in both cards now ends in a small ✓ ("Seen" on hover) that clears
+that one line. "Mark all seen" stays at the top of both (the Feedback card's button said "Mark seen"); a project's own
+"Mark seen" link goes, as the ✓ covers it. Opening a task still clears its line. Seen is kept on the person's account as
+before. No schema change. Checked in the browser on a demo copy.
+Rollback: git revert the commit.

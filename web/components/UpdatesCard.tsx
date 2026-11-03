@@ -11,7 +11,8 @@ import { TaskLink } from './TaskLink';
 // "Updates for you": changes other people made to your tasks, tasks blocked on you, or your project's
 // tasks. Grouped by project, one line per task: its current title, then who did what. Small renames stay
 // out. Renders nothing when there is nothing new. "Seen" is saved on the person's account, so it holds on
-// every device: "Mark all seen", a project's own "Mark seen", or opening a task clears its line.
+// every device: "Mark all seen", the ✓ at the end of a line (3 Nov, in place of a project's own "Mark seen"), or opening a
+// task clears its line.
 // A click opens the task in the page's own drawer.
 
 const SHOWN = 6;
@@ -48,12 +49,10 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
         <div key={g.projectId ?? 'none'} className="upd-group">
           <div className="upd-project-row">
             <h3 className="upd-project">{g.projectId ? <Link className="rlink" href={`/projects/${g.projectId}`}>{g.name}</Link> : g.name}</h3>
-            {!readOnly && live.length > 1 && (
-              <Help term="mark_seen" host><button className="linkbtn upd-seen" onClick={() => seen({ taskIds: live.find((x) => x.projectId === g.projectId)!.rows.map((r) => r.taskId) }, false)}>Mark seen</button></Help>
-            )}
           </div>
           {g.rows.map((r) => (
-            <TaskLink key={r.taskId} id={r.taskId} className={`callout-row upd-row${r.closed ? ' is-closed' : ''}`} onOpen={() => { onOpen(r.taskId); seen({ taskIds: [r.taskId] }, false); }}>
+            <div key={r.taskId} className="upd-line">
+            <TaskLink id={r.taskId} className={`callout-row upd-row${r.closed ? ' is-closed' : ''}`} onOpen={() => { onOpen(r.taskId); seen({ taskIds: [r.taskId] }, false); }}>
               <span className="upd-mark" aria-hidden>{r.closed ? '✓' : '●'}</span>
               <span className="upd-body">
                 <span className="upd-title">{r.title}</span>
@@ -64,6 +63,8 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
               </span>
               {r.due && <span className={`upd-due due-${r.due.tone}`}>{r.due.label}</span>}
             </TaskLink>
+            {!readOnly && <SeenTick label={`Mark “${r.title}” seen`} onClick={() => seen({ taskIds: [r.taskId] }, false)} />}
+            </div>
           ))}
         </div>
       ))}
@@ -72,4 +73,9 @@ export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: Updat
       )}
     </section>
   );
+}
+
+// The ✓ at the end of an update line: clears that one line. Shared by Updates for you and Feedback updates.
+export function SeenTick({ label, onClick }: { label: string; onClick: () => void }) {
+  return <button type="button" className="seen-tick" title="Seen" aria-label={label} onClick={onClick}>✓</button>;
 }
