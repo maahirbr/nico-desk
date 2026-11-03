@@ -1332,3 +1332,11 @@ dropped, reopened) gives the date and the person; a task never changed shows its
 status change. `loadTasks` adds `statusSet`, read from the events table; the label is `components/WhenTip.tsx`, in a
 portal so the table never clips it. No schema change. Checked in the browser on a demo copy.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Reopening a feedback note tells nobody
+
+At the PM's call. A reopen is mostly a mistaken Done or Not now undone, so it no longer sends "reopened" news to the
+writer and the +1s. It also deletes any Done or Not now news on that note not seen yet, so nobody is told it closed.
+"Reopened" news already sent is never shown on Home (`feedbackNewsForMe` leaves the kind out), so the ones on the live
+app go once this is deployed, with no change to the database. Replies, Done and Not now are told as before.
+Rollback: git revert the commit.

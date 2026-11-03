@@ -159,7 +159,9 @@ export async function replyFeedback(db: Db, me: Me, id: string, text: string): P
 }
 
 // Done, Not now (with a short reason, which shows on the note) or back to open. Anyone on the team may, and the note
-// says who did it and when, so a wrong close is plain and anyone can reopen it.
+// says who did it and when, so a wrong close is plain and anyone can reopen it. A reopen tells nobody (the PM's call,
+// 3 Nov): it is mostly a mistaken close undone. It clears any Done or Not now news on the note not seen yet, so nobody
+// is told it closed. 'reopened' news written before then is never shown (feedbackNewsForMe).
 export async function setFeedbackStatus(db: Db, me: Me, id: string, status: FeedbackStatus, reason?: string): Promise<{ status: FeedbackStatus }> {
   assertNotViewing(me);
   await noteOnTeam(db, me, id);
@@ -172,7 +174,8 @@ export async function setFeedbackStatus(db: Db, me: Me, id: string, status: Feed
     if (status === 'open') await tx.query(`UPDATE feedback SET status = 'open', closed_by = NULL, closed_at = NULL, closed_note = NULL WHERE id = $1`, [id]);
     else await tx.query(`UPDATE feedback SET status = $2, closed_by = $3, closed_at = now(), closed_note = $4, working_by = NULL, working_at = NULL WHERE id = $1`,
       [id, status, me.person.id, status === 'not_now' ? note : null]);
-    await tell(tx, id, me.person.id, status === 'open' ? 'reopened' : status, status === 'not_now' ? { reason: note } : {});
+    if (status === 'open') await tx.query(`DELETE FROM feedback_news WHERE feedback_id = $1 AND kind IN ('done','not_now') AND seen_at IS NULL`, [id]);
+    else await tell(tx, id, me.person.id, status, status === 'not_now' ? { reason: note } : {});
   });
   return { status };
 }
@@ -210,7 +213,7 @@ export async function feedbackNewsForMe(db: Db, me: Me): Promise<FeedbackNews[]>
             CASE n.kind WHEN 'reply' THEN r.body WHEN 'not_now' THEN n.reason END AS text
        FROM feedback_news n JOIN feedback f ON f.id = n.feedback_id JOIN people p ON p.id = n.actor_id
        LEFT JOIN feedback_replies r ON r.id = n.reply_id
-      WHERE n.person_id = $1 AND n.seen_at IS NULL
+      WHERE n.person_id = $1 AND n.seen_at IS NULL AND n.kind <> 'reopened' -- reopens tell nobody (3 Nov), old ones included
       ORDER BY n.created_at DESC, n.id DESC LIMIT 20`, [me.person.id]);
   return rows.map((r) => {
     const tab = r.f_kind === 'praise' ? '?show=praise' : r.f_status === 'open' ? '' : '?show=resolved';
