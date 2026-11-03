@@ -7,6 +7,9 @@ import { Select } from './Select';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { endedSortOf } from '@/lib/remember';
 import { addDays, fmtDate } from '@/lib/time';
+
+// "Tuesday, 3 Nov" in the summary line (the PM's call, 3 Nov). The day is read as a calendar day, so no zone shifts it.
+const weekdayName = (d: string) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(`${d}T00:00:00Z`).getUTCDay()];
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { PersonLink } from './chips';
 import type { HelpTerm } from './help';
@@ -128,7 +131,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
           <p className="summary">
             {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text"><Help term="overdue">{overdue} late</Help></span></>}</> : 'Nothing open'}
             {waiting.length > 0 && <> · {waiting.length} <Help term="waiting_on_you">waiting on you</Help></>}
-            <span className="dim"> · {fmtDate(today)}</span>
+            <span className="dim"> · {weekdayName(today)}, {fmtDate(today)}</span>
             <NewNotices known={noticeIds} />
           </p>
         </div>

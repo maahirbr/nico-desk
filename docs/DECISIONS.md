@@ -1462,3 +1462,9 @@ Rollback: git revert the commit.
 At the PM's call: the top search box's placeholder reads "Search anything" in place of "Search tasks, projects,
 people". Shorter, and still tells a first-timer it finds more than tasks. Its label for screen readers stays "Search".
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Home's summary line names the day
+
+At the PM's call: the line under the greeting on Home ends "Tuesday, 3 Nov" in place of "3 Nov", so the day is plain at
+a glance next to This week and Next week. No schema change.
+Rollback: git revert the commit.
