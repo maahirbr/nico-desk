@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHelpOn } from './HelpMode';
 
-// "You set this on 22 Sep" under a task's status pill, after a 1-second hover (the PM's call, 3 Nov). Light grey, like
+// "Updated 22 Sep · You" under a task's status pill, after a 1-second hover (the PM's call, 3 Nov). Light grey, like
 // the ? button. It floats in a portal, fixed under the pill, so a table that scrolls sideways never clips it. Leaving,
 // clicking or scrolling hides it. With help mode (?) on, the help text has this spot, so this stays away.
 // Phones have no hover; there the same line heads the status menu.

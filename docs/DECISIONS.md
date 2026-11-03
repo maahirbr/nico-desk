@@ -1418,3 +1418,10 @@ that one line. "Mark all seen" stays at the top of both (the Feedback card's but
 "Mark seen" link goes, as the ✓ covers it. Opening a task still clears its line. Seen is kept on the person's account as
 before. No schema change. Checked in the browser on a demo copy.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · The status hover says "Updated 28 Oct · Sam"
+
+At the PM's call, in the words of the pilot teammate who asked for the date: the label under a task's status now reads
+"Updated 28 Oct · Sam" ("· You" for your own, the date alone for an import), in place of "Sam set this on 28 Oct". The
+same line heads the status menu on a phone. No schema change.
+Rollback: git revert the commit.

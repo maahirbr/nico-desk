@@ -267,7 +267,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 // task that is not mine to change, so the menu holds Ask for update… alone. Arrow keys move, Enter picks, Esc closes.
 export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, askOnly = false, disabled, set, when, onPick }: {
   t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; canAsk?: boolean; askOnly?: boolean; disabled: boolean; set: boolean;
-  when?: string | null; // "Sam set this on 28 Oct" (statusWhen): on hover, and at the top of the open menu for phones
+  when?: string | null; // "Updated 28 Oct · Sam" (statusWhen): on hover, and at the top of the open menu for phones
   onPick: (a: RowAction) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -314,13 +314,13 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
   );
 }
 
-// "Sam set this on 28 Oct": who last set a task's status, and when (the PM's call, 3 Nov, from a pilot teammate's
-// feedback). The person reading it is "You"; a change with no person (an import) says only the date.
+// "Updated 28 Oct · Sam": when a task's status was last updated, and by whom, in the words of the pilot teammate who
+// asked for it (the PM's call, 3 Nov; was "Sam set this on 28 Oct"). Your own reads "You"; an import gives the date only.
 export function statusWhen(t: Task, names: Record<string, string>, meId: string): string | null {
   if (!t.statusSet) return null;
   const day = fmtDate(istDate(t.statusSet.at));
   const by = t.statusSet.by;
-  return !by ? `Set on ${day}` : by === meId ? `You set this on ${day}` : `${(names[by] ?? 'Someone').split(' ')[0]} set this on ${day}`;
+  return !by ? `Updated ${day}` : `Updated ${day} · ${by === meId ? 'You' : (names[by] ?? 'Someone').split(' ')[0]}`;
 }
 
 // ---------- pop-up and side panel ----------
