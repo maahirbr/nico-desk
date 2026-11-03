@@ -109,3 +109,17 @@ describe('asking for an update', () => {
     expect((await ask(t.id)).status).toBe(200);
   });
 });
+
+describe('who last set a status, and when', () => {
+  it('is the creation at first, then the latest status change', async () => {
+    const t = await task();
+    expect((await s.getTask(db, t.id)).statusSet).toMatchObject({ by: LEAD });
+    await new Promise((r) => setTimeout(r, 5));
+    await s.addUpdate(db, OWNER, t.id, 'Just a note'); // a written update is not a status change
+    expect((await s.getTask(db, t.id)).statusSet?.by).toBe(LEAD);
+    await s.setHealth(db, OWNER, t.id, { version: t.version, health: 'on_track' });
+    const after = await s.getTask(db, t.id);
+    expect(after.statusSet?.by).toBe(OWNER);
+    expect(Date.parse(after.statusSet!.at)).toBeGreaterThan(Date.parse(t.createdAt));
+  });
+});

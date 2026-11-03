@@ -7,7 +7,8 @@ import { useReadOnly } from './readonly';
 // "Feedback updates" on Home: replies, Done, Not now and Reopen on notes this person wrote or gave +1, never their own
 // doing. Opening Feedback, or Mark seen, clears them. In-app only, nothing is sent anywhere. Under View as it shows but
 // cannot be changed.
-export type HomeReply = { id: string; kind: 'reply' | 'done' | 'not_now' | 'reopened'; authorName: string; snippet: string | null; note: string };
+// href: the note on the Feedback page, at the reply itself for a reply (lib/feedback.ts), so a click reads it in full.
+export type HomeReply = { id: string; kind: 'reply' | 'done' | 'not_now' | 'reopened'; authorName: string; snippet: string | null; note: string; href: string };
 
 export function FeedbackRepliesCard({ items }: { items: HomeReply[] }) {
   const readOnly = useReadOnly();
@@ -15,10 +16,10 @@ export function FeedbackRepliesCard({ items }: { items: HomeReply[] }) {
   if (gone || items.length === 0) return null;
   const seen = () => fetch('/api/v1/me/feedback-replies/seen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
   const what = (i: HomeReply) => {
-    const note = <Link className="rlink" href="/feedback">&ldquo;{i.note}&rdquo;</Link>;
-    if (i.kind === 'reply') return <>replied to {note}: {i.snippet}</>;
+    const note = <Link className="rlink" href={i.href}>&ldquo;{i.note}&rdquo;</Link>;
+    if (i.kind === 'reply') return <>replied to {note}: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
     if (i.kind === 'done') return <>marked {note} done</>;
-    if (i.kind === 'not_now') return <>marked {note} not now: {i.snippet}</>;
+    if (i.kind === 'not_now') return <>marked {note} not now: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
     return <>reopened {note}</>;
   };
   return (

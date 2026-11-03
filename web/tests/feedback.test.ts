@@ -221,6 +221,9 @@ describe('replies', () => {
     expect(out[0].replies).toEqual([expect.objectContaining({ body: 'Fixed in today\'s update, thanks!' })]);
 
     expect(await news(m.id)).toEqual([['reply', 'Fixed in today\'s update, thanks!']]);
+    // The update links to the reply itself on the Feedback page, so a click reads it whole.
+    const [first] = await feedbackNewsForMe(db, await meAs(m.id));
+    expect(first.href).toBe(`/feedback#reply-${out[0].replies[0].id}`);
     expect(await news('per_ada')).toEqual([['reply', 'Fixed in today\'s update, thanks!']]); // gave +1
     expect(await news(ADMIN)).toEqual([]); // wrote the reply
     signIn(m.id);
@@ -266,12 +269,16 @@ describe('done and not now', () => {
     expect((await vote(id)).status).toBe(400); // closed: no new +1
     expect((await statusReq(id, { status: 'open' })).status).toBe(200);
     expect((await (await list()).json())[0]).toMatchObject({ status: 'open', closedNote: null, closedByName: null });
+    expect(await news(m.id)).toEqual([]); // a reopen tells nobody, and takes back the Not now nobody has seen yet
     expect((await statusReq(id, { status: 'done' })).status).toBe(200);
     expect((await statusReq(id, { status: 'done' })).status).toBe(200); // twice is one notice
     expect((await (await list()).json())[0]).toMatchObject({ status: 'done', closedNote: null });
-    expect((await news(m.id)).map(([k]) => k)).toEqual(['done', 'reopened', 'not_now']);
-    expect(await news(ADMIN)).toEqual([['not_now', 'Not for the pilot, maybe later']]); // own changes are not news
+    expect((await news(m.id)).map(([k]) => k)).toEqual(['done']);
+    expect(await news(ADMIN)).toEqual([]); // the Not now went with the reopen, and own changes are not news
     expect((await statusReq(id, { status: 'closed' })).status).toBe(400);
+    // A reopen told before 3 Nov is not shown either.
+    await db.query(`INSERT INTO feedback_news (id, person_id, feedback_id, kind, actor_id) VALUES ('fbn_old', $1, $2, 'reopened', $3)`, [m.id, id, ADMIN]);
+    expect((await news(m.id)).map(([k]) => k)).toEqual(['done']);
   });
 });
 

@@ -75,6 +75,7 @@ export type Task = {
   overdue: boolean;
   slippedSilently: boolean;
   renegotiations: Renegotiation[];
+  statusSet?: { at: string; by: string | null } | null; // when the status was last set and by whom (lib/service.ts loadTasks)
   priority: { value: 'high' | 'normal' | 'low'; setBy: string; setAt: string } | null;
   blocked: { onId: string | null; ask: string; at: string } | null; // ask is the block reason; a person is optional
   origin: 'app' | 'sheet' | 'granola';

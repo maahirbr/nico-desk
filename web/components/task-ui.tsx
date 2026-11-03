@@ -37,6 +37,7 @@ import { TaskDrafts } from './TaskDrafts';
 import type { SentenceRead } from '@/lib/sentence';
 import { Count } from './LimitNotice';
 import { isRealEnter } from './ime';
+import { WhenTip } from './WhenTip';
 import { Fold, FoldChev } from './Fold';
 
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
@@ -264,8 +265,10 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 // The row's status as a menu button: the statuses, each with its icon and colour, then Unblock when
 // blocked, Move date… and, for leads and admins, Reassign…, then Ask for update… on someone else's task. askOnly: a
 // task that is not mine to change, so the menu holds Ask for update… alone. Arrow keys move, Enter picks, Esc closes.
-export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, askOnly = false, disabled, set, onPick }: {
-  t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; canAsk?: boolean; askOnly?: boolean; disabled: boolean; set: boolean; onPick: (a: RowAction) => void;
+export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, askOnly = false, disabled, set, when, onPick }: {
+  t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; canAsk?: boolean; askOnly?: boolean; disabled: boolean; set: boolean;
+  when?: string | null; // "Sam set this on 28 Oct" (statusWhen): on hover, and at the top of the open menu for phones
+  onPick: (a: RowAction) => void;
 }) {
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
@@ -280,15 +283,16 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
   }, [open, canAsk, t.id]);
   return (
     <span className="menu-wrap st-menu-wrap">
-      <Help term={`status_${current}`} host><button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
+      <WhenTip text={open ? null : when}><Help term={`status_${current}`} host><button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
         aria-label={`Status of “${t.title}”: ${STATUS[current].word}`} disabled={disabled}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}>
         <StatusIcon s={current} />{STATUS[current].word}
-      </button></Help>
+      </button></Help></WhenTip>
       <AnimatePresence>
         {open && (
           <Popover anchor={btn} onClose={() => setOpen(false)} align="end" role="menu" label="Status" className="menu st-menu" max={440}>
+            {when && <><span className="st-menu-when">{when}</span><span className="st-menu-sep" role="separator" /></>}
             {statuses.map((s) => (
               <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
                 <StatusIcon s={s} /><span>{STATUS[s].word}</span>
@@ -308,6 +312,15 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
       </AnimatePresence>
     </span>
   );
+}
+
+// "Sam set this on 28 Oct": who last set a task's status, and when (the PM's call, 3 Nov, from a pilot teammate's
+// feedback). The person reading it is "You"; a change with no person (an import) says only the date.
+export function statusWhen(t: Task, names: Record<string, string>, meId: string): string | null {
+  if (!t.statusSet) return null;
+  const day = fmtDate(istDate(t.statusSet.at));
+  const by = t.statusSet.by;
+  return !by ? `Set on ${day}` : by === meId ? `You set this on ${day}` : `${(names[by] ?? 'Someone').split(' ')[0]} set this on ${day}`;
 }
 
 // ---------- pop-up and side panel ----------

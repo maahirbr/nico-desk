@@ -63,7 +63,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       assignedNotice={assignedNotice}
       noticeIds={notices.map((n) => n.id)}
       movedAway={movedAway}
-      feedbackReplies={replies.map((r) => ({ id: r.id, kind: r.kind, authorName: r.actorName, snippet: r.text && r.text.length > 140 ? `${r.text.slice(0, 137)}...` : r.text, note: r.note.length > 60 ? `${r.note.slice(0, 57)}...` : r.note }))}
+      feedbackReplies={replies.map((r) => ({ id: r.id, kind: r.kind, authorName: r.actorName, snippet: r.text && r.text.length > 140 ? `${r.text.slice(0, 137)}...` : r.text, note: r.note.length > 60 ? `${r.note.slice(0, 57)}...` : r.note, href: r.href }))}
       asks={asks.map((a) => ({ id: a.id, taskId: a.taskId, title: a.title, askerName: (names[a.askerId] ?? 'Someone').split(' ')[0], question: a.question, askedAt: a.askedAt,
         project: projectNames[projectOf.get(a.taskId) ?? ''] ?? null }))}
       waiting={mine.blockedOnMe}

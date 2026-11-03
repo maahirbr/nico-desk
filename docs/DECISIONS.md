@@ -1377,3 +1377,35 @@ Rollback: git revert the commit; the `update_asks` table can stay (nothing reads
 
 The repo owner connected Claude to production and asked for simple steps for everyone. The Guide gains "Connect Claude": four steps, the MCP address, and a line that Claude sees only what the person can see. This release also takes Ask for an update to production, so the hosted database took a backup and `npm run db:upgrade` first.
 Rollback: `vercel promote nico-desk-ihre8jgc2-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The `update_asks` table can stay, because the older build does not read it.
+
+## 2026-11-03 · Opus 5.5 · A feedback reply on Home opens where it sits
+
+At the PM's call. In "Feedback updates" on Home, a reply is cut short. The reply text and the note's name now link to
+the Feedback page, in the note's tab (Open, Resolved or Working well), at the reply itself (`#reply-<id>`), or at the note
+for a Done, Not now or Reopen. The page scrolls it into view and marks it in a soft colour, so the whole reply can be
+read. `feedbackNewsForMe` returns the link (`href`). No schema change. Checked in the browser on a demo copy.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Who set a task's status, and when, on hover
+
+From a pilot teammate's feedback, at the PM's call: on a project page, the date a task's status was last set. Kept out
+of the table so it stays as it was. Hovering over the status pill for a second shows a light-grey label under it ("Sam
+set this on 28 Oct", or "You set this on…"); on a phone, tapping the pill shows the same line at the top of the status
+menu. With help mode on, only the help text shows there. The last status event (a start, a block or unblock, done,
+dropped, reopened) gives the date and the person; a task never changed shows its creation. A written update is not a
+status change. `loadTasks` adds `statusSet`, read from the events table; the label is `components/WhenTip.tsx`, in a
+portal so the table never clips it. No schema change. Checked in the browser on a demo copy.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Reopening a feedback note tells nobody
+
+At the PM's call. A reopen is mostly a mistaken Done or Not now undone, so it no longer sends "reopened" news to the
+writer and the +1s. It also deletes any Done or Not now news on that note not seen yet, so nobody is told it closed.
+"Reopened" news already sent is never shown on Home (`feedbackNewsForMe` leaves the kind out), so the ones on the live
+app go once this is deployed, with no change to the database. Replies, Done and Not now are told as before.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Merge the PM's three 3 Nov commits
+
+The repo owner asked to deploy them. No schema change, so no `db:upgrade`. Typecheck, 891 tests and the build pass.
+Rollback: `vercel promote nico-desk-mbqjqzast-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. This returns the code to the build before this merge.

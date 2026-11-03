@@ -20,10 +20,11 @@ import { arrivals, focusOnDesktop } from './motion';
 import { OwnerPicker, ownerFields, ownerReady, useProjectPeople } from './OwnerPicker';
 import { useReadOnly } from './readonly';
 import { BoardStatusMenu, MotionRow, MovedDate } from './rowmotion';
+import { WhenTip } from './WhenTip';
 import { Select } from './Select';
 import { SortPick } from './SortPick';
 import { canMoveTo } from './statusRules';
-import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
+import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, statusWhen, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
@@ -240,9 +241,9 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           <td>
             {(can || askable) && t.statusCategory === 'open' ? (
               <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && isLead}
-                canAsk={askable} askOnly={!can}
+                canAsk={askable} askOnly={!can} when={statusWhen(t, names, meId)}
                 onPick={(a) => (a === 'date' || a === 'reassign' || a === 'ask' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
-            ) : <span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span>}
+            ) : <WhenTip text={statusWhen(t, names, meId)}><span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span></WhenTip>}
             <div><FlagChip t={t} today={today} /></div>
           </td>
           <td className="act-cell">

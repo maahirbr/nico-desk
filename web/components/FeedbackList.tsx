@@ -46,6 +46,15 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   const [moving, setMoving] = useState<string | null>(null);
   const [show, setShow] = useUrlText('show');
   const view = show === 'resolved' ? 'resolved' : show === 'praise' ? 'praise' : 'open';
+  // Opened from a Feedback update on Home (/feedback#reply-…): bring that reply or note into view and mark it, as a
+  // client-side visit does not set :target. The mark stays until the page is left.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    const el = id ? document.getElementById(id) : null;
+    if (!el) return;
+    el.classList.add('is-target');
+    el.scrollIntoView({ block: 'center' });
+  }, []);
   // Seeing this page counts as seeing the news on Home.
   useEffect(() => {
     if (readOnly || !hasNews) return;
@@ -127,7 +136,7 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
         {r.replies.length > 0 && (
           <ul className="fb-replies">
             {r.replies.map((x) => (
-              <li key={x.id}><div className="fb-meta small"><b>{x.authorName}</b><span className="dim">{x.stamp}</span></div><p className="fb-body">{x.body}</p></li>
+              <li key={x.id} id={`reply-${x.id}`}><div className="fb-meta small"><b>{x.authorName}</b><span className="dim">{x.stamp}</span></div><p className="fb-body">{x.body}</p></li>
             ))}
           </ul>
         )}
