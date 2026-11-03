@@ -1182,6 +1182,13 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .menu > .st-act:disabled, .menu > .st-act:disabled:hover { color: var(--ink-3); background: none; cursor: default; } /* ✓ Asked: already asked for an update */
 .menu > .st-menu-sep { height: var(--rule); padding: 0; margin: var(--space-xxs) var(--space-xs); background: var(--hairline); cursor: default; }
 .menu > .st-menu-sep:hover { background: var(--hairline); }
+/* Who last set the status, and when (components/WhenTip.tsx): under the pill after a 1-second hover, light grey like the ? button. */
+.when-host { display: inline-flex; }
+.when-tip { position: fixed; z-index: 70; white-space: nowrap; pointer-events: none; padding: var(--space-xxs) var(--space-xs);
+  background: var(--canvas); color: var(--ink-2); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-small); }
+/* Who last set the status, and when: the menu's first line, not an item. */
+.menu > .st-menu-when { padding: var(--space-xxs) var(--space-sm); font: var(--type-small); color: var(--ink-3); white-space: nowrap; cursor: default; }
+.menu > .st-menu-when:hover { background: none; }
 .ask-unblock { display: flex; gap: var(--space-xs); margin-top: var(--space-sm); }
 .ask-unblock input { flex: 1; min-width: 0; }
 

@@ -149,7 +149,14 @@ async function loadTasks(db: Tx, where: string, params: unknown[], today: string
   const byTask = new Map<string, EventRow[]>();
   for (const e of events) byTask.set(e.entity_id, [...(byTask.get(e.entity_id) ?? []), e]);
   const links = await linksFor(db, rows.map((r) => r.id));
-  return rows.map((r) => ({ ...derive(r, byTask.get(r.id) ?? [], today), links: links.get(r.id) ?? [] }));
+  // When each task's status was last set, and by whom: its latest status event (a start, a block or unblock, done,
+  // dropped, reopened), or its creation when the status was never changed. Shown on hover over the status (3 Nov).
+  const { rows: set } = await db.query<{ entity_id: string; actor_id: string | null; at: string | Date }>(
+    `SELECT DISTINCT ON (entity_id) entity_id, actor_id, at FROM events
+      WHERE entity_type = 'task' AND entity_id = ANY($1) AND field IN ('_created','health','status_category','blocked_ask','_reopened')
+      ORDER BY entity_id, at DESC, id DESC`, [rows.map((r) => r.id)]);
+  const setOf = new Map(set.map((e) => [e.entity_id, { at: new Date(e.at).toISOString(), by: e.actor_id }]));
+  return rows.map((r) => ({ ...derive(r, byTask.get(r.id) ?? [], today), links: links.get(r.id) ?? [], statusSet: setOf.get(r.id) ?? null }));
 }
 
 // ---------- links on a task ----------

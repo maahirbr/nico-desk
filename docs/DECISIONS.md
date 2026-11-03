@@ -1321,3 +1321,14 @@ the Feedback page, in the note's tab (Open, Resolved or Working well), at the re
 for a Done, Not now or Reopen. The page scrolls it into view and marks it in a soft colour, so the whole reply can be
 read. `feedbackNewsForMe` returns the link (`href`). No schema change. Checked in the browser on a demo copy.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Who set a task's status, and when, on hover
+
+From a pilot teammate's feedback, at the PM's call: on a project page, the date a task's status was last set. Kept out
+of the table so it stays as it was. Hovering over the status pill for a second shows a light-grey label under it ("Sam
+set this on 28 Oct", or "You set this on…"); on a phone, tapping the pill shows the same line at the top of the status
+menu. With help mode on, only the help text shows there. The last status event (a start, a block or unblock, done,
+dropped, reopened) gives the date and the person; a task never changed shows its creation. A written update is not a
+status change. `loadTasks` adds `statusSet`, read from the events table; the label is `components/WhenTip.tsx`, in a
+portal so the table never clips it. No schema change. Checked in the browser on a demo copy.
+Rollback: git revert the commit.
