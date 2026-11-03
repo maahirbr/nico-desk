@@ -52,7 +52,7 @@ export function refsIn(body: string): Ref[] {
 }
 
 type Row = { id: string; subject_kind: SubjectKind; subject_id: string; author_id: string; body: string; created_at: string; edited_at: string | null; deleted_at: string | null; author_name: string; via: 'claude' | null };
-const COMMENT_SQL = `SELECT c.*, COALESCE(p.nickname, p.display_name) AS author_name FROM comments c JOIN people p ON p.id = c.author_id`;
+const COMMENT_SQL = `SELECT c.*, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS author_name FROM comments c JOIN people p ON p.id = c.author_id`;
 
 // The label each reference shows for this reader, or null when they may not see it.
 async function labels(tx: Tx, me: Me, sight: Sight, refs: Ref[]): Promise<Map<string, string | null>> {
@@ -220,7 +220,7 @@ export type Mention = { noticeId: string; commentId: string; byName: string; sub
 // Unread "mentioned" notices whose comment still stands and whose task or project this person still sees.
 export async function listMentions(db: Db, me: Me): Promise<Mention[]> {
   const { rows } = await db.query<{ notice_id: string; created_at: string } & Row>(
-    `SELECT n.id AS notice_id, c.*, COALESCE(p.nickname, p.display_name) AS author_name FROM notices n
+    `SELECT n.id AS notice_id, c.*, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS author_name FROM notices n
      JOIN comments c ON c.id = n.comment_id JOIN people p ON p.id = c.author_id
      WHERE n.person_id = $1 AND n.kind = 'mentioned' AND n.read_at IS NULL AND c.deleted_at IS NULL
      ORDER BY n.created_at DESC LIMIT 50`, [me.person.id]);

@@ -11,7 +11,7 @@ describe('help text', () => {
       'remind_gmail', 'remind_mail', 'remind_copy', 'remind_flag',
       'comment_box', 'comment_mention', 'comment_urgent', 
       // coverage pass of 13 Oct
-      'group_today', 'group_this_week', 'group_later', 'overdue', 'waiting_on_you', 'updates_for_you', 'mark_seen', 'your_projects', 'done_this_week',
+      'group_today', 'group_this_week', 'group_next_week', 'group_later', 'overdue', 'waiting_on_you', 'updates_for_you', 'mark_seen', 'your_projects', 'done_this_week',
       'team_by_person', 'team_by_status', 'coming_up',
       'project_on_track', 'project_at_risk', 'project_off_track', 'project_archived', 'project_internal', 'project_partner', 'project_progress',
       'tile_open', 'pushed', 'priority', 'unblock', 'move_date', 'reassign',

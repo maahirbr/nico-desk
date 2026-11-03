@@ -45,7 +45,8 @@ export const HELP = {
   // Home
   group_today: 'Today. Open tasks that are due today.',
   group_this_week: 'This week. Open tasks due in the week, up to Sunday.',
-  group_later: 'Later. Open tasks due after this week.',
+  group_next_week: 'Next week. Open tasks due Monday to Sunday of next week.',
+  group_later: 'Later. Open tasks due after next week.',
   overdue: 'Overdue. The date has passed and the task is not done.',
   waiting_on_you: 'Waiting on you. Someone else is blocked until you do something. A block stays here until it is cleared.',
   updates_for_you: 'Updates for you. Changes to your tasks and projects since you last looked, such as a new owner or a moved date.',

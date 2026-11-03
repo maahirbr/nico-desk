@@ -198,7 +198,7 @@ export type LogLine = EventRow & { actorName: string | null };
 
 export async function taskLog(db: Tx, taskId: string, before?: string, limit = 50): Promise<LogLine[]> {
   const { rows } = await db.query<LogLine>(
-    `SELECT e.*, COALESCE(p.nickname, p.display_name) AS "actorName" FROM events e LEFT JOIN people p ON p.id = e.actor_id
+    `SELECT e.*, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS "actorName" FROM events e LEFT JOIN people p ON p.id = e.actor_id
      WHERE e.entity_type = 'task' AND e.entity_id = $1
        AND ($2::text IS NULL OR (e.at, e.id) < (SELECT at, id FROM events WHERE id = $2))
      ORDER BY e.at DESC, e.id DESC LIMIT $3`,
@@ -859,7 +859,8 @@ export async function patchPerson(
         [personId, email],
       );
     }
-    if (input.active !== undefined) await tx.query(`UPDATE people SET active = $2 WHERE id = $1`, [personId, input.active]);
+    // Bring back clears the removal record (who, when, why); removing goes through removePerson, which asks why.
+    if (input.active !== undefined) await tx.query(`UPDATE people SET active = $2${input.active ? ', removed_at = NULL, removed_by = NULL, removed_reason = NULL' : ''} WHERE id = $1`, [personId, input.active]);
     if (input.role !== undefined) await tx.query(`UPDATE people SET role = $2 WHERE id = $1`, [personId, input.role.trim()]);
     if (input.department !== undefined) await tx.query(`UPDATE people SET department = $2 WHERE id = $1`, [personId, input.department.trim()]);
     if (input.restricted !== undefined) await tx.query(`UPDATE people SET restricted = $2 WHERE id = $1`, [personId, input.restricted]);
@@ -872,6 +873,143 @@ export async function patchPerson(
     }
   });
   return (await getPerson(db, teamId, personId))!;
+}
+
+// ---------- removing someone, with a hand-off (3 Nov) ----------
+// An admin removes a person from NicoDesk: they can no longer sign in, and leave the pickers, Team and Reminders. Nothing
+// they did is deleted, so their name stays on past tasks, comments and the Ledger, and they can be brought back. What
+// they still hold goes to one person the admin picks, in the same step: their open tasks, the live projects they own or
+// lead, and the open blocks waiting on them. Each move is logged as a normal change, made by the admin.
+
+export type HandoffLoad = {
+  tasks: { id: string; title: string }[];
+  projects: { id: string; name: string; as: 'owner' | 'lead' }[];
+  waitingOn: { id: string; title: string }[];
+};
+
+export async function handoffLoad(db: Tx, meId: string, teamId: string, personId: string): Promise<HandoffLoad> {
+  await requireAdmin(db, teamId, meId);
+  const p = await getPerson(db, teamId, personId);
+  if (!p || p.appRoles.length === 0) throw notFound('No such person on this team.');
+  const [tasks, projects, waitingOn] = await Promise.all([
+    db.query<{ id: string; title: string }>(
+      `SELECT id, title FROM tasks WHERE team_id = $1 AND owner_id = $2 AND status_category = 'open' AND origin <> 'sheet' ORDER BY due_on, title`, [teamId, personId]),
+    db.query<{ id: string; name: string; as: 'owner' | 'lead' }>(
+      `SELECT id, name, CASE WHEN owner_id = $2 THEN 'owner' ELSE 'lead' END AS as FROM projects
+        WHERE team_id = $1 AND archived_at IS NULL AND (owner_id = $2 OR lead_id = $2) ORDER BY name`, [teamId, personId]),
+    db.query<{ id: string; title: string }>(
+      `SELECT id, title FROM tasks WHERE team_id = $1 AND blocked_on_id = $2 AND status_category = 'open' AND (owner_id IS NULL OR owner_id <> $2) ORDER BY title`, [teamId, personId]),
+  ]);
+  return { tasks: tasks.rows, projects: projects.rows, waitingOn: waitingOn.rows };
+}
+
+// The reason is for admins only (Roster). Each handed-over item also becomes a handover the new holder sees on Home
+// ("Handover from Ravi"): they keep it or pass it on. Open feedback notes they were working on are let go.
+export async function removePerson(db: Db, meId: string, teamId: string, personId: string, handTo: string | null, reason: string): Promise<{ moved: number }> {
+  let moved = 0;
+  const why = reason.trim();
+  if (why.length < 2 || why.length > 200) throw bad('invalid_body', 'Say in a line why they are being removed.', 'reason');
+  await db.transaction(async (tx) => {
+    if (personId === meId) throw bad('invalid_body', 'You cannot remove yourself. Ask another admin.');
+    const load = await handoffLoad(tx, meId, teamId, personId);
+    const holds = load.tasks.length + load.projects.length + load.waitingOn.length;
+    if (holds && !handTo) throw bad('needs_handoff', 'Pick who takes over their work first.', 'handTo');
+    if (handTo) {
+      if (handTo === personId) throw bad('invalid_body', 'Pick someone else to take over.', 'handTo');
+      await activeMember(tx, teamId, handTo, 'handTo');
+    }
+    const at = new Date().toISOString();
+    const handover = (refId: string, kind: 'task' | 'project' | 'block', role: 'owner' | 'lead' | null = null) => tx.query(
+      `INSERT INTO handovers (id, team_id, kind, ref_id, role, from_id, to_id, by_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [newId('hnd'), teamId, kind, refId, role, personId, handTo, meId]);
+    const member = (projectId: string) => tx.query(
+      `INSERT INTO project_members (project_id, person_id, project_role) VALUES ($1,$2,'Member') ON CONFLICT (project_id, person_id) DO NOTHING`, [projectId, handTo]);
+    for (const t of load.tasks) {
+      const { rows: [r] } = await tx.query<{ project_id: string | null }>(
+        `UPDATE tasks SET owner_id = $2, version = version + 1 WHERE id = $1 RETURNING project_id`, [t.id, handTo]);
+      if (r.project_id) await member(r.project_id);
+      await insertEvent(tx, { entityId: t.id, field: 'owner_id', before: personId, after: handTo, reason: 'Handed over when the owner left NicoDesk', actorId: meId, at });
+      await handover(t.id, 'task');
+      moved++;
+    }
+    for (const t of load.waitingOn) {
+      await tx.query(`UPDATE tasks SET blocked_on_id = $2, version = version + 1 WHERE id = $1`, [t.id, handTo]);
+      await insertEvent(tx, { entityId: t.id, field: 'blocked_on_id', before: personId, after: handTo, reason: 'Handed over when they left NicoDesk', actorId: meId, at });
+      await handover(t.id, 'block');
+    }
+    for (const pr of load.projects) {
+      const field = pr.as === 'owner' ? 'owner_id' : 'lead_id';
+      await tx.query(`UPDATE projects SET ${field} = $2 WHERE id = $1`, [pr.id, handTo]);
+      await member(pr.id);
+      await tx.query(
+        `INSERT INTO events (id, entity_type, entity_id, field, before, after, reason, actor_id, origin, at) VALUES ($1,'project',$2,$3,$4::jsonb,$5::jsonb,$6,$7,$9,$8)`,
+        [newId('evt'), pr.id, field, JSON.stringify(personId), JSON.stringify(handTo), 'Handed over when they left NicoDesk', meId, at, originNow()]);
+      await handover(pr.id, 'project', pr.as);
+    }
+    await tx.query(`UPDATE feedback SET working_by = NULL, working_at = NULL WHERE working_by = $1 AND status = 'open'`, [personId]);
+    // Off every project they were on or could view (the PM's call, 3 Nov). Bring back does not put them back.
+    await tx.query(`DELETE FROM project_members WHERE person_id = $1`, [personId]);
+    await tx.query(`DELETE FROM project_viewers WHERE person_id = $1`, [personId]);
+    await tx.query(`UPDATE people SET active = false, removed_at = now(), removed_by = $2, removed_reason = $3 WHERE id = $1`, [personId, meId, why]);
+  });
+  return { moved };
+}
+
+// What was handed to me when someone was removed, not yet kept or passed on: the "Handover from Ravi" card on Home.
+// An item that has since closed (a task done or dropped, a block cleared) settles by itself and stays out.
+export type HandoverItem = { id: string; kind: 'task' | 'project' | 'block'; refId: string; role: 'owner' | 'lead' | null; title: string;
+  dueOn: string | null; projectId: string | null; fromId: string; fromName: string; byName: string };
+export async function handoversForMe(db: Tx, meId: string, teamId: string): Promise<HandoverItem[]> {
+  const { rows } = await db.query<{ id: string; kind: HandoverItem['kind']; ref_id: string; role: HandoverItem['role']; from_id: string; from_name: string; by_name: string;
+    t_title: string | null; t_due: string | null; t_project: string | null; t_open: boolean | null; t_owner: string | null; t_on: string | null; p_name: string | null }>(
+    `SELECT h.id, h.kind, h.ref_id, h.role, h.from_id, COALESCE(f.nickname, f.display_name) AS from_name, COALESCE(b.nickname, b.display_name) AS by_name,
+            t.title AS t_title, to_char(t.due_on, 'YYYY-MM-DD') AS t_due, t.project_id AS t_project, t.status_category = 'open' AS t_open,
+            t.owner_id AS t_owner, t.blocked_on_id AS t_on, pr.name AS p_name
+       FROM handovers h JOIN people f ON f.id = h.from_id JOIN people b ON b.id = h.by_id
+       LEFT JOIN tasks t ON h.kind IN ('task','block') AND t.id = h.ref_id
+       LEFT JOIN projects pr ON h.kind = 'project' AND pr.id = h.ref_id
+      WHERE h.to_id = $1 AND h.team_id = $2 AND h.settled_at IS NULL ORDER BY h.created_at, t.due_on NULLS LAST, h.id`, [meId, teamId]);
+  return rows
+    .filter((r) => (r.kind === 'task' ? r.t_open && r.t_owner === meId : r.kind === 'block' ? r.t_open && r.t_on === meId : !!r.p_name))
+    .map((r) => ({ id: r.id, kind: r.kind, refId: r.ref_id, role: r.role, title: (r.kind === 'project' ? r.p_name : r.t_title) ?? '',
+      dueOn: r.t_due, projectId: r.kind === 'project' ? r.ref_id : r.t_project, fromId: r.from_id, fromName: r.from_name, byName: r.by_name }));
+}
+
+// Keep it (it stays mine), or pass it on: a task to a new owner through the normal edit rules, a project's role or a
+// block to another active teammate, each logged. Either way it leaves the card.
+export async function settleHandover(db: Db, meId: string, teamId: string, id: string, to: string | null): Promise<{ ok: true }> {
+  const { rows: [h] } = await db.query<{ kind: HandoverItem['kind']; ref_id: string; role: 'owner' | 'lead' | null; to_id: string; settled_at: string | null }>(
+    `SELECT kind, ref_id, role, to_id, settled_at FROM handovers WHERE id = $1 AND team_id = $2`, [id, teamId]);
+  if (!h || h.to_id !== meId) throw notFound('No such handover.');
+  if (h.settled_at) return { ok: true };
+  if (to && to !== meId) {
+    if (h.kind === 'task') {
+      const t = await getTask(db, h.ref_id);
+      await editTask(db, meId, h.ref_id, { version: t.version, ownerId: to });
+    } else {
+      await db.transaction(async (tx) => {
+        await activeMember(tx, teamId, to, 'to');
+        const at = new Date().toISOString();
+        if (h.kind === 'block') {
+          const { rows: [r] } = await tx.query<{ blocked_on_id: string | null }>(`SELECT blocked_on_id FROM tasks WHERE id = $1 FOR UPDATE`, [h.ref_id]);
+          if (r?.blocked_on_id !== meId) return;
+          await tx.query(`UPDATE tasks SET blocked_on_id = $2, version = version + 1 WHERE id = $1`, [h.ref_id, to]);
+          await insertEvent(tx, { entityId: h.ref_id, field: 'blocked_on_id', before: meId, after: to, reason: 'Passed on from a handover', actorId: meId, at });
+        } else {
+          const field = h.role === 'lead' ? 'lead_id' : 'owner_id';
+          const { rows: [r] } = await tx.query<{ v: string | null }>(`SELECT ${field} AS v FROM projects WHERE id = $1 FOR UPDATE`, [h.ref_id]);
+          if (r?.v !== meId) throw forbidden('You no longer hold this project.');
+          await tx.query(`UPDATE projects SET ${field} = $2 WHERE id = $1`, [h.ref_id, to]);
+          await tx.query(`INSERT INTO project_members (project_id, person_id, project_role) VALUES ($1,$2,'Member') ON CONFLICT (project_id, person_id) DO NOTHING`, [h.ref_id, to]);
+          await tx.query(
+            `INSERT INTO events (id, entity_type, entity_id, field, before, after, reason, actor_id, origin, at) VALUES ($1,'project',$2,$3,$4::jsonb,$5::jsonb,$6,$7,$9,$8)`,
+            [newId('evt'), h.ref_id, field, JSON.stringify(meId), JSON.stringify(to), 'Passed on from a handover', meId, at, originNow()]);
+        }
+      });
+    }
+  }
+  await db.query(`UPDATE handovers SET settled_at = now() WHERE id = $1`, [id]);
+  return { ok: true };
 }
 
 // ---------- profile: names, phone and photo ----------
@@ -989,7 +1127,7 @@ export async function teamPhotos(db: Tx, teamId: string): Promise<Record<string,
 // The update log across one project's tasks, newest first. It also holds the project's own archive, restore, owner and lead events.
 export async function projectLog(db: Tx, projectId: string, limit = 30): Promise<(LogLine & { taskTitle: string })[]> {
   const { rows } = await db.query<LogLine & { taskTitle: string }>(
-    `SELECT e.*, COALESCE(p.nickname, p.display_name) AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
+    `SELECT e.*, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
      LEFT JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
      LEFT JOIN projects pr ON pr.id = e.entity_id AND e.entity_type = 'project'
      LEFT JOIN people p ON p.id = e.actor_id

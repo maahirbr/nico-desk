@@ -454,20 +454,22 @@ export function AddPeopleForm({ teamId }: { teamId: string }) {
 // An admin edits a roster row in one window: name, job title, email and access. The row keeps Copy invite.
 // The server holds the same rules (patchPerson): admin only, no one removes their own admin or changes their own email.
 type RosterPerson = { id: string; name: string; role: string; email: string; active: boolean; roles: string[] };
-export function PersonControls({ person: p, self }: { person: RosterPerson; self: boolean }) {
+// others: the active people who could take over this person's work if they are removed.
+export function PersonControls({ person: p, self, others = [] }: { person: RosterPerson; self: boolean; others?: Opt[] }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="row" style={{ gap: 12 }}>
       <button className="act" onClick={() => setOpen(true)} aria-label={`Edit ${p.name}`}>Edit</button>
       {p.active && <CopyInvite email={p.email} />}
-      {open && <EditPerson person={p} self={self} onClose={() => setOpen(false)} />}
+      {open && <EditPerson person={p} self={self} others={others} onClose={() => setOpen(false)} />}
     </span>
   );
 }
 
-function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: boolean; onClose: () => void }) {
+function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson; self: boolean; others: Opt[]; onClose: () => void }) {
   const { busy, error, run } = useSubmit();
   const [f, setF] = useState({ name: p.name, role: p.role, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin') });
+  const first = p.name.split(' ')[0];
   const emailChanged = f.email.trim().toLowerCase() !== p.email.toLowerCase();
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -490,7 +492,6 @@ function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: 
         </label>
         <p className="hint" style={{ margin: 0 }}>{self ? 'Ask another admin to change your own email.' : emailChanged ? 'They sign in with this address from now on. The old one keeps working as a second address.' : 'The address they sign in with.'}</p>
         <fieldset className="f edit-access"><legend>Access</legend>
-          <label className="check"><input type="checkbox" checked={f.active} disabled={self} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Active</label>
           <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
           <label className="check"><input type="checkbox" checked={f.admin} disabled={self} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
         </fieldset>
@@ -500,7 +501,78 @@ function EditPerson({ person: p, self, onClose }: { person: RosterPerson; self: 
           <button type="submit" className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </form>
+      {!self && <RemovePerson person={p} first={first} others={others} onDone={onClose} />}
     </Modal>
+  );
+}
+
+// Remove (a person, from NicoDesk), at the foot of Edit Person (3 Nov). They can no longer sign in; their past work stays on record.
+// What they still hold (open tasks, projects they own or lead, blocks waiting on them) goes to one person, picked here,
+// in the same step. A removed person shows Bring back instead.
+type Load = { tasks: { id: string; title: string }[]; projects: { id: string; name: string; as: 'owner' | 'lead' }[]; waitingOn: { id: string; title: string }[] };
+function RemovePerson({ person: p, first, others, onDone }: { person: RosterPerson; first: string; others: Opt[]; onDone: () => void }) {
+  const { busy, error, run } = useSubmit();
+  const [load, setLoad] = useState<Load | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [handTo, setHandTo] = useState('');
+  const [reason, setReason] = useState('');
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+  if (!p.active) {
+    return (
+      <div className="remove-zone">
+        <p className="small dim">{first} was removed and can&rsquo;t sign in. Their past work is still on record.</p>
+        <button type="button" className="btn ghost" disabled={busy}
+          onClick={async () => { if (await run(`/people/${p.id}`, 'PATCH', { active: true })) { notify(`${first} is back`); onDone(); } }}>Bring back</button>
+        <Err e={error} />
+      </div>
+    );
+  }
+  const start = async () => {
+    setAsking(true); setLoadErr(null);
+    const r = await api(`/people/${p.id}/handoff`, 'GET');
+    if (r.ok) setLoad(r.data); else setLoadErr(r.error.message);
+  };
+  const holds = load ? load.tasks.length + load.projects.length + load.waitingOn.length : 0;
+  const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  return (
+    <div className="remove-zone">
+      {!asking ? (
+        <button type="button" className="act danger" onClick={start}>Remove…</button>
+      ) : !load ? (
+        loadErr ? <p className="err">{loadErr}</p> : <p className="small dim">Checking what {first} still has…</p>
+      ) : (
+        <div className="stack">
+          <p className="small"><b>Remove {first}?</b> They won&rsquo;t be able to sign in. Their past work stays on record, marked &ldquo;(inactive)&rdquo;, and you can bring them back.</p>
+          <label className="f"><span>Reason <span className="req" aria-hidden="true">*</span></span>
+            <input maxLength={200} value={reason} onChange={(e) => setReason(e.target.value)} aria-describedby={`why-${p.id}`} />
+          </label>
+          <p className="hint" id={`why-${p.id}`}>Only admins see this.</p>
+          {holds > 0 && (<>
+            <p className="small" style={{ margin: 0 }}>{first} still has:</p>
+            <ul className="small remove-holds">
+              {load.tasks.length > 0 && <li>{n(load.tasks.length, 'open task', 'open tasks')}</li>}
+              {load.projects.length > 0 && <li>{load.projects.map((x) => `${x.as === 'owner' ? 'Owner' : 'Lead'} of ${x.name}`).join(', ')}</li>}
+              {load.waitingOn.length > 0 && <li>{n(load.waitingOn.length, 'task', 'tasks')} waiting on them</li>}
+            </ul>
+            <label className="f"><span>Hand over to <span className="req" aria-hidden="true">*</span></span>
+              <Select value={handTo} onChange={setHandTo} aria-label="Hand their work to">
+                <option value="">Pick a person</option>
+                {others.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </Select>
+            </label>
+            <p className="hint">They see it on their Home, and keep it or pass it on.</p>
+          </>)}
+          <div className="row" style={{ gap: 'var(--space-sm)' }}>
+            <button type="button" className="btn danger" disabled={busy || (holds > 0 && !handTo) || reason.trim().length < 2}
+              onClick={async () => { if (await run(`/people/${p.id}/remove`, 'POST', { handTo: handTo || null, reason: reason.trim() })) { notify(holds ? `${first} removed. Their work went to ${others.find((o) => o.id === handTo)?.name.split(' ')[0] ?? 'the new owner'}` : `${first} removed`); onDone(); } }}>
+              {busy ? 'Removing…' : `Remove ${first}`}
+            </button>
+            <button type="button" className="btn ghost" onClick={() => { setAsking(false); setLoad(null); setHandTo(''); }}>Cancel</button>
+          </div>
+          <Err e={error} />
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -81,7 +81,10 @@ export async function ledgerFor(db: Tx, me: Me, w: { from: string; to: string; p
     const firm = t.partnerOwner && t.projectId ? partnerOf.get(t.projectId) : undefined;
     return firm ? [{ ...t, ownerId: partnerKey(firm, t.partnerOwner!) }] : [];
   }) : [];
-  const team = [...everything.filter((t) => t.ownerId), ...partnerCopies];
+  // Someone removed from NicoDesk has no Ledger record (the PM's call, 3 Nov): their tasks leave every count here.
+  const { rows: gone } = await db.query<{ id: string }>(`SELECT id FROM people WHERE active = false`);
+  const removed = new Set(gone.map((r) => r.id));
+  const team = [...everything.filter((t) => t.ownerId && !removed.has(t.ownerId)), ...partnerCopies];
   const partners = [...new Map(partnerCopies.map((t) => {
     const [, firm, name] = t.ownerId.split(':');
     return [t.ownerId, { id: t.ownerId, name, role: firm }];

@@ -89,7 +89,7 @@ export async function planState(db: Tx, projectId: string): Promise<PlanState> {
     db.query<LineRow>(`SELECT text FROM plan_parked WHERE project_id = $1 ORDER BY position`, [projectId]),
     db.query<LineRow>(`SELECT * FROM plan_proposals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at, position`, [projectId]),
     db.query<LineRow>(
-      `SELECT a.id, a.at, a.summary, COALESCE(p.nickname, p.display_name) AS actor FROM plan_activity a LEFT JOIN people p ON p.id = a.actor_id
+      `SELECT a.id, a.at, a.summary, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS actor FROM plan_activity a LEFT JOIN people p ON p.id = a.actor_id
        WHERE a.project_id = $1 ORDER BY a.at DESC, a.id DESC LIMIT 40`, [projectId]),
   ]);
   const byLine = new Map<string, Checkpoint[]>();

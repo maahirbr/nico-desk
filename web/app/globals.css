@@ -874,6 +874,18 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .drawer-facts dd select, .drawer-facts dd input, .drawer-facts dd .sel-btn { width: 100%; }
 .drawer-foot { display: flex; gap: var(--space-md); flex-wrap: wrap; padding-top: var(--space-sm); border-top: var(--rule) solid var(--hairline); }
 .act.danger { color: var(--late); }
+/* Remove from NicoDesk, at the foot of Edit Person: set apart by a rule, the work they hold listed plainly. */
+.remove-zone { margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
+.remove-holds { margin: 0; padding-left: var(--space-md); }
+.remove-zone .stack { gap: var(--space-xs); }
+.remove-zone .stack p { margin: 0; }
+/* Handover from someone removed (components/HandoverCard.tsx): each item keeps or goes, on one line. */
+.handover-lede { margin: 0 0 var(--space-xs); }
+.callout-row.handover-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); cursor: default; border-top: var(--rule) solid var(--hairline); padding: var(--space-xs) 0; }
+.callout-row.handover-row:hover { color: inherit; }
+.handover-acts { display: flex; align-items: center; gap: var(--space-xs); flex: none; }
+.handover-acts .sel-btn { min-width: 140px; }
+@media (max-width: 520px) { .callout-row.handover-row { flex-wrap: wrap; } }
 .small-toggle { font: var(--type-meta); margin: 0 0 var(--space-xs); color: var(--ink-3); }
 /* A finished list's toggle with its sort picker on the same line. */
 .list-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; margin: 0 0 var(--space-xs); }

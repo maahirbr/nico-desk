@@ -1425,3 +1425,27 @@ At the PM's call, in the words of the pilot teammate who asked for the date: the
 "Updated 28 Oct · Sam" ("· You" for your own, the date alone for an import), in place of "Sam set this on 28 Oct". The
 same line heads the status menu on a phone. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Home splits "Next week" out of "Later"
+
+At the PM's call. Home groups open tasks as Late, Today, This week, Next week (Monday to Sunday after this one) and
+Later (after next week), so a task due next Tuesday no longer sits with one due in three months. "Next up" names next
+week when that is the nearest. Help mode explains both. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Remove someone, with a reason and a handover
+
+At the PM's call, so a person who leaves does not turn into a ghost. On the Roster an admin opens Edit, then Remove…,
+gives a reason (stored on the person, shown to admins only: "Left Nicobar · 3 Nov · by Sam") and picks who takes over
+whenever the person still holds work. In one step: their open tasks, the live projects they own or lead, and the open
+blocks waiting on them move to that person, each logged as a normal change by the admin; feedback notes they were
+working on are let go; they leave every project they were on or could view; and they can no longer sign in. The new
+holder sees a "Handover from <name>" card on Home and keeps each item or gives it to someone else (a task only to that
+project's people), or keeps all; the card stays until everything is sorted. Nothing they did is deleted: finished
+tasks, history, comments and feedback keep their name, marked "(inactive)". Their Ledger record goes, as they are no
+longer on the team. Bring back restores sign-in and clears the reason, not their projects or the work handed over.
+Plan-board lines and actions and archived projects are not handed over yet. Admins only, never yourself; route()
+refuses it under View as. Schema: `people.removed_at`, `removed_by`, `removed_reason` and a `handovers` table (RLS on,
+fenced by team), in `upgrade()`; the hosted database needs `npm run db:upgrade`. The old "Active" tick on Edit Person
+is gone. Checked in the browser on a demo copy as the admin and as the person taking over.
+Rollback: git revert the commit; the new columns and table can stay (nothing else reads them).

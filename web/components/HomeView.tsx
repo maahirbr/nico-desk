@@ -6,7 +6,7 @@ import { useJev } from './jevFlag';
 import { Select } from './Select';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
 import { endedSortOf } from '@/lib/remember';
-import { fmtDate } from '@/lib/time';
+import { addDays, fmtDate } from '@/lib/time';
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
 import { PersonLink } from './chips';
 import type { HelpTerm } from './help';
@@ -15,6 +15,8 @@ import { useRemembered } from './remember';
 import { SortPick } from './SortPick';
 import { useOpenTask } from './taskUrl';
 import { AsksCard, type HomeAsk } from './AsksCard';
+import { HandoverCard } from './HandoverCard';
+import type { HandoverItem } from '@/lib/service';
 import { FeedbackRepliesCard, type HomeReply } from './FeedbackRepliesCard';
 import { MovedAwayCard, type MovedAway } from './MovedAwayCard';
 import { NewNotices } from './NewNotices';
@@ -27,7 +29,7 @@ import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { Fold, FoldChev } from './Fold';
 
-const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', week: 'group_this_week', later: 'group_later' };
+const HEAD: Record<string, HelpTerm> = { late: 'late', today: 'group_today', week: 'group_this_week', next: 'group_next_week', later: 'group_later' };
 
 // Home: what is on your plate, grouped by when it is due. One line per task; click for detail.
 
@@ -47,9 +49,9 @@ export function clearLine(personId: string, day: string): string {
   return CLEAR_LINES[h % CLEAR_LINES.length];
 }
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; handovers?: HandoverItem[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
   welcome?: Welcome | null; // someone's first week (components/WelcomeCard.tsx)
@@ -94,18 +96,23 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       })()
     : null;
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : '', t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
+  const nextWeekEnd = addDays(weekEnd, 7);
   const groups = [
     { key: 'late', label: 'Late', items: mine.filter((t) => t.dueOn < today) },
     { key: 'today', label: 'Today', items: mine.filter((t) => t.dueOn === today) },
     { key: 'week', label: 'This week', items: mine.filter((t) => t.dueOn > today && t.dueOn <= weekEnd) },
-    { key: 'later', label: 'Later', items: mine.filter((t) => t.dueOn > weekEnd) },
+    // Next week (the PM's call, 3 Nov): Monday to Sunday after this one. Later is anything after that.
+    { key: 'next', label: 'Next week', items: mine.filter((t) => t.dueOn > weekEnd && t.dueOn <= nextWeekEnd) },
+    { key: 'later', label: 'Later', items: mine.filter((t) => t.dueOn > nextWeekEnd) },
   ].filter((g) => g.items.length);
   const overdue = mine.filter((t) => t.dueOn < today).length;
   // Today is clear when nothing late or due today is left that is yours to do.
   const todayClear = !mine.some((t) => t.dueOn <= today && !t.blocked);
   const nextWeek = mine.filter((t) => t.dueOn > today && t.dueOn <= weekEnd).length;
-  const nextLater = mine.filter((t) => t.dueOn > weekEnd).length;
-  const nextUp = nextWeek ? `Next up: ${nextWeek} ${nextWeek === 1 ? 'task' : 'tasks'} this week` : nextLater ? `Next up: ${nextLater} ${nextLater === 1 ? 'task' : 'tasks'} later` : '';
+  const nextNext = mine.filter((t) => t.dueOn > weekEnd && t.dueOn <= nextWeekEnd).length;
+  const nextLater = mine.filter((t) => t.dueOn > nextWeekEnd).length;
+  const tasks = (n: number) => `${n} ${n === 1 ? 'task' : 'tasks'}`;
+  const nextUp = nextWeek ? `Next up: ${tasks(nextWeek)} this week` : nextNext ? `Next up: ${tasks(nextNext)} next week` : nextLater ? `Next up: ${tasks(nextLater)} later` : '';
   const open = (id: string, s?: RowAction) => {
     markWelcomeStep(meId, 'task');
     setOpenId(id); setStartStatus(s);
@@ -129,6 +136,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       </header>
 
       {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
+
+      <HandoverCard items={handovers} people={people} meId={meId} projectNames={projectNames} onOpen={(id) => open(id)} />
 
       <AsksCard items={asks} now={updates.now} onOpen={(id) => open(id)} />
 
