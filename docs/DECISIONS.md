@@ -1530,3 +1530,9 @@ At the PM's call. The step reads "Add a photo, nickname or phone number", and op
 browser, like the Guide step), as none of the three is required. Saving any of them ticks it too, as before. No schema
 change.
 Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · The Guide says where Ask for update is
+
+At the PM's call: the Guide's line now reads "On someone else's task, open the status menu and pick Ask for update.
+Their answer shows in your Updates." (it said to open the task and tap it). No schema change.
+Rollback: git revert the commit.
