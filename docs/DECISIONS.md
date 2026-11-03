@@ -1449,3 +1449,10 @@ refuses it under View as. Schema: `people.removed_at`, `removed_by`, `removed_re
 fenced by team), in `upgrade()`; the hosted database needs `npm run db:upgrade`. The old "Active" tick on Edit Person
 is gone. Checked in the browser on a demo copy as the admin and as the person taking over.
 Rollback: git revert the commit; the new columns and table can stay (nothing else reads them).
+
+## 2026-11-03 · Opus 5.5 · Team shows open work only
+
+At the PM's call. By status on Team now shows Blocked, Not started and In progress; the Done group and the "· N done"
+count are gone. By person already showed open work only. Finished work stays on project pages (the Done tile) and in
+the Ledger. No schema change.
+Rollback: git revert the commit.
