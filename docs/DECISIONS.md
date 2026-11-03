@@ -1493,3 +1493,13 @@ task's description), "One line note" (its note) and "Search anything" (the searc
 blocked?", "Move the date. The first date stays on record. Moving it early counts as on time." and "Reason to drop the
 task". Labels keep their present capitals. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Owners reassign their own tasks; Added since gets a faint tint
+
+At the PM's call. Reassign… in a task's status menu was for leads and admins only, though the server already let a
+task's owner hand it on; it now shows for the owner too, on Home, Team and project pages. The usual project rule holds
+(only the project owner, its lead, a team lead or an admin brings someone new onto the project). The new owner gets a
+notice and an "assigned" update, and the project's owner and lead see "reassigned" in Updates for you, as before. The
+Added since button on a project's filter row gets a very faint accent tint, so it reads as a tool beside the person
+pills; turned on, it fills as before. No schema change.
+Rollback: git revert the commit.

@@ -179,7 +179,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {suggested && (
         <Stagger id="home-suggested" className="tlist">
-          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign={isLead} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
         </Stagger>
       )}
 
@@ -187,7 +187,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}><Help term={HEAD[g.key]}>{g.label}</Help> <span className="n">{g.items.length}</span></h2>
           <Stagger id="home" className="tlist">
-            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign={isLead} onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </Stagger>
         </section>
       ))}

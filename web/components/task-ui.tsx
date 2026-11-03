@@ -263,7 +263,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
 }
 
 // The row's status as a menu button: the statuses, each with its icon and colour, then Unblock when
-// blocked, Move date… and, for leads and admins, Reassign…, then Ask for update… on someone else's task. askOnly: a
+// blocked, Move date…, Reassign… (the task's owner, a lead or an admin), then Ask for update… on someone else's task. askOnly: a
 // task that is not mine to change, so the menu holds Ask for update… alone. Arrow keys move, Enter picks, Esc closes.
 export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, askOnly = false, disabled, set, when, onPick }: {
   t: Task; current: StatusKey; statuses: StatusKey[]; canReassign: boolean; canAsk?: boolean; askOnly?: boolean; disabled: boolean; set: boolean;

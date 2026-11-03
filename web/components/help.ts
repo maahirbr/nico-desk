@@ -107,7 +107,7 @@ export const HELP = {
   priority: 'Priority. High, normal or low. A lead sets it, to show which tasks matter most.',
   unblock: 'Unblock. Clears the block and sets the task to In progress. A short note is optional for the owner.',
   move_date: 'Move date. Changes the due date. A reason is needed, and the first date stays on record.',
-  reassign: 'Reassign. Gives the task to another person. The old owner gets a notice. Only leads and admins can do this.',
+  reassign: 'Reassign. Gives the task to another person on the project. The new owner, the project owner and its lead are told. The task\'s owner, a lead or an admin can do this.',
 
   // Ledger
   delivery_habits: 'Delivery habits. One card for each person, showing how they keep their dates over the period.',

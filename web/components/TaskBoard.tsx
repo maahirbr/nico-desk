@@ -240,7 +240,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </td>
           <td>
             {(can || askable) && t.statusCategory === 'open' ? (
-              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && isLead}
+              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && (isLead || t.ownerId === meId)}
                 canAsk={askable} askOnly={!can} when={statusWhen(t, names, meId)}
                 onPick={(a) => (a === 'date' || a === 'reassign' || a === 'ask' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
             ) : <WhenTip text={statusWhen(t, names, meId)}><span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span></WhenTip>}

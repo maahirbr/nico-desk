@@ -386,6 +386,9 @@ button.stat[aria-pressed="true"] .stat-n, button.stat[aria-pressed="true"] .stat
 .since { position: relative; display: inline-flex; margin-right: var(--space-xs); padding-right: var(--space-sm); border-right: var(--rule) solid var(--hairline); }
 .since .pill, .since-open { display: inline-flex; align-items: center; gap: var(--space-xxs); }
 .since-ico { flex: none; }
+/* A faint tint so the meeting-review button reads as a tool, not one more person (the PM's call, 3 Nov). On, it fills as before. */
+.since > .pill:not(.since-on) { background: color-mix(in srgb, var(--primary) 6%, var(--surface)); border-color: color-mix(in srgb, var(--primary) 22%, var(--hairline)); color: color-mix(in srgb, var(--primary) 75%, var(--ink)); }
+.since > .pill:not(.since-on):hover { background: color-mix(in srgb, var(--primary) 11%, var(--surface)); }
 @media (max-width: 600px) { .since { border-right: 0; padding-right: 0; margin-right: 0; } }
 .since-on { display: inline-flex; align-items: center; gap: var(--space-xxs); padding-right: var(--space-xxs); background: var(--ink); color: var(--canvas); border-color: var(--ink); }
 .since-on button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
