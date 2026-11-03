@@ -17,7 +17,7 @@ export default async function Feedback() {
   return (
     <>
       <h1>Feedback</h1>
-      <p className="lede">You're one of NicoDesk's first users, and we'd love your thoughts.</p>
+      <p className="lede">You are one of NicoDesk's first users, and we would love your thoughts.</p>
       <FeedbackForm />
       <section>
         <h2>From the team</h2>

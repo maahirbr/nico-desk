@@ -1468,3 +1468,10 @@ Rollback: git revert the commit.
 At the PM's call: the line under the greeting on Home ends "Tuesday, 3 Nov" in place of "3 Nov", so the day is plain at
 a glance next to This week and Next week. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Plainer words on the Feedback page
+
+At the PM's call. The line on top reads "You are one of NicoDesk's first users, and we would love your thoughts." (no
+contractions). The "or paste one into the box" hint beside + Add screenshot is gone; pasting still works. The Page list
+starts on "Select". No schema change.
+Rollback: git revert the commit.

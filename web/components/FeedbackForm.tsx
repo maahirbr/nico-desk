@@ -19,7 +19,7 @@ export const FEEDBACK_LIMIT = 4000;
 const MAX_SHOTS = 3;
 
 export const PAGES: [string, string][] = [
-  ['', 'Select a page'], ['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/tasks/new', 'New Task'],
+  ['', 'Select'], ['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects'], ['/tasks/new', 'New Task'],
   ['/ledger', 'Ledger'], ['/reminders', 'Reminders'], ['/admin', 'Roster'], ['/guide', 'Guide'],
 ];
 
@@ -102,7 +102,6 @@ export function FeedbackForm() {
         )}
         <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden
           onChange={(e) => { void addShots(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
-        <span className="hint">or paste one into the box</span>
       </div>
       <label className="f">
         <span><Help term="feedback_page">Page</Help></span>
