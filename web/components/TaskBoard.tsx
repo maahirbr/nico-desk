@@ -241,7 +241,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </td>
           <td>
             {(can || askable) && t.statusCategory === 'open' ? (
-              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && isLead}
+              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && (isLead || t.ownerId === meId)}
                 canAsk={askable} askOnly={!can} when={statusWhen(t, names, meId)}
                 onPick={(a) => (a === 'date' || a === 'reassign' || a === 'ask' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
             ) : <WhenTip text={statusWhen(t, names, meId)}><span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span></WhenTip>}
@@ -411,8 +411,8 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
   const [person, setPerson] = useState('');
   const label = {
     status: 'Back to “Not started”. Why did work stop?',
-    blocked: 'Why is it blocked? If it is waiting on someone in the team, you can name them and they see it in the app.',
-    remove: 'Why drop this task? A reason is needed, and it stays in the log.',
+    blocked: 'Why is it blocked?',
+    remove: 'Reason to drop the task',
     reopen: 'Why reopen it? Only a lead can reopen.',
   }[p.kind];
   const ok = text.trim().length > 0;
@@ -422,12 +422,12 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
         <div className="prompt">
           <div className="small">{label}</div>
           <div className="row">
-            <label className="f"><span>{p.kind === 'blocked' ? 'Block reason' : 'Reason'}</span>
+            <label className="f"><span>{p.kind === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
               <input ref={focusOnDesktop} maxLength={280} value={text} onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (isRealEnter(e) && ok) onGo({ text, date, person }); if (e.key === 'Escape') onCancel(); }} />
             </label>
             {p.kind === 'blocked' && (
-              <label className="f" style={{ flex: '0 1 220px' }}><span>Waiting on (optional)</span>
+              <label className="f" style={{ flex: '0 1 220px' }}><span>Waiting on</span>
                 <Select value={person} onChange={setPerson}>
                   <option value="">No one, or someone outside</option>
                   {people.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
@@ -487,7 +487,7 @@ function EditRow({ t, people, partnerPeople, partnerName, workstreams, today, bu
             </label>
           )}
           <label className="f"><span>Due date</span><DateField min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value || t.dueOn })} /></label>
-          <label className="f"><span>Note (one line)</span><input value={f.note} maxLength={140} placeholder="Blocker, dependency, who's been chased" onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
+          <label className="f"><span>Note (one line)</span><input value={f.note} maxLength={140} placeholder="One line note" onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
           {moved && (
             <label className="f wide"><span>Why the date moved (kept on record; the first date, {fmtDate(t.firstDueOn)}, stays)</span>
               <input value={f.reason} maxLength={280} onChange={(e) => setF({ ...f, reason: e.target.value })} />

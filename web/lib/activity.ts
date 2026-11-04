@@ -40,7 +40,64 @@ export type AdoptionRow = {
   lastActive: string | null; // the latest trace, an instant
   days: string[]; // the visit days in the last 14, 'YYYY-MM-DD'
   opened7: number; weekdays: number; changes7: number; // weekdays: Mon to Fri opened in the 7 days before today
+  interactions: Interactions; // what they did in the last 7 days, one count per action (4 Nov)
 };
+// Interactions (the PM's call, 4 Nov): everything someone did in the app in the last 7 days, each action once. A change
+// that touches several fields of a task at one moment is one action; tasks one person created together in one go (an
+// import of minutes, a pasted chat, + Add another task) count as one. Opening the app is not counted: the dots show it.
+export type Interactions = { total: number; parts: [string, number][] };
+const KINDS = ['created', 'updates', 'status', 'dates', 'reassigned', 'edits', 'links', 'plan', 'comments', 'asks', 'feedback'] as const;
+type Kind = (typeof KINDS)[number];
+const WORDS: Record<Kind, [string, string]> = {
+  created: ['task created', 'tasks created'], updates: ['update written', 'updates written'], status: ['status change', 'status changes'],
+  dates: ['date moved', 'dates moved'], reassigned: ['task reassigned', 'tasks reassigned'], edits: ['edit', 'edits'], links: ['link added or removed', 'links added or removed'],
+  plan: ['plan board change', 'plan board changes'], comments: ['comment or message', 'comments or messages'], asks: ['ask for update', 'asks for update'],
+  feedback: ['feedback note, reply or +1', 'feedback notes, replies or +1s'],
+};
+// One action's kind, from the fields it touched (the strongest first).
+function kindOf(fields: Set<string>): Kind {
+  if (fields.has('_created')) return 'created';
+  if (fields.has('_update')) return 'updates';
+  if (['health', 'status_category', '_reopened', 'blocked_ask', 'status'].some((f) => fields.has(f))) return 'status';
+  if (fields.has('due_on')) return 'dates';
+  if (fields.has('owner_id') || fields.has('lead_id')) return 'reassigned';
+  if (fields.has('_link_added') || fields.has('_link_removed')) return 'links';
+  return 'edits';
+}
+export function sumInteractions(counts: Partial<Record<Kind, number>>): Interactions {
+  const parts = KINDS.filter((k) => (counts[k] ?? 0) > 0).map((k): [string, number] => [WORDS[k][counts[k] === 1 ? 0 : 1], counts[k]!]);
+  return { total: parts.reduce((n, [, c]) => n + c, 0), parts: parts.sort((a, b) => b[1] - a[1]) };
+}
+
+async function interactionsFor(db: Db, ids: string[], since: string): Promise<Map<string, Interactions>> {
+  const counts = new Map<string, Partial<Record<Kind, number>>>();
+  const add = (id: string | null, k: Kind, n = 1) => { if (!id) return; const c = counts.get(id) ?? {}; c[k] = (c[k] ?? 0) + n; counts.set(id, c); };
+  const day = `(at AT TIME ZONE 'Asia/Kolkata')::date >= $2`;
+  const { rows: ev } = await db.query<{ actor_id: string; entity_id: string; at: string | Date; fields: string[] }>(
+    `SELECT actor_id, entity_id, at, array_agg(field) AS fields FROM events
+      WHERE actor_id = ANY($1) AND origin IN ('app','claude') AND ${day} GROUP BY actor_id, entity_id, at`, [ids, since]);
+  const batches = new Set<string>(); // person|minute: tasks created together count once
+  for (const e of ev) {
+    const k = kindOf(new Set(e.fields));
+    if (k === 'created') {
+      const key = `${e.actor_id}|${new Date(e.at).toISOString().slice(0, 16)}`;
+      if (batches.has(key)) continue;
+      batches.add(key);
+    }
+    add(e.actor_id, k);
+  }
+  const counted = async (sql: string, k: Kind) => {
+    const { rows } = await db.query<{ id: string; n: number }>(sql, [ids, since]);
+    for (const r of rows) add(r.id, k, r.n);
+  };
+  await counted(`SELECT actor_id AS id, count(*)::int AS n FROM plan_activity WHERE actor_id = ANY($1) AND ${day} GROUP BY actor_id`, 'plan');
+  await counted(`SELECT author_id AS id, count(*)::int AS n FROM (SELECT author_id, created_at AS at FROM comments WHERE deleted_at IS NULL
+      UNION ALL SELECT author_id, created_at FROM chat_messages) c WHERE author_id = ANY($1) AND ${day} GROUP BY author_id`, 'comments');
+  await counted(`SELECT asker_id AS id, count(*)::int AS n FROM update_asks WHERE asker_id = ANY($1) AND (asked_at AT TIME ZONE 'Asia/Kolkata')::date >= $2 GROUP BY asker_id`, 'asks');
+  await counted(`SELECT id, count(*)::int AS n FROM (SELECT person_id AS id, created_at AS at FROM feedback UNION ALL SELECT person_id, created_at FROM feedback_votes
+      UNION ALL SELECT author_id, created_at FROM feedback_replies) f WHERE id = ANY($1) AND ${day} GROUP BY id`, 'feedback');
+  return new Map(ids.map((id) => [id, sumInteractions(counts.get(id) ?? {})]));
+}
 // The live site moved to the real pilot on 11 Oct (DECISIONS). Older changes are tasks loaded from the old tracker under
 // their first owner's name, not sign-ins, so a trace other than a visit counts only from this day (India time). Visits
 // are kept only since 28 Oct, so they are always after it.
@@ -80,9 +137,11 @@ export async function teamAdoption(db: Db, teamId: string): Promise<AdoptionRow[
            last.at::text AS last, v.days, coalesce(v.o7, 0) AS o7, coalesce(v.wd, 0) AS wd, coalesce(x.x7, 0) AS x7
       FROM people p LEFT JOIN last ON last.id = p.id LEFT JOIN v ON v.id = p.id LEFT JOIN x ON x.id = p.id
      WHERE p.active AND p.id IN (SELECT person_id FROM team_members WHERE team_id = $1)`, [teamId, week, fortnight, LIVE_SINCE, lastWeek, yesterday]);
+  const did = await interactionsFor(db, rows.map((r) => r.id), week);
   return rows
     .map((r) => ({
       id: r.id, name: r.name, email: r.email, lastActive: r.last, days: r.days ?? [], opened7: r.o7, weekdays: r.wd, changes7: r.x7,
+      interactions: did.get(r.id) ?? { total: 0, parts: [] },
       status: statusOf(r.wd, r.o7, r.flag || r.last !== null),
     }))
     .sort((a, b) => RANK[a.status] - RANK[b.status] || (b.lastActive ?? '').localeCompare(a.lastActive ?? '') || a.name.localeCompare(b.name));

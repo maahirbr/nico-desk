@@ -119,7 +119,7 @@ async function gather(db: Tx, teamId: string, sight: Sight, q: string, today: st
       const taskById = new Map(tasks.map((t) => [t.id, t]));
       const projectById = new Map(projects.map((p) => [p.id, p]));
       const { rows } = await db.query<{ id: string; subject_kind: 'task' | 'project'; subject_id: string; body: string; author_name: string }>(
-        `SELECT c.id, c.subject_kind, c.subject_id, c.body, COALESCE(p.nickname, p.display_name) AS author_name FROM comments c JOIN people p ON p.id = c.author_id
+        `SELECT c.id, c.subject_kind, c.subject_id, c.body, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS author_name FROM comments c JOIN people p ON p.id = c.author_id
          WHERE c.deleted_at IS NULL AND (c.subject_kind = 'task' AND c.subject_id IN (SELECT id FROM tasks WHERE team_id = $1)
            OR c.subject_kind = 'project' AND c.subject_id IN (SELECT id FROM projects WHERE team_id = $1))
          ORDER BY c.created_at DESC LIMIT 2000`, [teamId]);

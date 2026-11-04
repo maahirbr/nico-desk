@@ -386,6 +386,9 @@ button.stat[aria-pressed="true"] .stat-n, button.stat[aria-pressed="true"] .stat
 .since { position: relative; display: inline-flex; margin-right: var(--space-xs); padding-right: var(--space-sm); border-right: var(--rule) solid var(--hairline); }
 .since .pill, .since-open { display: inline-flex; align-items: center; gap: var(--space-xxs); }
 .since-ico { flex: none; }
+/* A faint tint so the meeting-review button reads as a tool, not one more person (the PM's call, 3 Nov). On, it fills as before. */
+.since > .pill:not(.since-on) { background: color-mix(in srgb, var(--primary) 6%, var(--surface)); border-color: color-mix(in srgb, var(--primary) 22%, var(--hairline)); color: color-mix(in srgb, var(--primary) 75%, var(--ink)); }
+.since > .pill:not(.since-on):hover { background: color-mix(in srgb, var(--primary) 11%, var(--surface)); }
 @media (max-width: 600px) { .since { border-right: 0; padding-right: 0; margin-right: 0; } }
 .since-on { display: inline-flex; align-items: center; gap: var(--space-xxs); padding-right: var(--space-xxs); background: var(--ink); color: var(--canvas); border-color: var(--ink); }
 .since-on button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
@@ -874,6 +877,18 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .drawer-facts dd select, .drawer-facts dd input, .drawer-facts dd .sel-btn { width: 100%; }
 .drawer-foot { display: flex; gap: var(--space-md); flex-wrap: wrap; padding-top: var(--space-sm); border-top: var(--rule) solid var(--hairline); }
 .act.danger { color: var(--late); }
+/* Remove from NicoDesk, at the foot of Edit Person: set apart by a rule, the work they hold listed plainly. */
+.remove-zone { margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
+.remove-holds { margin: 0; padding-left: var(--space-md); }
+.remove-zone .stack { gap: var(--space-xs); }
+.remove-zone .stack p { margin: 0; }
+/* Handover from someone removed (components/HandoverCard.tsx): each item keeps or goes, on one line. */
+.handover-lede { margin: 0 0 var(--space-xs); }
+.callout-row.handover-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); cursor: default; border-top: var(--rule) solid var(--hairline); padding: var(--space-xs) 0; }
+.callout-row.handover-row:hover { color: inherit; }
+.handover-acts { display: flex; align-items: center; gap: var(--space-xs); flex: none; }
+.handover-acts .sel-btn { min-width: 140px; }
+@media (max-width: 520px) { .callout-row.handover-row { flex-wrap: wrap; } }
 .small-toggle { font: var(--type-meta); margin: 0 0 var(--space-xs); color: var(--ink-3); }
 /* A finished list's toggle with its sort picker on the same line. */
 .list-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; margin: 0 0 var(--space-xs); }
@@ -1187,6 +1202,10 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 .when-host { display: inline-flex; }
 .when-tip { position: fixed; z-index: 70; white-space: nowrap; pointer-events: none; padding: var(--space-xxs) var(--space-xs);
   background: var(--canvas); color: var(--ink-2); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-small); }
+/* A breakdown (Activity's interactions): one line each, left-aligned. */
+.when-tip.when-list { white-space: pre-line; text-align: left; line-height: 1.5; }
+.when-tap { cursor: default; }
+.act-n { font-variant-numeric: tabular-nums; text-decoration: underline dotted; text-decoration-color: var(--line-strong); text-underline-offset: 3px; cursor: default; }
 /* Who last set the status, and when: the menu's first line, not an item. */
 .menu > .st-menu-when { padding: var(--space-xxs) var(--space-sm); font: var(--type-small); color: var(--ink-3); white-space: nowrap; cursor: default; }
 .menu > .st-menu-when:hover { background: none; }
@@ -1486,10 +1505,13 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 .callout-row.moved-row:hover { color: inherit; }
 .moved-text { min-width: 0; overflow-wrap: anywhere; }
 .upd-project-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); }
-.upd-seen { font: var(--type-small); color: var(--ink-3); background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
-.upd-seen:hover { color: var(--primary); }
-.callout-row.upd-row { display: flex; align-items: flex-start; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); }
-.upd-group .upd-row:first-of-type { border-top: 0; }
+.callout-row.upd-row { display: flex; flex: 1; min-width: 0; align-items: flex-start; gap: var(--space-sm); padding: var(--space-xs) 0; }
+/* One update line: the task link, then the ✓ that marks it seen (3 Nov). */
+.upd-line { display: flex; align-items: center; gap: var(--space-xs); border-top: var(--rule) solid var(--hairline); }
+.upd-group .upd-line:first-of-type { border-top: 0; }
+.seen-tick { flex: none; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; font: var(--type-small); color: var(--ink-3);
+  background: none; border: var(--rule) solid transparent; border-radius: var(--radius-pill); cursor: pointer; transition: background var(--dur-state) var(--ease), color var(--dur-state) var(--ease); }
+.seen-tick:hover, .seen-tick:focus-visible { color: var(--primary); background: var(--sunk); border-color: var(--hairline); }
 .upd-row:hover .upd-title { color: var(--primary); }
 .upd-mark { flex: none; width: 1em; text-align: center; color: var(--primary); font-size: 10px; line-height: 20px; }
 .upd-row.is-closed .upd-mark { color: var(--ink-3); font-size: 12px; }
@@ -1824,3 +1846,15 @@ label.f > span.say-box { font: inherit; color: inherit; } /* the box sits where 
 .welcome-steps a:hover, .welcome-steps .linkbtn:hover { text-decoration: underline; }
 .welcome-tick { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: var(--rule) solid var(--line-strong); font-size: 11px; color: var(--canvas); flex: none; }
 .welcome-steps li.done .welcome-tick { background: var(--status-done-fg); border-color: var(--status-done-fg); }
+
+/* The Roster (3 Nov): one line a person where it fits, everything on the row's middle, actions side by side, the email in
+   the body font. Access shows the one role that matters most (Admin, Lead or Member). */
+table.roster td { vertical-align: middle; }
+table.roster td:not(:last-child) { white-space: nowrap; }
+/* Edit Person opens inside the last cell: it keeps the page's own alignment and wrapping. */
+table.roster .overlay { white-space: normal; text-align: left; }
+table.roster .roster-email { color: var(--ink-2); }
+.roster-acts { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-sm); white-space: nowrap; }
+@media (min-width: 861px) { table.roster th, table.roster td { padding-left: var(--space-sm); padding-right: var(--space-sm); } table.roster th:first-child, table.roster td:first-child { padding-left: var(--space-md); } table.roster td:last-child { padding-right: var(--space-md); } }
+.edit-access { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-lg); }
+.edit-access legend { width: 100%; }

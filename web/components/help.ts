@@ -45,7 +45,8 @@ export const HELP = {
   // Home
   group_today: 'Today. Open tasks that are due today.',
   group_this_week: 'This week. Open tasks due in the week, up to Sunday.',
-  group_later: 'Later. Open tasks due after this week.',
+  group_next_week: 'Next week. Open tasks due Monday to Sunday of next week.',
+  group_later: 'Later. Open tasks due after next week.',
   overdue: 'Overdue. The date has passed and the task is not done.',
   waiting_on_you: 'Waiting on you. Someone else is blocked until you do something. A block stays here until it is cleared.',
   updates_for_you: 'Updates for you. Changes to your tasks and projects since you last looked, such as a new owner or a moved date.',
@@ -106,7 +107,7 @@ export const HELP = {
   priority: 'Priority. High, normal or low. A lead sets it, to show which tasks matter most.',
   unblock: 'Unblock. Clears the block and sets the task to In progress. A short note is optional for the owner.',
   move_date: 'Move date. Changes the due date. A reason is needed, and the first date stays on record.',
-  reassign: 'Reassign. Gives the task to another person. The old owner gets a notice. Only leads and admins can do this.',
+  reassign: 'Reassign. Gives the task to another person on the project. The new owner, the project owner and its lead are told. The task\'s owner, a lead or an admin can do this.',
 
   // Ledger
   delivery_habits: 'Delivery habits. One card for each person, showing how they keep their dates over the period.',

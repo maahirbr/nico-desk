@@ -1410,6 +1410,133 @@ Rollback: git revert the commit.
 The repo owner asked to deploy them. No schema change, so no `db:upgrade`. Typecheck, 891 tests and the build pass.
 Rollback: `vercel promote nico-desk-mbqjqzast-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. This returns the code to the build before this merge.
 
+## 2026-11-03 · Opus 5.5 · A ✓ to mark one update seen
+
+At the PM's call. In "Updates for you" a single update cleared only by opening its task, which nobody could tell, and
+"Feedback updates" cleared only all at once. Each line in both cards now ends in a small ✓ ("Seen" on hover) that clears
+that one line. "Mark all seen" stays at the top of both (the Feedback card's button said "Mark seen"); a project's own
+"Mark seen" link goes, as the ✓ covers it. Opening a task still clears its line. Seen is kept on the person's account as
+before. No schema change. Checked in the browser on a demo copy.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · The status hover says "Updated 28 Oct · Sam"
+
+At the PM's call, in the words of the pilot teammate who asked for the date: the label under a task's status now reads
+"Updated 28 Oct · Sam" ("· You" for your own, the date alone for an import), in place of "Sam set this on 28 Oct". The
+same line heads the status menu on a phone. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Home splits "Next week" out of "Later"
+
+At the PM's call. Home groups open tasks as Late, Today, This week, Next week (Monday to Sunday after this one) and
+Later (after next week), so a task due next Tuesday no longer sits with one due in three months. "Next up" names next
+week when that is the nearest. Help mode explains both. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Remove someone, with a reason and a handover
+
+At the PM's call, so a person who leaves does not turn into a ghost. On the Roster an admin opens Edit, then Remove…,
+gives a reason (stored on the person, shown to admins only: "Left Nicobar · 3 Nov · by Sam") and picks who takes over
+whenever the person still holds work. In one step: their open tasks, the live projects they own or lead, and the open
+blocks waiting on them move to that person, each logged as a normal change by the admin; feedback notes they were
+working on are let go; they leave every project they were on or could view; and they can no longer sign in. The new
+holder sees a "Handover from <name>" card on Home and keeps each item or gives it to someone else (a task only to that
+project's people), or keeps all; the card stays until everything is sorted. Nothing they did is deleted: finished
+tasks, history, comments and feedback keep their name, marked "(inactive)". Their Ledger record goes, as they are no
+longer on the team. Bring back restores sign-in and clears the reason, not their projects or the work handed over.
+Plan-board lines and actions and archived projects are not handed over yet. Admins only, never yourself; route()
+refuses it under View as. Schema: `people.removed_at`, `removed_by`, `removed_reason` and a `handovers` table (RLS on,
+fenced by team), in `upgrade()`; the hosted database needs `npm run db:upgrade`. The old "Active" tick on Edit Person
+is gone. Checked in the browser on a demo copy as the admin and as the person taking over.
+Rollback: git revert the commit; the new columns and table can stay (nothing else reads them).
+
+## 2026-11-03 · Opus 5.5 · Team shows open work only
+
+At the PM's call. By status on Team now shows Blocked, Not started and In progress; the Done group and the "· N done"
+count are gone. By person already showed open work only. Finished work stays on project pages (the Done tile) and in
+the Ledger. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · The search box says "Search anything"
+
+At the PM's call: the top search box's placeholder reads "Search anything" in place of "Search tasks, projects,
+people". Shorter, and still tells a first-timer it finds more than tasks. Its label for screen readers stays "Search".
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Home's summary line names the day
+
+At the PM's call: the line under the greeting on Home ends "Tuesday, 3 Nov" in place of "3 Nov", so the day is plain at
+a glance next to This week and Next week. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Plainer words on the Feedback page
+
+At the PM's call. The line on top reads "You are one of NicoDesk's first users, and we would love your thoughts." (no
+contractions). The "or paste one into the box" hint beside + Add screenshot is gone; pasting still works. The Page list
+starts on "Select". No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · A tidier Roster, with Department, and Access for admins only
+
+At the PM's call. The Roster shows Department after Job title, and admins can change it in Edit Person (beside Job
+title). Access is for admins only: members and leads see Name, Job title, Department and Email, and a removed person
+as "(inactive)" by their name. Access shows one word (Admin, Lead or Member) in place of the full list. Each row keeps to
+one line, centred, with Edit and Copy invite side by side; emails use the body font; Lead and Admin sit on one line in
+Edit Person. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-03 · Opus 5.5 · Plainer form words, and ✱ on a required reason
+
+At the PM's call. "(optional)" goes from the block and unblock forms and from a link's name, as anything without ✱ is
+optional; so the reason a block, a drop, a move back or a reopen needs now carries ✱. Shorter hints: "Add details" (a
+task's description), "One line note" (its note) and "Search anything" (the search page). Shorter prompts: "Why is it
+blocked?", "Move the date. The first date stays on record. Moving it early counts as on time." and "Reason to drop the
+task". Labels keep their present capitals. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Owners reassign their own tasks; Added since gets a faint tint
+
+At the PM's call. Reassign… in a task's status menu was for leads and admins only, though the server already let a
+task's owner hand it on; it now shows for the owner too, on Home, Team and project pages. The usual project rule holds
+(only the project owner, its lead, a team lead or an admin brings someone new onto the project). The new owner gets a
+notice and an "assigned" update, and the project's owner and lead see "reassigned" in Updates for you, as before. The
+Added since button on a project's filter row gets a very faint accent tint, so it reads as a tool beside the person
+pills; turned on, it fills as before. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Activity counts interactions; invites go by email
+
+At the PM's call. Activity's "Changes (7 days)" becomes "Interactions (7 days)": one number for everything a person did
+in the last 7 days, each action once (a change that touches several fields at one moment is one; tasks one person
+created together in one go, such as an import of minutes or a pasted chat, count as one). Opening the app is not
+counted, as the dots show it. Hovering the number for half a second (or tapping it on a phone) shows the breakdown
+beside it, to its right, biggest first: tasks created, updates written, status changes, dates moved, reassigns, edits,
+links, plan board changes, comments and messages, asks for update, feedback. No new tracking: it is read from what is
+already kept. Invites: on Activity, "Invite to join ▾" offers By email (a filled-in email in the admin's own Gmail,
+"Join NicoDesk", greeting, two steps, signed with their name) and Copy for WhatsApp; the Roster has one Email invite
+button. The app sends nothing. The hover label also takes an "off" switch, so a status pill inside it is never rebuilt
+mid-click. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Email invite only for people who have not signed in
+
+At the PM's call. On the Roster, Email invite shows only beside someone who has never signed in (the same test as
+Activity's "Never signed in"); once they have, it goes. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · The welcome card's profile step ticks when the profile is opened
+
+At the PM's call. The step reads "Add a photo, nickname or phone number", and opening the profile ticks it (kept in the
+browser, like the Guide step), as none of the three is required. Saving any of them ticks it too, as before. No schema
+change.
+Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · The Guide says where Ask for update is
+
+At the PM's call: the Guide's line now reads "On someone else's task, open the status menu and pick Ask for update.
+Their answer shows in your Updates." (it said to open the task and tap it). No schema change.
+Rollback: git revert the commit.
+
 ## 2026-11-04 · Opus 5.5 · The mic on the update and details boxes
 
 The PM asked about writing help such as Grammarly. A browser extension needs no build, so the repo owner chose the one native step: Quick Add's own mic on the longer boxes. The speech code moved to `components/speech.tsx`, and `SayBox` puts the mic in the box's top corner, clear of the resize handle and of what an extension adds at the bottom. It is on a task's description, Your update, the Add an update form, and the Details box of both new task forms. It is not on the comment box, which has been off since 14 Oct, or on reasons, the feedback form or other boxes. What is said is added to what the box holds and stays there to edit. Speaking posts and saves nothing. Typing, or the box being emptied, ends the take. A take stops at the box's limit and says so. The browser's speech service hears the audio, as it already does for Quick Add. Checked in the browser with a fake speech service, not with a real voice. No schema change.

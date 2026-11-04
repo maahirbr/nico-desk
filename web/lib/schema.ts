@@ -57,7 +57,10 @@ CREATE TABLE people (
   photo_url     text,                          -- the Google sign-in photo; an uploaded one (person_photos) wins
   phone         text CHECK (phone ~ '^[0-9 +-]{7,20}$'),  -- optional; shown only to people on the same team
   restricted    boolean NOT NULL DEFAULT false,  -- sees only the projects they are on or may view (lib/sight.ts); leads and admins see all
-  replies_feedback boolean NOT NULL DEFAULT false -- may reply to feedback notes; an admin sets it on the Roster for the people building the app
+  replies_feedback boolean NOT NULL DEFAULT false, -- may reply to feedback notes; an admin sets it on the Roster for the people building the app
+  removed_at    timestamptz,                   -- 3 Nov: when an admin removed them (active is false); shown to admins only
+  removed_by    text REFERENCES people(id),
+  removed_reason text CHECK (char_length(removed_reason) <= 200)
 );
 
 -- An uploaded profile photo: a 256px square the browser made, stored here so no storage service is needed.
@@ -356,6 +359,23 @@ CREATE INDEX update_asks_task ON update_asks (task_id, asked_at);
 CREATE INDEX update_asks_asker ON update_asks (asker_id, asked_at);
 ALTER TABLE update_asks ENABLE ROW LEVEL SECURITY;
 
+-- 3 Nov: work handed over when someone is removed (lib/service.ts removePerson). The new holder sees each item on Home,
+-- keeps it or passes it on, and that settles it.
+CREATE TABLE handovers (
+  id          text PRIMARY KEY,
+  team_id     text NOT NULL REFERENCES teams(id),
+  kind        text NOT NULL CHECK (kind IN ('task','project','block')),
+  ref_id      text NOT NULL,                   -- the task (task, block) or the project
+  role        text CHECK (role IN ('owner','lead')),  -- for a project: which role was handed over
+  from_id     text NOT NULL REFERENCES people(id),
+  to_id       text NOT NULL REFERENCES people(id),
+  by_id       text NOT NULL REFERENCES people(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  settled_at  timestamptz
+);
+CREATE INDEX handovers_open ON handovers (to_id) WHERE settled_at IS NULL;
+ALTER TABLE handovers ENABLE ROW LEVEL SECURITY;
+
 -- Links on a task (Docs, Sheets, Figma, decks, any web page). The task keeps its own version; a link change is logged as an event.
 CREATE TABLE task_links (
   id          text PRIMARY KEY,
@@ -594,6 +614,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   plan_checkpoints: `line_id IN (SELECT id FROM plan_lines)`,
   task_links: inTask('task_id'),
   update_asks: inTask('task_id'),
+  handovers: `team_id = ${TEAM}`,
   events: kindOf('entity_type', 'entity_id'),
   comments: kindOf('subject_kind', 'subject_id'),
   comment_refs: `comment_id IN (SELECT id FROM comments)`,

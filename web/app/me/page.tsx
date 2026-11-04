@@ -1,7 +1,7 @@
 import { requireMe } from '@/lib/auth';
 import { latestEndedFirst } from '@/lib/derive';
 import { homeUpdates, lookups } from '@/lib/page';
-import { listNotices, myTasks } from '@/lib/service';
+import { handoversForMe, listNotices, myTasks } from '@/lib/service';
 import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
@@ -27,6 +27,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
     myTasks(d, me.person.id, me.team.id), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
     myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
+  const handovers = await handoversForMe(d, me.person.id, me.team.id);
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   const first = await firstSeenDay(d, me.realPerson.id);
@@ -64,6 +65,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       noticeIds={notices.map((n) => n.id)}
       movedAway={movedAway}
       feedbackReplies={replies.map((r) => ({ id: r.id, kind: r.kind, authorName: r.actorName, snippet: r.text && r.text.length > 140 ? `${r.text.slice(0, 137)}...` : r.text, note: r.note.length > 60 ? `${r.note.slice(0, 57)}...` : r.note, href: r.href }))}
+      handovers={handovers}
       asks={asks.map((a) => ({ id: a.id, taskId: a.taskId, title: a.title, askerName: (names[a.askerId] ?? 'Someone').split(' ')[0], question: a.question, askedAt: a.askedAt,
         project: projectNames[projectOf.get(a.taskId) ?? ''] ?? null }))}
       waiting={mine.blockedOnMe}

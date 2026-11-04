@@ -18,7 +18,8 @@ export async function lookups(me: Me) {
     sight,
     people,
     projects,
-    names: Object.fromEntries(people.map((p) => [p.id, p.displayName])) as Record<string, string>,
+    // A removed person keeps their name on past work, marked "(inactive)" (3 Nov).
+    names: Object.fromEntries(people.map((p) => [p.id, p.active ? p.displayName : `${p.displayName} (inactive)`])) as Record<string, string>,
     projectNames: Object.fromEntries(projects.map((p) => [p.id, p.name])) as Record<string, string>,
     activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies

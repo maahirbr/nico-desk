@@ -39,7 +39,6 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   const ahead = later.filter(inProject).sort((a, b) => a.dueOn.localeCompare(b.dueOn));
   const open = list.filter((t) => t.statusCategory === 'open');
   const overdue = open.filter((t) => t.dueOn < today).length;
-  const done = list.filter((t) => t.statusCategory === 'done').length;
   const href = (o: Record<string, string>) => {
     // The project and the search follow the week and the tab, so a link keeps the view as it is.
     const p = new URLSearchParams({ week: weekStart, view, ...o });
@@ -49,7 +48,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   };
   const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ');
   const row = (t: Task, owner?: string) => (
-    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)} canBlock={!t.readOnly && (t.ownerId === meId || isLead)} canReassign={!t.readOnly && isLead}
+    <TaskRow key={t.id} t={t} today={today} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)} canBlock={!t.readOnly && (t.ownerId === meId || isLead)} canReassign={!t.readOnly && (isLead || t.ownerId === meId)}
       canAsk={!t.readOnly && !!t.ownerId && t.ownerId !== meId}
       onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} />
   );
@@ -58,7 +57,8 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   const hasWork = (p: Person) => list.some((t) => t.ownerId === p.id && t.statusCategory === 'open') || ahead.some((t) => t.ownerId === p.id);
   const shownPeople = people.filter((p) => found(p) && hasWork(p));
   const SOON = 3; // coming-up tasks shown per person before the show-more button
-  const ORDER: StatusKey[] = ['blocked', 'todo', 'doing', 'done'];
+  // Open work only (the PM's call, 3 Nov): Done is not shown on Team. Finished work lives on project pages and the Ledger.
+  const ORDER: StatusKey[] = ['blocked', 'todo', 'doing'];
 
   return (
     <div className="calm">
@@ -66,7 +66,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         <div>
           <h1>Team</h1>
           <p className="summary">
-            {open.length} open this week{overdue > 0 && <span className="late-text"> · {overdue} late</span>}{view === 'status' && <> · {done} done</>}
+            {open.length} open this week{overdue > 0 && <span className="late-text"> · {overdue} late</span>}
           </p>
         </div>
       </header>
@@ -93,7 +93,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
       {view === 'person' && shownPeople.length === 0 && (needle ? people.filter(found).length > 0 : true) && (
         <div className="empty-state"><EmptyMark d={ICON[needle ? '/search' : '/status']} /><p>{needle ? 'No tasks for that search.' : 'Nothing open or coming up.'}</p>{needle ? <button className="btn ghost" onClick={() => setQ('')}>Clear search</button> : <Link className="btn" href="/tasks/new">Add a task</Link>}</div>
       )}
-      {!needle && view === 'status' && list.length === 0 && <div className="empty-state"><EmptyMark d={ICON['/week']} /><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
+      {!needle && view === 'status' && open.length === 0 && <div className="empty-state"><EmptyMark d={ICON['/week']} /><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
 
       {view === 'person' ? shownPeople.map((p) => {
         const o = list.filter((t) => t.ownerId === p.id && t.statusCategory === 'open');

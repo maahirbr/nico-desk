@@ -108,6 +108,8 @@ export async function upgrade(db: Db) {
   await db.exec(PARTNER_OWNER_UPGRADE);
   // 3 Nov: "Ask for an update" on a task.
   await db.exec(UPDATE_ASKS_UPGRADE);
+  // 3 Nov: removing someone with a reason, and the work handed over.
+  await db.exec(HANDOVER_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
@@ -209,6 +211,26 @@ DO $$ BEGIN
     ALTER TABLE tasks ADD CONSTRAINT tasks_has_owner CHECK (owner_id IS NOT NULL OR partner_owner IS NOT NULL);
   END IF;
 END $$;`;
+
+// Idempotent: why and when someone was removed, and the handovers table (RLS on). The same SQL as lib/schema.ts.
+export const HANDOVER_UPGRADE = `
+ALTER TABLE people ADD COLUMN IF NOT EXISTS removed_at timestamptz;
+ALTER TABLE people ADD COLUMN IF NOT EXISTS removed_by text REFERENCES people(id);
+ALTER TABLE people ADD COLUMN IF NOT EXISTS removed_reason text CHECK (char_length(removed_reason) <= 200);
+CREATE TABLE IF NOT EXISTS handovers (
+  id          text PRIMARY KEY,
+  team_id     text NOT NULL REFERENCES teams(id),
+  kind        text NOT NULL CHECK (kind IN ('task','project','block')),
+  ref_id      text NOT NULL,                   -- the task (task, block) or the project
+  role        text CHECK (role IN ('owner','lead')),  -- for a project: which role was handed over
+  from_id     text NOT NULL REFERENCES people(id),
+  to_id       text NOT NULL REFERENCES people(id),
+  by_id       text NOT NULL REFERENCES people(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  settled_at  timestamptz
+);
+CREATE INDEX IF NOT EXISTS handovers_open ON handovers (to_id) WHERE settled_at IS NULL;
+ALTER TABLE handovers ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: asks for an update on a task (RLS on). The same SQL as lib/schema.ts.
 export const UPDATE_ASKS_UPGRADE = `

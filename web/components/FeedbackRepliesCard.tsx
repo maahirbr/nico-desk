@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useReadOnly } from './readonly';
+import { SeenTick } from './UpdatesCard';
 
 // "Feedback updates" on Home: replies, Done, Not now and Reopen on notes this person wrote or gave +1, never their own
-// doing. Opening Feedback, or Mark seen, clears them. In-app only, nothing is sent anywhere. Under View as it shows but
+// doing. Opening Feedback, Mark seen, or the ✓ at the end of a line (one at a time, 3 Nov) clears them. In-app only, nothing is sent anywhere. Under View as it shows but
 // cannot be changed.
 // href: the note on the Feedback page, at the reply itself for a reply (lib/feedback.ts), so a click reads it in full.
 export type HomeReply = { id: string; kind: 'reply' | 'done' | 'not_now' | 'reopened'; authorName: string; snippet: string | null; note: string; href: string };
@@ -13,8 +14,15 @@ export type HomeReply = { id: string; kind: 'reply' | 'done' | 'not_now' | 'reop
 export function FeedbackRepliesCard({ items }: { items: HomeReply[] }) {
   const readOnly = useReadOnly();
   const [gone, setGone] = useState(false);
-  if (gone || items.length === 0) return null;
-  const seen = () => fetch('/api/v1/me/feedback-replies/seen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const shown = items.filter((i) => !hidden.has(i.id));
+  if (gone || shown.length === 0) return null;
+  const seen = (ids?: string[]) => fetch('/api/v1/me/feedback-replies/seen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(ids ? { ids } : {}) });
+  const one = async (id: string) => {
+    setHidden((h) => new Set([...h, id]));
+    const r = await seen([id]).catch(() => null);
+    if (!r?.ok) setHidden((h) => { const n = new Set(h); n.delete(id); return n; });
+  };
   const what = (i: HomeReply) => {
     const note = <Link className="rlink" href={i.href}>&ldquo;{i.note}&rdquo;</Link>;
     if (i.kind === 'reply') return <>replied to {note}: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
@@ -25,12 +33,13 @@ export function FeedbackRepliesCard({ items }: { items: HomeReply[] }) {
   return (
     <section className="callout" aria-label="Feedback updates">
       <div className="callout-head">
-        <h2>Feedback updates <span className="count-badge">{items.length}</span></h2>
-        {!readOnly && <button className="mini-btn" onClick={async () => { setGone(true); const r = await seen().catch(() => null); if (!r?.ok) setGone(false); }}>Mark seen</button>}
+        <h2>Feedback updates <span className="count-badge">{shown.length}</span></h2>
+        {!readOnly && <button className="mini-btn" onClick={async () => { setGone(true); const r = await seen().catch(() => null); if (!r?.ok) setGone(false); }}>Mark all seen</button>}
       </div>
-      {items.map((i) => (
+      {shown.map((i) => (
         <div key={i.id} className="callout-row moved-row">
           <span className="moved-text"><b>{i.authorName}</b> {what(i)}</span>
+          {!readOnly && <SeenTick label="Mark this update seen" onClick={() => void one(i.id)} />}
         </div>
       ))}
     </section>

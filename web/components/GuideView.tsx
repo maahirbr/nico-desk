@@ -78,7 +78,7 @@ export function GuideView() {
           <li><b>Updates for you.</b> Changes others made to your tasks.</li>
           <li><b>Waiting on you.</b> Tasks stuck until you act.</li>
           <li><b>Update asked.</b> Someone wants to know how your task is going. Add an update or change its status, and they&rsquo;ll see it.</li>
-          <li><b>Ask for update.</b> Open someone else&rsquo;s task and tap it. Their answer shows in your Updates.</li>
+          <li><b>Ask for update.</b> On someone else&rsquo;s task, open the status menu and pick Ask for update. Their answer shows in your Updates.</li>
           <li>Finish today&rsquo;s tasks and you get a little cheer.</li>
         </ul>
       </section>

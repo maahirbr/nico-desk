@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { inviteText } from '@/lib/invite';
+import { AnimatePresence } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
+import { inviteEmail, inviteText } from '@/lib/invite';
+import { Popover } from './popover';
 import { useReadOnly } from './readonly';
 import { notify } from './toast';
 
@@ -48,4 +50,47 @@ export function CopyInvite({ email, className = 'act' }: { email: string; classN
       catch { notify('Could not copy the invite.'); }
     }}>{copied ? <Copied /> : 'Copy invite'}</button>
   );
+}
+
+// "Invite to join ▾" (4 Nov): By email opens a filled-in email in the admin's own Gmail, from their address; Copy
+// Copy for WhatsApp copies the short text to paste in a chat. The app sends nothing. Hidden under "View as".
+export function InviteMenu({ email, name, from, className = 'act' }: { email: string; name: string; from: string; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const [copied, mark] = useCopied();
+  const btn = useRef<HTMLButtonElement>(null);
+  if (useReadOnly()) return null;
+  const mail = () => { setOpen(false); openInviteEmail(email, name, from); };
+  const copy = async () => {
+    setOpen(false);
+    try { await navigator.clipboard.writeText(inviteText(window.location.origin, email)); mark(); notify('Invite copied. Paste it in a message to them.'); }
+    catch { notify('Could not copy the invite.'); }
+  };
+  return (
+    <span className="menu-wrap invite-wrap">
+      <button ref={btn} className={className} type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {copied ? <Copied /> : <>Invite to join <span aria-hidden>▾</span></>}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <Popover anchor={btn} onClose={() => setOpen(false)} align="end" role="menu" label="Invite" className="menu">
+            <button type="button" role="menuitem" onClick={mail}>By email</button>
+            <button type="button" role="menuitem" onClick={copy}>Copy for WhatsApp</button>
+          </Popover>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}
+
+// Opens the invite as a new email in the admin's own Gmail, filled in. Nothing is sent until they press Send there.
+function openInviteEmail(email: string, name: string, from: string) {
+  const m = inviteEmail(window.location.origin, email, name, from);
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`, '_blank', 'noopener,noreferrer');
+  notify('Opened in Gmail. Check it and press Send there.');
+}
+
+// The Roster's one button (4 Nov): Email invite, straight to the filled-in email. Hidden under "View as".
+export function EmailInvite({ email, name, from, className = 'act' }: { email: string; name: string; from: string; className?: string }) {
+  if (useReadOnly()) return null;
+  return <button className={className} type="button" onClick={() => openInviteEmail(email, name, from)}>Email invite</button>;
 }

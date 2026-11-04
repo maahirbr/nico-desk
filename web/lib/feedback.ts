@@ -50,7 +50,7 @@ type Row = { id: string; person_id: string; person_name: string; path: string | 
 // Everyone on the team reads every note, whatever their role (the PM's call, 14 Oct).
 export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
   const { rows } = await db.query<Row>(
-    `SELECT f.id, f.person_id, COALESCE(p.nickname, p.display_name) AS person_name, f.path, f.body, f.created_at,
+    `SELECT f.id, f.person_id, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS person_name, f.path, f.body, f.created_at,
             f.status, COALESCE(c.nickname, c.display_name) AS closed_by_name, f.closed_at, f.closed_note,
             f.kind, f.working_by, COALESCE(w.nickname, w.display_name) AS working_by_name,
             (SELECT count(*)::int FROM feedback_images i WHERE i.feedback_id = f.id) AS images,
@@ -62,13 +62,13 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
     [me.team.id, me.person.id],
   );
   const replies = await db.query<{ id: string; feedback_id: string; author_name: string; body: string; created_at: string }>(
-    `SELECT r.id, r.feedback_id, COALESCE(p.nickname, p.display_name) AS author_name, r.body, r.created_at
+    `SELECT r.id, r.feedback_id, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS author_name, r.body, r.created_at
        FROM feedback_replies r JOIN people p ON p.id = r.author_id JOIN feedback f ON f.id = r.feedback_id
       WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1)
       ORDER BY r.created_at, r.id`, [me.team.id]);
   // Who gave +1, in the order they did, leaving out the reader (the page says "You" for them).
   const votes = await db.query<{ feedback_id: string; name: string }>(
-    `SELECT v.feedback_id, COALESCE(p.nickname, p.display_name) AS name
+    `SELECT v.feedback_id, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS name
        FROM feedback_votes v JOIN people p ON p.id = v.person_id JOIN feedback f ON f.id = v.feedback_id
       WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1) AND v.person_id <> $2
       ORDER BY v.created_at, v.person_id`, [me.team.id, me.person.id]);
@@ -126,7 +126,7 @@ export async function voteFeedback(db: Db, me: Me, id: string, on: boolean): Pro
   if (on) await db.query(`INSERT INTO feedback_votes (feedback_id, person_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [id, me.person.id]);
   else await db.query(`DELETE FROM feedback_votes WHERE feedback_id = $1 AND person_id = $2`, [id, me.person.id]);
   const { rows } = await db.query<{ name: string }>(
-    `SELECT COALESCE(p.nickname, p.display_name) AS name FROM feedback_votes v JOIN people p ON p.id = v.person_id
+    `SELECT (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS name FROM feedback_votes v JOIN people p ON p.id = v.person_id
       WHERE v.feedback_id = $1 AND v.person_id <> $2 ORDER BY v.created_at, v.person_id`, [id, me.person.id]);
   return { votes: rows.length + (on ? 1 : 0), mine: on, others: rows.map((r) => r.name) };
 }
@@ -208,7 +208,7 @@ export type FeedbackNews = { id: string; kind: NewsKind; actorName: string; note
 export async function feedbackNewsForMe(db: Db, me: Me): Promise<FeedbackNews[]> {
   const { rows } = await db.query<{ id: string; kind: NewsKind; actor_name: string; note: string; text: string | null; created_at: string;
     feedback_id: string; reply_id: string | null; f_kind: string; f_status: string }>(
-    `SELECT n.id, n.kind, COALESCE(p.nickname, p.display_name) AS actor_name, f.body AS note, n.created_at, n.feedback_id, n.reply_id,
+    `SELECT n.id, n.kind, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS actor_name, f.body AS note, n.created_at, n.feedback_id, n.reply_id,
             f.kind AS f_kind, f.status AS f_status,
             CASE n.kind WHEN 'reply' THEN r.body WHEN 'not_now' THEN n.reason END AS text
        FROM feedback_news n JOIN feedback f ON f.id = n.feedback_id JOIN people p ON p.id = n.actor_id
