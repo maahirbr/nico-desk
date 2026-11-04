@@ -258,11 +258,16 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         {p && <PromptRow p={p} people={people.filter((x) => x.id !== t.ownerId)} today={today} busy={busy} onCancel={() => setPrompt(null)}
           onGo={(v) => run(async () => {
             if (p.kind === 'status') return quickMove(t, 'todo', v.text);
-            if (p.kind === 'blocked') return call(`/tasks/${t.id}/block`, 'POST', { version: t.version, onId: v.person || null, ask: v.text });
+            if (p.kind === 'blocked') {
+              // A new due date in the same step (a pilot teammate's ask, 3 Nov): block, then move the date with the block reason.
+              const b = await call(`/tasks/${t.id}/block`, 'POST', { version: t.version, onId: v.person || null, ask: v.text });
+              if (v.date && v.date !== t.dueOn) return call(`/tasks/${t.id}/renegotiate`, 'POST', { version: b.version, newDueOn: v.date, reason: v.text });
+              return b;
+            }
             if (p.kind === 'remove') return call(`/tasks/${t.id}/close`, 'POST', { version: t.version, as: 'dropped', reason: v.text });
             return call(`/tasks/${t.id}/reopen`, 'POST', { version: t.version, reason: v.text });
-          }, { status: 'Status set to Not started', blocked: 'Marked blocked', remove: 'Task dropped', reopen: 'Task reopened' }[p.kind],
-            { before: t, fields: { status: statusFields(t, 'todo'), blocked: ['blocked'], remove: statusFields(t, 'dropped'), reopen: ['category'] }[p.kind] as UndoField[] })} />}
+          }, { status: 'Status set to Not started', blocked: moved(t, v.date) ? `Marked blocked, due ${fmtDate(v.date)}` : 'Marked blocked', remove: 'Task dropped', reopen: 'Task reopened' }[p.kind],
+            { before: t, fields: { status: statusFields(t, 'todo'), blocked: moved(t, v.date) ? ['blocked', 'due'] : ['blocked'], remove: statusFields(t, 'dropped'), reopen: ['category'] }[p.kind] as UndoField[] })} />}
       </Fragment>
     );
   };
@@ -402,11 +407,14 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   );
 }
 
+const moved = (t: Task, date: string) => !!date && date !== t.dueOn;
+
 function PromptRow({ p, people, today, busy, onCancel, onGo }: {
   p: NonNullable<Prompt>; people: P[]; today: string; busy: boolean; onCancel: () => void; onGo: (v: { text: string; date: string; person: string }) => void;
 }) {
   const [text, setText] = useState('');
-  const [date, setDate] = useState('');
+  // Blocking: the due date starts as it is (empty when it has passed, as a new date cannot be in the past).
+  const [date, setDate] = useState(p.kind === 'blocked' && p.t.dueOn >= today ? p.t.dueOn : '');
   const [person, setPerson] = useState('');
   const label = {
     status: 'Back to “Not started”. Why did work stop?',
@@ -431,6 +439,11 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
                   <option value="">No one, or someone outside</option>
                   {people.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                 </Select>
+              </label>
+            )}
+            {p.kind === 'blocked' && (
+              <label className="f" style={{ flex: '0 1 180px' }}><span>New due date</span>
+                <DateField noQuick min={today} value={date} onChange={(e) => setDate(e.target.value)} />
               </label>
             )}
             <span className="row" style={{ flex: 'none' }}>
@@ -472,7 +485,7 @@ function EditRow({ t, people, partnerPeople, partnerName, workstreams, today, bu
           </label>
           {partnerName && f.ownerId && canReassign && <button type="button" className="mini-btn" onClick={() => setF({ ...f, ownerId: '', ownerRole: undefined })}>No Nicobar owner</button>}
           {workstreams.length > 0 && (
-            <label className="f"><span>Sub-project</span>
+            <label className="f"><span>Sub-Project</span>
               <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
               </Select>

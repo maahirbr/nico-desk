@@ -283,7 +283,7 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
   }, [open, canAsk, t.id]);
   return (
     <span className="menu-wrap st-menu-wrap">
-      <WhenTip text={open ? null : when}><Help term={`status_${current}`} host><button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
+      <WhenTip text={when} off={open}><Help term={`status_${current}`} host><button ref={btn} type="button" className={`st-pick tone-${STATUS[current].tone}${set ? ' state-set' : ''}`} aria-haspopup="menu" aria-expanded={open}
         aria-label={`Status of “${t.title}”: ${STATUS[current].word}`} disabled={disabled}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}>
@@ -455,6 +455,12 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     run(() => quickMove(t, s), t.blocked && s === 'doing' ? 'Unblocked, in progress' : `Status set to ${STATUS[s].word}`, statusFields(t, s));
   }
 
+  // Blocking can move the due date in the same step (3 Nov). It starts as it is, or empty once it has passed.
+  useEffect(() => {
+    if (mode === 'blocked' && t) setForm((f) => ({ ...f, date: t.dueOn >= today ? t.dueOn : '' }));
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  const blockMoves = !!t && mode === 'blocked' && !!form.date && form.date !== t.dueOn;
+
   // Opened from a row's status picker: go straight to the question for that status.
   const [started, setStarted] = useState(false);
   useEffect(() => {
@@ -600,16 +606,23 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                     </Select>
                   </label>
                 )}
+                {mode === 'blocked' && (
+                  <label className="f"><span>New due date</span><DateField noQuick min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>
+                )}
                 <div className="row">
                   <button className="btn" disabled={busy || !okText || (mode === 'date' && !form.date)}
                     onClick={() => run(async (v) => {
                       if (mode === 'status') return moveWithWords(t, 'todo', form.text);
-                      if (mode === 'blocked') return moveWithWords(t, 'blocked', form.text, form.person || null);
+                      if (mode === 'blocked') {
+                        const b = await moveWithWords(t, 'blocked', form.text, form.person || null) as Task;
+                        if (blockMoves) return api(`/tasks/${t.id}/renegotiate`, 'POST', { version: b.version, newDueOn: form.date, reason: form.text });
+                        return b;
+                      }
                       if (mode === 'date') return api(`/tasks/${t.id}/renegotiate`, 'POST', { version: v, newDueOn: form.date, reason: form.text });
                       if (mode === 'drop') return moveWithWords(t, 'dropped', form.text);
                       return api(`/tasks/${t.id}/reopen`, 'POST', { version: v, reason: form.text });
-                    }, { status: 'Status set to Not started', blocked: 'Marked blocked', date: `Date moved to ${fmtDate(form.date)}`, drop: 'Task dropped', reopen: 'Task reopened' }[mode],
-                      { status: statusFields(t, 'todo'), blocked: ['blocked'], date: ['due'], drop: statusFields(t, 'dropped'), reopen: ['category'] }[mode] as UndoField[])}>Save</button>
+                    }, { status: 'Status set to Not started', blocked: blockMoves ? `Marked blocked, due ${fmtDate(form.date)}` : 'Marked blocked', date: `Date moved to ${fmtDate(form.date)}`, drop: 'Task dropped', reopen: 'Task reopened' }[mode],
+                      { status: statusFields(t, 'todo'), blocked: blockMoves ? ['blocked', 'due'] : ['blocked'], date: ['due'], drop: statusFields(t, 'dropped'), reopen: ['category'] }[mode] as UndoField[])}>Save</button>
                   <button className="btn ghost" onClick={() => setMode(null)}>Cancel</button>
                 </div>
               </div>

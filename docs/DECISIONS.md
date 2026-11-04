@@ -1536,3 +1536,12 @@ Rollback: git revert the commit.
 At the PM's call: the Guide's line now reads "On someone else's task, open the status menu and pick Ask for update.
 Their answer shows in your Updates." (it said to open the task and tap it). No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-04 · Opus 5.5 · Blocking a task can move its date in the same step
+
+From a pilot teammate's feedback, which she confirmed. The block form (on a project's table and in the task panel) has
+a New due date after Waiting on. It starts on the task's date (empty once that date has passed, as a new date cannot be
+in the past); left as it is, only the block is saved. Changed, one save blocks the task and moves the date, with the
+block reason as the reason for the move, so a move made before the date passes still counts as moved in time. The
+message says "Marked blocked, due 22 Oct", and Undo takes back both. No schema change.
+Rollback: git revert the commit.
