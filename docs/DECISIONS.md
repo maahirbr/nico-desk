@@ -1541,3 +1541,12 @@ Rollback: git revert the commit.
 
 The PM asked about writing help such as Grammarly. A browser extension needs no build, so the repo owner chose the one native step: Quick Add's own mic on the longer boxes. The speech code moved to `components/speech.tsx`, and `SayBox` puts the mic in the box's top corner, clear of the resize handle and of what an extension adds at the bottom. It is on a task's description, Your update, the Add an update form, and the Details box of both new task forms. It is not on the comment box, which has been off since 14 Oct, or on reasons, the feedback form or other boxes. What is said is added to what the box holds and stays there to edit. Speaking posts and saves nothing. Typing, or the box being emptied, ends the take. A take stops at the box's limit and says so. The browser's speech service hears the audio, as it already does for Quick Add. Checked in the browser with a fake speech service, not with a real voice. No schema change.
 Rollback: git revert the commit. Quick Add keeps its mic in that case, since the revert restores its own code.
+
+## 2026-11-04 · Opus 5.5 · Blocking a task can move its date in the same step
+
+From a pilot teammate's feedback, which she confirmed. The block form (on a project's table and in the task panel) has
+a New due date after Waiting on. It starts on the task's date (empty once that date has passed, as a new date cannot be
+in the past); left as it is, only the block is saved. Changed, one save blocks the task and moves the date, with the
+block reason as the reason for the move, so a move made before the date passes still counts as moved in time. The
+message says "Marked blocked, due 22 Oct", and Undo takes back both. No schema change.
+Rollback: git revert the commit.
