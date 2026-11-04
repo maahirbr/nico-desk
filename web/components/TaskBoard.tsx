@@ -39,6 +39,7 @@ import { FreshDot } from './viewer';
 import { playFor } from './sound';
 import { isRealEnter } from './ime';
 import { Count } from './LimitNotice';
+import { SayBox } from './speech';
 import { Fold, FoldChev } from './Fold';
 
 // A project's tasks as one board: number cards that filter, people and sub-project filters, and a
@@ -541,7 +542,7 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
       <div className="form-split"><span>Fill It In Yourself</span></div>
       <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-      <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={f.description} placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
+      <label className="f"><span>Details</span><SayBox value={f.description} max={600} names={people.map((p) => p.name)} onChange={(v) => setF((x) => ({ ...x, description: v }))}><textarea rows={2} maxLength={600} value={f.description} aria-label="Details" placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /></SayBox><Count value={f.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>{partnerName ? 'Nicobar Owner' : <>Owner <span className="req" aria-hidden="true">*</span></>}</span>
           <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />

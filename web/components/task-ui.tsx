@@ -36,6 +36,7 @@ import { PasteChat } from './PasteChat';
 import { TaskDrafts } from './TaskDrafts';
 import type { SentenceRead } from '@/lib/sentence';
 import { Count } from './LimitNotice';
+import { SayBox } from './speech';
 import { isRealEnter } from './ime';
 import { WhenTip } from './WhenTip';
 import { Fold, FoldChev } from './Fold';
@@ -518,8 +519,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               ? <textarea className="drawer-title" rows={2} value={edit.title} maxLength={200} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Task" />
               : <h2 className="drawer-title static">{t.title}</h2>}
             {canEdit && open
-              ? <><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="What this task is about. A line or two."
-                  onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" /><Count value={edit.description} max={600} /></>
+              ? <><SayBox value={edit.description} max={600} names={people.map((p) => p.name)} onChange={(v) => setEdit((x) => ({ ...x, description: v }))}><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="What this task is about. A line or two."
+                  onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" /></SayBox><Count value={edit.description} max={600} /></>
               : t.description && <p className="drawer-desc static">{t.description}</p>}
 
             {open ? (
@@ -544,7 +545,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                   <div key={a.id} className="small"><b>{(names[a.askerId] ?? 'Someone').split(' ')[0]}</b> asked for an update{a.question ? <>: &ldquo;{a.question}&rdquo;</> : ''} <span className="dim">· {ago(a.askedAt, new Date())}</span></div>
                 ))}
                 <label className="f"><span>Your update</span>
-                  <textarea rows={2} maxLength={280} value={reply} placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} />
+                  <SayBox value={reply} max={280} names={people.map((p) => p.name)} onChange={setReply}><textarea rows={2} maxLength={280} value={reply} aria-label="Your update" placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} /></SayBox>
                   <Count value={reply} max={280} />
                 </label>
                 <div className="row" style={{ alignItems: 'center' }}>
@@ -729,7 +730,7 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
   return (
     <>
       <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} name="title" required minLength={3} maxLength={200} value={d.title} onChange={(e) => set({ ...d, title: e.target.value })} onBlur={onTitleBlur} /></label>
-      <label className="f"><span>Details</span><textarea rows={2} maxLength={600} value={d.description} placeholder="Anything the owner should know" onChange={(e) => set({ ...d, description: e.target.value })} /><Count value={d.description} max={600} /></label>
+      <label className="f"><span>Details</span><SayBox value={d.description} max={600} names={people.map((p) => p.name)} onChange={(v) => set({ ...d, description: v })}><textarea rows={2} maxLength={600} value={d.description} aria-label="Details" placeholder="Anything the owner should know" onChange={(e) => set({ ...d, description: e.target.value })} /></SayBox><Count value={d.description} max={600} /></label>
       <div className="row">
         <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
           <OwnerPicker key={d.projectId} projectId={d.projectId || null} value={d.ownerId} people={people} onChange={(ownerId, ownerRole) => set({ ...d, ownerId, ownerRole })} />

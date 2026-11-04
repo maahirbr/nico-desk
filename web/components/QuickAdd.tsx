@@ -1,30 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { parseChat } from '@/lib/chat';
-import { pickHeard, type Named, type QuickParse } from '@/lib/quickadd';
+import type { Named, QuickParse } from '@/lib/quickadd';
 import type { SentenceRead } from '@/lib/sentence';
 import { focusOnDesktop } from './motion';
 import { isRealEnter } from './ime';
+import { SpeechButton, useSpeech } from './speech';
 
 // Quick add, the way a person talks: "Ask Sam to send me the design files by Monday for the landing page". The server reads the
 // sentence (lib/sentenceRead.ts: the model when it is on, masked, else plain rules) and this fills the form's own fields,
 // which stay editable. Nothing is made until the person presses Add task.
 // A pasted chat (several lines with names and times) goes to the chat review instead (onChat), when the form has one.
-// The mic types what is said into the box, through the browser's own speech service, and reads it when the person stops.
+// The mic (components/speech.tsx) types what is said into the box, and this reads it when the person stops.
 // Keyboard rule: Enter ("go") reads the line and the global handler closes the keyboard.
-
-type Speech = { lang: string; interimResults: boolean; continuous: boolean; maxAlternatives: number; start(): void; stop(): void;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
-  onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null };
-const speechApi = (): (new () => Speech) | null => {
-  if (typeof window === 'undefined') return null;
-  const w = window as unknown as { SpeechRecognition?: new () => Speech; webkitSpeechRecognition?: new () => Speech };
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
-};
-
-// How long a silence ends a spoken take. Long enough to stop and think mid-sentence.
-const QUIET_MS = 2500;
 
 // A chat looks like several lines with a sender each, as WhatsApp copies them.
 export function looksLikeChat(text: string): boolean {
@@ -39,12 +28,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
-  const [listening, setListening] = useState(false);
-  const [canSpeak, setCanSpeak] = useState(false);
-  const rec = useRef<Speech | null>(null);
-  const said = useRef('');
-  const quiet = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => { setCanSpeak(!!speechApi()); return () => { clearTimeout(quiet.current); rec.current?.stop(); }; }, []);
+  const { canSpeak, listening, toggle } = useSpeech({ names: [...people, ...(projects ?? [])].map((p) => p.name), heard: setText, problem: setDone, stopped: (all) => void fill(all) });
 
   async function fill(line = text.trim()) {
     if (!line || busy) return;
@@ -73,39 +57,6 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
     } finally { setBusy(false); }
   }
 
-  function speak() {
-    if (listening) { rec.current?.stop(); return; }
-    const Api = speechApi();
-    if (!Api) return;
-    const r = new Api();
-    // Continuous, so a pause to think does not end the take: the browser alone stops at the first short gap.
-    // We stop once nothing new is heard for QUIET_MS, or when the mic is tapped.
-    // Three guesses per stretch of speech: the one that has a teammate's or project's name in it wins (lib/quickadd.ts pickHeard).
-    r.lang = 'en-IN'; r.interimResults = true; r.continuous = true; r.maxAlternatives = 3;
-    said.current = '';
-    const names = [...people, ...(projects ?? [])].map((p) => p.name);
-    r.onresult = (e) => {
-      const all = Array.from(e.results).map((x) => pickHeard(Array.from(x).map((a) => a.transcript), names)).join(' ').replace(/\s+/g, ' ').trim();
-      said.current = all; setText(all);
-      clearTimeout(quiet.current); quiet.current = setTimeout(() => r.stop(), QUIET_MS);
-    };
-    // Each failure says what to do, since "blocked" covers several different causes.
-    r.onerror = (e) => {
-      const say: Record<string, string> = {
-        'not-allowed': 'The microphone is blocked. Allow it from the icon left of the address bar, then reload. On a Mac, also turn on your browser under System Settings, Privacy & Security, Microphone.',
-        'service-not-allowed': 'This browser cannot turn speech into text (Brave and Arc often cannot). Try Chrome or Safari, or type instead.',
-        network: 'Speech to text needs the internet, because the browser sends it to its speech service. Check your connection and try again.',
-        'audio-capture': 'No microphone was found. Check one is connected and chosen in your sound settings.',
-        'no-speech': 'Nothing was heard. Tap the mic and try again, a little closer.',
-        'language-not-supported': 'This browser cannot take English (India) speech. Try Chrome, or type instead.',
-      };
-      if (e.error !== 'aborted') setDone(say[e.error] ?? `The microphone stopped (${e.error}). Try again, or type instead.`);
-    };
-    r.onend = () => { clearTimeout(quiet.current); setListening(false); rec.current = null; if (said.current) void fill(said.current); };
-    rec.current = r; setDone(null); setListening(true);
-    try { r.start(); } catch { setListening(false); rec.current = null; setDone('The microphone could not start. Reload the page and try again, or type instead.'); }
-  }
-
   return (
     <>
       <div className="f">
@@ -122,14 +73,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
             }}
             onKeyDown={(e) => { if (isRealEnter(e)) { e.preventDefault(); void fill(); } }}
             onBlur={() => { if (!hasTitle && text.trim() && !listening) void fill(); }} />
-          {canSpeak && (
-            <button type="button" className={`btn ghost say-mic${listening ? ' on' : ''}`} aria-pressed={listening}
-              aria-label={listening ? 'Stop and fill in' : 'Say it'} title={listening ? 'Stop' : 'Say it'} onClick={speak}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" />
-              </svg>
-            </button>
-          )}
+          {canSpeak && <SpeechButton listening={listening} stopLabel="Stop and fill in" onClick={() => { setDone(null); toggle(); }} />}
           <button type="button" className="btn ghost" disabled={busy || !text.trim()} onClick={() => void fill()}>{busy ? 'Reading…' : 'Fill in'}</button>
         </div>
       </div>

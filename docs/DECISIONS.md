@@ -1409,3 +1409,8 @@ Rollback: git revert the commit.
 
 The repo owner asked to deploy them. No schema change, so no `db:upgrade`. Typecheck, 891 tests and the build pass.
 Rollback: `vercel promote nico-desk-mbqjqzast-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. This returns the code to the build before this merge.
+
+## 2026-11-04 · Opus 5.5 · The mic on the update and details boxes
+
+The PM asked about writing help such as Grammarly. A browser extension needs no build, so the repo owner chose the one native step: Quick Add's own mic on the longer boxes. The speech code moved to `components/speech.tsx`, and `SayBox` puts the mic in the box's top corner, clear of the resize handle and of what an extension adds at the bottom. It is on a task's description, Your update, the Add an update form, and the Details box of both new task forms. It is not on the comment box, which has been off since 14 Oct, or on reasons, the feedback form or other boxes. What is said is added to what the box holds and stays there to edit. Speaking posts and saves nothing. Typing, or the box being emptied, ends the take. A take stops at the box's limit and says so. The browser's speech service hears the audio, as it already does for Quick Add. Checked in the browser with a fake speech service, not with a real voice. No schema change.
+Rollback: git revert the commit. Quick Add keeps its mic in that case, since the revert restores its own code.
