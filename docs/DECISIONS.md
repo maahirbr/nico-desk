@@ -1550,3 +1550,36 @@ in the past); left as it is, only the block is saved. Changed, one save blocks t
 block reason as the reason for the move, so a move made before the date passes still counts as moved in time. The
 message says "Marked blocked, due 22 Oct", and Undo takes back both. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · The Roster fits its card, with Edit always in view
+
+At the PM's call, from the live Roster: with real names, a long job title or email made the table wider than its card,
+so the last column (Edit, Email invite) was cut off, and for anyone already signed in, Edit alone sat out of view. Now a
+long job title, department or email ends in "…" (the whole on hover), tighter on a narrower window, and the last column
+holds to the card's right edge, so Edit (everyone) and Email invite (only those not yet signed in) always show. On a
+phone each person stays a card. Checked on the local roster at four window widths. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · A clearer reason on Reminders
+
+At the PM's call: an item already in a reminder sent in the last 2 days is flagged "Reminder already sent in the last 2
+days" in place of "Already in a reminder in the last 2 days". No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · Reminders says when the last reminder went
+
+At the PM's call: the flag on an item already in a recent reminder now names the day, "Reminder sent on 9 Nov" (the
+latest such reminder, India time), in place of "Reminder already sent in the last 2 days". No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · Team's toggle puts By status first
+
+At the PM's call: Team opens on By status (as since 2 Nov), and the toggle now shows it on the left, By person on the
+right. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · Edit and Email invite sit beside Access
+
+At the PM's call: on the Roster, Edit and Email invite move from their own column onto the Access line ("Member  Edit ·
+Email invite"), so each row stays one line and the table is one column narrower. No schema change.
+Rollback: git revert the commit.

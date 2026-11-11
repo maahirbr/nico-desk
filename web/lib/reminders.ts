@@ -4,7 +4,7 @@ import { isLeadOrAdmin } from './roles';
 import { daysBetween, nextCheckpoint } from './planUtil';
 import { planState, teamProjects } from './plan';
 import { newId, teamTasks } from './service';
-import { addDays, today as todayIst } from './time';
+import { addDays, fmtDate, istDate, today as todayIst } from './time';
 import { doneByNote } from './jevUses';
 import { seesProject, seesTask, type Sight } from './sight';
 import { bodyFor, subjectFor, type RemindItem } from './reminderText';
@@ -78,10 +78,14 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
     `SELECT person_id, max(at) AS at FROM reminders WHERE team_id = $1 GROUP BY person_id`, [teamId]);
   const lastAt = new Map(last.map((r) => [r.person_id, r.at]));
   // Item keys from recent reminders. A row logged before keys were kept has none, so it flags nothing.
-  const { rows: recent } = await db.query<{ person_id: string; item_keys: string[] }>(
-    `SELECT person_id, item_keys FROM reminders WHERE team_id = $1 AND at >= $2 AND item_keys IS NOT NULL`, [teamId, since]);
-  const sentRecently = new Set(recent.flatMap((r) => r.item_keys.map((k) => `${r.person_id}|${k}`)));
-  for (const [pid, items] of byPerson) for (const i of items) if (!i.flag && sentRecently.has(`${pid}|${i.key}`)) i.flag = 'Already in a reminder in the last 2 days';
+  // The flag names the day of the latest such reminder: "Reminder sent on 9 Nov" (the PM's call, 11 Nov).
+  const { rows: recent } = await db.query<{ person_id: string; item_keys: string[]; at: string | Date }>(
+    `SELECT person_id, item_keys, at FROM reminders WHERE team_id = $1 AND at >= $2 AND item_keys IS NOT NULL ORDER BY at`, [teamId, since]);
+  const sentOn = new Map(recent.flatMap((r) => r.item_keys.map((k) => [`${r.person_id}|${k}`, istDate(new Date(r.at).toISOString())] as const)));
+  for (const [pid, items] of byPerson) for (const i of items) {
+    const on = sentOn.get(`${pid}|${i.key}`);
+    if (!i.flag && on) i.flag = `Reminder sent on ${fmtDate(on)}`;
+  }
 
   // Jev reads words only, on the tasks no rule flagged. Off, slow or unsure leaves them in.
   const ask = tasks.filter((t) => byPerson.get(t.ownerId)?.find((i) => i.key === `task:${t.id}`)?.flag === null);
