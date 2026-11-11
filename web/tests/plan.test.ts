@@ -5,6 +5,7 @@ import { getProject, planOp, planState, projectCounts, teamProjects } from '../l
 import { countdown, lineLate, membersExceptLead, personCounts, nextStepsOf, plainParse, stampRel, totalPushes } from '../lib/planUtil';
 import { TEAM_ID } from '../lib/seed';
 import { SEE_ALL, sightOf } from '../lib/sight';
+import { fmtDate, istDate } from '../lib/time';
 
 // Project pages and the plan board, on the synthetic fixtures (fixtures/plan.json).
 const AS_OF = '2026-10-09';
@@ -202,7 +203,7 @@ describe('reminders', () => {
     await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'copy', subject: 'x', itemCount: 0 }); // an old-style row: no keys
     expect((await flags()).map((i) => i.flag)).toEqual(d.map((i) => i.flag));
     await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'gmail', subject: 'x', itemCount: 1, itemKeys: [d[n].key] });
-    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? 'Reminder already sent in the last 2 days' : i.flag)));
+    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? `Reminder sent on ${fmtDate(istDate(new Date().toISOString()))}` : i.flag)));
   });
 
   it('names only what the lead can see', async () => {

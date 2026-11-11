@@ -1565,3 +1565,9 @@ Rollback: git revert the commit.
 At the PM's call: an item already in a reminder sent in the last 2 days is flagged "Reminder already sent in the last 2
 days" in place of "Already in a reminder in the last 2 days". No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · Reminders says when the last reminder went
+
+At the PM's call: the flag on an item already in a recent reminder now names the day, "Reminder sent on 9 Nov" (the
+latest such reminder, India time), in place of "Reminder already sent in the last 2 days". No schema change.
+Rollback: git revert the commit.
