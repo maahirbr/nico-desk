@@ -79,8 +79,9 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           <Link className="iconbtn" href={href({ week: addDays(weekStart, 7) })} aria-label="Next week">›</Link>
         </span>
         <span className="seg" role="group" aria-label="View">
-          <Help term="team_by_person" host><Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link></Help>
+          {/* By status first, on the left, as it opens on it (the PM's call, 11 Nov). */}
           <Help term="team_by_status" host><Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link></Help>
+          <Help term="team_by_person" host><Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link></Help>
         </span>
         <Select value={project} aria-label="Project" onChange={setProject}>
           <option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}

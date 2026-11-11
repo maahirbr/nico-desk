@@ -7,7 +7,7 @@ import { TeamView } from '@/components/TeamView';
 export const dynamic = 'force-dynamic';
 
 // The team's week. By person: what is next for each person (overdue, this week, coming up).
-// By status: the week's work, done included.
+// By status (the default, shown first): the week's open work, by status.
 export default async function Team({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
   const sp = await searchParams;

@@ -1571,3 +1571,9 @@ Rollback: git revert the commit.
 At the PM's call: the flag on an item already in a recent reminder now names the day, "Reminder sent on 9 Nov" (the
 latest such reminder, India time), in place of "Reminder already sent in the last 2 days". No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · Team's toggle puts By status first
+
+At the PM's call: Team opens on By status (as since 2 Nov), and the toggle now shows it on the left, By person on the
+right. No schema change.
+Rollback: git revert the commit.
