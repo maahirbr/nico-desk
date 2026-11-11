@@ -1854,7 +1854,23 @@ table.roster td:not(:last-child) { white-space: nowrap; }
 /* Edit Person opens inside the last cell: it keeps the page's own alignment and wrapping. */
 table.roster .overlay { white-space: normal; text-align: left; }
 table.roster .roster-email { color: var(--ink-2); }
-.roster-acts { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-sm); white-space: nowrap; }
+.roster-acts { display: flex; align-items: center; gap: var(--space-sm); white-space: nowrap; }
+/* So the table always fits its card (11 Nov): a long job title, department or email ends in "…", the whole of it on
+   hover. On a phone each row is a card, so nothing is cut. */
+@media (min-width: 861px) {
+  table.roster .clip { display: block; overflow: hidden; text-overflow: ellipsis; }
+  table.roster .clip-title { max-width: 11rem; }
+  table.roster .clip-dept { max-width: 9rem; }
+  table.roster .clip-email { max-width: 15rem; }
+}
+/* Edit and Email invite stay in view on a narrow window: the last column holds to the card's right edge. */
+@media (min-width: 861px) { table.roster th:last-child, table.roster td:last-child { position: sticky; right: 0; background: var(--surface); z-index: 1; } }
+@media (min-width: 861px) and (max-width: 1280px) {
+  table.roster .clip-title { max-width: 7.5rem; }
+  table.roster .clip-dept { max-width: 6.5rem; }
+  table.roster .clip-email { max-width: 10.5rem; }
+  table.roster .person-cell, table.roster td:first-child { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; }
+}
 @media (min-width: 861px) { table.roster th, table.roster td { padding-left: var(--space-sm); padding-right: var(--space-sm); } table.roster th:first-child, table.roster td:first-child { padding-left: var(--space-md); } table.roster td:last-child { padding-right: var(--space-md); } }
 .edit-access { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-lg); }
 .edit-access legend { width: 100%; }

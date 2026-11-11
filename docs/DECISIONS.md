@@ -1550,3 +1550,12 @@ in the past); left as it is, only the block is saved. Changed, one save blocks t
 block reason as the reason for the move, so a move made before the date passes still counts as moved in time. The
 message says "Marked blocked, due 22 Oct", and Undo takes back both. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · The Roster fits its card, with Edit always in view
+
+At the PM's call, from the live Roster: with real names, a long job title or email made the table wider than its card,
+so the last column (Edit, Email invite) was cut off, and for anyone already signed in, Edit alone sat out of view. Now a
+long job title, department or email ends in "…" (the whole on hover), tighter on a narrower window, and the last column
+holds to the card's right edge, so Edit (everyone) and Email invite (only those not yet signed in) always show. On a
+phone each person stays a card. Checked on the local roster at four window widths. No schema change.
+Rollback: git revert the commit.

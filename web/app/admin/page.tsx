@@ -28,9 +28,9 @@ export default async function Admin() {
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}>
               <td><Person name={p.displayName} id={p.id} />{p.nickname && <span className="dim"> ({p.fullName})</span>}{!p.active && <span className="dim"> (inactive)</span>}</td>
-              <td data-label="Job title">{p.role}</td>
-              <td data-label="Department">{p.department}</td>
-              <td data-label="Email" className="roster-email">{p.email}</td>
+              <td data-label="Job title"><span className="clip clip-title" title={p.role}>{p.role}</span></td>
+              <td data-label="Department"><span className="clip clip-dept" title={p.department}>{p.department}</span></td>
+              <td data-label="Email" className="roster-email"><span className="clip clip-email" title={p.email}>{p.email}</span></td>
               {isAdmin && <td data-label="Access"><span>{!p.active ? 'Removed' : p.appRoles.includes('admin') ? 'Admin' : p.appRoles.includes('lead') ? 'Lead' : 'Member'}</span>
                 {!p.active && why.get(p.id) && (() => { const r = why.get(p.id)!; return (
                   <div className="small dim">{[r.removed_reason, r.removed_at ? fmtDate(istDate(new Date(r.removed_at).toISOString())) : '', r.removed_by ? `by ${(names[r.removed_by] ?? '').split(' ')[0]}` : ''].filter(Boolean).join(' · ')}</div>
