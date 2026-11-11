@@ -1577,3 +1577,9 @@ Rollback: git revert the commit.
 At the PM's call: Team opens on By status (as since 2 Nov), and the toggle now shows it on the left, By person on the
 right. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · Edit and Email invite sit beside Access
+
+At the PM's call: on the Roster, Edit and Email invite move from their own column onto the Access line ("Member  Edit ·
+Email invite"), so each row stays one line and the table is one column narrower. No schema change.
+Rollback: git revert the commit.

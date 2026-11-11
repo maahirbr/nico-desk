@@ -23,7 +23,7 @@ export default async function Admin() {
       <div className="page-head"><h1>Roster</h1></div>
       <div className="card table-card"><table className="stacked roster">
         {/* Access (member, lead, admin, removed) is for admins only (the PM's call, 3 Nov). */}
-        <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <><th>Access</th><th></th></>}</tr></thead>
+        <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <th>Access</th>}</tr></thead>
         <tbody>
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}>
@@ -31,12 +31,13 @@ export default async function Admin() {
               <td data-label="Job title"><span className="clip clip-title" title={p.role}>{p.role}</span></td>
               <td data-label="Department"><span className="clip clip-dept" title={p.department}>{p.department}</span></td>
               <td data-label="Email" className="roster-email"><span className="clip clip-email" title={p.email}>{p.email}</span></td>
-              {isAdmin && <td data-label="Access"><span>{!p.active ? 'Removed' : p.appRoles.includes('admin') ? 'Admin' : p.appRoles.includes('lead') ? 'Lead' : 'Member'}</span>
+              {/* The access word, then Edit and Email invite on the same line (the PM's call, 11 Nov). */}
+              {isAdmin && <td data-label="Access"><span className="roster-access"><span className="roster-role">{!p.active ? 'Removed' : p.appRoles.includes('admin') ? 'Admin' : p.appRoles.includes('lead') ? 'Lead' : 'Member'}</span>
+                {!readOnly && <PersonControls self={p.id === me.person.id} me={me.person.displayName} invite={notYet.has(p.id)} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</span>
                 {!p.active && why.get(p.id) && (() => { const r = why.get(p.id)!; return (
                   <div className="small dim">{[r.removed_reason, r.removed_at ? fmtDate(istDate(new Date(r.removed_at).toISOString())) : '', r.removed_by ? `by ${(names[r.removed_by] ?? '').split(' ')[0]}` : ''].filter(Boolean).join(' · ')}</div>
                 ); })()}
               </td>}
-              {isAdmin && <td>{!readOnly && <PersonControls self={p.id === me.person.id} me={me.person.displayName} invite={notYet.has(p.id)} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</td>}
             </tr>
           ))}
         </tbody>

@@ -1855,6 +1855,8 @@ table.roster td:not(:last-child) { white-space: nowrap; }
 table.roster .overlay { white-space: normal; text-align: left; }
 table.roster .roster-email { color: var(--ink-2); }
 .roster-acts { display: flex; align-items: center; gap: var(--space-sm); white-space: nowrap; }
+.roster-access { display: flex; align-items: center; gap: var(--space-md); white-space: nowrap; }
+.roster-role { min-width: 4.5rem; }
 /* So the table always fits its card (11 Nov): a long job title, department or email ends in "…", the whole of it on
    hover. On a phone each row is a card, so nothing is cut. */
 @media (min-width: 861px) {
