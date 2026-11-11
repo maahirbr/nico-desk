@@ -202,7 +202,7 @@ describe('reminders', () => {
     await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'copy', subject: 'x', itemCount: 0 }); // an old-style row: no keys
     expect((await flags()).map((i) => i.flag)).toEqual(d.map((i) => i.flag));
     await logReminder(db, TEAM_ID, ME, { personId: 'per_bo', channel: 'gmail', subject: 'x', itemCount: 1, itemKeys: [d[n].key] });
-    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? 'Already in a reminder in the last 2 days' : i.flag)));
+    expect((await flags()).map((i) => i.flag)).toEqual(d.map((i, j) => (j === n ? 'Reminder already sent in the last 2 days' : i.flag)));
   });
 
   it('names only what the lead can see', async () => {

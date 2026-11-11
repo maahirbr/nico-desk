@@ -1559,3 +1559,9 @@ long job title, department or email ends in "…" (the whole on hover), tighter 
 holds to the card's right edge, so Edit (everyone) and Email invite (only those not yet signed in) always show. On a
 phone each person stays a card. Checked on the local roster at four window widths. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-11 · Opus 5.5 · A clearer reason on Reminders
+
+At the PM's call: an item already in a reminder sent in the last 2 days is flagged "Reminder already sent in the last 2
+days" in place of "Already in a reminder in the last 2 days". No schema change.
+Rollback: git revert the commit.

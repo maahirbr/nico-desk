@@ -81,7 +81,7 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   const { rows: recent } = await db.query<{ person_id: string; item_keys: string[] }>(
     `SELECT person_id, item_keys FROM reminders WHERE team_id = $1 AND at >= $2 AND item_keys IS NOT NULL`, [teamId, since]);
   const sentRecently = new Set(recent.flatMap((r) => r.item_keys.map((k) => `${r.person_id}|${k}`)));
-  for (const [pid, items] of byPerson) for (const i of items) if (!i.flag && sentRecently.has(`${pid}|${i.key}`)) i.flag = 'Already in a reminder in the last 2 days';
+  for (const [pid, items] of byPerson) for (const i of items) if (!i.flag && sentRecently.has(`${pid}|${i.key}`)) i.flag = 'Reminder already sent in the last 2 days';
 
   // Jev reads words only, on the tasks no rule flagged. Off, slow or unsure leaves them in.
   const ask = tasks.filter((t) => byPerson.get(t.ownerId)?.find((i) => i.key === `task:${t.id}`)?.flag === null);
