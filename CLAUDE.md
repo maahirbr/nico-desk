@@ -78,7 +78,8 @@ Add new entries at its bottom, never here. The rules below come from that log an
   or an admin brings someone new onto a project.
 - View as: every non-GET `/api/v1` call is refused in `route()`. Any write path outside `route()` must call
   `assertNotViewing`.
-- Reminders open as drafts in the lead's own Gmail. The app never sends. The cron only writes in-app notices.
+- Reminders open as drafts in the lead's own Gmail, or, with `NICO_GMAIL_SEND=1` (11 Nov), go out from the lead's own
+  Gmail when the lead presses Send. Nothing else sends. The cron only writes in-app notices.
 - Undo makes a new change through the normal rules, never a delete.
 - Every table has RLS on. Every schema change also goes into `upgrade()`, and the hosted database needs
   `npm run db:upgrade` before a build that uses it is promoted. Never run `db:remote` on production without
@@ -99,7 +100,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `904 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `915 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

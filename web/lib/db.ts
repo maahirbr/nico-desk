@@ -118,6 +118,14 @@ export async function upgrade(db: Db) {
   await db.exec(CHAT_UPGRADE);
   // 19 Oct: a reminder keeps which items it held, so the next draft can leave out what was just sent.
   await db.exec(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS item_keys text[];`);
+  // 11 Nov: a reminder can be sent from the app (lib/gmailSend.ts), logged as 'sent'. Rollback: the old check, without 'sent'.
+  await db.exec(`DO $$ DECLARE c text; BEGIN
+    FOR c IN SELECT conname FROM pg_constraint WHERE conrelid = 'reminders'::regclass AND contype = 'c'
+      AND pg_get_constraintdef(oid) LIKE '%channel%' AND pg_get_constraintdef(oid) NOT LIKE '%sent%' LOOP
+      EXECUTE format('ALTER TABLE reminders DROP CONSTRAINT %I', c);
+      ALTER TABLE reminders ADD CONSTRAINT reminders_channel_check CHECK (channel IN ('gmail','mail_app','copy','sent'));
+    END LOOP;
+  END $$;`);
   // 26 Oct: an admin can delete an archived partner plan, so its activity log may go inside that one transaction.
   await db.exec(PLAN_ACTIVITY_GUARD);
   // 28 Oct: the MCP server. An event or a comment written through Claude says so ("via Claude").

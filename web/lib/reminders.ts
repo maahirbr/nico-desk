@@ -120,10 +120,14 @@ async function ownerTouched(db: Tx, taskIds: string[], since: string): Promise<S
   return new Set(rows.map((r) => `${r.id}|${r.by}`));
 }
 
-export async function logReminder(db: Tx, teamId: string, meId: string,
-  r: { personId: string; channel: 'gmail' | 'mail_app' | 'copy'; subject: string; itemCount: number; itemKeys?: string[] }) {
-  const { rows } = await db.query(`SELECT 1 FROM team_members WHERE team_id = $1 AND person_id = $2`, [teamId, r.personId]);
+export async function assertOnTeam(db: Tx, teamId: string, personId: string) {
+  const { rows } = await db.query(`SELECT 1 FROM team_members WHERE team_id = $1 AND person_id = $2`, [teamId, personId]);
   if (!rows.length) throw bad('invalid_body', 'That person is not on this team.', 'personId');
+}
+
+export async function logReminder(db: Tx, teamId: string, meId: string,
+  r: { personId: string; channel: 'gmail' | 'mail_app' | 'copy' | 'sent'; subject: string; itemCount: number; itemKeys?: string[] }) {
+  await assertOnTeam(db, teamId, r.personId);
   await db.query(`INSERT INTO reminders (id, team_id, person_id, sent_by, channel, subject, item_count, item_keys, at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now())`,
     [newId('rem'), teamId, r.personId, meId, r.channel, r.subject.slice(0, 200), r.itemCount, r.itemKeys ?? null]);
 }

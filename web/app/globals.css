@@ -659,6 +659,22 @@ ul.acts li.ticked .act-task { text-decoration: line-through; color: var(--ink-3)
 .ask-remind li .remind-item-text { flex: 1; min-width: 0; }
 .ask-remind li .mini-btn { flex: none; }
 .remind-flag { display: block; color: var(--ink-2); }
+/* The sender, the To line with its Cc / Bcc opener, and the email editor (components/RichText.tsx). */
+.remind-from { margin: 0; color: var(--ink); }
+.remind-to { display: flex; align-items: flex-end; gap: var(--space-sm); }
+.remind-to > label.f { flex: 1; }
+.remind-to > .linkbtn { background: none; border: 0; padding: 0; cursor: pointer; min-height: var(--field-height); margin-left: 0; }
+div.f { display: flex; flex-direction: column; gap: var(--space-xxs); min-width: 0; }
+div.f > span { font: var(--type-label); color: var(--ink-2); }
+.rte { background: var(--surface); border: var(--rule) solid var(--line-strong); border-radius: var(--radius-control); transition: border-color var(--dur-state) var(--ease); }
+.rte:focus-within { border-color: var(--ring-color); }
+.rte-tools { display: flex; gap: var(--space-xxs); padding: var(--space-xxs); border-bottom: var(--rule) solid var(--hairline); }
+.rte-btn { min-width: var(--button-height); min-height: var(--button-height); padding: 0 var(--space-xs); background: none; border: 0; border-radius: var(--radius-control); color: var(--ink-2); font: var(--type-button); cursor: pointer; }
+.rte-btn:hover { background: var(--sunk); color: var(--ink); }
+.rte-body { min-height: 9em; max-height: 28em; overflow-y: auto; padding: var(--space-xs) var(--field-pad-x); font: var(--type-meta); color: var(--ink); overflow-wrap: anywhere; }
+.rte-body:focus-visible { outline: none; }
+.rte-body ul, .rte-body ol { margin: var(--space-xxs) 0; padding-left: var(--space-lg); }
+.rte-body a { color: var(--primary); }
 a.btn { text-decoration: none; }
 a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .seg-link { font: var(--type-button); display: inline-flex; align-items: center; min-height: var(--button-height); padding: 0 var(--button-pad-x); text-decoration: none; color: var(--ink-2); background: var(--canvas); }
