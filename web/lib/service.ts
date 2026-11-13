@@ -131,7 +131,7 @@ async function activeMember(db: Tx, teamId: string, personId: string, field: str
 
 export async function listProjects(db: Tx, teamId: string): Promise<{ id: string; name: string; archived: boolean; personalFor: string | null }[]> {
   const { rows } = await db.query<{ id: string; name: string; archived: boolean; personalFor: string | null }>(
-    `SELECT id, name, archived_at IS NOT NULL AS archived, personal_for AS "personalFor" FROM projects WHERE team_id = $1 ORDER BY name`,
+    `SELECT id, CASE WHEN personal_for IS NOT NULL THEN 'Personal' ELSE name END AS name, archived_at IS NOT NULL AS archived, personal_for AS "personalFor" FROM projects WHERE team_id = $1 ORDER BY name`,
     [teamId],
   );
   return rows;
@@ -189,7 +189,7 @@ export async function teamTasks(db: Tx, teamId: string, today = todayIst(), with
 }
 
 // My Personal project's settings (13 Nov): a description (emoji welcome) and the page's accent colour. The name stays
-// "Personal 🔒", as Home shows it.
+// "Personal", as Home shows it.
 export async function updatePersonal(db: Db, meId: string, teamId: string, input: { description?: string | null; accent?: 'orange' | 'sage' | 'indigo' | null; notesFirst?: boolean }): Promise<{ ok: true }> {
   const id = await ensurePersonalProject(db, teamId, meId);
   const d = input.description?.trim() ?? null;
@@ -1013,7 +1013,7 @@ export async function handoversForMe(db: Tx, meId: string, teamId: string): Prom
     t_title: string | null; t_due: string | null; t_project: string | null; t_open: boolean | null; t_owner: string | null; t_on: string | null; p_name: string | null }>(
     `SELECT h.id, h.kind, h.ref_id, h.role, h.from_id, COALESCE(f.nickname, f.display_name) AS from_name, COALESCE(b.nickname, b.display_name) AS by_name,
             t.title AS t_title, to_char(t.due_on, 'YYYY-MM-DD') AS t_due, t.project_id AS t_project, t.status_category = 'open' AS t_open,
-            t.owner_id AS t_owner, t.blocked_on_id AS t_on, pr.name AS p_name
+            t.owner_id AS t_owner, t.blocked_on_id AS t_on, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END AS p_name
        FROM handovers h JOIN people f ON f.id = h.from_id JOIN people b ON b.id = h.by_id
        LEFT JOIN tasks t ON h.kind IN ('task','block') AND t.id = h.ref_id
        LEFT JOIN projects pr ON h.kind = 'project' AND pr.id = h.ref_id
@@ -1176,7 +1176,7 @@ export async function teamPhotos(db: Tx, teamId: string): Promise<Record<string,
 // The update log across one project's tasks, newest first. It also holds the project's own archive, restore, owner and lead events.
 export async function projectLog(db: Tx, projectId: string, limit = 30): Promise<(LogLine & { taskTitle: string })[]> {
   const { rows } = await db.query<LogLine & { taskTitle: string }>(
-    `SELECT e.*, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS "actorName", COALESCE(t.title, pr.name) AS "taskTitle" FROM events e
+    `SELECT e.*, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS "actorName", COALESCE(t.title, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END) AS "taskTitle" FROM events e
      LEFT JOIN tasks t ON t.id = e.entity_id AND e.entity_type = 'task'
      LEFT JOIN projects pr ON pr.id = e.entity_id AND e.entity_type = 'project'
      LEFT JOIN people p ON p.id = e.actor_id
@@ -1301,7 +1301,7 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
   const open = tasks.filter((t) => t.statusCategory === 'open');
   const [proj, rec, ph] = await Promise.all([
     db.query<{ id: string; name: string; role: string }>(
-      `SELECT pr.id, pr.name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
+      `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END AS name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
        LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
        WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) ORDER BY pr.name`,
       [teamId, personId],

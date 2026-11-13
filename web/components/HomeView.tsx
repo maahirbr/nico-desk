@@ -197,7 +197,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
           <h2><Help term="your_projects">Your projects</Help> <span className="n">{myProjects.length}</span></h2>
           <div className="my-projects">
             {myProjects.map((p) => (
-              <Link key={p.id} href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b><span className="dim">{p.role}</span></Link>
+              <Link key={p.id} href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b>{p.role && <span className="dim">{p.role}</span>}</Link>
             ))}
           </div>
         </section>

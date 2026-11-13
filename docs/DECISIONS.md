@@ -1636,3 +1636,12 @@ carried Email invite. Now the Roster's card scrolls sideways at every desktop wi
 a long name ends in "…" at every desktop width, not only up to 1280px. Checked live: at a 980px card, Edit was cut on
 every row before and on none after. CSS only.
 Rollback: git revert the commit.
+
+## 2026-11-13 · Opus 5.5 · Personal shows as "Personal", first on Home
+
+A Personal project is stored as "Personal · <person id>", because project names are unique on a team. Some places read
+the stored name, so the PM saw "Personal · per_…" on Home and elsewhere. Now it shows as just "Personal" (the PM's call;
+the 🔒 is dropped from the name) wherever a project name is read: Home's Your projects, the project list, the person page,
+the activity log, handovers and Claude's project list. On Home it comes first and shows no part ("Owner and lead").
+Display only: nothing stored changes.
+Rollback: git revert the commit.

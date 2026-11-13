@@ -21,8 +21,8 @@ export async function seenTasks(db: Tx, me: Me, today?: string, sight?: Sight): 
 
 export async function seenProjects(db: Tx, me: Me, sight?: Sight): Promise<Project[]> {
   const [s, ps] = await Promise.all([sight ?? sightFor(db, me), teamProjects(db, me.team.id)]);
-  // My own Personal project shows by its name, "Personal 🔒", first (11 Nov); nobody else's ever passes seesProject.
-  return ps.filter((p) => seesProject(s, p.id)).map((p) => (p.personalFor ? { ...p, name: 'Personal 🔒' } : p))
+  // My own Personal project shows by its name, "Personal", first (11 Nov); nobody else's ever passes seesProject.
+  return ps.filter((p) => seesProject(s, p.id)).map((p) => (p.personalFor ? { ...p, name: 'Personal' } : p))
     .sort((a, b) => (a.personalFor ? 0 : 1) - (b.personalFor ? 0 : 1));
 }
 

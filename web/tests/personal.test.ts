@@ -3,6 +3,7 @@ import type { Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { addFile, getFile, myPage, restorePage, savePage } from '../lib/notes';
+import { myProjects } from '../lib/plan';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
 import { seesProject, seesTask, sightOf } from '../lib/sight';
@@ -113,5 +114,14 @@ describe('Personal running notes', () => {
     expect(await code(addFile(db, me, 'fake.png', 'image/png', new Uint8Array([1, 2, 3])))).toBe('400 invalid_body');
     expect(await code(addFile(db, me, 'run.exe', 'application/x-msdownload', new Uint8Array([1])))).toBe('400 invalid_body');
     expect((await addFile(db, me, 'brief.pdf', 'application/pdf', new Uint8Array([0x25, 0x50, 0x44, 0x46]))).image).toBe(false);
+  });
+});
+
+describe('Your projects on Home', () => {
+  it('puts Personal first, by that name, with no part', async () => {
+    await s.ensurePersonalProject(db, TEAM_ID, 'per_cy');
+    const mine = await myProjects(db, TEAM_ID, 'per_cy');
+    expect(mine[0]).toMatchObject({ name: 'Personal', role: '' });
+    expect(mine.slice(1).every((p) => p.name !== 'Personal' && p.role)).toBe(true);
   });
 });
