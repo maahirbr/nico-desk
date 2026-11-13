@@ -287,6 +287,15 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
      unreadable and each lead must connect again). Without `NICO_TOKEN_KEY` on Vercel or with `DATABASE_URL` set, the
      feature stays off.
   5. Run `npm run db:upgrade` before promoting the build, so `google_links` exists.
+- Send reminders from Gmail (`NICO_GMAIL_SEND=1`, 11 Nov), steps for the person who owns the Google Cloud project:
+  1. In APIs and Services, enable the Gmail API.
+  2. On the OAuth consent screen, add the scope `https://www.googleapis.com/auth/gmail.send` (Sensitive: it sends mail
+     as the person and cannot read any). An Internal app in one Workspace domain needs no Google verification.
+  3. On the same OAuth client, add the redirect URI `https://<host>/api/auth/google/gmail/callback`, and
+     `http://localhost:3100/api/auth/google/gmail/callback` for local runs.
+  4. Set `NICO_GMAIL_SEND=1`. It uses the same `NICO_TOKEN_KEY` and the same `google_links` row as Google Meet, so one
+     person has one Google link: disconnecting either one stops both.
+  5. Run `npm run db:upgrade` before promoting the build, so a reminder can be logged as `sent`.
 - MCP server for Claude (`app/api/mcp/`, `lib/mcp.ts`, `lib/mcpAuth.ts`): add the custom connector
   `https://<host>/api/mcp` in Claude. Claude registers itself, the person approves at `/connect` (with their app
   session, or Google if they have none), and every tool call runs as that person through `scoped()`, with the same

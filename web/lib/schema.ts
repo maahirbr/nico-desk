@@ -557,7 +557,7 @@ CREATE TABLE reminders (
   team_id     text NOT NULL REFERENCES teams(id),
   person_id   text NOT NULL REFERENCES people(id),
   sent_by     text NOT NULL REFERENCES people(id),
-  channel     text NOT NULL CHECK (channel IN ('gmail','mail_app','copy')),
+  channel     text NOT NULL CHECK (channel IN ('gmail','mail_app','copy','sent')),
   subject     text NOT NULL,
   item_count  integer NOT NULL,
   item_keys   text[],

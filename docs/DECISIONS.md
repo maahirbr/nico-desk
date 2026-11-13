@@ -1610,3 +1610,29 @@ Schema: projects.personal_for, accent, notes_first; personal_pages and personal_
 `upgrade()`. **The hosted database needs `npm run db:upgrade` before this is deployed**: every page now looks up the
 person's Personal project. Private means private in the app; whoever runs the database can technically read it.
 Rollback: git revert the commit; the new columns and tables can stay (nothing else reads them).
+
+## 2026-11-11 · Opus 5.5 · Reminders can be sent from the app
+
+At the PM's call, with the repo owner's yes: a lead can now send a reminder from the Reminders page, from their own
+Gmail, as a fourth choice beside Open in Gmail, Mail app and Copy. This reverses "Reminders open as drafts in the lead's
+own Gmail. The app never sends." The rule that nothing is sent without the sender's yes still holds: only the lead's
+press of Send sends, and only to the addresses they typed. Each card now shows From (the lead's address), a Cc / Bcc
+opener, and an editor with bold, italics, underline, bullets, numbers and links. Formatting goes only with Send; a
+Gmail or mail-app draft link carries plain text, and Cc and Bcc travel in all three. The lead connects Gmail once
+(Google's `gmail.send` scope, which cannot read mail). The refresh token is sealed in the same `google_links` row as
+Google Meet, one Google grant per person, and the Google account must be the lead's own address. The server keeps
+only the toolbar's HTML tags and http, https or mailto links, base64-encodes every part, and drops line breaks from
+headers. A sent reminder is logged with the new channel `sent` (schema and `upgrade()`). Off unless
+`NICO_GMAIL_SEND=1`; the Google Cloud steps are in `web/README.md` Hosting.
+Rollback: unset `NICO_GMAIL_SEND` (the page goes back to three choices), then git revert the commit. The `sent` value
+in the channel check can stay.
+
+## 2026-11-13 · Opus 5.5 · The Roster keeps Edit in view on every desktop width
+
+A partner teammate's 11 Nov fit made the Access column sticky so Edit stays in view. Above 1180px `.table-card` is
+`overflow: clip` (for sticky table heads), which is not a scroll container, so the sticky column could not hold: on a
+1281 to 1486px window (a 1440px laptop) Edit was cut off at the card's edge. It showed once the roster grew and most rows
+carried Email invite. Now the Roster's card scrolls sideways at every desktop width (the Roster has no sticky head), and
+a long name ends in "…" at every desktop width, not only up to 1280px. Checked live: at a 980px card, Edit was cut on
+every row before and on none after. CSS only.
+Rollback: git revert the commit.

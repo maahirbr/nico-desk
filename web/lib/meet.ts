@@ -199,7 +199,9 @@ export type MeetStatus = { enabled: true; connected: boolean; email: string | nu
 
 export async function meetStatus(db: Db, personId: string): Promise<MeetStatus> {
   const l = await linkOf(db, personId);
-  return { enabled: true, connected: !!l, email: l?.email ?? null, since: l?.created_at ?? null };
+  // The row is shared with Gmail send (lib/gmailSend.ts), so a row alone is not a Meet link: it needs the Meet scopes.
+  const on = !!l && MEET_SCOPES.every((s) => l.scopes.includes(s));
+  return { enabled: true, connected: on, email: on ? l.email : null, since: on ? l.created_at : null };
 }
 
 // Deletes the row first, then asks Google to revoke. If Google cannot be reached the link is still gone here.

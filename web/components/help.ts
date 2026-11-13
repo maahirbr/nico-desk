@@ -115,10 +115,11 @@ export const HELP = {
   moved_late: 'Moved late. The new date was logged after the date it replaced had passed.',
 
   // Reminders
-  remind_gmail: 'Opens a draft in your Gmail, from your address. You press Send. The app sends nothing.',
+  remind_gmail: 'Opens a draft in your Gmail, from your address. You press Send there. Bold, italics and lists stay behind: a draft link carries plain text.',
   remind_mail: 'Opens a draft in your mail app. You press Send. The app sends nothing.',
   remind_flag: 'Why this may not need a reminder. It starts left out of the email. Tick it to put it back in.',
   remind_copy: 'Copies the subject and the text, so you can paste them into any email or chat.',
+  remind_send: 'Sends the email now from your own Gmail, with your Cc, Bcc and formatting. The first time, Google asks you to allow it. Only you can press Send.',
   // Comments
   comment_box: 'Write a note for everyone who can see this. Type @ to mention a person. Type # to link a task or a project.',
   comment_mention: 'A mention adds a notice for that person. People who cannot see this item are not told.',
