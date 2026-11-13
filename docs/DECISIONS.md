@@ -1583,3 +1583,11 @@ Rollback: git revert the commit.
 At the PM's call: on the Roster, Edit and Email invite move from their own column onto the Access line ("Member  Edit ·
 Email invite"), so each row stays one line and the table is one column narrower. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-13 · Opus 5.5 · Project setup steps: people, first work, a date
+
+At the PM's call. A new project's setup list now asks for the people, the first tasks (or lines) and a date, plus the
+partner on a partner project (a plan board, or a task board with a partner). "Bring in the first minutes" and "Set when
+the team meets" are no longer setup steps. The date step opens Settings and ticks once the project's date is set, as
+At risk and Late are measured against it. No schema change.
+Rollback: git revert the commit.

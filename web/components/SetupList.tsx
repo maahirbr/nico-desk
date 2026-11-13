@@ -15,8 +15,8 @@ import { useViewer } from './viewer';
 // per project in this browser (localStorage, always in try/catch). It stays closed until the browser has been asked,
 // so a person who hid it never sees it flash. In View as the list shows with no buttons and no way to hide it.
 
-// The rhythm step has no button yet: its form lives in MeetingSection, which is off project pages until gate G1.
-const EVENT_OF: Partial<Record<SetupAction, string>> = { settings: OPEN_SETTINGS_EVENT, add: OPEN_ADD_EVENT, minutes: IMPORT_EVENT };
+// The date and the people open the project's Settings; the first work opens Add.
+const EVENT_OF: Partial<Record<SetupAction, string>> = { settings: OPEN_SETTINGS_EVENT, add: OPEN_ADD_EVENT };
 
 function dwellMs(): number {
   const raw = getComputedStyle(document.documentElement).getPropertyValue('--dwell-confirm').trim();

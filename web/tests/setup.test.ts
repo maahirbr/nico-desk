@@ -17,7 +17,7 @@ import { markMeetingHeld, setMeetingRhythm } from '../lib/meetings';
 import { createProject, type ProjectInput } from '../lib/plan';
 import * as s from '../lib/service';
 import { TEAM_ID } from '../lib/seed';
-import { MEETINGS_ON, SETUP_SINCE, setupState, setupSteps, type SetupInput } from '../lib/setup';
+import { SETUP_SINCE, setupState, setupSteps, type SetupInput } from '../lib/setup';
 
 const TODAY = '2026-10-09';
 const LEAD = 'per_ada'; // a team lead
@@ -43,34 +43,27 @@ const mk = async (over: Partial<ProjectInput> = {}) => {
 const keys = (steps: { key: string }[] | null) => (steps ?? []).map((x) => x.key);
 const doneOf = (steps: { key: string; done: boolean }[] | null) => Object.fromEntries((steps ?? []).map((x) => [x.key, x.done]));
 
-const none: SetupInput = { kind: 'tasks', hasMembers: false, hasWork: false, meetEvery: null, hasMinutes: false, partnerName: null, meetingsOn: false };
+const none: SetupInput = { kind: 'tasks', hasMembers: false, hasWork: false, hasDate: false, partnerName: null };
 
 describe('setupSteps', () => {
-  it('lists members, work and minutes on a task board, in that order', () => {
-    expect(keys(setupSteps(none))).toEqual(['members', 'work', 'minutes']);
+  it('lists the people, the first tasks and a date on a task board, in that order (13 Nov: no minutes, no rhythm)', () => {
+    expect(keys(setupSteps(none))).toEqual(['members', 'work', 'date']);
   });
 
-  it('adds the partner step on a plan board only', () => {
-    expect(keys(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual(['members', 'work', 'minutes', 'partner']);
-    expect(keys(setupSteps({ ...none, partnerName: 'Acme' }))).not.toContain('partner');
-  });
-
-  it('shows the rhythm step only when meetings are on', () => {
-    expect(keys(setupSteps({ ...none, meetingsOn: true }))).toEqual(['members', 'work', 'rhythm', 'minutes']);
-    expect(keys(setupSteps({ ...none, kind: 'plan', meetingsOn: true }))).toEqual(['members', 'work', 'rhythm', 'minutes', 'partner']);
-    expect(keys(setupSteps({ ...none, meetingsOn: false, meetEvery: 'weekly' }))).not.toContain('rhythm');
+  it('adds the partner step on a plan board and on a partner task board', () => {
+    expect(keys(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual(['members', 'work', 'date', 'partner']);
+    expect(keys(setupSteps({ ...none, partnerName: 'Acme' }))).toEqual(['members', 'work', 'date', 'partner']);
+    expect(keys(setupSteps(none))).not.toContain('partner');
   });
 
   it('ticks each step from its own input', () => {
-    const all = setupSteps({ kind: 'plan', hasMembers: true, hasWork: true, meetEvery: 'weekly', hasMinutes: true, partnerName: 'Acme', meetingsOn: true });
+    const all = setupSteps({ kind: 'plan', hasMembers: true, hasWork: true, hasDate: true, partnerName: 'Acme' });
     expect(all.every((x) => x.done)).toBe(true);
-    expect(doneOf(setupSteps({ ...none, kind: 'plan', meetingsOn: true, partnerName: 'Partner' }))).toEqual({
-      members: false, work: false, rhythm: false, minutes: false, partner: false,
-    });
-    expect(doneOf(setupSteps({ ...none, hasMembers: true }))).toMatchObject({ members: true, work: false, minutes: false });
+    expect(doneOf(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual({ members: false, work: false, date: false, partner: false });
+    expect(doneOf(setupSteps({ ...none, hasMembers: true }))).toMatchObject({ members: true, work: false, date: false });
     expect(doneOf(setupSteps({ ...none, hasWork: true }))).toMatchObject({ members: false, work: true });
-    expect(doneOf(setupSteps({ ...none, hasMinutes: true }))).toMatchObject({ minutes: true });
-    expect(doneOf(setupSteps({ ...none, meetingsOn: true, meetEvery: 'monthly' }))).toMatchObject({ rhythm: true });
+    expect(doneOf(setupSteps({ ...none, hasDate: true }))).toMatchObject({ date: true });
+    expect(setupSteps(none)[2]).toMatchObject({ title: 'Set a date', action: 'settings' });
   });
 
   it('counts an empty or default partner name as not named', () => {
@@ -85,17 +78,13 @@ describe('setupSteps', () => {
     expect(setupSteps(none)[1]).toMatchObject({ title: 'Add the first tasks', button: 'Add a task', action: 'add' });
     expect(setupSteps({ ...none, kind: 'plan' })[1]).toMatchObject({ title: 'Add the first lines', button: 'Add a line', action: 'add' });
   });
-
-  it('keeps the meeting rhythm step off until the PM says yes (G1)', () => {
-    expect(MEETINGS_ON).toBe(false);
-  });
 });
 
 describe('setupState', () => {
   it('shows a new task project with nothing done to its lead and its owner', async () => {
     const p = await mk();
-    expect(doneOf(await setupState(db, await meAs(LEAD), p.id))).toEqual({ members: false, work: false, minutes: false });
-    expect(keys(await setupState(db, await meAs(OWNER), p.id))).toEqual(['members', 'work', 'minutes']);
+    expect(doneOf(await setupState(db, await meAs(LEAD), p.id))).toEqual({ members: false, work: false, date: false });
+    expect(keys(await setupState(db, await meAs(OWNER), p.id))).toEqual(['members', 'work', 'date']);
   });
 
   it('shows it to an admin and to the project lead, and hides it from a plain member', async () => {
@@ -151,23 +140,11 @@ describe('setupState', () => {
     expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).work).toBe(true);
   });
 
-  it('ticks minutes from a held meeting, a proposal or an accepted action', async () => {
-    const held = await mk();
-    await setMeetingRhythm(db, LEAD, held.id, { every: 'weekly' }, TODAY);
-    expect(doneOf(await setupState(db, await meAs(LEAD), held.id)).minutes).toBe(false);
-    await markMeetingHeld(db, LEAD, held.id, TODAY);
-    expect(doneOf(await setupState(db, await meAs(LEAD), held.id)).minutes).toBe(true);
-
-    const prop = await mk({ kind: 'plan', name: 'Proposal drive' });
-    await db.query(
-      `INSERT INTO plan_proposals (id, project_id, batch, position, meeting, task, confidence, created_at) VALUES ('pp_t1',$1,'b1',1,'{}','Send the brief','sure',now())`, [prop.id]);
-    expect(doneOf(await setupState(db, await meAs(LEAD), prop.id)).minutes).toBe(true);
-
-    const act = await mk({ kind: 'plan', name: 'Action drive' });
-    await db.query(`INSERT INTO plan_actions (id, project_id, task, created_at) VALUES ('pa_t1',$1,'Hand typed',now())`, [act.id]);
-    expect(doneOf(await setupState(db, await meAs(LEAD), act.id)).minutes).toBe(false);
-    await db.query(`INSERT INTO plan_actions (id, project_id, task, proposal_id, created_at) VALUES ('pa_t2',$1,'From minutes','pp_x',now())`, [act.id]);
-    expect(doneOf(await setupState(db, await meAs(LEAD), act.id)).minutes).toBe(true);
+  it('ticks the date step once the project has its date', async () => {
+    const p = await mk();
+    expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).date).toBe(false);
+    await db.query(`UPDATE projects SET launch_on = '2026-11-30' WHERE id = $1`, [p.id]);
+    expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).date).toBe(true);
   });
 
   it('ticks the partner step once the plan names one', async () => {
