@@ -1,3 +1,4 @@
+import { newsFor } from '@/lib/news';
 import { requireMe } from '@/lib/auth';
 import { latestEndedFirst } from '@/lib/derive';
 import { homeUpdates, lookups } from '@/lib/page';
@@ -28,6 +29,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
     myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
   const handovers = await handoversForMe(d, me.person.id, me.team.id);
+  const news = me.viewingAs ? null : await newsFor(d, me.person.id);
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   const first = await firstSeenDay(d, me.realPerson.id);
@@ -78,6 +80,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       myProjects={onProjects}
       welcome={welcome}
+      news={news}
     />
   );
 }

@@ -1660,3 +1660,12 @@ the 🔒 is dropped from the name) wherever a project name is read: Home's Your 
 the activity log, handovers and Claude's project list. On Home it comes first and shows no part ("Owner and lead").
 Display only: nothing stored changes.
 Rollback: git revert the commit.
+
+## 2026-11-13 · Opus 5.5 · What's new: a note on Home until Got it
+
+To announce Personal to everyone, the PM wanted a short note from the NicoDesk team that people can mark seen. Home now
+opens with a thin "✨ New in NicoDesk" card (the welcome card's look): one line of news with the feature's name
+highlighted and "Projects" as a link, and a small Got it ✓. Got it hides it for that person on every device; it is kept
+in `update_seen` under the scope `news:<id>`, so no schema change. It does not show under View as, and nothing is sent.
+The note lives in `lib/news.ts` `NEWS`: a new id shows a new note to everyone; null shows none.
+Rollback: set `NEWS` to null, or git revert the commit. The `news:` rows in `update_seen` can stay.
