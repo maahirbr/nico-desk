@@ -1599,3 +1599,13 @@ headers. A sent reminder is logged with the new channel `sent` (schema and `upgr
 `NICO_GMAIL_SEND=1`; the Google Cloud steps are in `web/README.md` Hosting.
 Rollback: unset `NICO_GMAIL_SEND` (the page goes back to three choices), then git revert the commit. The `sent` value
 in the channel check can stay.
+
+## 2026-11-13 · Opus 5.5 · The Roster keeps Edit in view on every desktop width
+
+A partner teammate's 11 Nov fit made the Access column sticky so Edit stays in view. Above 1180px `.table-card` is
+`overflow: clip` (for sticky table heads), which is not a scroll container, so the sticky column could not hold: on a
+1281 to 1486px window (a 1440px laptop) Edit was cut off at the card's edge. It showed once the roster grew and most rows
+carried Email invite. Now the Roster's card scrolls sideways at every desktop width (the Roster has no sticky head), and
+a long name ends in "…" at every desktop width, not only up to 1280px. Checked live: at a 980px card, Edit was cut on
+every row before and on none after. CSS only.
+Rollback: git revert the commit.
