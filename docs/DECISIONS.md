@@ -1636,3 +1636,19 @@ carried Email invite. Now the Roster's card scrolls sideways at every desktop wi
 a long name ends in "…" at every desktop width, not only up to 1280px. Checked live: at a 980px card, Edit was cut on
 every row before and on none after. CSS only.
 Rollback: git revert the commit.
+
+## 2026-11-13 · Opus 5.5 · Personal 🔒 stays private when someone is removed, in View as and in Activity
+
+A review of the Personal push before it went live found three paths that still showed Personal work to others:
+- Remove: the admin's handover list showed the leaver's Personal task titles, and Remove handed those tasks (and the
+  Personal project) to the new holder, whose Home then named them. Now `handoffLoad` leaves out Personal tasks, Personal
+  projects and Personal tasks waiting on the leaver; they stay with their owner.
+- View as: due-today and overdue notices on Personal tasks showed on the viewed person's Home. `listNotices` now takes
+  the viewing flag, so the View as sight hides them.
+- Activity: the change count and the comment count still counted Personal tasks and the Personal project. Both now
+  leave them out. Last active still counts them: working on one's own Personal tasks is still using the app.
+Three tests in `tests/personal.test.ts`; each fails without its fix. Known and left for later: someone on two teams
+gets no working Personal project on the second team (the pilot has one team), uploaded files cannot be deleted, a
+notes page near the size limit fails to save without a message, and the stored name `Personal · <id>` shows in
+Search, the Ledger and Home's project list.
+Rollback: git revert the commit.

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
+import { teamAdoption } from '../lib/activity';
 import { addFile, getFile, myPage, restorePage, savePage } from '../lib/notes';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
@@ -113,5 +114,39 @@ describe('Personal running notes', () => {
     expect(await code(addFile(db, me, 'fake.png', 'image/png', new Uint8Array([1, 2, 3])))).toBe('400 invalid_body');
     expect(await code(addFile(db, me, 'run.exe', 'application/x-msdownload', new Uint8Array([1])))).toBe('400 invalid_body');
     expect((await addFile(db, me, 'brief.pdf', 'application/pdf', new Uint8Array([0x25, 0x50, 0x44, 0x46]))).image).toBe(false);
+  });
+});
+
+// 13 Nov review: three more paths kept Personal work in view of others.
+describe('Personal work stays private beyond the lists', () => {
+  it('is never listed or handed on when its owner is removed', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const secret = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Private errand', ownerId: ME, dueOn: '2026-10-12', projectId: pid });
+    const team = await s.createTask(db, LEAD, { teamId: TEAM_ID, title: 'Team handover work', ownerId: ME, dueOn: '2026-10-12' });
+    const load = await s.handoffLoad(db, ADMIN, TEAM_ID, ME);
+    expect(load.tasks.map((t) => t.id)).toContain(team.id);
+    expect(load.tasks.some((t) => t.id === secret.id)).toBe(false);
+    expect(load.projects.some((p) => p.id === pid)).toBe(false);
+    await s.removePerson(db, ADMIN, TEAM_ID, ME, OTHER, 'Left the team');
+    expect((await s.getTask(db, secret.id)).ownerId).toBe(ME);
+    expect((await s.getTask(db, team.id)).ownerId).toBe(OTHER);
+    expect(JSON.stringify(await s.handoversForMe(db, OTHER, TEAM_ID))).not.toContain('Private errand');
+  });
+
+  it('shows its due notices to the owner, not to an admin viewing as them', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const t = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Private due today', ownerId: ME, dueOn: '2026-10-09', projectId: pid });
+    await s.runReminders(db, '2026-10-09');
+    expect((await s.listNotices(db, ME)).some((n) => n.taskId === t.id)).toBe(true);
+    expect((await s.listNotices(db, ME, false, true)).some((n) => n.taskId === t.id)).toBe(false);
+  });
+
+  it('adds nothing to the Activity counts', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const before = (await teamAdoption(db, TEAM_ID)).find((r) => r.id === ME)!;
+    await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Private count check', ownerId: ME, dueOn: '2026-10-12', projectId: pid });
+    const after = (await teamAdoption(db, TEAM_ID)).find((r) => r.id === ME)!;
+    expect(after.changes7).toBe(before.changes7);
+    expect(after.interactions.total).toBe(before.interactions.total);
   });
 });

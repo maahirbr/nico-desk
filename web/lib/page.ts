@@ -58,7 +58,7 @@ export async function homeUpdates(me: Me, d: Awaited<ReturnType<typeof db>>, nam
 // "assigned" notices. A small rename stays out, as it does in the Updates card.
 export async function freshFor(me: Me, d: Awaited<ReturnType<typeof db>>): Promise<Record<string, { at: string; notice?: string }>> {
   const seen = await seenFor(me, d);
-  const [items, notices] = await Promise.all([updatesFor(d, me.person.id, me.team.id, {}, seen.all, new Date(), seen.byTask), listNotices(d, me.person.id, true)]);
+  const [items, notices] = await Promise.all([updatesFor(d, me.person.id, me.team.id, {}, seen.all, new Date(), seen.byTask), listNotices(d, me.person.id, true, me.viewingAs)]);
   const out: Record<string, { at: string; notice?: string }> = {};
   const latest = (id: string, at: string, notice?: string) => {
     const cur = out[id];

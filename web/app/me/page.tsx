@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const t = today();
   const updates = await homeUpdates(me, d, names, projectNames);
   const [mine, notices, all, projects, onProjects, replies, asks] = await Promise.all([
-    myTasks(d, me.person.id, me.team.id, undefined, !me.viewingAs), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
+    myTasks(d, me.person.id, me.team.id, undefined, !me.viewingAs), listNotices(d, me.person.id, true, me.viewingAs), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
     myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
   const handovers = await handoversForMe(d, me.person.id, me.team.id);

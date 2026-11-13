@@ -778,7 +778,7 @@ export function ledgerOf(all: Task[], from: string, to: string, personId?: strin
 
 export type Notice = { id: string; taskId: string; taskTitle: string; kind: string; forDate: string; createdAt: string; readAt: string | null; canOpen: boolean };
 
-export async function listNotices(db: Db, meId: string, unreadOnly = false): Promise<Notice[]> {
+export async function listNotices(db: Db, meId: string, unreadOnly = false, viewing = false): Promise<Notice[]> {
   type Row = Notice & { team_id: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null };
   const { rows } = await db.query<Row>(
     `SELECT n.id, n.task_id AS "taskId", t.title AS "taskTitle", n.kind, n.for_date AS "forDate",
@@ -791,7 +791,7 @@ export async function listNotices(db: Db, meId: string, unreadOnly = false): Pro
   // A notice on a task this person cannot see is dropped, with one exception (15 Oct, the PM's call): "moved off your
   // plate" still tells them a task that was theirs went to someone else, by its title only, with nothing to open.
   const sights = new Map<string, Sight>();
-  for (const r of rows) if (!sights.has(r.team_id)) sights.set(r.team_id, await sightOf(db, r.team_id, meId));
+  for (const r of rows) if (!sights.has(r.team_id)) sights.set(r.team_id, await sightOf(db, r.team_id, meId, viewing)); // View as: Personal is hidden (13 Nov)
   return rows.flatMap((r) => {
     const canOpen = seesTaskRow(sights.get(r.team_id)!, r);
     if (!canOpen && r.kind !== 'reassigned_away') return [];
@@ -936,18 +936,19 @@ export type HandoffLoad = {
   waitingOn: { id: string; title: string }[];
 };
 
+// Personal work (13 Nov) is never listed to the admin or handed on: it stays with its owner, removed or not.
 export async function handoffLoad(db: Tx, meId: string, teamId: string, personId: string): Promise<HandoffLoad> {
   await requireAdmin(db, teamId, meId);
   const p = await getPerson(db, teamId, personId);
   if (!p || p.appRoles.length === 0) throw notFound('No such person on this team.');
   const [tasks, projects, waitingOn] = await Promise.all([
     db.query<{ id: string; title: string }>(
-      `SELECT id, title FROM tasks WHERE team_id = $1 AND owner_id = $2 AND status_category = 'open' AND origin <> 'sheet' ORDER BY due_on, title`, [teamId, personId]),
+      `SELECT id, title FROM tasks WHERE team_id = $1 AND owner_id = $2 AND status_category = 'open' AND origin <> 'sheet' AND ${NOT_PERSONAL} ORDER BY due_on, title`, [teamId, personId]),
     db.query<{ id: string; name: string; as: 'owner' | 'lead' }>(
       `SELECT id, name, CASE WHEN owner_id = $2 THEN 'owner' ELSE 'lead' END AS as FROM projects
-        WHERE team_id = $1 AND archived_at IS NULL AND (owner_id = $2 OR lead_id = $2) ORDER BY name`, [teamId, personId]),
+        WHERE team_id = $1 AND archived_at IS NULL AND personal_for IS NULL AND (owner_id = $2 OR lead_id = $2) ORDER BY name`, [teamId, personId]),
     db.query<{ id: string; title: string }>(
-      `SELECT id, title FROM tasks WHERE team_id = $1 AND blocked_on_id = $2 AND status_category = 'open' AND (owner_id IS NULL OR owner_id <> $2) ORDER BY title`, [teamId, personId]),
+      `SELECT id, title FROM tasks WHERE team_id = $1 AND blocked_on_id = $2 AND status_category = 'open' AND (owner_id IS NULL OR owner_id <> $2) AND ${NOT_PERSONAL} ORDER BY title`, [teamId, personId]),
   ]);
   return { tasks: tasks.rows, projects: projects.rows, waitingOn: waitingOn.rows };
 }

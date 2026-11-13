@@ -42,6 +42,10 @@ export type AdoptionRow = {
   opened7: number; weekdays: number; changes7: number; // weekdays: Mon to Fri opened in the 7 days before today
   interactions: Interactions; // what they did in the last 7 days, one count per action (4 Nov)
 };
+// Personal tasks and Personal projects (11 Nov): nobody else's business, so no count includes them (13 Nov). Last active
+// still does: working on one's own Personal tasks is still using the app.
+const PERSONAL_IDS = `(SELECT t.id FROM tasks t JOIN projects pr ON pr.id = t.project_id WHERE pr.personal_for IS NOT NULL
+  UNION ALL SELECT id FROM projects WHERE personal_for IS NOT NULL)`;
 // Interactions (the PM's call, 4 Nov): everything someone did in the app in the last 7 days, each action once. A change
 // that touches several fields of a task at one moment is one action; tasks one person created together in one go (an
 // import of minutes, a pasted chat, + Add another task) count as one. Opening the app is not counted: the dots show it.
@@ -76,8 +80,7 @@ async function interactionsFor(db: Db, ids: string[], since: string): Promise<Ma
   const { rows: ev } = await db.query<{ actor_id: string; entity_id: string; at: string | Date; fields: string[] }>(
     `SELECT actor_id, entity_id, at, array_agg(field) AS fields FROM events
       WHERE actor_id = ANY($1) AND origin IN ('app','claude') AND ${day}
-        -- Personal tasks (11 Nov) are nobody else's business: not counted here.
-        AND entity_id NOT IN (SELECT t.id FROM tasks t JOIN projects pr ON pr.id = t.project_id WHERE pr.personal_for IS NOT NULL)
+        AND entity_id NOT IN ${PERSONAL_IDS}
       GROUP BY actor_id, entity_id, at`, [ids, since]);
   const batches = new Set<string>(); // person|minute: tasks created together count once
   for (const e of ev) {
@@ -94,7 +97,7 @@ async function interactionsFor(db: Db, ids: string[], since: string): Promise<Ma
     for (const r of rows) add(r.id, k, r.n);
   };
   await counted(`SELECT actor_id AS id, count(*)::int AS n FROM plan_activity WHERE actor_id = ANY($1) AND ${day} GROUP BY actor_id`, 'plan');
-  await counted(`SELECT author_id AS id, count(*)::int AS n FROM (SELECT author_id, created_at AS at FROM comments WHERE deleted_at IS NULL
+  await counted(`SELECT author_id AS id, count(*)::int AS n FROM (SELECT author_id, created_at AS at FROM comments WHERE deleted_at IS NULL AND subject_id NOT IN ${PERSONAL_IDS}
       UNION ALL SELECT author_id, created_at FROM chat_messages) c WHERE author_id = ANY($1) AND ${day} GROUP BY author_id`, 'comments');
   await counted(`SELECT asker_id AS id, count(*)::int AS n FROM update_asks WHERE asker_id = ANY($1) AND (asked_at AT TIME ZONE 'Asia/Kolkata')::date >= $2 GROUP BY asker_id`, 'asks');
   await counted(`SELECT id, count(*)::int AS n FROM (SELECT person_id AS id, created_at AS at FROM feedback UNION ALL SELECT person_id, created_at FROM feedback_votes
@@ -133,7 +136,8 @@ export async function teamAdoption(db: Db, teamId: string): Promise<AdoptionRow[
                  count(*) FILTER (WHERE day BETWEEN $5 AND $6 AND extract(isodow FROM day) <= 5)::int AS wd
             FROM visit_days GROUP BY person_id),
     x AS (SELECT a.actor_id AS id, count(*)::int AS x7 FROM (
-            SELECT actor_id, at FROM events WHERE origin IN ('app','claude') UNION ALL SELECT actor_id, at FROM plan_activity) a
+            SELECT actor_id, at FROM events WHERE origin IN ('app','claude') AND entity_id NOT IN ${PERSONAL_IDS}
+            UNION ALL SELECT actor_id, at FROM plan_activity) a
           WHERE a.actor_id IS NOT NULL AND (a.at AT TIME ZONE 'Asia/Kolkata')::date >= $2 GROUP BY a.actor_id)
     SELECT p.id, coalesce(p.nickname, p.display_name) AS name, p.email,
            (p.photo_url IS NOT NULL OR p.nickname IS NOT NULL OR p.phone IS NOT NULL) AS flag,
