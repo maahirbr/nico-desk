@@ -11,7 +11,8 @@ import type { Task } from './derive';
 // What pages and routes read through: the team's tasks and projects as this viewer may see them (lib/sight.ts).
 // Pages never import teamTasks or teamProjects directly; tests/visibility.test.ts holds that line.
 
-export const sightFor = (db: Tx, me: Me): Promise<Sight> => sightOf(db, me.team.id, me.person.id);
+// View as never shows the person's own Personal project (11 Nov).
+export const sightFor = (db: Tx, me: Me): Promise<Sight> => sightOf(db, me.team.id, me.person.id, me.viewingAs);
 
 export async function seenTasks(db: Tx, me: Me, today?: string, sight?: Sight): Promise<Task[]> {
   const [s, ts] = await Promise.all([sight ?? sightFor(db, me), teamTasks(db, me.team.id, today)]);
@@ -20,7 +21,9 @@ export async function seenTasks(db: Tx, me: Me, today?: string, sight?: Sight): 
 
 export async function seenProjects(db: Tx, me: Me, sight?: Sight): Promise<Project[]> {
   const [s, ps] = await Promise.all([sight ?? sightFor(db, me), teamProjects(db, me.team.id)]);
-  return ps.filter((p) => seesProject(s, p.id));
+  // My own Personal project shows by its name, "Personal 🔒", first (11 Nov); nobody else's ever passes seesProject.
+  return ps.filter((p) => seesProject(s, p.id)).map((p) => (p.personalFor ? { ...p, name: 'Personal 🔒' } : p))
+    .sort((a, b) => (a.personalFor ? 0 : 1) - (b.personalFor ? 0 : 1));
 }
 
 // One task or project for this viewer. Hidden reads as missing: the same 404 as an id that does not exist.

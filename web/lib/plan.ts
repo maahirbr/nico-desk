@@ -28,6 +28,9 @@ export type Project = {
   workstreams: string[]; targetLabel: string | null; createdBy: string | null;
   archivedAt: string | null; archivedBy: string | null; // set while the project is closed
   meetEvery: MeetEvery | null; meetDay: number | null; meetNext: string | null; meetLast: string | null; // the meeting rhythm (lib/meetings.ts)
+  personalFor: string | null; // 11 Nov: set on a person's own Personal project; only they see it (lib/sight.ts)
+  accent: 'orange' | 'sage' | 'indigo' | null; // 13 Nov: a Personal page's colour
+  notesFirst: boolean; // 13 Nov: a Personal page shows notes above tasks
 };
 
 type ProjectRow = {
@@ -36,6 +39,9 @@ type ProjectRow = {
   pills: Pill[]; pillars: Project['pillars']; partner_name: string | null; partner_people: string[]; cadence: Cadence[];
   workstreams: string[]; target_label: string | null; created_by: string | null; archived_at: string | null; archived_by: string | null;
   meet_every: MeetEvery | null; meet_day: number | null; meet_next: string | null; meet_last: string | null;
+  personal_for?: string | null;
+  accent?: Project['accent'];
+  notes_first?: boolean;
 };
 
 const toProject = (r: ProjectRow): Project => ({
@@ -45,6 +51,9 @@ const toProject = (r: ProjectRow): Project => ({
   workstreams: r.workstreams ?? [], targetLabel: r.target_label, createdBy: r.created_by,
   archivedAt: r.archived_at, archivedBy: r.archived_by,
   meetEvery: r.meet_every ?? null, meetDay: r.meet_day ?? null, meetNext: r.meet_next ?? null, meetLast: r.meet_last ?? null,
+  personalFor: r.personal_for ?? null,
+  accent: r.accent ?? null,
+  notesFirst: !!r.notes_first,
 });
 
 export async function teamProjects(db: Tx, teamId: string): Promise<Project[]> {

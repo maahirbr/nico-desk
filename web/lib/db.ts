@@ -110,6 +110,10 @@ export async function upgrade(db: Db) {
   await db.exec(UPDATE_ASKS_UPGRADE);
   // 3 Nov: removing someone with a reason, and the work handed over.
   await db.exec(HANDOVER_UPGRADE);
+  // 11 Nov: a Personal project per person, and its notes.
+  await db.exec(PERSONAL_UPGRADE);
+  await notesToPages(db);
+  await checklistsInPages(db);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
@@ -211,6 +215,35 @@ DO $$ BEGIN
     ALTER TABLE tasks ADD CONSTRAINT tasks_has_owner CHECK (owner_id IS NOT NULL OR partner_owner IS NOT NULL);
   END IF;
 END $$;`;
+
+// Idempotent: a project that is one person's own (Personal), its running notes page and attached files (RLS on). The same SQL as lib/schema.ts.
+export const PERSONAL_UPGRADE = `
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS personal_for text REFERENCES people(id);
+CREATE UNIQUE INDEX IF NOT EXISTS projects_personal ON projects (personal_for) WHERE personal_for IS NOT NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS accent text CHECK (accent IN ('orange','sage','indigo','sand'));
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS notes_first boolean NOT NULL DEFAULT false;
+CREATE TABLE IF NOT EXISTS personal_pages (
+  person_id   text PRIMARY KEY REFERENCES people(id),
+  team_id     text NOT NULL REFERENCES teams(id),
+  doc         jsonb NOT NULL,                         -- the running page, as the editor's document
+  prev_doc    jsonb,                                  -- the page as it stood the day before, to restore
+  prev_at     timestamptz,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CHECK (octet_length(doc::text) <= 400000)
+);
+ALTER TABLE personal_pages ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS personal_files (
+  id          text PRIMARY KEY,
+  team_id     text NOT NULL REFERENCES teams(id),
+  person_id   text NOT NULL REFERENCES people(id),
+  name        text NOT NULL CHECK (char_length(name) BETWEEN 1 AND 200),
+  mime        text NOT NULL,
+  bytes       bytea NOT NULL,
+  size        integer NOT NULL CHECK (size <= 5242880),
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS personal_files_person ON personal_files (person_id, created_at);
+ALTER TABLE personal_files ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: why and when someone was removed, and the handovers table (RLS on). The same SQL as lib/schema.ts.
 export const HANDOVER_UPGRADE = `
@@ -458,4 +491,45 @@ export function db(): Promise<Db> {
     });
   }
   return g.__ndDb;
+}
+
+// Notes kept as separate cards (local builds of 11 Nov only, never on the hosted database) move onto the one running
+// page, newest first, a line between each, and the old table goes. Idempotent: does nothing once it is gone.
+async function notesToPages(db: Db) {
+  const { rows: [t] } = await db.query<{ n: string | null }>(`SELECT to_regclass('public.personal_notes')::text AS n`);
+  if (!t?.n) return;
+  const { rows } = await db.query<{ person_id: string; team_id: string; body: string }>(
+    `SELECT person_id, team_id, body FROM personal_notes WHERE deleted_at IS NULL ORDER BY person_id, pinned DESC, updated_at DESC`).catch(() => ({ rows: [] as { person_id: string; team_id: string; body: string }[] }));
+  const by = new Map<string, { team: string; bodies: string[] }>();
+  for (const r of rows) (by.get(r.person_id) ?? by.set(r.person_id, { team: r.team_id, bodies: [] }).get(r.person_id)!).bodies.push(r.body);
+  for (const [person, v] of by) {
+    const content = v.bodies.flatMap((b, i) => [...(i ? [{ type: 'horizontalRule' }] : []), ...checklists(b.split('\n').map((l) => (l.trim() ? { type: 'paragraph', content: [{ type: 'text', text: l }] } : { type: 'paragraph' })))]);
+    await db.query(`INSERT INTO personal_pages (person_id, team_id, doc) VALUES ($1,$2,$3::jsonb) ON CONFLICT (person_id) DO NOTHING`,
+      [person, v.team, JSON.stringify({ type: 'doc', content })]);
+  }
+  await db.exec(`DROP TABLE personal_notes`);
+}
+
+type PNode = { type: string; content?: PNode[]; text?: string; attrs?: Record<string, unknown> };
+// Lines written as "[ ] thing" or "[x] thing" become a real checklist, each run of them one list.
+function checklists(nodes: PNode[]): PNode[] {
+  const out: PNode[] = [];
+  for (const n of nodes) {
+    const t = n.type === 'paragraph' && n.content?.length === 1 ? n.content[0].text ?? '' : '';
+    const m = t.match(/^\s*\[( |x|X)\]\s?(.*)$/);
+    if (!m) { out.push(n); continue; }
+    const item: PNode = { type: 'taskItem', attrs: { checked: m[1] !== ' ' }, content: [{ type: 'paragraph', ...(m[2] ? { content: [{ type: 'text', text: m[2] }] } : {}) }] };
+    const last = out[out.length - 1];
+    if (last?.type === 'taskList') last.content!.push(item); else out.push({ type: 'taskList', content: [item] });
+  }
+  return out;
+}
+
+// Pages already moved over before checklists were read (local builds of 11 Nov): their "[ ] " lines become tick boxes.
+async function checklistsInPages(db: Db) {
+  const { rows } = await db.query<{ person_id: string; doc: PNode }>(`SELECT person_id, doc FROM personal_pages WHERE doc::text ~ '"text": ?"\\s*\\[( |x|X)\\]'`);
+  for (const r of rows) {
+    const doc = { ...r.doc, content: checklists(r.doc.content ?? []) };
+    await db.query(`UPDATE personal_pages SET doc = $2::jsonb WHERE person_id = $1`, [r.person_id, JSON.stringify(doc)]);
+  }
 }

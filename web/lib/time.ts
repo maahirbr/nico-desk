@@ -79,3 +79,8 @@ const STAMP = new Intl.DateTimeFormat('en-GB', {
 export function fmtStamp(at: string): string {
   return STAMP.format(new Date(at)).replace('Sept', 'Sep');
 }
+
+// "Wed, 11 Nov": the dated heading on a running notes page (11 Nov). The day is read as a calendar day.
+export function dayHeading(d: string): string {
+  return `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(`${d}T00:00:00Z`).getUTCDay()]}, ${fmtDate(d)}`;
+}

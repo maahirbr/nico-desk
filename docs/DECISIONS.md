@@ -1591,3 +1591,22 @@ partner on a partner project (a plan board, or a task board with a partner). "Br
 the team meets" are no longer setup steps. The date step opens Settings and ticks once the project's date is set, as
 At risk and Late are measured against it. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-13 · Opus 5.5 · Personal 🔒: my own tasks and running notes
+
+From a teammate's idea (approved by them on 11 Nov), shaped by the PM over 11–13 Nov. Every person gets a Personal 🔒
+project, made the first time they open the app, first on Projects. Only they see it: teammates, leads and admins do not,
+View as hides it (lib/sight.ts `hidden`), and its tasks stay out of every team list and count (Team, Ledger, Reminders,
+Updates, Search, Activity). Its tasks show on the person's Home, marked "Personal 🔒".
+- Tasks: the five tiles (Open, In progress, At risk, Late, Done), a Task / Due date / Status table with ✎ and ✕, "+ Add
+  task" (name and details in one box, and a date), Done folded underneath (untick to reopen, no reason needed for one's
+  own Personal task). Only the person owns them; a task moves in only if they made it and own it; ✕ drops it.
+- Running notes: one page, auto-saved, in a rich editor (TipTap 3.32.0, new dependency): bold, italic, underline, text
+  colour, highlight, alignment, indent, checklist / bulleted / numbered lists, a divider, pictures and files (kept in
+  the database, 5 MB each, served only to their owner), "+ Today", "+ Meeting" and "→ Task". Unsafe content is dropped
+  on save (lib/notes.ts cleanDoc).
+- Settings: a description, an accent colour (Rust, Sage, Indigo) and Tasks or Notes on top. The title stays "Personal 🔒".
+Schema: projects.personal_for, accent, notes_first; personal_pages and personal_files (RLS on, fenced by team), all in
+`upgrade()`. **The hosted database needs `npm run db:upgrade` before this is deployed**: every page now looks up the
+person's Personal project. Private means private in the app; whoever runs the database can technically read it.
+Rollback: git revert the commit; the new columns and tables can stay (nothing else reads them).

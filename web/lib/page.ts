@@ -1,15 +1,19 @@
 import { db, scoped } from './db';
 import { isLeadOrAdmin } from './roles';
 import { cookies } from 'next/headers';
-import { listNotices, listPeople, listProjects, seenMarks, updatesFor, updatesView } from './service';
+import { ensurePersonalProject, listNotices, listPeople, listProjects, seenMarks, updatesFor, updatesView } from './service';
 import { seenCookieName } from './updates';
 import type { Me } from './auth';
 import { seesProject } from './sight';
 import { sightFor } from './visibility';
 
+export const PERSONAL_NAME = 'Personal 🔒';
+
 // Lookups every page needs: names by id and project names by id.
 export async function lookups(me: Me) {
   const d = scoped(await db(), me.team.id);
+  // Everyone has a Personal project from their first visit (11 Nov). Not made while an admin views as someone.
+  if (!me.viewingAs) await ensurePersonalProject(d, me.team.id, me.person.id);
   const [people, all, sight] = await Promise.all([listPeople(d, me.team.id), listProjects(d, me.team.id), sightFor(d, me)]);
   // Project names and pickers carry only the projects this viewer may see (lib/sight.ts).
   const projects = all.filter((p) => seesProject(sight, p.id));
@@ -20,7 +24,8 @@ export async function lookups(me: Me) {
     projects,
     // A removed person keeps their name on past work, marked "(inactive)" (3 Nov).
     names: Object.fromEntries(people.map((p) => [p.id, p.active ? p.displayName : `${p.displayName} (inactive)`])) as Record<string, string>,
-    projectNames: Object.fromEntries(projects.map((p) => [p.id, p.name])) as Record<string, string>,
+    // A Personal project is stored under a unique name; it shows as "Personal 🔒".
+    projectNames: Object.fromEntries(projects.map((p) => [p.id, p.personalFor ? PERSONAL_NAME : p.name])) as Record<string, string>,
     activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),

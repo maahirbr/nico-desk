@@ -75,7 +75,10 @@ async function interactionsFor(db: Db, ids: string[], since: string): Promise<Ma
   const day = `(at AT TIME ZONE 'Asia/Kolkata')::date >= $2`;
   const { rows: ev } = await db.query<{ actor_id: string; entity_id: string; at: string | Date; fields: string[] }>(
     `SELECT actor_id, entity_id, at, array_agg(field) AS fields FROM events
-      WHERE actor_id = ANY($1) AND origin IN ('app','claude') AND ${day} GROUP BY actor_id, entity_id, at`, [ids, since]);
+      WHERE actor_id = ANY($1) AND origin IN ('app','claude') AND ${day}
+        -- Personal tasks (11 Nov) are nobody else's business: not counted here.
+        AND entity_id NOT IN (SELECT t.id FROM tasks t JOIN projects pr ON pr.id = t.project_id WHERE pr.personal_for IS NOT NULL)
+      GROUP BY actor_id, entity_id, at`, [ids, since]);
   const batches = new Set<string>(); // person|minute: tasks created together count once
   for (const e of ev) {
     const k = kindOf(new Set(e.fields));

@@ -20,14 +20,25 @@ export default async function Projects() {
   const [projects, counts] = await Promise.all([seenProjects(d, me, sight), projectCounts(d, me.team.id)]);
   const t = today();
   const bySoonest = (a: (typeof projects)[number], b: (typeof projects)[number]) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999');
-  const live = projects.filter((p) => !p.archivedAt).sort(bySoonest);
-  const archived = projects.filter((p) => p.archivedAt).sort(bySoonest); // closed projects: out of the main list, still readable
+  // My Personal project first (11 Nov), then the rest by soonest date.
+  const live = [...projects.filter((p) => p.personalFor), ...projects.filter((p) => !p.archivedAt && !p.personalFor).sort(bySoonest)];
+  const archived = projects.filter((p) => p.archivedAt && !p.personalFor).sort(bySoonest); // closed projects: out of the main list, still readable
   const members = Object.fromEntries(await Promise.all(projects.map(async (p) => [p.id, await projectMembers(d, p.id)] as const)));
   const STATUS: Record<string, { word: string; tone: string; help: HelpTerm }> = {
     on_track: { word: 'On track', tone: 'ok', help: 'project_on_track' }, at_risk: { word: 'At risk', tone: 'risk', help: 'project_at_risk' }, off_track: { word: 'Off track', tone: 'late', help: 'project_off_track' },
   };
   const card = (p: (typeof projects)[number]) => {
     const c = counts[p.id] ?? { open: 0, overdue: 0, done: 0 };
+    // Personal: just the counts and who sees it. No status, people or date.
+    if (p.personalFor) return (
+      <Link key={p.id} href={`/projects/${p.id}`} className="pcard pcard-personal">
+        <div className="pcard-top"><h2 className="pcard-name">{p.name}</h2></div>
+        <p className="pcard-goal">Your own tasks and notes. Only you can see them.</p>
+        <div className="pcard-progress">
+          <span className="small"><b>{c.open}</b> open{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>
+        </div>
+      </Link>
+    );
     const total = c.open + c.done;
     const cd = p.launchOn ? countdown(t, p.launchOn) : null;
     const team = [...new Set([p.ownerId, p.leadId, ...(members[p.id] ?? []).map((m) => m.personId)])];
@@ -67,7 +78,7 @@ export default async function Projects() {
   return (
     <div className="calm">
       <header className="page-head">
-        <div><h1>Projects</h1><p className="summary">{live.length} project{live.length === 1 ? '' : 's'} · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
+        <div><h1>Projects</h1><p className="summary">{live.filter((p) => !p.personalFor).length} project{live.filter((p) => !p.personalFor).length === 1 ? '' : 's'} · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
         {!readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
       {live.length === 0 ? (

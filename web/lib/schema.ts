@@ -111,8 +111,12 @@ CREATE TABLE projects (
   meet_day       smallint CHECK (meet_day BETWEEN 1 AND 7),  -- ISO weekday, 1 Monday to 7 Sunday
   meet_next      date,
   meet_last      date,
+  personal_for   text REFERENCES people(id),  -- 11 Nov: this person's own Personal project, seen by them alone (lib/sight.ts)
+  accent         text CHECK (accent IN ('orange','sage','indigo','sand')),  -- 13 Nov: a Personal page's own colour
+  notes_first    boolean NOT NULL DEFAULT false,  -- 13 Nov: a Personal page shows its notes above its tasks
   UNIQUE (team_id, name)
 );
+CREATE UNIQUE INDEX projects_personal ON projects (personal_for) WHERE personal_for IS NOT NULL;
 
 CREATE TABLE tasks (
   id               text PRIMARY KEY,
@@ -376,6 +380,31 @@ CREATE TABLE handovers (
 CREATE INDEX handovers_open ON handovers (to_id) WHERE settled_at IS NULL;
 ALTER TABLE handovers ENABLE ROW LEVEL SECURITY;
 
+-- 11 Nov: someone's running notes page in their Personal project, and the pictures and files they attach to it. Only
+-- that person reads or writes them (lib/notes.ts).
+CREATE TABLE personal_pages (
+  person_id   text PRIMARY KEY REFERENCES people(id),
+  team_id     text NOT NULL REFERENCES teams(id),
+  doc         jsonb NOT NULL,                         -- the running page, as the editor's document
+  prev_doc    jsonb,                                  -- the page as it stood the day before, to restore
+  prev_at     timestamptz,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CHECK (octet_length(doc::text) <= 400000)
+);
+ALTER TABLE personal_pages ENABLE ROW LEVEL SECURITY;
+CREATE TABLE personal_files (
+  id          text PRIMARY KEY,
+  team_id     text NOT NULL REFERENCES teams(id),
+  person_id   text NOT NULL REFERENCES people(id),
+  name        text NOT NULL CHECK (char_length(name) BETWEEN 1 AND 200),
+  mime        text NOT NULL,
+  bytes       bytea NOT NULL,
+  size        integer NOT NULL CHECK (size <= 5242880),
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX personal_files_person ON personal_files (person_id, created_at);
+ALTER TABLE personal_files ENABLE ROW LEVEL SECURITY;
+
 -- Links on a task (Docs, Sheets, Figma, decks, any web page). The task keeps its own version; a link change is logged as an event.
 CREATE TABLE task_links (
   id          text PRIMARY KEY,
@@ -615,6 +644,8 @@ export const FENCE: Record<string, string | [string, string]> = {
   task_links: inTask('task_id'),
   update_asks: inTask('task_id'),
   handovers: `team_id = ${TEAM}`,
+  personal_pages: `team_id = ${TEAM}`,
+  personal_files: `team_id = ${TEAM}`,
   events: kindOf('entity_type', 'entity_id'),
   comments: kindOf('subject_kind', 'subject_id'),
   comment_refs: `comment_id IN (SELECT id FROM comments)`,

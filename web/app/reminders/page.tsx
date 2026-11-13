@@ -58,7 +58,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
         <label className="f" style={{ flex: '0 1 240px' }}><span>Project</span>
           <Select name="project" aria-label="Project" defaultValue={projectId ?? ''}>
             <option value="">All projects</option>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {projects.filter((p) => !p.personalFor).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </Select>
         </label>
         <button className="btn ghost">Apply</button>

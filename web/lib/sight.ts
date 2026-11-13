@@ -5,10 +5,20 @@ import type { Task } from './derive';
 // else, leads included, sees the projects they own, lead, are on or may view (project_viewers), and every task in
 // those. Outside them they see a task only when they own it, it waits on them, or, with no project, they created it.
 // people.restricted is no longer read. Callers pass me.person, so View as shows exactly what that person sees.
-export type Sight = { all: true } | { all: false; personId: string; projects: Set<string> };
+// hidden (11 Nov): Personal projects (projects.personal_for) this sight may not see, whoever it is, admins included:
+// everyone's but the person's own, and their own too while an admin views as them (viewing).
+export type Sight = { all: true; hidden?: Set<string> } | { all: false; personId: string; projects: Set<string>; hidden?: Set<string> };
 export const SEE_ALL: Sight = { all: true };
 
-export async function sightOf(db: Tx, teamId: string, personId: string): Promise<Sight> {
+export async function sightOf(db: Tx, teamId: string, personId: string, viewing = false): Promise<Sight> {
+  const { rows: own } = await db.query<{ id: string; personal_for: string }>(
+    `SELECT id, personal_for FROM projects WHERE team_id = $1 AND personal_for IS NOT NULL`, [teamId]);
+  const hidden = new Set(own.filter((r) => viewing || r.personal_for !== personId).map((r) => r.id));
+  const s = await sightBase(db, teamId, personId);
+  return hidden.size ? { ...s, hidden } : s;
+}
+
+async function sightBase(db: Tx, teamId: string, personId: string): Promise<Sight> {
   const { rows } = await db.query<{ app_role: string }>(
     `SELECT m.app_role FROM people p JOIN team_members m ON m.person_id = p.id
      WHERE m.team_id = $1 AND p.id = $2 AND p.active`, [teamId, personId]);
@@ -23,11 +33,13 @@ export async function sightOf(db: Tx, teamId: string, personId: string): Promise
   return { all: false, personId, projects: new Set(ps.map((r) => r.id)) };
 }
 
-export const seesProject = (s: Sight, id: string | null | undefined): boolean => s.all || (!!id && s.projects.has(id));
+export const seesProject = (s: Sight, id: string | null | undefined): boolean =>
+  !(id && s.hidden?.has(id)) && (s.all || (!!id && s.projects.has(id)));
 
 export type TaskSightFields = Pick<Task, 'projectId' | 'ownerId' | 'createdBy'> & { blocked: { onId: string | null } | null };
 
 export function seesTask(s: Sight, t: TaskSightFields): boolean {
+  if (t.projectId && s.hidden?.has(t.projectId)) return false; // someone's Personal project
   if (s.all || t.ownerId === s.personId || t.blocked?.onId === s.personId) return true;
   return t.projectId ? s.projects.has(t.projectId) : t.createdBy === s.personId;
 }

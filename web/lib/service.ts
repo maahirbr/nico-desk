@@ -129,9 +129,9 @@ async function activeMember(db: Tx, teamId: string, personId: string, field: str
   if (roles.size === 0) throw bad('owner_not_on_roster', 'That person is not an active member of this team.', field);
 }
 
-export async function listProjects(db: Tx, teamId: string): Promise<{ id: string; name: string; archived: boolean }[]> {
-  const { rows } = await db.query<{ id: string; name: string; archived: boolean }>(
-    `SELECT id, name, archived_at IS NOT NULL AS archived FROM projects WHERE team_id = $1 ORDER BY name`,
+export async function listProjects(db: Tx, teamId: string): Promise<{ id: string; name: string; archived: boolean; personalFor: string | null }[]> {
+  const { rows } = await db.query<{ id: string; name: string; archived: boolean; personalFor: string | null }>(
+    `SELECT id, name, archived_at IS NOT NULL AS archived, personal_for AS "personalFor" FROM projects WHERE team_id = $1 ORDER BY name`,
     [teamId],
   );
   return rows;
@@ -181,8 +181,37 @@ export async function getTask(db: Tx, id: string, today = todayIst()): Promise<T
 
 // Tasks with a Nicobar owner. A task only a partner owns shows on its project page (projectTasks) and in the ledger
 // (withPartnerOnly), nowhere else (the PM's call, 1 Nov).
+// Personal tasks (in someone's own Personal project, 11 Nov) are never team work: they stay out of every team list and
+// count (Team, Ledger, Reminders, Updates, Search). Their owner reads them through myTasks and the project page.
+const NOT_PERSONAL = `(project_id IS NULL OR project_id NOT IN (SELECT id FROM projects WHERE personal_for IS NOT NULL))`;
 export async function teamTasks(db: Tx, teamId: string, today = todayIst(), withPartnerOnly = false): Promise<Task[]> {
-  return loadTasks(db, withPartnerOnly ? 'team_id = $1' : 'team_id = $1 AND owner_id IS NOT NULL', [teamId], today);
+  return loadTasks(db, `${withPartnerOnly ? 'team_id = $1' : 'team_id = $1 AND owner_id IS NOT NULL'} AND ${NOT_PERSONAL}`, [teamId], today);
+}
+
+// My Personal project's settings (13 Nov): a description (emoji welcome) and the page's accent colour. The name stays
+// "Personal 🔒", as Home shows it.
+export async function updatePersonal(db: Db, meId: string, teamId: string, input: { description?: string | null; accent?: 'orange' | 'sage' | 'indigo' | null; notesFirst?: boolean }): Promise<{ ok: true }> {
+  const id = await ensurePersonalProject(db, teamId, meId);
+  const d = input.description?.trim() ?? null;
+  if (d && d.length > 200) throw bad('invalid_body', 'A description holds 200 characters.', 'description');
+  if (input.description !== undefined) await db.query(`UPDATE projects SET intro = $2 WHERE id = $1 AND personal_for = $3`, [id, d || null, meId]);
+  if (input.accent !== undefined) await db.query(`UPDATE projects SET accent = $2 WHERE id = $1 AND personal_for = $3`, [id, input.accent, meId]);
+  if (input.notesFirst !== undefined) await db.query(`UPDATE projects SET notes_first = $2 WHERE id = $1 AND personal_for = $3`, [id, input.notesFirst, meId]);
+  return { ok: true };
+}
+
+// This person's own Personal project, made the first time it is needed (11 Nov). Its stored name is unique on the team
+// (names are); the app shows it as "Personal".
+export async function ensurePersonalProject(db: Tx, teamId: string, personId: string): Promise<string> {
+  const { rows } = await db.query<{ id: string }>(`SELECT id FROM projects WHERE team_id = $1 AND personal_for = $2`, [teamId, personId]);
+  if (rows[0]) return rows[0].id;
+  const id = newId('prj');
+  await db.query(
+    `INSERT INTO projects (id, team_id, name, department, owner_id, lead_id, status, status_at, kind, personal_for)
+     SELECT $1, $2, $3, p.department, p.id, p.id, 'on_track', now(), 'tasks', p.id FROM people p WHERE p.id = $4
+     ON CONFLICT DO NOTHING`, [id, teamId, `Personal · ${personId}`, personId]);
+  const { rows: again } = await db.query<{ id: string }>(`SELECT id FROM projects WHERE team_id = $1 AND personal_for = $2`, [teamId, personId]);
+  return again[0]?.id ?? id;
 }
 
 // A partner owner must be one of the partner project's people.
@@ -318,8 +347,12 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
     if (input.ownerId) await activeMember(tx, input.teamId, input.ownerId, 'ownerId');
     if (partnerOwner) await checkPartnerOwner(tx, input.projectId ?? null, partnerOwner);
     if (input.projectId) {
-      const { rows } = await tx.query<{ archived_at: string | null }>(`SELECT archived_at FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, input.teamId]);
+      const { rows } = await tx.query<{ archived_at: string | null; personal_for: string | null }>(`SELECT archived_at, personal_for FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, input.teamId]);
       if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
+      // Personal (11 Nov): only its person adds to it, and only for themselves.
+      if (rows[0].personal_for && (rows[0].personal_for !== meId || input.ownerId !== meId || partnerOwner)) {
+        throw bad('invalid_body', 'A Personal task is yours alone. Put it in a team project to give it to someone.', 'projectId');
+      }
       if (rows[0].archived_at) throw bad('project_archived', 'This project is archived. Restore it to add tasks.', 'projectId');
       if (input.ownerId) await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
@@ -368,6 +401,15 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
       return { set };
     },
     async (tx, c) => {
+      // Personal (11 Nov): a task in it stays its person's; one comes in only when they made it and own it.
+      const into = input.projectId !== undefined ? input.projectId : c.row.project_id;
+      if (into) {
+        const { rows: [pp] } = await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [into]);
+        const owner = input.ownerId !== undefined ? input.ownerId || null : c.row.owner_id;
+        if (pp?.personal_for && (pp.personal_for !== meId || owner !== meId || c.row.created_by !== meId)) {
+          throw bad('invalid_body', 'Only a task you made and own can go in your Personal project, and it stays yours there.', 'projectId');
+        }
+      }
       if (input.ownerId !== undefined && (input.ownerId || null) !== c.row.owner_id) {
         if (input.ownerId) await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
         if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
@@ -465,14 +507,17 @@ export async function dropOpenTasks(tx: Tx, meId: string, projectId: string, rea
 }
 
 export async function reopenTask(db: Db, meId: string, id: string, input: { version: number; reason: string }): Promise<Task> {
-  const reason = needReason(input.reason);
   await db.transaction(async (tx) => {
     const { rows } = await tx.query<TaskRow>(`SELECT * FROM tasks WHERE id = $1 FOR UPDATE`, [id]);
     const row = rows[0];
     if (!row) throw notFound('No such task.');
     const roles = await rolesIn(tx, row.team_id, meId);
     if (row.origin === 'sheet') throw new ApiError(403, 'read_only_mirror', 'This task comes from a Sheet. Edit it there.');
-    if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can reopen a task.');
+    // My own Personal task (13 Nov): I reopen it myself, no reason needed. Anything else: a lead, with a reason.
+    const { rows: [pp] } = row.project_id ? await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [row.project_id]) : { rows: [] as { personal_for: string | null }[] };
+    const personal = !!pp?.personal_for && pp.personal_for === meId && row.owner_id === meId;
+    if (!personal && !isLeadOrAdmin(roles)) throw forbidden('Only a lead can reopen a task.');
+    const reason = personal ? (input.reason?.trim() || 'Reopened') : needReason(input.reason);
     if (row.version !== input.version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
     if (row.status_category === 'open') throw bad('invalid_body', 'The task is already open.');
     if (row.project_id) {
@@ -613,8 +658,12 @@ const applyFilters = (ts: Task[], f: Filters) =>
   ts.filter((t) => (!f.personId || t.ownerId === f.personId) && (!f.projectId || t.projectId === f.projectId));
 
 // FR-29
-export async function myTasks(db: Db, meId: string, teamId: string, today = todayIst()) {
-  const all = await teamTasks(db, teamId, today);
+// withPersonal: also this person's Personal tasks (11 Nov). Off while an admin views as them.
+export async function myTasks(db: Db, meId: string, teamId: string, today = todayIst(), withPersonal = true) {
+  const team = await teamTasks(db, teamId, today);
+  const all = withPersonal
+    ? [...team, ...await loadTasks(db, `team_id = $1 AND project_id IN (SELECT id FROM projects WHERE personal_for = $2)`, [teamId, meId], today)]
+    : team;
   const { rows } = await db.query<{ task_id: string }>(
     `SELECT DISTINCT task_id FROM notices WHERE person_id = $1 AND kind = 'assigned' AND read_at IS NULL`,
     [meId],

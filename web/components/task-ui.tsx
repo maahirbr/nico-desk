@@ -195,8 +195,11 @@ export async function api(path: string, method: string, body?: unknown) {
 
 // onStatus, when given, turns the status word into a menu. One-click moves happen in place;
 // blocked, dropped, going back to not started, a date move and a new owner open the side panel.
-export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void;
+// onReopen: a finished task shows its tick, and unticking it opens it again (Personal, 13 Nov).
+// onEdit: a ✎ at the row's end, as on a project's table, that opens the task to change it (Personal, 13 Nov).
+// onDelete: a ✕ beside it; the first press asks (it turns red), the second removes the task.
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void;
 }) {
   const desc = t.description;
   const router = useRouter();
@@ -222,7 +225,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
     </TaskLink>
   );
   return (
-    <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}${readOnly ? ' no-check' : ''}`}>
+    <div className={`trow${closed || ticked ? ' is-closed' : ''}${arrive ? ' arrive' : ''}${readOnly ? ' no-check' : ''}${onEdit !== undefined ? ' has-acts' : ''}`}>
       {!readOnly && <span className="trow-check">
         {!closed && canTick && (
           <input type="checkbox" aria-label={`Mark “${t.title}” done`} checked={ticked} disabled={ticked}
@@ -233,6 +236,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
             }} />
         )}
         {!closed && canTick && <CheckTick />}
+        {closed && onReopen && <><input type="checkbox" checked aria-label={`Reopen “${t.title}”`} onChange={onReopen} /><CheckTick /></>}
       </span>}
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
       {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar id={t.ownerId} name={owner} />{owner.split(' ')[0]}</PersonLink>}
@@ -259,6 +263,10 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
         ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
+      {onEdit !== undefined && <span className="trow-acts">{!readOnly && <>
+        <button type="button" className="row-btn" title="Edit" aria-label={`Edit “${t.title}”`} onClick={onEdit}>✎</button>
+        {onDelete && <DeleteButton title={t.title} onDelete={onDelete} />}
+      </>}</span>}
     </div>
   );
 }
@@ -889,5 +897,15 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       {err && <p className="err" role="alert">{err}</p>}
       <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn" disabled={busy}>{busy ? 'Adding…' : extra.length ? `Add ${extra.length + 1} tasks` : 'Add task'}</button></div>
     </form>
+  );
+}
+
+// A ✕ that asks once: the first press turns it red with "Delete?", a second within a few seconds deletes.
+function DeleteButton({ title, onDelete }: { title: string; onDelete: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => { if (!armed) return; const t = setTimeout(() => setArmed(false), 3000); return () => clearTimeout(t); }, [armed]);
+  return (
+    <button type="button" className={`row-btn del${armed ? ' armed' : ''}`} title={armed ? 'Press again to delete' : 'Delete'} aria-label={armed ? `Delete “${title}” now` : `Delete “${title}”`}
+      onClick={() => (armed ? onDelete() : setArmed(true))}>{armed ? 'Delete?' : '✕'}</button>
   );
 }

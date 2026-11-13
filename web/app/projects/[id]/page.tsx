@@ -16,6 +16,10 @@ import { ProjectHeader } from '@/components/ProjectHeader';
 import { ProjectHealth } from '@/components/ProjectHealth';
 import { SetupList } from '@/components/SetupList';
 import { TaskBoard } from '@/components/TaskBoard';
+import { PersonalNotes } from '@/components/PersonalNotes';
+import { PersonalTasks } from '@/components/PersonalTasks';
+import { PersonalHeader } from '@/components/PersonalHeader';
+import { myPage } from '@/lib/notes';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +36,26 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   }
   if (p.teamId !== me.team.id) notFound();
   const active = people.filter((x) => x.active).map((x) => ({ id: x.id, name: x.displayName, role: x.role, department: x.department }));
+  // My Personal project (11 Nov): only I reach this page (lib/sight.ts). One view: my tasks on top, my running notes below.
+  if (p.personalFor) {
+    const [tasks, page] = await Promise.all([projectTasks(d, p.id), myPage(d, me)]);
+    return (
+      <>
+        <Link className="crumb" href="/projects">← All projects</Link>
+        <ReadOnlyProvider readOnly={readOnly}>
+        <div className={`personal-page accent-${p.accent ?? 'orange'}`}>
+          <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} />
+          {/* Tasks on top unless Settings says notes first (13 Nov). */}
+          {(() => {
+            const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} projectNames={projectNames} />;
+            const n = page ? <PersonalNotes key="n" page={page} projectId={p.id} meId={me.person.id} teamId={me.team.id} today={today()} /> : null;
+            return p.notesFirst ? <>{n}{t}</> : <>{t}{n}</>;
+          })()}
+        </div>
+        </ReadOnlyProvider>
+      </>
+    );
+  }
   const opts = active.map((x) => ({ id: x.id, name: x.name }));
   const [members, viewers] = await Promise.all([projectMembers(d, p.id), projectViewers(d, p.id)]);
   const now = today();
