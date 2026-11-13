@@ -4,6 +4,7 @@ import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { teamAdoption } from '../lib/activity';
 import { addFile, getFile, myPage, restorePage, savePage } from '../lib/notes';
+import { myProjects } from '../lib/plan';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
 import { seesProject, seesTask, sightOf } from '../lib/sight';
@@ -148,5 +149,14 @@ describe('Personal work stays private beyond the lists', () => {
     const after = (await teamAdoption(db, TEAM_ID)).find((r) => r.id === ME)!;
     expect(after.changes7).toBe(before.changes7);
     expect(after.interactions.total).toBe(before.interactions.total);
+  });
+});
+
+describe('Your projects on Home', () => {
+  it('puts Personal first, by that name, with no part', async () => {
+    await s.ensurePersonalProject(db, TEAM_ID, 'per_cy');
+    const mine = await myProjects(db, TEAM_ID, 'per_cy');
+    expect(mine[0]).toMatchObject({ name: 'Personal', role: '' });
+    expect(mine.slice(1).every((p) => p.name !== 'Personal' && p.role)).toBe(true);
   });
 });

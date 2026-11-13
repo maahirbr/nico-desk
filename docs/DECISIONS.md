@@ -1651,4 +1651,12 @@ Three tests in `tests/personal.test.ts`; each fails without its fix. Known and l
 gets no working Personal project on the second team (the pilot has one team), uploaded files cannot be deleted, a
 notes page near the size limit fails to save without a message, and the stored name `Personal · <id>` shows in
 Search, the Ledger and Home's project list.
+
+## 2026-11-13 · Opus 5.5 · Personal shows as "Personal", first on Home
+
+A Personal project is stored as "Personal · <person id>", because project names are unique on a team. Some places read
+the stored name, so the PM saw "Personal · per_…" on Home and elsewhere. Now it shows as just "Personal" (the PM's call;
+the 🔒 is dropped from the name) wherever a project name is read: Home's Your projects, the project list, the person page,
+the activity log, handovers and Claude's project list. On Home it comes first and shows no part ("Owner and lead").
+Display only: nothing stored changes.
 Rollback: git revert the commit.

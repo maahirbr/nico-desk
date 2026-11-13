@@ -6,7 +6,7 @@ import { useReadOnly } from './readonly';
 import { Modal } from './task-ui';
 import { notify } from './toast';
 
-// The top of my Personal page (13 Nov): the title stays "Personal 🔒" (as Home shows it), my own description under it,
+// The top of my Personal page (13 Nov): the title stays "Personal" (as Home shows it), my own description under it,
 // and Settings, where I change that description (emoji welcome) and the page's accent colour.
 export type Accent = 'orange' | 'sage' | 'indigo';
 export const ACCENTS: { key: Accent; label: string }[] = [
@@ -32,7 +32,7 @@ export function PersonalHeader({ description, accent, notesFirst }: { descriptio
   return (
     <header className="page-head">
       <div>
-        <h1>Personal 🔒</h1>
+        <h1>Personal</h1>
         <p className="summary">{description || 'Only you can see this. Not your team, not admins.'}</p>
         {description && <p className="small dim">Only you can see this.</p>}
       </div>
