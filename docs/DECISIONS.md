@@ -1721,3 +1721,9 @@ Rollback: git revert the commit. The archive_asks table can stay; nothing else r
   Archive, so a long list needs fewer rows. The header is a grid: title and its line on the left, the buttons on the
   right, the rest full width. On a phone the buttons drop below, as before. CSS only.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Quick Add says "You can add 1 or more tasks"
+
+The PM's wording for the Quick Add hint: "Type or say it the way you'd tell someone. You can add 1 or more tasks, or paste
+a WhatsApp chat." (was "Add one task or a few"). Words only.
+Rollback: git revert the commit.
