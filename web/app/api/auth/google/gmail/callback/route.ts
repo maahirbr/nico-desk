@@ -3,7 +3,7 @@ import { db, scoped } from '@/lib/db';
 import { errorResponse, rateLimit } from '@/lib/http';
 import { exchangeGmailCode, GMAIL_CALLBACK_PATH, GMAIL_STATE_COOKIE, gmailSendEnabled, saveLink } from '@/lib/gmailSend';
 import { checkState } from '@/lib/meet';
-import { isLeadOrAdmin } from '@/lib/roles';
+import { mayOversee } from '@/lib/roles';
 
 function readCookie(req: Request, name: string): string {
   for (const part of (req.headers.get('cookie') ?? '').split(';')) {
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     const me = await currentMe();
     if (!me) return new Response(null, { status: 302, headers: { Location: `${url.origin}/signin` } });
     if (me.viewingAs) return back('viewing_as');
-    if (!isLeadOrAdmin(me.person.appRoles)) return back('not_allowed');
+    if (!mayOversee(me.person.appRoles)) return back('not_allowed');
     if (url.searchParams.get('error')) return back('cancelled');
     const state = url.searchParams.get('state') ?? '';
     const code = url.searchParams.get('code') ?? '';

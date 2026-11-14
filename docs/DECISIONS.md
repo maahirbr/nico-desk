@@ -1770,3 +1770,19 @@ On task rows (Home, Team, Personal), "pushed 2×" now sits under the date, not b
 one line each: "First given 5 Oct", "Pushed to 12 Oct: why", "Then pushed to 16 Oct: why" (`task-ui.tsx pushHistory`,
 through WhenTip, half a second). Phones have no hover; the task panel shows the latest push.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Leadership replaces the team Lead role
+
+The PM's call: the team "Lead" role did not make sense any more, now that a project's owner and lead run their own
+project. It is retired. In its place, Leadership: oversight and follow-up, with no extra power over tasks or projects.
+- Leadership may: draft and send reminders to anyone on the team (the drafts cover every team task, Personal left out,
+  even on projects they cannot open), read Activity, and connect and use the team's meeting-tool keys (Granola, Fireflies,
+  Fathom) and Gmail sending. `lib/roles.ts mayOversee`.
+- Leadership does not see every project (only what they own, lead, are on or may view), and has no lead power over
+  tasks (`isLeadOrAdmin` stays lead or admin). Admins keep everything.
+- The Roster offers Member, Leadership or Admin; the API no longer accepts 'lead'. The database allows 'leadership'
+  (upgrade step) and still reads 'lead' so nothing breaks before the conversion.
+- Everyone who was a Lead becomes a Member: `npm run db:leads-to-members` lists them, `-- --apply` removes the lead
+  rows (run once on the hosted database, after db:upgrade). Admins stay admins. The PM gives Leadership after go-live.
+- Project owners and leads are unchanged.
+Rollback: git revert the commit; re-add the listed people's lead rows (the script prints them).

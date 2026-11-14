@@ -69,7 +69,7 @@ export function connectionStatus(): Record<Provider, ConnectionState> {
 // The environment wins over the key file (production keys live in env vars).
 function keyFor(p: Provider): string {
   const k = envKey(p) ?? read()[p]?.key;
-  if (!k) throw bad('not_connected', `${LABEL[p]} is not connected. A lead can connect it from Import minutes.`);
+  if (!k) throw bad('not_connected', `${LABEL[p]} is not connected. Leadership or an admin can connect it from Connections.`);
   return k;
 }
 

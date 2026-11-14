@@ -1,3 +1,4 @@
+import { mayOversee } from '@/lib/roles';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -26,13 +27,16 @@ const GMAIL_SAID: Record<string, string> = {
   google: 'Gmail was not connected: Google returned an error. Try again in a moment.',
   email: 'Gmail was not connected: Google did not confirm the address. Try again.',
   viewing_as: 'Gmail cannot be connected while you view as someone else.',
-  not_allowed: 'Only a lead can connect Gmail.',
+  not_allowed: 'Only leadership or an admin can connect Gmail for reminders.',
 };
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
-  const { d, sight, isLead, isAdmin, names } = await lookups(me);
-  if (!isLead && !isAdmin) return (<><h1>Reminders</h1><p className="lede">Only a lead drafts reminders.</p></>);
+  const { d, sight, names } = await lookups(me);
+  if (!mayOversee(me.person.appRoles)) return (<><h1>Reminders</h1><p className="lede">Only leadership or an admin drafts reminders.</p></>);
+  // Leadership reminds anyone (15 Nov, the PM's call): the drafts cover every team task, even on projects they cannot
+  // open. They still open only their own projects; Personal tasks stay out (sight.hidden).
+  const remindSight = me.person.appRoles.includes('leadership') ? { all: true as const, hidden: sight.hidden } : sight;
   const sp = await searchParams;
   const mode = one(sp.mode) === 'window' ? 'window' : 'overdue';
   const days = Math.min(Math.max(Number(one(sp.days) ?? 2) || 2, 1), 30);
@@ -42,7 +46,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
   const sendOn = gmailSendEnabled() && !me.viewingAs;
   const [{ drafts, skipped }, projects, asks, link] = await Promise.all([
-    reminderDrafts(d, me.team.id, { mode, days, projectId, sight }, appUrl),
+    reminderDrafts(d, me.team.id, { mode, days, projectId, sight: remindSight }, appUrl),
     seenProjects(d, me, sight),
     staleAsks(d, me, projectId),
     sendOn ? gmailStatus(d, me.realPerson.id) : null,

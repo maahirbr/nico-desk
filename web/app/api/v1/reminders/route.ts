@@ -3,7 +3,7 @@ import { readBody, route } from '@/lib/http';
 import { logReminder, mayRemind, reminderDrafts } from '@/lib/reminders';
 import { projectFor, sightFor } from '@/lib/visibility';
 
-// GET: the drafts (leads only). POST: record that a lead opened or copied one to send it themselves.
+// GET: the drafts (leadership and admins). POST: record that they opened or copied one to send it themselves.
 export const GET = route(async ({ req, me, db }) => {
   mayRemind(me.person.appRoles);
   const u = new URL(req.url);
@@ -11,7 +11,9 @@ export const GET = route(async ({ req, me, db }) => {
   const days = Math.min(Math.max(Number(u.searchParams.get('days') ?? 2) || 2, 1), 30);
   const projectId = u.searchParams.get('project') ?? undefined;
   if (projectId) await projectFor(db, me, projectId); // hidden or on another team reads as missing
-  return reminderDrafts(db, me.team.id, { mode, days, projectId, sight: await sightFor(db, me) }, u.origin);
+  const sight = await sightFor(db, me);
+  // Leadership reminds anyone (15 Nov): every team task, Personal left out, as on the Reminders page.
+  return reminderDrafts(db, me.team.id, { mode, days, projectId, sight: me.person.appRoles.includes('leadership') ? { all: true, hidden: sight.hidden } : sight }, u.origin);
 });
 
 const Body = z.object({

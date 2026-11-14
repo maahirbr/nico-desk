@@ -116,6 +116,9 @@ export async function upgrade(db: Db) {
   await checklistsInPages(db);
   // 15 Nov: a member's ask to archive a project.
   await db.exec(ARCHIVE_ASKS_UPGRADE);
+  // 15 Nov: the Leadership role (lib/roles.ts mayOversee). The retired 'lead' stays allowed so old rows still read.
+  await db.exec(`ALTER TABLE team_members DROP CONSTRAINT IF EXISTS team_members_app_role_check;
+    ALTER TABLE team_members ADD CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin'));`);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).

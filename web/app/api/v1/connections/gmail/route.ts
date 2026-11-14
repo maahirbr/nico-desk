@@ -3,10 +3,10 @@ import { forbidden } from '@/lib/errors';
 import { assertNotViewing, rateLimit, route } from '@/lib/http';
 import { GMAIL_CALLBACK_PATH, GMAIL_STATE_COOKIE, gmailAuthUrl, gmailStatus, requireGmailSend } from '@/lib/gmailSend';
 import { disconnectMeet, newNonce, signState } from '@/lib/meet';
-import { isLeadOrAdmin } from '@/lib/roles';
+import { mayOversee } from '@/lib/roles';
 
 // Gmail send is one lead's own link, so every call here is about the signed-in person and nobody else.
-const lead = (roles: string[]) => { if (!isLeadOrAdmin(roles)) throw forbidden('Only a lead can connect Gmail.'); };
+const lead = (roles: string[]) => { if (!mayOversee(roles)) throw forbidden('Only leadership or an admin can connect Gmail for reminders.'); };
 
 export const GET = route(async ({ me, db }) => {
   requireGmailSend();

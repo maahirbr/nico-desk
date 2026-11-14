@@ -100,7 +100,7 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
   if (status === 'off') return (
     <div className="stack small">
       {provider === 'google_meet' ? <ConnectGoogle what="your Meet meetings" />
-        : <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. A lead adds the team’s {NAME[provider]} API key once: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>}
+        : <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. Leadership or an admin adds the team’s {NAME[provider]} API key once: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>}
     </div>
   );
   return (

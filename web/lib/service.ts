@@ -25,7 +25,7 @@ export type Person = {
   restricted: boolean; // sees only their own projects and the ones they may view (lib/sight.ts)
   repliesFeedback: boolean; // may reply to feedback notes (set on the Roster)
 };
-export type AppRole = 'member' | 'lead' | 'admin';
+export type AppRole = 'member' | 'lead' | 'leadership' | 'admin'; // 'lead' is retired (15 Nov), see lib/roles.ts
 
 let seq = 0;
 export function newId(prefix: string): string {

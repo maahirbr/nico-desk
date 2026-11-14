@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { currentMe } from '@/lib/auth';
 import { mayReadActivity } from '@/lib/activity';
-import { isLeadOrAdmin } from '@/lib/roles';
+import { isLeadOrAdmin, mayOversee } from '@/lib/roles';
 import { FeedbackLink, Nav, SwitchToOwner } from '@/components/client';
 import { HELP_COOKIE, helpOf } from '@/components/help';
 import { HelpProvider, HelpToggle } from '@/components/HelpMode';
@@ -107,7 +107,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="mark-sub mark-wordmark" role="img" aria-label="Nicobar" />
                 </span>
               </Link>
-              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} activity={mayReadActivity(me)} />
+              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} remind={mayOversee(me.person.appRoles)} activity={mayReadActivity(me)} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
               <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
