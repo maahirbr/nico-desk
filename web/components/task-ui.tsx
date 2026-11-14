@@ -203,9 +203,12 @@ export async function api(path: string, method: string, body?: unknown) {
 // onReopen: a finished task shows its tick, and unticking it opens it again (Personal, 13 Nov).
 // onEdit: a ✎ at the row's end, as on a project's table, that opens the task to change it (Personal, 13 Nov).
 // onDelete: a ✕ beside it; the first press asks (it turns red), the second removes the task.
-export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void;
+// names (15 Nov): when given, hovering the status shows "Updated 18 Oct · Sam", as on a project's table (Home, Team).
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete, names }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void; names?: Record<string, string>;
 }) {
+  const { meId: viewerId } = useViewer();
+  const when = names ? statusWhen(t, names, viewerId) : null;
   const desc = t.description;
   const router = useRouter();
   const undo = useUndo();
@@ -255,7 +258,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
-          <StatusMenu t={t} current={key} disabled={ticked} set={stateFrom !== undefined}
+          <StatusMenu t={t} current={key} disabled={ticked} set={stateFrom !== undefined} when={when}
             statuses={PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked')} canReassign={canReassign} canAsk={canAsk}
             onPick={async (a) => {
               if (a === 'date' || a === 'reassign' || a === 'ask') return onStatus(a);
@@ -267,8 +270,8 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }} />
         ) : onStatus && !closed && canAsk ? (
-          <StatusMenu t={t} current={key} disabled={false} set={stateFrom !== undefined} statuses={[]} canReassign={false} canAsk askOnly onPick={(a) => onStatus(a)} />
-        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span>}
+          <StatusMenu t={t} current={key} disabled={false} set={stateFrom !== undefined} when={when} statuses={[]} canReassign={false} canAsk askOnly onPick={(a) => onStatus(a)} />
+        ) : <WhenTip text={when}><span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span></WhenTip>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
       {onEdit !== undefined && <span className="trow-acts">{!readOnly && <>
@@ -907,7 +910,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       {extra.map((d, i) => (
         <div key={d.key} className="task-more">
           <div className="task-more-head"><h3 className="task-more-h">Task {i + 2}</h3>
-            <button type="button" className="mini-btn" onClick={() => setExtra((all) => all.filter((x) => x.key !== d.key))} aria-label={`Remove task ${i + 2}`}>✕ Remove</button></div>
+            <button type="button" className="btn ghost task-remove" onClick={() => setExtra((all) => all.filter((x) => x.key !== d.key))} aria-label={`Remove task ${i + 2}`}>✕ Remove</button></div>
           <TaskFields d={d} set={(nd) => setExtraAt(i, nd)} people={people} today={today} projects={projects} workstreams={wsFor(d.projectId)} />
         </div>
       ))}

@@ -189,7 +189,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {suggested && (
         <Stagger id="home-suggested" className="tlist">
-          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
         </Stagger>
       )}
 
@@ -197,7 +197,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}><Help term={HEAD[g.key]}>{g.label}</Help> <span className="n">{g.items.length}</span></h2>
           <Stagger id="home" className="tlist">
-            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </Stagger>
         </section>
       ))}
@@ -221,7 +221,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             </button></Help>
             {showDone && done.length > 1 && <SortPick value={doneSort} onChange={setDoneSort} />}
           </div>
-          <Fold open={showDone}><div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
+          <Fold open={showDone}><div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
         </section>
       )}
 
@@ -233,7 +233,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             </button></Help>
             {showDropped && dropped.length > 1 && <SortPick value={droppedSort} onChange={setDroppedSort} />}
           </div>
-          <Fold open={showDropped}><div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
+          <Fold open={showDropped}><div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
         </section>
       )}
 

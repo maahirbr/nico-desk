@@ -1833,3 +1833,10 @@ Rollback: git revert the commit.
 The PM's call: when adding a task, Note repeated Details, so it is gone from the add form. Details holds anything the
 owner should know. A task's note can still be read and edited on the task itself; nothing stored changes.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Status hover on Home and Team; a clearer Remove
+
+- Hovering a task's status on Home and Team shows "Updated 18 Oct · Sam" after half a second, as on a project's table
+  (TaskRow takes `names`).
+- "✕ Remove" on an added task in the add form is a red outlined button, easy to see.
+Rollback: git revert the commit.

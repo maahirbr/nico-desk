@@ -2086,3 +2086,6 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .menu > .st-menu-sep { background: var(--line-strong, var(--hairline)); margin: var(--space-xs) var(--space-xs); }
 .menu > .st-opt { padding-top: 5px; padding-bottom: 5px; }
 .menu > .st-act, .menu > .help-host > .st-act { padding-top: 6px; padding-bottom: 6px; }
+/* Remove on an added task (15 Nov): easy to see, in the late colour. */
+.task-remove { color: var(--late); border-color: color-mix(in srgb, var(--late) 40%, var(--hairline)); font-weight: 600; }
+.task-remove:hover { background: color-mix(in srgb, var(--late) 8%, var(--surface)); }
