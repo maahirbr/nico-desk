@@ -1827,3 +1827,9 @@ Rollback: git revert the commit.
 The PM's wording for the last sentence of the Reminders line (was "Nothing is sent until you check it and press Send.").
 The rest of the line is unchanged. Words only.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Adding a task has no Note field
+
+The PM's call: when adding a task, Note repeated Details, so it is gone from the add form. Details holds anything the
+owner should know. A task's note can still be read and edited on the task itself; nothing stored changes.
+Rollback: git revert the commit.

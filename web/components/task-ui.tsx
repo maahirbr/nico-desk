@@ -795,7 +795,7 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
           )}
         </div>
       )}
-      <label className="f"><span>Note</span><input maxLength={140} value={d.note} onChange={(e) => set({ ...d, note: e.target.value })} /></label>
+      {/* No Note field (15 Nov): Details already holds anything the owner should know. */}
     </>
   );
 }
