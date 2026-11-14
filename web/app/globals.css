@@ -1794,7 +1794,7 @@ label.f > span.say-box { font: inherit; color: inherit; } /* the box sits where 
 .fb-switch { margin-bottom: var(--space-md); }
 .fb-switch .count-badge { color: inherit; opacity: .75; margin-left: var(--space-xxs); }
 .fb-reply-form { margin-top: var(--space-sm); }
-.remind-find { display: block; margin: 0 0 var(--space-md); }
+.remind-find { display: inline-flex; align-items: center; gap: var(--space-sm); margin-left: auto; align-self: flex-end; }
 
 /* New Task: "+ Add another task" adds full task blocks under the first (30 Oct). */
 .task-more { display: flex; flex-direction: column; gap: var(--space-sm); padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); }
@@ -2019,3 +2019,5 @@ table.roster .roster-email { color: var(--ink-2); }
 /* Find a person on the Roster (14 Nov, components/RosterFind.tsx). */
 .roster-find { display: flex; align-items: center; flex-direction: row-reverse; gap: var(--space-sm); flex-wrap: wrap; margin-left: auto; }
 .roster-edit { font-size: 15px; padding: 0 var(--space-xxs); }
+/* Rows and cards hidden by a find box (RosterFind, RemindFind): their own display rule would otherwise beat [hidden]. */
+table.roster tr[hidden], .remind-card[hidden] { display: none; }

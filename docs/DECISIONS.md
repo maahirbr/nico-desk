@@ -1683,3 +1683,11 @@ type sizes and line spacing (it keeps Geist and its own weights), Warm's page wi
 height and padding, date and status column widths, group heading style and avatar sizes. Its colours, glass sidebar and
 top bar, rounder corners, segmented toggles, plain chips and normal-case flags stay its own. `tokens.css` only.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Reminders: Find a person sits in the filter bar, and find boxes really hide
+
+The PM's call: Find a person on Reminders is part of the filters, not a separate box. It now sits at the right end of the
+filter bar (it filters as you type, needs no Apply, and Enter does not send the form). A fix with it: a find box hides
+rows by `hidden`, but a card's or a phone-width row's own display rule beat it, so on a phone the Roster's find (13 Nov)
+did not hide anyone. `table.roster tr[hidden]` and `.remind-card[hidden]` now stay hidden.
+Rollback: git revert the commit.

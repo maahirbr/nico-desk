@@ -7,7 +7,6 @@ import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
 import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
-import { EmptyMark, ICON } from './icons';
 import { RichText, textToHtml } from './RichText';
 import { CheckTick } from './task-ui';
 
@@ -82,7 +81,7 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
   const over = d.items.filter((i) => i.days < 0).length;
   const out = d.items.length - on.size;
   return (
-    <section className="card remind-card" id={`remind-${d.personId}`}>
+    <section className="card remind-card" id={`remind-${d.personId}`} data-find={d.name.toLowerCase()}>
       <div className="remind-head">
         <span className="person-cell"><Avatar id={d.personId} name={d.name} lg /><span><PersonLink id={d.personId}><b>{d.name}</b></PersonLink>
           <span className="small dim"> · {d.items.length} {d.items.length === 1 ? 'item' : 'items'}{over ? `, ${over} overdue` : ''}{out ? ` · ${out} left out` : ''}{last ? ` · ${ago(last)}` : ''}</span></span></span>
@@ -128,20 +127,7 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
   );
 }
 
-// A search box over the drafts, so a lead can find one person's reminder quickly (the PM's call, 14 Oct).
+// The cards. Finding a person is in the filter bar above (components/RemindFind.tsx, 15 Nov), which hides cards by data-find.
 export function ReminderCards({ drafts, appUrl, send }: { drafts: ReminderDraft[]; appUrl: string; send: SendState }) {
-  const [q, setQ] = useState('');
-  const needle = q.trim().toLowerCase();
-  const shown = needle ? drafts.filter((d) => d.name.toLowerCase().includes(needle)) : drafts;
-  return (
-    <>
-      {drafts.length > 1 && (
-        <input className="find-person remind-find" type="search" value={q} placeholder="Find a person" aria-label="Find a person by name"
-          onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
-      )}
-      {shown.length === 0
-        ? <div className="empty-state"><EmptyMark d={ICON['/search']} /><p>No one matches &ldquo;{q.trim()}&rdquo;.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>
-        : <div className="remind-list">{shown.map((d) => <Card key={d.personId} d={d} appUrl={appUrl} send={send} />)}</div>}
-    </>
-  );
+  return <div className="remind-list">{drafts.map((d) => <Card key={d.personId} d={d} appUrl={appUrl} send={send} />)}</div>;
 }

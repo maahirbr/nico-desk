@@ -9,6 +9,7 @@ import { reminderDrafts } from '@/lib/reminders';
 import { staleAsks, ASK_STALE_DAYS } from '@/lib/asks';
 import { AskReminders } from '@/components/AskReminders';
 import { ReminderCards } from '@/components/Reminders';
+import { RemindFind } from '@/components/RemindFind';
 import { gmailSendEnabled, gmailStatus } from '@/lib/gmailSend';
 import { Select } from '@/components/Select';
 
@@ -84,6 +85,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
           </Select>
         </label>
         <button className="btn ghost">Apply</button>
+        {drafts.length > 1 && <RemindFind />}
       </form>
       {asks.length > 0 && <AskReminders appUrl={appUrl} days={ASK_STALE_DAYS} items={asks.map((a) => ({
         id: a.id, taskId: a.taskId, title: a.title, ownerId: a.ownerId, ownerName: first(a.ownerId), askerName: first(a.askerId), question: a.question, days: a.days, to: mail.get(a.ownerId) ?? null,
