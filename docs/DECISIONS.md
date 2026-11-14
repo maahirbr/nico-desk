@@ -1763,3 +1763,10 @@ hid them. `components/ViewAsGuard.tsx` stops the changes: any call that is not a
 as and signing out still go through. The server still refuses every write in View as (`lib/http.ts` route(),
 assertNotViewing). Private things stay hidden: their Personal page and notes, and their Google link.
 Rollback: git revert the commit (View as hides the controls again).
+
+## 2026-11-15 · Opus 5.5 · "pushed 2×" sits under the date, with the history on hover
+
+On task rows (Home, Team, Personal), "pushed 2×" now sits under the date, not beside it. Hovering it shows the history,
+one line each: "First given 5 Oct", "Pushed to 12 Oct: why", "Then pushed to 16 Oct: why" (`task-ui.tsx pushHistory`,
+through WhenTip, half a second). Phones have no hover; the task panel shows the latest push.
+Rollback: git revert the commit.

@@ -169,6 +169,11 @@ export async function moveWithWords(t: Task, s: StatusKey, text: string, onId: s
   return quickMove(t, s, text);
 }
 
+// A task's date history, one line each, for the hover on "pushed 2×": "First given 5 Oct", then "Pushed to 12 Oct: why".
+export function pushHistory(t: Pick<Task, 'firstDueOn' | 'renegotiations'>): string {
+  return [`First given ${fmtDate(t.firstDueOn)}`, ...(t.renegotiations ?? []).map((r, i) => `${i === 0 ? 'Pushed' : 'Then pushed'} to ${fmtDate(r.to)}${r.reason ? `: ${r.reason}` : ''}`)].join('\n');
+}
+
 // "Today", "Tomorrow", "3 days late", or the date.
 export function dueText(t: Task, today: string): { text: string; late: boolean } {
   if (t.statusCategory !== 'open') return { text: fmtDate(t.dueOn), late: false };
@@ -240,12 +245,13 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       </span>}
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
       {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar id={t.ownerId} name={owner} />{owner.split(' ')[0]}</PersonLink>}
-      <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, pushed ${t.dateMoves}×` : undefined}>
+      <span className={`trow-due${due.late ? ' late' : ''}`}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
         {/* Late: the date it was due, under the count, so nobody has to work it out (the PM's call, 15 Nov). */}
         {due.late && <span className="trow-was">due {fmtDate(t.dueOn)}</span>}
-        {t.dateMoves > 0 && !closed && <Help term="pushed"><span className="moved">pushed {t.dateMoves}×</span></Help>}
+        {/* Under the date, with the whole history on hover (the PM's call, 15 Nov): the first date, then each push and why. */}
+        {t.dateMoves > 0 && !closed && <WhenTip text={pushHistory(t)} side="below"><span className="moved">pushed {t.dateMoves}×</span></WhenTip>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (

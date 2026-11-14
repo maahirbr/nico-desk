@@ -739,7 +739,7 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .trow-owner { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--type-small); color: var(--ink-2); min-width: 0; white-space: nowrap; }
 .trow-due { font: var(--type-meta); color: var(--ink-2); font-feature-settings: var(--features-date); white-space: nowrap; }
 .trow-due.late { color: var(--late); font-weight: 500; }
-.trow-due .moved { color: var(--ink-3); font: var(--type-small); margin-left: var(--space-xs); }
+.trow-due .moved { display: block; color: var(--ink-3); font: var(--type-small); margin-left: 0; cursor: default; } /* under the date (15 Nov) */
 .trow-status { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xxs); }
 .trow.is-closed .trow-title { color: var(--ink-3); text-decoration: line-through; }
 .tlist .trow:not(:has(.trow-owner)) { grid-template-columns: 36px minmax(0, 1fr) var(--date-col-team) var(--col-status); }
