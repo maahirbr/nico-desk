@@ -808,8 +808,13 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 
 /* project header */
 .crumb { margin-bottom: var(--space-sm); }
-.phead { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); margin-bottom: var(--space-lg); }
-.phead-main { flex: 1 1 0; min-width: 0; }
+/* The title and its line sit left of the buttons; everything under them (the people, the description, an ask to archive)
+   uses the full width, so the people fill the row under the buttons too (the PM's call, 15 Nov). */
+.phead { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-md); align-items: start; margin-bottom: var(--space-lg); }
+.phead-main { display: contents; }
+.phead-main > * { grid-column: 1; min-width: 0; }
+.phead-main > :not(h1):not(.eyebrow):not(.phead-meta) { grid-column: 1 / -1; }
+.phead-actions { grid-column: 2; grid-row: 1 / span 2; }
 .phead h1 { margin: 0 0 var(--space-xxs); }
 .phead .eyebrow { margin-bottom: var(--space-xs); }
 .phead-meta { display: flex; flex-wrap: wrap; gap: var(--space-xxs) var(--space-lg); margin: 0; font: var(--type-meta); }
@@ -818,8 +823,9 @@ a.btn.disabled { opacity: .45; cursor: not-allowed; }
 .phead-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-xs); }
 .phead-actions .err { max-width: 30ch; text-align: right; margin: 0; }
 @media (max-width: 720px) {
-  .phead { flex-direction: column; align-items: stretch; }
-  .phead-actions { align-items: flex-start; }
+  .phead { grid-template-columns: minmax(0, 1fr); }
+  .phead-main > *, .phead-main > :not(h1):not(.eyebrow):not(.phead-meta) { grid-column: 1; }
+  .phead-actions { grid-column: 1; grid-row: auto; align-items: flex-start; margin-top: var(--space-sm); }
   .phead-btns { justify-content: flex-start; }
   .phead-actions .err { text-align: left; }
 }
@@ -2024,6 +2030,8 @@ table.roster .roster-email { color: var(--ink-2); }
 .trow-due .trow-was { display: block; font: var(--type-small); font-weight: 400; color: var(--ink-3); white-space: nowrap; }
 /* Rows and cards hidden by a find box (RosterFind, RemindFind): their own display rule would otherwise beat [hidden]. */
 table.roster tr[hidden], .remind-card[hidden] { display: none; }
+/* Access: one choice, Member, Lead or Admin (15 Nov, components/client.tsx AccessPick). */
+.edit-access { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); border: 0; padding: 0; margin: 0; }
 /* Settings for someone who may not change all of it (15 Nov, ProjectForm access): a bare fieldset, and the note on top. */
 .pform-plain { border: 0; padding: 0; margin: 0; min-width: 0; display: contents; }
 .pform-group:disabled, .pform-plain:disabled { opacity: 0.75; }

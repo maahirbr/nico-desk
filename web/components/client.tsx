@@ -395,6 +395,22 @@ export function MarkRead({ id }: { id: string }) {
 
 // ---------- roster ----------
 
+// Access is one choice (the PM's call, 15 Nov): Member, Lead or Admin. An admin has every right a lead has
+// (isLeadOrAdmin), so Admin is stored alone. Someone cannot take away their own admin (lock).
+type Access = 'member' | 'lead' | 'admin';
+const ACCESS: { key: Access; word: string }[] = [{ key: 'member', word: 'Member' }, { key: 'lead', word: 'Lead' }, { key: 'admin', word: 'Admin' }];
+const accessOf = (f: { lead: boolean; admin: boolean }): Access => (f.admin ? 'admin' : f.lead ? 'lead' : 'member');
+function AccessPick({ value, onChange, lock = false }: { value: Access; onChange: (a: Access) => void; lock?: boolean }) {
+  return (
+    <fieldset className="f edit-access"><legend>Access</legend>
+      {ACCESS.map((a) => (
+        <label key={a.key} className="check"><input type="radio" name="access" checked={value === a.key} disabled={lock && a.key !== 'admin'}
+          onChange={() => onChange(a.key)} /> {a.word}</label>
+      ))}
+    </fieldset>
+  );
+}
+
 export function AddPersonForm({ teamId }: { teamId: string }) {
   const { busy, error, run } = useSubmit();
   const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false };
@@ -413,8 +429,7 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
         <label className="f"><span>Email</span><input type="email" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
       </div>
       <div className="row">
-        <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
-        <label className="check"><input type="checkbox" checked={f.admin} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
+        <AccessPick value={accessOf(f)} onChange={(a) => setF({ ...f, lead: a === 'lead', admin: a === 'admin' })} />
         <button className="btn" disabled={busy}>Add to roster</button>
       </div>
       <Err e={error} />
@@ -484,7 +499,7 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
     if (f.department.trim() !== p.department) body.department = f.department.trim();
     if (emailChanged) body.email = f.email.trim();
     if (f.active !== p.active) body.active = f.active;
-    if (f.lead !== p.roles.includes('lead') || f.admin !== p.roles.includes('admin')) body.appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
+    if (accessOf(f) !== accessOf({ lead: p.roles.includes('lead'), admin: p.roles.includes('admin') })) body.appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
     if (Object.keys(body).length === 0) { onClose(); return; }
     if (await run(`/people/${p.id}`, 'PATCH', body)) { notify(`Saved ${f.name.trim()}`); onClose(); }
   }
@@ -500,10 +515,7 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
           <input type="email" required value={f.email} disabled={self} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </label>
         <p className="hint" style={{ margin: 0 }}>{self ? 'Ask another admin to change your own email.' : emailChanged ? 'They sign in with this address from now on. The old one keeps working as a second address.' : 'The address they sign in with.'}</p>
-        <fieldset className="f edit-access"><legend>Access</legend>
-          <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
-          <label className="check"><input type="checkbox" checked={f.admin} disabled={self} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
-        </fieldset>
+        <AccessPick value={accessOf(f)} lock={self && p.roles.includes('admin')} onChange={(a) => setF({ ...f, lead: a === 'lead', admin: a === 'admin' })} />
         <Err e={error} />
         <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>
           <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>

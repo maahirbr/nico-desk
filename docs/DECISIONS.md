@@ -1712,3 +1712,12 @@ The PM's calls, one batch:
 - The status hover waits half a second (was one). Team, by status: each group folds from its heading, open on load.
   The Projects line drops "N archived". A late row shows "due 5 Oct" under its count.
 Rollback: git revert the commit. The archive_asks table can stay; nothing else reads it.
+
+## 2026-11-15 · Opus 5.5 · Roster Access is one choice, and a project's people use the header's full width
+
+- Access on the Roster (Add and Edit) is one choice: Member, Lead or Admin. Admin is stored alone, as every rule reads
+  admin as lead too (`isLeadOrAdmin`). Someone cannot take away their own admin. The PM's call: no descriptions.
+- On a project page the people sit under the title across the full width, including under Copy link, Settings and
+  Archive, so a long list needs fewer rows. The header is a grid: title and its line on the left, the buttons on the
+  right, the rest full width. On a phone the buttons drop below, as before. CSS only.
+Rollback: git revert the commit.
