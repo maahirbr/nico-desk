@@ -173,6 +173,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const byWho = (t: Task) => !who || (who.startsWith('partner:') ? t.partnerOwner === who.slice(8) : t.ownerId === who);
   const visible = tasks.filter((t) => byWho(t) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
   const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
+  // The sub-project panel folds away with the ☰ beside Tasks (the PM's call, 15 Nov). Open at first; this browser
+  // remembers a fold (localStorage, always in try/catch).
+  const [side, setSide] = useState(true);
+  useEffect(() => { try { if (localStorage.getItem('ws-side-shut') === '1') setSide(false); } catch { /* storage blocked */ } }, []);
+  const toggleSide = () => { const next = !side; setSide(next); try { localStorage.setItem('ws-side-shut', next ? '0' : '1'); } catch { /* storage blocked */ } };
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn);
   // With "added since", the order they were added, so a meeting reads its to-dos back in the order it agreed them.
   const byAdded = (a: Task, b: Task) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -303,7 +308,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       </div>
 
       <div className="board-head">
-        <h2>Tasks{ws !== 'All' && <span className="count-badge">{ws === '__none' ? 'No sub-project' : ws}</span>}</h2>
+        <h2>{wsList.length > 0 && (
+          <button type="button" className="ws-toggle" aria-expanded={side} aria-label={side ? 'Hide sub-projects' : 'Show sub-projects'} title={side ? 'Hide sub-projects' : 'Show sub-projects'} onClick={toggleSide}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+        )}Tasks{ws !== 'All' && <span className="count-badge">{ws === '__none' ? 'No sub-project' : ws}</span>}</h2>
         <span className="board-tools">
           {isLead && <a className="btn ghost" href={`/reminders?project=${projectId}`}>Reminders</a>}
           {!readOnly && <button className="btn ghost" aria-expanded={importOpen} onClick={() => setImportOpen(!importOpen)}>{importOpen ? 'Close import' : 'Import minutes'}</button>}
@@ -333,8 +342,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       </div>
       {added && <p className="small dim since-count" role="status">{visible.length} {visible.length === 1 ? 'task' : 'tasks'} {added === today ? 'added today' : `added since ${sinceWords(added, today)}`}</p>}
 
-      <div className={wsList.length ? 'ws-layout' : ''}>
-        {wsList.length > 0 && (
+      <div className={wsList.length && side ? 'ws-layout' : ''}>
+        {wsList.length > 0 && side && (
           <aside className="card ws-side" aria-label="Sub-projects">
             <div className="ws-label">Sub-projects</div>
             {['All', ...wsList].map((k) => (

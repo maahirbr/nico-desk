@@ -2055,3 +2055,7 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .email-sugg { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); display: grid; padding: var(--space-xxs); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--pop-shadow, var(--card-shadow)); }
 .email-sugg > span { padding: var(--space-xs) var(--space-sm); border-radius: calc(var(--radius-control) - 2px); cursor: pointer; display: flex; gap: var(--space-xs); align-items: baseline; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .email-sugg > span.on, .email-sugg > span:hover { background: var(--sunk); }
+/* The ☰ beside Tasks that folds the sub-project panel (15 Nov). */
+.ws-toggle { display: inline-grid; place-items: center; width: 32px; height: 32px; margin-right: var(--space-xs); vertical-align: middle; border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); cursor: pointer; }
+.ws-toggle[aria-expanded="true"] { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+.ws-toggle:hover { border-color: var(--line-strong); }

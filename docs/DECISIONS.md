@@ -1805,3 +1805,10 @@ Rollback: git revert the commit.
 
 The PM's call: two sections left the Guide, "Who sees what" (the roles table) and "Phone and feedback". The rest stays.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The sub-project panel folds away
+
+On a project with sub-projects, a ☰ beside "Tasks" folds the Sub-projects panel away and brings it back (the PM's
+call). It starts open; this browser remembers a fold (localStorage, in try/catch). When folded the task table takes the
+full width.
+Rollback: git revert the commit.
