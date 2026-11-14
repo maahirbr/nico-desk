@@ -1821,3 +1821,9 @@ Rollback: git revert the commit.
 - The status menu shows each status as its coloured pill, as on the rows, with a tick on the current one, a clear divider
   under "Updated …" and after the statuses, and tighter rows (the PM's call).
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Reminders: "Nothing goes out until you press Send."
+
+The PM's wording for the last sentence of the Reminders line (was "Nothing is sent until you check it and press Send.").
+The rest of the line is unchanged. Words only.
+Rollback: git revert the commit.

@@ -69,7 +69,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
       <h1>Reminders</h1>
       <p className="lede">{sendOn
         ? 'One draft email per person, from the address you signed in with. Check it, then press Send, or open it in Gmail.'
-        : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing is sent until you check it and press Send.'}</p>
+        : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing goes out until you press Send.'}</p>
       {gmail && <p className="small" role="status">{gmail}</p>}
       <form className="bar" action="/reminders" method="get">
         <span className="seg" role="group" aria-label="What to include">
