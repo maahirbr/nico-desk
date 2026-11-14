@@ -1674,3 +1674,12 @@ Rollback: git revert the commit. Any no-date tasks already made keep 9999-12-31 
 - The Roster has a find box at the right of its title (name, job title, department or email; it only hides rows on the
   page). Edit is a ✎ to save space, and "Email invite" is "Invite".
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Cool reads and sits the same as Warm
+
+The PM's call: switching skin should not change how big the text is or where a page sits. Cool was a little smaller
+and wider because it followed its macOS source (13 to 14px text, 1360px pages), not by choice. Now Cool takes Warm's
+type sizes and line spacing (it keeps Geist and its own weights), Warm's page width (1120px), page padding, task-row
+height and padding, date and status column widths, group heading style and avatar sizes. Its colours, glass sidebar and
+top bar, rounder corners, segmented toggles, plain chips and normal-case flags stay its own. `tokens.css` only.
+Rollback: git revert the commit.
