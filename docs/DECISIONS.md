@@ -1786,3 +1786,17 @@ project. It is retired. In its place, Leadership: oversight and follow-up, with 
   rows (run once on the hosted database, after db:upgrade). Admins stay admins. The PM gives Leadership after go-live.
 - Project owners and leads are unchanged.
 Rollback: git revert the commit; re-add the listed people's lead rows (the script prints them).
+
+## 2026-11-15 · Opus 5.5 · A pictorial Guide, a friendlier reminder card, and the pushed line fix
+
+- The Guide (/guide) is pictorial: one short section per feature, each with a picture of the real screen, two short clips
+  (Quick Add, a note line made a task), links to jump to each section, a "Who sees what" table, and plain words only for
+  what is not obvious. Connect Claude and Help and shortcuts come first (the PM's call). The pictures live in
+  public/guide and come from a demo copy with made-up people only, never a real roster or live data (the repo is
+  public); `scripts/guide-shots.cjs` retakes them. Clips pause under reduced motion.
+- Reminders: Cc and Bcc suggest teammates as you type, like Gmail, and Enter adds one. The email toolbar is B, I, U and
+  one Lists menu (bulleted or numbered, as in Personal notes); the Link button is gone. Every draft ends "Best," and
+  the sender's nickname, else their first name. A card's header drops the item count and keeps "reminded … ago".
+  A late item reads "overdue since 13 Oct".
+- Fix: "pushed 2×" now really sits under the date (its hover wrapper kept it on the date's line).
+Rollback: git revert the commit.

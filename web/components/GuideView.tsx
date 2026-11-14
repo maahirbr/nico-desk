@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 import { useViewer } from './viewer';
 import { markWelcomeStep } from './WelcomeCard';
 
@@ -9,30 +10,31 @@ import { HELP, type HelpTerm } from './help';
 import { SHORTCUTS } from './keys';
 import { PICK, STATUS, StatusIcon, type StatusKey } from './task-ui';
 
-// The Guide page (/guide): a short read for a team that is new to NicoDesk. It has no state. It is a client module
-// only because PICK and STATUS live in task-ui.tsx, which is one. The status words come from help.ts (the same text help mode shows) and the keys from keys.ts, so neither can
-// drift from the app. Everything else is written here, in plain words.
+// The Guide page (/guide), made pictorial on 15 Nov (the PM's call): one short section per feature, each with a picture
+// of the real screen, two short clips where a picture is not enough, and plain words only for what is not obvious.
+// The pictures come from a demo copy with made-up people only (scripts/guide-shots.cjs retakes them). The status words
+// come from help.ts and the keys from keys.ts, so neither can drift from the app.
 
 // The section headings, in order. The test pins these and the page renders them as its h2 elements.
 export const GUIDE_SECTIONS = [
-  { id: 'purpose', title: 'What NicoDesk is for' },
-  { id: 'adding', title: 'Adding tasks' },
-  { id: 'home', title: 'Your Home' },
-  { id: 'statuses', title: 'The five statuses' },
-  { id: 'rule', title: 'The one rule' },
-  { id: 'blocked', title: 'When you are blocked' },
-  { id: 'projects', title: 'Projects' },
-  { id: 'sees', title: 'Who sees what' },
-  { id: 'leads', title: 'For leads and admins' },
   { id: 'claude', title: 'Connect Claude' },
   { id: 'help', title: 'Help and shortcuts' },
-  { id: 'phone', title: 'On your phone' },
-  { id: 'feedback', title: 'Feedback' },
+  { id: 'home', title: 'Your Home' },
+  { id: 'adding', title: 'Adding tasks' },
+  { id: 'statuses', title: 'The five statuses' },
+  { id: 'dates', title: 'Dates and pushes' },
+  { id: 'projects', title: 'Projects' },
+  { id: 'minutes', title: 'Meeting minutes' },
+  { id: 'personal', title: 'Personal' },
+  { id: 'team', title: 'Team' },
+  { id: 'sees', title: 'Who sees what' },
+  { id: 'more', title: 'Phone and feedback' },
 ] as const;
 
 const MCP_URL = 'https://nico-desk.vercel.app/api/mcp';
 
-const title = (id: (typeof GUIDE_SECTIONS)[number]['id']) => GUIDE_SECTIONS.find((s) => s.id === id)!.title;
+type Id = (typeof GUIDE_SECTIONS)[number]['id'];
+const title = (id: Id) => GUIDE_SECTIONS.find((s) => s.id === id)!.title;
 
 // "Blocked. Work has stopped. The reason is on the task." gives the word and what follows it.
 export function helpRest(term: HelpTerm): string {
@@ -46,140 +48,154 @@ const FLAGS: { term: HelpTerm; word: string }[] = [
   { term: 'at_risk', word: 'At risk' },
 ];
 
+// One feature: its picture (or a short clip) and a few words. `go` opens that screen.
+function Shot({ src, alt, w, h, small = false }: { src: string; alt: string; w: number; h: number; small?: boolean }) {
+  return <img className={`gshot${small ? ' gshot-small' : ''}`} src={`/guide/${src}`} alt={alt} width={w} height={h} loading="lazy" decoding="async" />;
+}
+function Clip({ src, label }: { src: string; label: string }) {
+  return <video className="gshot gclip" src={`/guide/${src}`} aria-label={label} autoPlay muted loop playsInline preload="metadata" />;
+}
+function Section({ id, emoji, children, go }: { id: Id; emoji: string; children: React.ReactNode; go?: { href: string; label: string } }) {
+  return (
+    <section id={id} aria-labelledby={`g-${id}`} className="gsec">
+      <h2 id={`g-${id}`}>{title(id)}</h2>
+      <span className="gsec-emoji" aria-hidden>{emoji}</span>
+      {children}
+      {go && <p className="gsec-go"><Link href={go.href}>{go.label} →</Link></p>}
+    </section>
+  );
+}
+
 export function GuideView() {
   const { meId } = useViewer();
   useEffect(() => { if (meId) markWelcomeStep(meId, 'guide'); }, [meId]); // ticks the welcome card's first step
+  // The clips stop under reduced motion: they show their first frame instead.
+  const root = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    root.current?.querySelectorAll('video').forEach((v) => { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
+  }, []);
   return (
-    <article className="guide calm">
+    <article className="guide calm" ref={root}>
       <header className="page-head">
         <div>
           <h1>How to use NicoDesk</h1>
-          <p className="summary">One minute. Read it once, then use it.</p>
+          <p className="summary">One place for who is doing what, and by when. Two minutes, with pictures.</p>
         </div>
       </header>
 
-      <section id="purpose" aria-labelledby="g-purpose">
-        <h2 id="g-purpose">{title('purpose')}</h2>
-        <p>One place to see who is doing what, and by when. Every task has one owner and one date.</p>
-      </section>
+      <nav className="gtoc" aria-label="On this page">
+        {GUIDE_SECTIONS.map((s) => <a key={s.id} href={`#${s.id}`}>{s.title}</a>)}
+      </nav>
 
-      <section id="adding" aria-labelledby="g-adding">
-        <h2 id="g-adding">{title('adding')}</h2>
-        <ul className="guide-list">
-          <li><b>Quick Add.</b> Type or say it the way you&rsquo;d tell someone, like &ldquo;Sam to send samples by Friday&rdquo;. Add a few at once, or paste a WhatsApp chat.</li>
-          <li><b>Fill it in yourself.</b> Use the form. Press + Add another task to add more in one go.</li>
-        </ul>
-      </section>
-
-      <section id="home" aria-labelledby="g-home">
-        <h2 id="g-home">{title('home')}</h2>
-        <ul className="guide-list">
-          <li>Your tasks, sorted into Late, Today, This week and Later.</li>
-          <li><b>Updates for you.</b> Changes others made to your tasks.</li>
-          <li><b>Waiting on you.</b> Tasks stuck until you act.</li>
-          <li><b>Update asked.</b> Someone wants to know how your task is going. Add an update or change its status, and they&rsquo;ll see it.</li>
-          <li><b>Ask for update.</b> On someone else&rsquo;s task, open the status menu and pick Ask for update. Their answer shows in your Updates.</li>
-          <li>Finish today&rsquo;s tasks and you get a little cheer.</li>
-        </ul>
-      </section>
-
-      <section id="statuses" aria-labelledby="g-statuses">
-        <h2 id="g-statuses">{title('statuses')}</h2>
-        <p>You pick one for every task.</p>
-        <dl className="guide-defs">
-          {PICK.map((s: StatusKey) => (
-            <div key={s}>
-              <dt><span className={`st st-status tone-${STATUS[s].tone}`}><StatusIcon s={s} />{STATUS[s].word}</span></dt>
-              <dd>{helpRest(`status_${s}`)}</dd>
-            </div>
-          ))}
-        </dl>
-        <p>The app works these out from the dates. You never pick them.</p>
-        <dl className="guide-defs">
-          {FLAGS.map((f) => (
-            <div key={f.term}>
-              <dt><b>{f.word}</b></dt>
-              <dd>{helpRest(f.term)}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section id="rule" aria-labelledby="g-rule">
-        <h2 id="g-rule">{title('rule')}</h2>
-        <p className="guide-rule">Move a date before it passes, and say why.</p>
-        <p>A moved date is fine. A date that passes in silence is a miss.</p>
-        <DateMoveFigure />
-      </section>
-
-      <section id="blocked" aria-labelledby="g-blocked">
-        <h2 id="g-blocked">{title('blocked')}</h2>
-        <p>Set the task to Blocked and say who you are waiting on. They see it on their Home.</p>
-      </section>
-
-      <section id="projects" aria-labelledby="g-projects">
-        <h2 id="g-projects">{title('projects')}</h2>
-        <ul className="guide-list">
-          <li>Press a tile, like Late or Done, to filter the list.</li>
-          <li><b>Added since.</b> Pick Today to review everything added in a meeting.</li>
-          <li><b>Done.</b> See finished tasks and when they were done.</li>
-          <li><b>Partner projects.</b> The same board, shared with an outside partner. Each task has a Nicobar owner, a partner owner, or both.</li>
-        </ul>
-      </section>
-
-      <section id="sees" aria-labelledby="g-sees">
-        <h2 id="g-sees">{title('sees')}</h2>
-        <ul className="guide-list">
-          <li><b>Projects.</b> You see the projects you own, lead or are on, or were added to as a viewer. Admins see every project.</li>
-          <li><b>Tasks.</b> You see the tasks on those projects, tasks you own, tasks waiting on you, and tasks you made with no project.</li>
-          <li><b>Minutes.</b> Anyone on a project can bring minutes into it. Nothing becomes a task until someone accepts it.</li>
-          <li><b>Ledger.</b> Leads and admins see everyone&rsquo;s record. You see yours and the records of people you work with.</li>
-          <li><b>Undo.</b> Press Undo in the short message after a change. It makes a new change, so the history keeps both.</li>
-          <li><b>Via Claude.</b> A change made through Claude shows &ldquo;via Claude&rdquo; in the history.</li>
-        </ul>
-      </section>
-
-      <section id="leads" aria-labelledby="g-leads">
-        <h2 id="g-leads">{title('leads')}</h2>
-        <ul className="guide-list">
-          <li><b>Team.</b> Everyone&rsquo;s open tasks.</li>
-          <li><b>Ledger.</b> Who kept their dates.</li>
-          <li><b>Reminders.</b> Drafts a nudge in your Gmail. You press Send.</li>
-          <li><b>Roster.</b> Add and edit people.</li>
-        </ul>
-      </section>
-
-      <section id="claude" aria-labelledby="g-claude">
-        <h2 id="g-claude">{title('claude')}</h2>
-        <ol className="guide-list">
-          <li>In Claude, open <b>Settings</b>, then <b>Connectors</b>.</li>
-          <li>Choose <b>Add custom connector</b>. Name it NicoDesk and paste this address: <code className="guide-url">{MCP_URL}</code></li>
-          <li>Press <b>Connect</b>, sign in with the Google account you use for NicoDesk, and approve.</li>
-          <li>Ask Claude: &ldquo;What are my open tasks in NicoDesk?&rdquo;</li>
+      {/* The two most asked: Claude and the shortcuts, first (the PM's call, 15 Nov). */}
+      <Section id="claude" emoji="✨">
+        <p>Ask Claude about your work, like &ldquo;What are my open tasks?&rdquo;. Claude sees only what you can see.</p>
+        <ol className="gsteps">
+          <li><b>1</b><span>In Claude, open <b>Settings</b>, then <b>Connectors</b>.</span></li>
+          <li><b>2</b><span>Choose <b>Add custom connector</b>. Name it NicoDesk. Paste <code className="guide-url">{MCP_URL}</code></span></li>
+          <li><b>3</b><span>Press <b>Connect</b>, sign in with your NicoDesk Google account, and approve.</span></li>
         </ol>
-        <p>Claude sees only what you can see. Its changes show &ldquo;via Claude&rdquo; in the history.</p>
-      </section>
+        <p>Its changes show &ldquo;via Claude&rdquo; in the history.</p>
+      </Section>
 
-      <section id="help" aria-labelledby="g-help">
-        <h2 id="g-help">{title('help')}</h2>
-        <p>Press ? at the top right. Any word with a dotted line then explains itself.</p>
+      <Section id="help" emoji="❓">
+        <p>Press <b>?</b> at the top right. Any word with a dotted line then explains itself.</p>
         <dl className="keylist guide-keys">
           {SHORTCUTS.map(([k, what]) => (<div key={k}><dt><kbd className="kbd-key">{k}</kbd></dt><dd>{what}</dd></div>))}
         </dl>
-      </section>
+      </Section>
 
-      <section id="phone" aria-labelledby="g-phone">
-        <h2 id="g-phone">{title('phone')}</h2>
+      <Section id="home" emoji="🏠" go={{ href: '/me', label: 'Open Home' }}>
+        <p>Your day at a glance. Your tasks by when they are due, what is waiting on you, and what changed.</p>
+        <Shot src="home.webp" alt="Home: a greeting, what is waiting on you, and tasks for next week and later." w={1100} h={653} />
+      </Section>
+
+      <Section id="adding" emoji="✍️">
+        <p>Type or say it the way you&rsquo;d tell someone, like &ldquo;Kabir to send the swatches by Friday&rdquo;. NicoDesk fills in the owner and the date.</p>
+        <div className="gpair">
+          <Shot src="quickadd.webp" alt="Quick Add with a task typed in." w={900} h={211} />
+          <Clip src="quickadd-clip.webm" label="A task typed into Quick Add and added." />
+        </div>
+      </Section>
+
+      <Section id="statuses" emoji="🚦">
+        <p>Every task has one. Click the status to change it.</p>
+        <div className="gpair gpair-side">
+          <dl className="guide-defs">
+            {PICK.map((s: StatusKey) => (
+              <div key={s}>
+                <dt><span className={`st st-status tone-${STATUS[s].tone}`}><StatusIcon s={s} />{STATUS[s].word}</span></dt>
+                <dd>{helpRest(`status_${s}`)}</dd>
+              </div>
+            ))}
+            {FLAGS.map((f) => (
+              <div key={f.term}>
+                <dt><b>{f.word}</b></dt>
+                <dd>{helpRest(f.term)} The app works this out from the date.</dd>
+              </div>
+            ))}
+          </dl>
+          <Shot src="status.webp" alt="A task's status menu, with Blocked, Dropped, Move date and Ask for update." w={520} h={632} small />
+        </div>
+      </Section>
+
+      <Section id="dates" emoji="📅">
+        <p className="guide-rule">Push a date before it passes, and say why.</p>
+        <p>A pushed date is fine. The reason shows under the task, so everyone knows. A date that passes in silence is a miss.</p>
+        <Shot src="pushed.webp" alt="A task pushed once, with its reason under the name." w={1000} h={106} />
+        <DateMoveFigure />
+      </Section>
+
+      <Section id="projects" emoji="📁" go={{ href: '/projects', label: 'Open Projects' }}>
+        <Shot src="project.webp" alt="A project page: its people, the counts, and its task list." w={1100} h={705} />
+        <ul className="guide-list">
+          <li><b>The tiles</b> filter the list. Press Late to see only late tasks.</li>
+          <li><b>Settings</b> is open to everyone on it. Members can add people. The owner and lead change the rest.</li>
+          <li><b>Archive</b> needs a reason. Not the owner or lead? You can ask them to archive it.</li>
+        </ul>
+      </Section>
+
+      <Section id="minutes" emoji="📝">
+        <p>Paste your meeting notes, or connect your own Google to bring in Meet notes and Docs. Next steps become suggestions. Nothing is added until someone accepts it.</p>
+        <Shot src="minutes.webp" alt="Import meeting minutes, with Paste open." w={900} h={514} />
+      </Section>
+
+      <Section id="personal" emoji="🔒">
+        <p>Your own corner, under Projects. Only you can see it. Quick to-dos, a date only if you want one, and notes that save as you type.</p>
+        <div className="gpair">
+          <Shot src="personal.webp" alt="Personal: three of your own tasks, and your notes below." w={1100} h={705} />
+          <Clip src="note-to-task-clip.webm" label="A line in the notes made a task with one click." />
+        </div>
+        <p className="gsec-tip">Tip: put your cursor on a note line and press <b>→ Task</b>. It becomes a task.</p>
+      </Section>
+
+      <Section id="team" emoji="👥" go={{ href: '/team', label: 'Open Team' }}>
+        <p>Everyone&rsquo;s open tasks this week, by status or by person. Click a status heading to fold it away.</p>
+        <Shot src="team.webp" alt="Team, by status." w={1100} h={653} />
+      </Section>
+
+      <Section id="sees" emoji="🔑">
+        <p>You see the projects you are on. Admins see all of them. Your Personal page is yours alone.</p>
+        <table className="gwho">
+          <thead><tr><th scope="col" /><th scope="col">Can</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Everyone</th><td>Add tasks, update their own, ask others for an update, see projects they are on</td></tr>
+            <tr><th scope="row">Viewer of a project</th><td>Look only, and copy its link</td></tr>
+            <tr><th scope="row">Project owner and lead</th><td>Everything in their project, including drop, reopen and archive</td></tr>
+            <tr><th scope="row">Leadership</th><td>Send reminders to anyone, see Activity, connect team tools</td></tr>
+            <tr><th scope="row">Admin</th><td>All of it, plus the Roster and View as</td></tr>
+          </tbody>
+        </table>
+      </Section>
+
+      <Section id="more" emoji="📱">
         <ul className="guide-list">
           <li><b>iPhone.</b> Open it in Safari. Tap Share, then Add to Home Screen.</li>
           <li><b>Android.</b> Open it in Chrome. Tap the menu, then Install app.</li>
+          <li><b>Feedback.</b> Press Feedback at the top. Tell us what to fix, and what works well.</li>
         </ul>
-      </section>
-
-      <section id="feedback" aria-labelledby="g-feedback">
-        <h2 id="g-feedback">{title('feedback')}</h2>
-        <p>Press Feedback at the top. Share what to fix, and what works well. Anyone can reply, +1, say they are working on it, or mark a note Done.</p>
-      </section>
+      </Section>
     </article>
   );
 }
@@ -189,9 +205,9 @@ export function GuideView() {
 function DateMoveFigure() {
   return (
     <figure className="guide-fig">
-      <svg viewBox="0 0 360 178" role="img" aria-label="Two timelines. First, a date moved before it passed, with a reason. Second, a date that passed with no word.">
+      <svg viewBox="0 0 360 178" role="img" aria-label="Two timelines. First, a date pushed before it passed, with a reason. Second, a date that passed with no word.">
         <g className="gf-row">
-          <text x="0" y="14" className="gf-title">Moved in time</text>
+          <text x="0" y="14" className="gf-title">Pushed in time</text>
           <line x1="0" y1="56" x2="360" y2="56" className="gf-line" />
           <circle cx="40" cy="56" r="4" className="gf-today" />
           <text x="40" y="78" textAnchor="middle" className="gf-label">Today</text>
@@ -199,7 +215,7 @@ function DateMoveFigure() {
           <text x="140" y="78" textAnchor="middle" className="gf-label">First date</text>
           <path d="M146 48 Q212 8 272 47" className="gf-arc" fill="none" />
           <path d="M265 41 L273 48 L263 51" className="gf-arc" fill="none" />
-          <text x="210" y="22" textAnchor="middle" className="gf-label">Moved, with a reason</text>
+          <text x="210" y="22" textAnchor="middle" className="gf-label">Pushed, with a reason</text>
           <circle cx="280" cy="56" r="6" className="gf-new" />
           <text x="280" y="78" textAnchor="middle" className="gf-label">New date</text>
         </g>
@@ -214,7 +230,7 @@ function DateMoveFigure() {
           <text x="195" y="40" textAnchor="middle" className="gf-label gf-late-text">No word</text>
         </g>
       </svg>
-      <figcaption>Same first date. The first task was moved in time. The second slipped.</figcaption>
+      <figcaption>Same first date. The first task was pushed in time. The second slipped.</figcaption>
     </figure>
   );
 }

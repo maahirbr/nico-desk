@@ -2048,3 +2048,10 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 /* The latest push and its reason, under a task's name in the panel (15 Nov, task-ui.tsx TaskDrawer). */
 .drawer-pushed { margin: calc(-1 * var(--space-xxs)) 0 var(--space-xs); color: var(--ink-2); }
 .pushed-line { color: var(--ink-2); }
+/* "pushed 2×" under the date: its hover wrapper would keep it on the date's line (15 Nov fix). */
+.trow-due > .when-host { display: flex; }
+/* Cc and Bcc suggestions (15 Nov, components/Reminders.tsx EmailsField): a small list under the box, as in Gmail. */
+.email-pick { position: relative; display: block; }
+.email-sugg { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); display: grid; padding: var(--space-xxs); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--pop-shadow, var(--card-shadow)); }
+.email-sugg > span { padding: var(--space-xs) var(--space-sm); border-radius: calc(var(--radius-control) - 2px); cursor: pointer; display: flex; gap: var(--space-xs); align-items: baseline; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.email-sugg > span.on, .email-sugg > span:hover { background: var(--sunk); }

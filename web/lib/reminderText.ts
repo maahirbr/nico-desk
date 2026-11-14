@@ -18,13 +18,14 @@ export function subjectFor(items: RemindItem[]): string {
   return `Reminder: ${soon} ${soon === 1 ? 'item' : 'items'} coming up`;
 }
 
-export function bodyFor(name: string, items: RemindItem[], appUrl: string): string {
+// signOff (15 Nov): the sender's name under "Best,": their nickname if they set one, else their first name.
+export function bodyFor(name: string, items: RemindItem[], appUrl: string, signOff?: string): string {
   const over = items.filter((i) => i.days < 0);
   const soon = items.filter((i) => i.days >= 0);
   const lines = [`Hi ${name.split(' ')[0]},`, ''];
   if (over.length) {
     lines.push('These are past their date:');
-    for (const i of over) lines.push(`• ${i.title} (${i.where}): was due ${fmtDate(i.dueOn)}, ${-i.days} day${i.days === -1 ? '' : 's'} ago`);
+    for (const i of over) lines.push(`• ${i.title} (${i.where}): overdue since ${fmtDate(i.dueOn)}, ${-i.days} day${i.days === -1 ? '' : 's'}`);
     lines.push('');
   }
   if (soon.length) {
@@ -34,5 +35,6 @@ export function bodyFor(name: string, items: RemindItem[], appUrl: string): stri
   }
   lines.push('Could you update these today: close them, or give a new date you can hold, with a line on why.');
   lines.push('', `Update them here: ${appUrl}`);
+  if (signOff?.trim()) lines.push('', 'Best,', signOff.trim());
   return lines.join('\n');
 }

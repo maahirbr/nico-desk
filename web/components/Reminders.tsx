@@ -9,6 +9,7 @@ import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
 import { RichText, textToHtml } from './RichText';
 import { CheckTick } from './task-ui';
+import { isRealEnter } from './ime';
 
 // Each draft opens in the lead's own Gmail (or mail app) with the text filled in, or, when the lead has connected
 // Gmail (lib/gmailSend.ts), goes out from here when they press Send. Either way the lead presses Send.
@@ -32,18 +33,65 @@ export type SendState = { enabled: boolean; connected: boolean; from: string };
 
 const list = (s: string) => s.split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean);
 
+export type Contact = { name: string; email: string };
+
+// Cc and Bcc (15 Nov, the PM's call): type part of a name or an address and the team's matches drop down, as in Gmail.
+// Enter (or a click) adds the highlighted one; Enter after a full address adds it as typed. The box keeps a comma list.
+function EmailsField({ label, value, onChange, contacts, readOnly }: { label: string; value: string; onChange: (v: string) => void; contacts: Contact[]; readOnly: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const parts = value.split(',');
+  const typed = parts[parts.length - 1].trim().toLowerCase();
+  const chosen = new Set(list(value).map((x) => x.toLowerCase()));
+  const matches = typed ? contacts.filter((c) => !chosen.has(c.email.toLowerCase()) && (c.name.toLowerCase().includes(typed) || c.email.toLowerCase().includes(typed))).slice(0, 6) : [];
+  const take = (email: string) => {
+    const kept = parts.slice(0, -1).map((x) => x.trim()).filter(Boolean);
+    onChange(`${[...kept, email].join(', ')}, `); setOpen(false); setHi(0);
+  };
+  return (
+    <label className="f"><span>{label}</span>
+      <span className="email-pick">
+        <input type="text" inputMode="email" autoComplete="off" value={value} readOnly={readOnly} placeholder="Name or email, then Enter"
+          role="combobox" aria-expanded={open && matches.length > 0} aria-autocomplete="list"
+          onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); setHi(0); }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); setHi((h) => (h + 1) % matches.length); }
+            else if (e.key === 'ArrowUp' && matches.length) { e.preventDefault(); setHi((h) => (h - 1 + matches.length) % matches.length); }
+            else if (e.key === 'Escape') setOpen(false);
+            else if (isRealEnter(e)) {
+              e.preventDefault();
+              if (open && matches[hi]) take(matches[hi].email);
+              else if (typed.includes('@')) take(parts[parts.length - 1].trim());
+            }
+          }} />
+        {open && matches.length > 0 && (
+          <span className="email-sugg" role="listbox" aria-label={`${label} suggestions`}>
+            {matches.map((c, i) => (
+              <span key={c.email} role="option" aria-selected={i === hi} className={i === hi ? 'on' : ''}
+                onMouseDown={(e) => { e.preventDefault(); take(c.email); }}><b>{c.name}</b> <span className="dim small">{c.email}</span></span>
+            ))}
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
+
 async function connectGmail(setSaid: (s: string) => void) {
   const res = await fetch('/api/v1/connections/gmail', { method: 'POST' }).catch(() => null);
   const j = res?.ok ? ((await res.json().catch(() => null)) as { url?: string } | null) : null;
   if (j?.url) window.location.assign(j.url); else setSaid('Could not reach Google. Try again in a moment.');
 }
 
-function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: SendState }) {
+function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl: string; send: SendState; signOff: string; contacts: Contact[] }) {
   const [on, setOn] = useState(() => new Set(d.items.filter((i) => !i.flag).map((i) => i.key)));
+  // The first text, with the sender's sign-off (15 Nov): "Best," and their nickname or first name.
+  const first = bodyFor(d.name, d.items.filter((i) => !i.flag), appUrl, signOff);
   const [subject, setSubject] = useState(d.subject);
-  const [body, setBody] = useState(d.body); // the plain text, for Gmail, the mail app and Copy
-  const [html, setHtml] = useState(() => textToHtml(d.body));
-  const [seed, setSeed] = useState(() => ({ n: 0, html: textToHtml(d.body) })); // a new n remounts the editor
+  const [body, setBody] = useState(first); // the plain text, for Gmail, the mail app and Copy
+  const [html, setHtml] = useState(() => textToHtml(first));
+  const [seed, setSeed] = useState(() => ({ n: 0, html: textToHtml(first) })); // a new n remounts the editor
   const [to, setTo] = useState(d.to ?? '');
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
@@ -58,7 +106,7 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
     const next = new Set(on);
     if (yes) next.add(key); else next.delete(key);
     const picked = d.items.filter((i) => next.has(i.key));
-    const text = bodyFor(d.name, picked, appUrl);
+    const text = bodyFor(d.name, picked, appUrl, signOff);
     setOn(next); setSubject(subjectFor(picked)); setBody(text); setSeed((x) => ({ n: x.n + 1, html: textToHtml(text) })); setSaid(''); setSent(false);
   };
   const none = on.size === 0;
@@ -78,13 +126,12 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
     if (res?.ok) { setSent(true); setLast(new Date().toISOString()); setSaid(`Sent from ${j?.from ?? send.from}.`); return; }
     setSaid(j?.error?.message ?? 'Could not send. Check your connection and try again.');
   };
-  const over = d.items.filter((i) => i.days < 0).length;
-  const out = d.items.length - on.size;
   return (
     <section className="card remind-card" id={`remind-${d.personId}`} data-find={d.name.toLowerCase()}>
       <div className="remind-head">
         <span className="person-cell"><Avatar id={d.personId} name={d.name} lg /><span><PersonLink id={d.personId}><b>{d.name}</b></PersonLink>
-          <span className="small dim"> · {d.items.length} {d.items.length === 1 ? 'item' : 'items'}{over ? `, ${over} overdue` : ''}{out ? ` · ${out} left out` : ''}{last ? ` · ${ago(last)}` : ''}</span></span></span>
+          {/* Only when they were last reminded (15 Nov): the count is plain from the list below. */}
+          {last && <span className="small dim"> · {ago(last)}</span>}</span></span>
       </div>
       <ul className="remind-items" aria-label={`Items in the reminder to ${d.name}`}>
         {d.items.map((i) => (
@@ -92,7 +139,7 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
             <span className="trow-check"><input type="checkbox" checked={on.has(i.key)} disabled={readOnly} aria-label={`Include “${i.title}”`}
               onChange={(e) => tick(i.key, e.target.checked)} /><CheckTick /></span>
             <span className="remind-item-text"><span>{i.title}</span>
-              <span className="small dim"> · {i.where} · {i.days < 0 ? `was due ${fmtDate(i.dueOn)}` : `due ${fmtDate(i.dueOn)}`}</span>
+              <span className="small dim"> · {i.where} · </span>{i.days < 0 ? <span className="small late-text">overdue since {fmtDate(i.dueOn)}</span> : <span className="small dim">due {fmtDate(i.dueOn)}</span>}
               {i.flag && <Help term="remind_flag"><span className="small remind-flag">{i.flag}</span></Help>}</span>
           </li>
         ))}
@@ -103,8 +150,8 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
         {!readOnly && !copies && <button type="button" className="linkbtn" onClick={() => setCopies(true)}>Cc / Bcc</button>}
       </div>
       {copies && <div className="row">
-        <label className="f"><span>Cc</span><input type="text" inputMode="email" value={cc} readOnly={readOnly} placeholder="Separate addresses with commas" onChange={(e) => setCc(e.target.value)} /></label>
-        <label className="f"><span>Bcc</span><input type="text" inputMode="email" value={bcc} readOnly={readOnly} placeholder="Separate addresses with commas" onChange={(e) => setBcc(e.target.value)} /></label>
+        <EmailsField label="Cc" value={cc} onChange={setCc} contacts={contacts} readOnly={readOnly} />
+        <EmailsField label="Bcc" value={bcc} onChange={setBcc} contacts={contacts} readOnly={readOnly} />
       </div>}
       <label className="f"><span>Subject</span><input value={subject} readOnly={readOnly} maxLength={200} onChange={(e) => setSubject(e.target.value)} /></label>
       <div className="f"><span>Email</span>
@@ -128,6 +175,6 @@ function Card({ d, appUrl, send }: { d: ReminderDraft; appUrl: string; send: Sen
 }
 
 // The cards. Finding a person is in the filter bar above (components/RemindFind.tsx, 15 Nov), which hides cards by data-find.
-export function ReminderCards({ drafts, appUrl, send }: { drafts: ReminderDraft[]; appUrl: string; send: SendState }) {
-  return <div className="remind-list">{drafts.map((d) => <Card key={d.personId} d={d} appUrl={appUrl} send={send} />)}</div>;
+export function ReminderCards({ drafts, appUrl, send, signOff = '', contacts = [] }: { drafts: ReminderDraft[]; appUrl: string; send: SendState; signOff?: string; contacts?: Contact[] }) {
+  return <div className="remind-list">{drafts.map((d) => <Card key={d.personId} d={d} appUrl={appUrl} send={send} signOff={signOff} contacts={contacts} />)}</div>;
 }

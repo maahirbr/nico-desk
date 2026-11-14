@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ListMenu } from './notesKit';
 
-// A small email editor: bold, italic, underline, bullets, numbers and a link. Cmd/Ctrl+B, I and U work as usual.
+// A small email editor: bold, italic, underline, and one Lists menu (bulleted or numbered), as in Personal notes
+// (15 Nov: no Link button, no checklist). Cmd/Ctrl+B, I and U work as usual.
 // It is uncontrolled: the parent gives the first HTML and remounts it (a new key) to replace the text.
 // The server keeps only the tags this toolbar makes (lib/gmailSend.ts cleanHtml), so a paste from elsewhere is cut down.
 
@@ -17,9 +19,6 @@ const TOOLS: { cmd: string; label: string; face: React.ReactNode }[] = [
   { cmd: 'bold', label: 'Bold', face: <b>B</b> },
   { cmd: 'italic', label: 'Italic', face: <i>I</i> },
   { cmd: 'underline', label: 'Underline', face: <u>U</u> },
-  { cmd: 'insertUnorderedList', label: 'Bulleted list', face: '•' },
-  { cmd: 'insertOrderedList', label: 'Numbered list', face: '1.' },
-  { cmd: 'createLink', label: 'Link', face: 'Link' },
 ];
 
 export function RichText({ initial, label, readOnly, onChange }: {
@@ -34,16 +33,13 @@ export function RichText({ initial, label, readOnly, onChange }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- set once per mount; the parent remounts to replace
   }, []);
   const changed = () => { const el = box.current; if (el) onChange(el.innerHTML, el.innerText); };
+  // Which list the cursor is in, so the Lists button shows it, as in Personal notes.
+  const [list, setList] = useState({ bullets: false, numbers: false });
+  const where = () => { try { setList({ bullets: document.queryCommandState('insertUnorderedList'), numbers: document.queryCommandState('insertOrderedList') }); } catch { /* not supported */ } };
   const run = (cmd: string) => {
-    let arg: string | undefined;
-    if (cmd === 'createLink') {
-      const got = window.prompt('Link address');
-      if (!got?.trim()) return;
-      arg = /^(https?:|mailto:)/i.test(got.trim()) ? got.trim() : `https://${got.trim()}`;
-    }
     box.current?.focus();
-    document.execCommand(cmd, false, arg);
-    changed();
+    document.execCommand(cmd, false);
+    changed(); where();
   };
   return (
     <div className="rte">
@@ -53,10 +49,11 @@ export function RichText({ initial, label, readOnly, onChange }: {
             <button key={t.cmd} type="button" className="rte-btn" aria-label={t.label} title={t.label}
               onMouseDown={(e) => e.preventDefault() /* keep the selection in the text */} onClick={() => run(t.cmd)}>{t.face}</button>
           ))}
+          <ListMenu bullets={list.bullets} numbers={list.numbers} onBullets={() => run('insertUnorderedList')} onNumbers={() => run('insertOrderedList')} />
         </div>
       )}
       <div ref={box} className="rte-body" role="textbox" aria-multiline="true" aria-label={label} contentEditable={!readOnly} suppressContentEditableWarning
-        onInput={changed} onBlur={changed} />
+        onInput={changed} onBlur={changed} onKeyUp={where} onMouseUp={where} />
     </div>
   );
 }

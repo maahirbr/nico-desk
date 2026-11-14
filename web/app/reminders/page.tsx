@@ -32,7 +32,7 @@ const GMAIL_SAID: Record<string, string> = {
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
-  const { d, sight, names } = await lookups(me);
+  const { d, sight, names, people } = await lookups(me);
   if (!mayOversee(me.person.appRoles)) return (<><h1>Reminders</h1><p className="lede">Only leadership or an admin drafts reminders.</p></>);
   // Leadership reminds anyone (15 Nov, the PM's call): the drafts cover every team task, even on projects they cannot
   // open. They still open only their own projects; Personal tasks stay out (sight.hidden).
@@ -96,7 +96,9 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
       }))} />}
       {skipped.length > 0 && <p className="small dim">Not reminded, by choice: {skipped.join(', ')}.</p>}
       {drafts.length === 0 ? <div className="card"><p className="empty card-pad">Nothing to chase. Everyone is on time for this view.</p></div>
-        : <ReminderCards drafts={drafts} appUrl={appUrl} send={send} />}
+        : <ReminderCards drafts={drafts} appUrl={appUrl} send={send}
+            signOff={me.person.nickname?.trim() || me.person.displayName.split(' ')[0]}
+            contacts={people.filter((p) => p.active && p.email).map((p) => ({ name: p.fullName ?? p.displayName, email: p.email }))} />}
     </>
   );
 }
