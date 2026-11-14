@@ -2,12 +2,12 @@
 
 import { useRef, useState } from 'react';
 import type { ReminderDraft } from '@/lib/reminders';
-import { bodyFor, subjectFor } from '@/lib/reminderText';
+import { bodyFor, bodyHtmlFor, subjectFor } from '@/lib/reminderText';
 import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
 import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
-import { RichText, textToHtml } from './RichText';
+import { RichText } from './RichText';
 import { CheckTick } from './task-ui';
 import { isRealEnter } from './ime';
 
@@ -102,8 +102,10 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
   const first = bodyFor(d.name, d.items.filter((i) => !i.flag), appUrl, signOff);
   const [subject, setSubject] = useState(d.subject);
   const [body, setBody] = useState(first); // the plain text, for Gmail, the mail app and Copy
-  const [html, setHtml] = useState(() => textToHtml(first));
-  const [seed, setSeed] = useState(() => ({ n: 0, html: textToHtml(first) })); // a new n remounts the editor
+  // Grouped by project, the project headings in bold (15 Nov, the PM's pick); the plain text goes to drafts.
+  const firstHtml = bodyHtmlFor(d.name, d.items.filter((i) => !i.flag), appUrl, signOff);
+  const [html, setHtml] = useState(firstHtml);
+  const [seed, setSeed] = useState(() => ({ n: 0, html: firstHtml })); // a new n remounts the editor
   const [to, setTo] = useState(d.to ?? '');
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
@@ -119,7 +121,7 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
     if (yes) next.add(key); else next.delete(key);
     const picked = d.items.filter((i) => next.has(i.key));
     const text = bodyFor(d.name, picked, appUrl, signOff);
-    setOn(next); setSubject(subjectFor(picked)); setBody(text); setSeed((x) => ({ n: x.n + 1, html: textToHtml(text) })); setSaid(''); setSent(false);
+    setOn(next); setSubject(subjectFor(picked)); setBody(text); setSeed((x) => ({ n: x.n + 1, html: bodyHtmlFor(d.name, picked, appUrl, signOff) })); setSaid(''); setSent(false);
   };
   const none = on.size === 0;
   const can = !!to && !none;

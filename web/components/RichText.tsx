@@ -15,6 +15,30 @@ export function textToHtml(text: string): string {
   return esc(text).replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}">${u}</a>`).replace(/\n/g, '<br>');
 }
 
+// The editor's text for plain drafts (Gmail, the mail app, Copy): line breaks kept, list items as "• " or "1. ".
+export function plainOf(root: Node): string {
+  let out = '';
+  const walk = (n: Node, list: { ordered: boolean; n: number } | null) => {
+    if (n.nodeType === Node.TEXT_NODE) { out += n.textContent ?? ''; return; }
+    if (!(n instanceof HTMLElement)) return;
+    const tag = n.tagName;
+    if (tag === 'BR') { out += '\n'; return; }
+    if (tag === 'UL' || tag === 'OL') {
+      if (out && !out.endsWith('\n')) out += '\n';
+      const l = { ordered: tag === 'OL', n: 0 };
+      n.childNodes.forEach((c) => walk(c, l));
+      return;
+    }
+    if (tag === 'LI') { out += list?.ordered ? `${++list.n}. ` : '• '; n.childNodes.forEach((c) => walk(c, null)); if (!out.endsWith('\n')) out += '\n'; return; }
+    const block = tag === 'DIV' || tag === 'P';
+    if (block && out && !out.endsWith('\n')) out += '\n';
+    n.childNodes.forEach((c) => walk(c, list));
+    if (block && !out.endsWith('\n')) out += '\n';
+  };
+  root.childNodes.forEach((c) => walk(c, null));
+  return out.replace(/\n{3,}/g, '\n\n').trim();
+}
+
 const TOOLS: { cmd: string; label: string; face: React.ReactNode }[] = [
   { cmd: 'bold', label: 'Bold', face: <b>B</b> },
   { cmd: 'italic', label: 'Italic', face: <i>I</i> },
@@ -29,10 +53,10 @@ export function RichText({ initial, label, readOnly, onChange }: {
     const el = box.current;
     if (!el) return;
     el.innerHTML = initial;
-    onChange(el.innerHTML, el.innerText);
+    onChange(el.innerHTML, plainOf(el));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- set once per mount; the parent remounts to replace
   }, []);
-  const changed = () => { const el = box.current; if (el) onChange(el.innerHTML, el.innerText); };
+  const changed = () => { const el = box.current; if (el) onChange(el.innerHTML, plainOf(el)); };
   // Which list the cursor is in, so the Lists button shows it, as in Personal notes.
   const [list, setList] = useState({ bullets: false, numbers: false });
   const where = () => { try { setList({ bullets: document.queryCommandState('insertUnorderedList'), numbers: document.queryCommandState('insertOrderedList') }); } catch { /* not supported */ } };

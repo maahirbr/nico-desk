@@ -1840,3 +1840,12 @@ Rollback: git revert the commit.
   (TaskRow takes `names`).
 - "✕ Remove" on an added task in the add form is a red outlined button, easy to see.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The reminder email, grouped by project
+
+The PM's pick of three styles. "Hi Sam," then one plain line ("These 4 tasks need an update, 3 past their date:"),
+then each project as a heading with its tasks under it, most late first, the project said once ("due 13 Oct (33 days
+late)" in italics). Then the ask and the link on one line, and "Best," with the sender's nickname or first name.
+`lib/reminderText.ts` bodyFor (plain text, for Gmail and mail-app drafts) and bodyHtmlFor (bold headings, for Send);
+the editor's plain copy keeps bullets (`RichText.tsx plainOf`).
+Rollback: git revert the commit.
