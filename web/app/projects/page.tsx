@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireMe } from '@/lib/auth';
-import { lookups } from '@/lib/page';
+import { lookups, PERSONAL_NAME } from '@/lib/page';
 import { projectCounts, projectMembers } from '@/lib/plan';
 import { seenProjects } from '@/lib/visibility';
 import { countdown, isPartnerProject } from '@/lib/planUtil';
@@ -32,7 +32,7 @@ export default async function Projects() {
     // Personal: just the counts and who sees it. No status, people or date.
     if (p.personalFor) return (
       <Link key={p.id} href={`/projects/${p.id}`} className="pcard pcard-personal">
-        <div className="pcard-top"><h2 className="pcard-name">{p.name}</h2></div>
+        <div className="pcard-top"><h2 className="pcard-name">{PERSONAL_NAME}</h2></div>
         <p className="pcard-goal">Your own tasks and notes. Only you can see them.</p>
         <div className="pcard-progress">
           <span className="small"><b>{c.open}</b> open{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>

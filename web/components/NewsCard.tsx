@@ -5,7 +5,8 @@ import { useState, type ReactNode } from 'react';
 import type { News } from '@/lib/news';
 import { useReadOnly } from './readonly';
 
-// The What's new note at the top of Home (lib/news.ts): the welcome card's look, kept thin. Got it hides it for good, on
+// The What's new note at the top of Home (lib/news.ts): the welcome card's look, kept thin. An admin viewing as
+// someone sees it as they do, with no Got it: pressing it is theirs to do (14 Nov). Got it hides it for good, on
 // every device. The body's `mark` words are highlighted and its `link` words open their page.
 type Cut = { at: number; text: string; el: (k: number) => ReactNode };
 function body(n: News): ReactNode[] {
@@ -28,7 +29,7 @@ export function NewsCard({ n }: { n: News }) {
   const readOnly = useReadOnly();
   const [gone, setGone] = useState(false);
   const [said, setSaid] = useState('');
-  if (gone || readOnly) return null;
+  if (gone) return null;
   const gotIt = async () => {
     const res = await fetch('/api/v1/me/news/seen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: n.id }) }).catch(() => null);
     if (res?.ok) setGone(true); else setSaid('Could not save that. Try again.');
@@ -37,10 +38,10 @@ export function NewsCard({ n }: { n: News }) {
     <section className="card welcome news" aria-label="What's new">
       <h2>{n.title}</h2>
       <p className="news-body">{body(n)}</p>
-      <div className="row news-actions">
+      {!readOnly && <div className="row news-actions">
         <button type="button" className="btn news-ok" onClick={gotIt}>Got it ✓</button>
         {said && <span className="small dim" role="status">{said}</span>}
-      </div>
+      </div>}
     </section>
   );
 }

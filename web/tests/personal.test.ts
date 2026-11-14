@@ -123,8 +123,9 @@ describe('Your projects on Home', () => {
   it('puts Personal first, by that name, with no part', async () => {
     await s.ensurePersonalProject(db, TEAM_ID, 'per_cy');
     const mine = await myProjects(db, TEAM_ID, 'per_cy');
-    expect(mine[0]).toMatchObject({ name: 'Personal', role: '' });
-    expect(mine.slice(1).every((p) => p.name !== 'Personal' && p.role)).toBe(true);
+    expect(mine[0]).toMatchObject({ name: 'Personal 🔒', role: '' });
+    expect(mine.slice(1).every((p) => !p.name.startsWith('Personal') && p.role)).toBe(true);
+    expect((await myProjects(db, TEAM_ID, 'per_cy', false)).some((p) => p.name.startsWith('Personal'))).toBe(false); // viewing as them
   });
 });
 

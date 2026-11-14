@@ -7,7 +7,8 @@ import type { Me } from './auth';
 import { seesProject } from './sight';
 import { sightFor } from './visibility';
 
-export const PERSONAL_NAME = 'Personal';
+// What people see (14 Nov): the lock says it is private. Matching (Quick Add, paste, Claude) uses the plain "Personal".
+export const PERSONAL_NAME = 'Personal 🔒';
 
 // Lookups every page needs: names by id and project names by id.
 export async function lookups(me: Me) {

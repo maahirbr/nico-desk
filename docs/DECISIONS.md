@@ -1663,3 +1663,14 @@ it sorts last, is never late or at risk, and shows as "No date". Giving it a dat
 reason (it is not a date move). Only a Personal task may carry it: creating one elsewhere, moving one out of Personal, or
 moving any date to it is refused. Claude sees its date as null. No schema change.
 Rollback: git revert the commit. Any no-date tasks already made keep 9999-12-31 and show that date.
+
+## 2026-11-15 · Opus 5.5 · Personal 🔒, What's new under View as, and finding people on the Roster
+
+- Personal shows with its lock again where people see it: the page title, Home's Your projects, the Projects list, a
+  task's project name on rows and in the drawer, and search results. Matching (Quick Add, paste, Claude, the search
+  filter) keeps the plain "Personal", so typing "personal" still finds it.
+- An admin viewing as someone sees the What's new note as they do (shown until they press Got it), with no Got it.
+- A fix: under View as, Home's Your projects listed that person's Personal. It is now left out, as everywhere else.
+- The Roster has a find box at the right of its title (name, job title, department or email; it only hides rows on the
+  page). Edit is a ✎ to save space, and "Email invite" is "Invite".
+Rollback: git revert the commit.

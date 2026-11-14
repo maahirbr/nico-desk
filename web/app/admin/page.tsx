@@ -4,6 +4,7 @@ import { Person } from '@/components/chips';
 import { fmtDate, istDate } from '@/lib/time';
 import { teamAdoption } from '@/lib/activity';
 import { AddPeopleForm, AddPersonForm, PersonControls } from '@/components/client';
+import { RosterFind } from '@/components/RosterFind';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,13 +21,15 @@ export default async function Admin() {
   const notYet = new Set(isAdmin ? (await teamAdoption(d, me.team.id)).filter((r) => r.status === 'never').map((r) => r.id) : []);
   return (
     <>
-      <div className="page-head"><h1>Roster</h1></div>
+      {/* The find box sits at the right of the title (the PM's call, 15 Nov). */}
+      <div className="page-head"><h1>Roster</h1><RosterFind total={people.length} /></div>
       <div className="card table-card"><table className="stacked roster">
         {/* Access (member, lead, admin, removed) is for admins only (the PM's call, 3 Nov). */}
         <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <th>Access</th>}</tr></thead>
         <tbody>
           {people.map((p) => (
-            <tr key={p.id} className={p.active ? '' : 'closed'}>
+            <tr key={p.id} className={p.active ? '' : 'closed'}
+              data-find={[p.displayName, p.fullName, p.nickname, p.role, p.department, p.email].filter(Boolean).join(' ').toLowerCase()}>
               <td><Person name={p.displayName} id={p.id} />{p.nickname && <span className="dim"> ({p.fullName})</span>}{!p.active && <span className="dim"> (inactive)</span>}</td>
               <td data-label="Job title"><span className="clip clip-title" title={p.role}>{p.role}</span></td>
               <td data-label="Department"><span className="clip clip-dept" title={p.department}>{p.department}</span></td>

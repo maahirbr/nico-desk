@@ -81,7 +81,7 @@ async function gather(db: Tx, teamId: string, sight: Sight, q: string, today: st
 
   for (const p of projects) {
     if (f.any && !otherPasses(f, { projectId: p.id, owners: [p.ownerId, p.leadId] })) continue;
-    push({ kind: 'project', id: p.id, title: p.name, sub: [p.eyebrow, `Lead: ${name[p.ownerId] ?? '?'}`].filter(Boolean).join(' · '), href: `/projects/${p.id}` },
+    push({ kind: 'project', id: p.id, title: p.personalFor ? 'Personal 🔒' : p.name, sub: [p.eyebrow, `Lead: ${name[p.ownerId] ?? '?'}`].filter(Boolean).join(' · '), href: `/projects/${p.id}` },
       `${p.name} ${p.eyebrow ?? ''} ${p.intro ?? ''} ${p.phase ?? ''} ${p.workstreams.join(' ')} ${name[p.ownerId] ?? ''}`, rank(p.name),
       `Project: ${p.name}. ${p.intro ?? ''} ${p.eyebrow ?? ''}`.trim());
   }

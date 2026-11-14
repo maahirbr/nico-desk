@@ -32,7 +32,7 @@ export function PersonalHeader({ description, accent, notesFirst }: { descriptio
   return (
     <header className="page-head">
       <div>
-        <h1>Personal</h1>
+        <h1>Personal 🔒</h1>
         <p className="summary">{description || 'Only you can see this. Not your team, not admins.'}</p>
         {description && <p className="small dim">Only you can see this.</p>}
       </div>

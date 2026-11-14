@@ -631,13 +631,14 @@ async function setViewers(tx: Tx, teamId: string, projectId: string, meId: strin
 }
 
 // The live projects someone is on, as owner, lead or member, with their part in each. Home lists these; archived ones are left out.
-// My Personal project comes first and carries no part (13 Nov): it is just "Personal".
-export async function myProjects(db: Tx, teamId: string, personId: string): Promise<{ id: string; name: string; role: string }[]> {
+// My Personal project comes first and carries no part (13 Nov): it is just "Personal 🔒".
+// withPersonal false (an admin viewing as them, 15 Nov): their Personal stays private, as everywhere else.
+export async function myProjects(db: Tx, teamId: string, personId: string, withPersonal = true): Promise<{ id: string; name: string; role: string }[]> {
   const { rows } = await db.query<{ id: string; name: string; owner_id: string; lead_id: string | null; project_role: string | null; personal_for: string | null }>(
-    `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END AS name, pr.owner_id, pr.lead_id, m.project_role, pr.personal_for FROM projects pr
+    `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal 🔒' ELSE pr.name END AS name, pr.owner_id, pr.lead_id, m.project_role, pr.personal_for FROM projects pr
      LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
      WHERE pr.team_id = $1 AND pr.archived_at IS NULL AND (pr.owner_id = $2 OR pr.lead_id = $2 OR m.person_id IS NOT NULL) ORDER BY pr.personal_for IS NULL, pr.name`, [teamId, personId]);
-  return rows.map((r) => {
+  return rows.filter((r) => withPersonal || !r.personal_for).map((r) => {
     const owner = r.owner_id === personId, lead = (r.lead_id ?? r.owner_id) === personId;
     if (r.personal_for) return { id: r.id, name: r.name, role: '' };
     return { id: r.id, name: r.name, role: owner && lead ? 'Owner and lead' : owner ? 'Owner' : lead ? 'Lead' : r.project_role ?? 'Member' };

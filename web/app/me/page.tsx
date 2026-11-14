@@ -26,10 +26,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const updates = await homeUpdates(me, d, names, projectNames);
   const [mine, notices, all, projects, onProjects, replies, asks] = await Promise.all([
     myTasks(d, me.person.id, me.team.id, undefined, !me.viewingAs), listNotices(d, me.person.id, true), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
-    myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me), asksForMe(d, me),
+    myProjects(d, me.team.id, me.person.id, !me.viewingAs), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
   const handovers = await handoversForMe(d, me.person.id, me.team.id);
-  const news = me.viewingAs ? null : await newsFor(d, me.person.id);
+  // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
+  const news = await newsFor(d, me.person.id);
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   const first = await firstSeenDay(d, me.realPerson.id);
