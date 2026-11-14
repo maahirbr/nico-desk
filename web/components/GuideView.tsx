@@ -27,8 +27,6 @@ export const GUIDE_SECTIONS = [
   { id: 'minutes', title: 'Meeting minutes' },
   { id: 'personal', title: 'Personal' },
   { id: 'team', title: 'Team' },
-  { id: 'sees', title: 'Who sees what' },
-  { id: 'more', title: 'Phone and feedback' },
 ] as const;
 
 const MCP_URL = 'https://nico-desk.vercel.app/api/mcp';
@@ -173,28 +171,6 @@ export function GuideView() {
       <Section id="team" emoji="👥" go={{ href: '/team', label: 'Open Team' }}>
         <p>Everyone&rsquo;s open tasks this week, by status or by person. Click a status heading to fold it away.</p>
         <Shot src="team.webp" alt="Team, by status." w={1100} h={653} />
-      </Section>
-
-      <Section id="sees" emoji="🔑">
-        <p>You see the projects you are on. Admins see all of them. Your Personal page is yours alone.</p>
-        <table className="gwho">
-          <thead><tr><th scope="col" /><th scope="col">Can</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">Everyone</th><td>Add tasks, update their own, ask others for an update, see projects they are on</td></tr>
-            <tr><th scope="row">Viewer of a project</th><td>Look only, and copy its link</td></tr>
-            <tr><th scope="row">Project owner and lead</th><td>Everything in their project, including drop, reopen and archive</td></tr>
-            <tr><th scope="row">Leadership</th><td>Send reminders to anyone, see Activity, connect team tools</td></tr>
-            <tr><th scope="row">Admin</th><td>All of it, plus the Roster and View as</td></tr>
-          </tbody>
-        </table>
-      </Section>
-
-      <Section id="more" emoji="📱">
-        <ul className="guide-list">
-          <li><b>iPhone.</b> Open it in Safari. Tap Share, then Add to Home Screen.</li>
-          <li><b>Android.</b> Open it in Chrome. Tap the menu, then Install app.</li>
-          <li><b>Feedback.</b> Press Feedback at the top. Tell us what to fix, and what works well.</li>
-        </ul>
       </Section>
     </article>
   );

@@ -1800,3 +1800,8 @@ Rollback: git revert the commit; re-add the listed people's lead rows (the scrip
   A late item reads "overdue since 13 Oct".
 - Fix: "pushed 2×" now really sits under the date (its hover wrapper kept it on the date's line).
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The Guide drops "Who sees what" and "Phone and feedback"
+
+The PM's call: two sections left the Guide, "Who sees what" (the roles table) and "Phone and feedback". The rest stays.
+Rollback: git revert the commit.

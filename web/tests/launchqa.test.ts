@@ -6,7 +6,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh() {}, push() {} 
 
 import { TaskRow } from '../components/task-ui';
 import { proposalGap } from '../components/Minutes';
-import { GUIDE_SECTIONS, GuideView } from '../components/GuideView';
+import { GuideView } from '../components/GuideView';
 import { personFields } from '../lib/personFields';
 import type { Task } from '../lib/derive';
 
@@ -44,10 +44,8 @@ describe('the minutes badge', () => {
 });
 
 describe('the guide', () => {
-  it('says who sees what', () => {
-    expect(GUIDE_SECTIONS.map((s) => s.id)).toContain('sees');
+  it('says Claude changes show as via Claude (Who sees what left the Guide, 15 Nov)', () => {
     const out = renderToStaticMarkup(createElement(GuideView));
-    expect(out).toContain('Who sees what');
     expect(out).toContain('via Claude');
   });
 
