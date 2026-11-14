@@ -1,3 +1,4 @@
+import { ViewAsGuard } from '@/components/ViewAsGuard';
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans, Inter, Source_Sans_3 } from 'next/font/google';
 import { cookies } from 'next/headers';
@@ -85,13 +86,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body data-viewing={me?.viewingAs ? '1' : undefined}>
         <HelpProvider initial={help} enabled={!!me}>
         {me?.viewingAs && <ViewBanner name={me.person.displayName} role={roleWord(me.person.appRoles)} />}
+        {me?.viewingAs && <ViewAsGuard name={me.person.displayName} />}
         <KeyboardDismiss />
         <ServiceWorker />
         <LimitNotice />
         <Toaster />
         {me && <Shortcuts />}
         {me ? (
-          <ReadOnlyProvider readOnly={me.viewingAs}>
+          <ReadOnlyProvider readOnly={false /* View as shows every control as the person sees it; ViewAsGuard stops the changes (15 Nov, option B) */}>
           <JevProvider on={jevOn()}>
           <PhotoProvider photos={photos}>
           <ViewerProvider meId={me.person.id} isLead={isLeadOrAdmin(me.person.appRoles)} today={todayIst()} fresh={fresh}>

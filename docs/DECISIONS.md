@@ -1753,3 +1753,13 @@ tab for someone not yet connected; Connections shows the Google Meet card to eve
 Granola, Fireflies and Fathom (one team key each) stay lead-only. Note: while the Google app is in testing mode, only its
 listed test users can connect.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · View as shows the controls the person sees (option B)
+
+The PM's call: View as is the truest picture of someone's screen. Every page now shows the controls they see (Import
+minutes, + Add task, Settings, status menus, Got it, the new-task form, the welcome card, Connections), where before View as
+hid them. `components/ViewAsGuard.tsx` stops the changes: any call that is not a GET to /api is answered in the page with
+"You're viewing as … This is look only." and never sent, and opening a mail draft is stopped the same way. Leaving View
+as and signing out still go through. The server still refuses every write in View as (`lib/http.ts` route(),
+assertNotViewing). Private things stay hidden: their Personal page and notes, and their Google link.
+Rollback: git revert the commit (View as hides the controls again).

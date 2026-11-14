@@ -30,7 +30,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
   if (t.ownerId === me.person.id && !me.viewingAs) await markAssignedSeen(d, me.person.id, t.id);
   const log = await taskLog(d, t.id, undefined, 200);
   const isOwner = t.ownerId === me.person.id;
-  const mirror = t.readOnly || me.viewingAs; // viewing as someone: show the task, offer no action
+  const mirror = t.readOnly; // View as shows the actions as they are; ViewAsGuard stops them (15 Nov)
   const may = {
     edit: !mirror && (isOwner || isLead || t.createdBy === me.person.id),
     reassign: !mirror && (isOwner || isLead),

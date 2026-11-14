@@ -44,7 +44,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
     `SELECT (photo_url IS NOT NULL OR nickname IS NOT NULL OR phone IS NOT NULL OR EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id)) AS done
        FROM people p WHERE id = $1`, [me.person.id]) : { rows: [] as { done: boolean }[] };
   const open = [...mine.assigned, ...mine.tasks];
-  const welcome = isNew && !me.viewingAs ? {
+  const welcome = isNew ? { // in View as too: it is what they see (15 Nov); its ticks live in this browser only
     firstName: me.person.displayName.split(' ')[0], projects: onProjects.map((p) => p.name), waiting: open.length,
     late: open.filter((x) => x.dueOn < t).length, dueToday: open.filter((x) => x.dueOn === t).length, profileDone: !!prof?.done,
     firstTaskId: [...open].sort((a, b) => a.dueOn.localeCompare(b.dueOn))[0]?.id ?? null,
