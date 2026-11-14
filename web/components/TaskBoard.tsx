@@ -87,9 +87,10 @@ function bringIntoView(selector: string) {
 }
 const importIntoView = () => bringIntoView('.imp-panel');
 
-export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, today, log, workstreams = [], proposals = [], partnerPeople = [], partnerName = null }: {
+// isHead (15 Nov): I own or lead this project, so I may drop any task in it (and reopen it from its panel).
+export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, isHead = false, today, log, workstreams = [], proposals = [], partnerPeople = [], partnerName = null }: {
   projectId: string; tasks: Task[]; people: P[]; names: Record<string, string>; projectNames?: Record<string, string>;
-  meId: string; isLead: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
+  meId: string; isLead: boolean; isHead?: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
   partnerPeople?: string[]; partnerName?: string | null; // a partner project (1 Nov): tasks have a Nicobar owner, a partner owner, or both
 }) {
   const router = useRouter();
@@ -226,6 +227,12 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             {t.description && <div className="desc">{t.description}</div>}
             {t.note && <div className="sub note-line">{t.note}</div>}
             {t.blocked && <div className="sub blocked-line">{t.blocked.onId ? <><Help term="blocked_on">Waiting on</Help> <PersonLink id={t.blocked.onId}>{names[t.blocked.onId]}</PersonLink>: </> : <><Help term="status_blocked">Blocked</Help>: </>}{t.blocked.ask}</div>}
+            {/* The latest push and why, under the name like a block (the PM's call, 15 Nov). */}
+            {t.statusCategory === 'open' && t.renegotiations.length > 0 && (() => {
+              const r = t.renegotiations[t.renegotiations.length - 1];
+              const who = r.by === meId ? 'you' : r.by ? (names[r.by] ?? 'someone').split(' ')[0] : null;
+              return <div className="sub pushed-line">Pushed to {fmtDate(r.to)}{who ? ` by ${who}` : ''}{r.reason ? `: ${r.reason}` : ''}</div>;
+            })()}
             {t.links.length > 0 && <div className="sub"><TaskLinkChips links={t.links} onMore={() => { setOpenId(t.id); setStartStatus(undefined); }} /></div>}
           </td>
           <td data-label={partnerName ? 'Nicobar Owner' : 'Owner'}>{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /> : <span className="dim">—</span>}</td>
@@ -240,9 +247,9 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             )}
           </td>
           <td>
-            {(can || askable) && t.statusCategory === 'open' ? (
-              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead)) : []} canReassign={can && (isLead || t.ownerId === meId)}
-                canAsk={askable} askOnly={!can} when={statusWhen(t, names, meId)}
+            {(can || askable || (isHead && !readOnly && !t.readOnly)) && t.statusCategory === 'open' ? (
+              <BoardStatusMenu t={t} current={s} disabled={busy} statuses={can ? PICK.filter((k) => k === s || canMoveTo(t, k, meId, isLead, isHead)) : isHead && !readOnly && !t.readOnly ? [s, 'dropped'] : []} canReassign={can && (isLead || t.ownerId === meId)}
+                canAsk={askable} askOnly={!can && !(isHead && !readOnly && !t.readOnly)} when={statusWhen(t, names, meId)}
                 onPick={(a) => (a === 'date' || a === 'reassign' || a === 'ask' ? (setOpenId(t.id), setStartStatus(a)) : changeStatus(t, a))} />
             ) : <WhenTip text={statusWhen(t, names, meId)}><span className={`st st-status tone-${st.tone}`}><StatusIcon s={s} />{st.word}</span></WhenTip>}
             <div><FlagChip t={t} today={today} /></div>

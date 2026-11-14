@@ -2045,3 +2045,6 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .archive-news { display: flex; gap: var(--space-sm); align-items: baseline; margin: var(--space-xs) 0 0; }
 /* Team, by status: a group's heading folds it (15 Nov). The heading keeps its look; only a chevron is added. */
 .group-toggle { display: inline-flex; align-items: center; gap: var(--space-xs); font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+/* The latest push and its reason, under a task's name in the panel (15 Nov, task-ui.tsx TaskDrawer). */
+.drawer-pushed { margin: calc(-1 * var(--space-xxs)) 0 var(--space-xs); color: var(--ink-2); }
+.pushed-line { color: var(--ink-2); }

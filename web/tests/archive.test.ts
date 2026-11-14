@@ -386,3 +386,22 @@ describe('asking to archive (15 Nov)', () => {
     expect((await archiveNewsForMe(db, p.teamId, m.person_id)).map((n) => n.outcome)).toEqual(['archived']);
   });
 });
+
+describe('a project owner or lead drops and reopens its tasks (15 Nov)', () => {
+  it('drops and reopens a task someone else owns in it; a plain member cannot', async () => {
+    // per_cy leads, per_bo is a plain member; neither holds the lead or admin role on the team.
+    const p = await createProject(db, LEAD, TEAM_ID, { ...base, leadId: 'per_cy' });
+    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo', projectId: p.id });
+    const other = await s.createTask(db, LEAD, { ...task, title: 'Second', ownerId: 'per_bo', projectId: p.id });
+    expect(await code(s.closeTask(db, 'per_cy', t.id, { version: t.version, as: 'done' }))).toBe('403 not_allowed'); // drop, not done
+    const dropped = await s.closeTask(db, 'per_cy', t.id, { version: t.version, as: 'dropped', reason: 'No longer needed' });
+    expect(dropped.statusCategory).toBe('dropped');
+    expect(await code(s.reopenTask(db, 'per_cy', t.id, { version: dropped.version, reason: 'Back on' }))).toBe('ok');
+    const { rows: [m] } = await db.query<{ person_id: string }>(`SELECT person_id FROM project_members WHERE project_id = $1 AND person_id = 'per_bo'`, [p.id]);
+    expect(m).toBeTruthy();
+    await s.createTask(db, LEAD, { ...task, title: 'Third', ownerId: 'per_dee', projectId: p.id, ownerRole: 'Help' });
+    const third = (await s.projectTasks(db, p.id)).find((x) => x.title === 'Third')!;
+    expect(await code(s.closeTask(db, 'per_bo', third.id, { version: third.version, as: 'dropped', reason: 'Not mine' }))).toBe('403 not_allowed');
+    expect(other.statusCategory).toBe('open');
+  });
+});

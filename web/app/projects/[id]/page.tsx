@@ -89,6 +89,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           projectNames={projectNames}
           meId={me.person.id}
           isLead={isLead}
+          isHead={p.ownerId === me.person.id || p.leadId === me.person.id}
           today={now}
           workstreams={p.workstreams}
           partnerPeople={p.partnerName ? p.partnerPeople : []}

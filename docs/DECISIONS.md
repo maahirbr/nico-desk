@@ -1727,3 +1727,19 @@ Rollback: git revert the commit.
 The PM's wording for the Quick Add hint: "Type or say it the way you'd tell someone. You can add 1 or more tasks, or paste
 a WhatsApp chat." (was "Add one task or a few"). Words only.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · A project's owner and lead drop and reopen its tasks
+
+The PM's call: the owner or lead of a project may drop any task in it (with a reason) and reopen a closed one, even
+when they are not a team lead. Only that: marking someone else's task Done, moving its date or giving it to someone else
+still needs its owner or a lead. `lib/service.ts` Ctx.isHead; the board's status menu and the task panel offer Drop and
+Reopen to them (`components/statusRules.ts` canMoveTo head).
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The latest push and its reason, under a task's name
+
+When a task's date was pushed, a small line under its name says the latest push, who made it and why: "Pushed to 16 Oct
+by Cy: Bandwidth issues". On a project's task table (under the description, like a block) and under the name in the task
+panel. The latest push only; open tasks only on the table. Project tables first, not Home or Team (the PM's call).
+`Renegotiation.by` carries who pushed it.
+Rollback: git revert the commit.

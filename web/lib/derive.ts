@@ -51,7 +51,8 @@ export type EventRow = {
   at: string;
 };
 
-export type Renegotiation = { at: string; from: string; to: string; reason: string | null; kind: 'open' | 'late' };
+// by (15 Nov): who pushed it, for the task panel's "Date pushed … by …" line.
+export type Renegotiation = { at: string; from: string; to: string; reason: string | null; kind: 'open' | 'late'; by?: string | null };
 
 export type Task = {
   id: string;
@@ -80,6 +81,7 @@ export type Task = {
   blocked: { onId: string | null; ask: string; at: string } | null; // ask is the block reason; a person is optional
   origin: 'app' | 'sheet' | 'granola';
   readOnly: boolean;
+  projectHead?: boolean; // set for the reader on a single task (GET /api/v1/tasks/:id): they own or lead its project
   createdBy: string | null;
   createdAt: string;
   closedAt: string | null;
@@ -113,7 +115,7 @@ export function renegotiations(events: EventRow[]): Renegotiation[] {
     .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : a.id < b.id ? -1 : 1))
     .map((e) => {
       const from = String(e.before);
-      return { at: e.at, from, to: String(e.after), reason: e.reason, kind: istDate(e.at) <= from ? 'open' : 'late' };
+      return { at: e.at, from, to: String(e.after), reason: e.reason, kind: istDate(e.at) <= from ? 'open' : 'late', by: e.actor_id };
     });
 }
 

@@ -4,8 +4,9 @@ import type { StatusKey } from './task-ui';
 // Which status moves the service allows this person, so the UI never offers one that returns 403.
 // Mirrors lib/service.ts: blockTask, setHealth, closeTask and the unblock that
 // quickMove runs first allow the owner or a lead; reopenTask is lead-only. Keep them in step.
-export function canMoveTo(t: Pick<Task, 'ownerId' | 'readOnly' | 'statusCategory'>, s: StatusKey, meId: string, isLead: boolean): boolean {
+// head (15 Nov): the owner or lead of the task's project may also drop it, and reopen it.
+export function canMoveTo(t: Pick<Task, 'ownerId' | 'readOnly' | 'statusCategory'>, s: StatusKey, meId: string, isLead: boolean, head = false): boolean {
   if (t.readOnly) return false;
-  if (t.statusCategory !== 'open') return isLead;
-  return t.ownerId === meId || isLead;
+  if (t.statusCategory !== 'open') return isLead || head;
+  return t.ownerId === meId || isLead || (head && s === 'dropped');
 }

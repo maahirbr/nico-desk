@@ -8,7 +8,9 @@ type P = { id: string };
 
 export const GET = route<P>(async ({ params, me, db }) => {
   const t = await taskFor(db, me, params.id);
-  return t;
+  // The owner or lead of its project may drop and reopen it (15 Nov), so the panel offers those.
+  const head = !!t.projectId && (await db.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [t.projectId, me.person.id])).rows.length > 0;
+  return { ...t, projectHead: head };
 });
 
 const Body = z.object({

@@ -238,7 +238,8 @@ export async function taskLog(db: Tx, taskId: string, before?: string, limit = 5
 
 // ---------- writing tasks ----------
 
-type Ctx = { row: TaskRow; roles: Set<AppRole>; meId: string; isOwner: boolean; isLead: boolean };
+// isHead (15 Nov): the owner or lead of the task's project, who may drop and reopen any task in it (the PM's call).
+type Ctx = { row: TaskRow; roles: Set<AppRole>; meId: string; isOwner: boolean; isLead: boolean; isHead: boolean };
 type Change = { set: Partial<TaskRow>; reasons?: Partial<Record<keyof TaskRow, string>>; extra?: { field: string; after: unknown }[] };
 
 async function insertEvent(
@@ -290,7 +291,8 @@ async function mutate(
     const onProject = !row.owner_id && row.project_id ? (await tx.query(
       `SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2) UNION SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`,
       [row.project_id, meId])).rows.length > 0 : false;
-    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles) };
+    const isHead = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [row.project_id, meId])).rows.length > 0 : false;
+    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles), isHead };
     if (!allow(ctx)) throw forbidden();
     const change = build(ctx);
     const at = new Date().toISOString();
@@ -481,7 +483,7 @@ export async function renegotiate(db: Db, meId: string, id: string, input: { ver
 }
 
 export async function closeTask(db: Db, meId: string, id: string, input: { version: number; as: 'done' | 'dropped'; reason?: string }): Promise<Task> {
-  return mutate(db, meId, id, input.version, (c) => c.isOwner || c.isLead, (c) => {
+  return mutate(db, meId, id, input.version, (c) => c.isOwner || c.isLead || (input.as === 'dropped' && c.isHead), (c) => {
     openOnly(c);
     if (input.as === 'done') {
       // Done is one tick; a note on what was delivered is welcome but not required.
@@ -523,7 +525,8 @@ export async function reopenTask(db: Db, meId: string, id: string, input: { vers
     // My own Personal task (13 Nov): I reopen it myself, no reason needed. Anything else: a lead, with a reason.
     const { rows: [pp] } = row.project_id ? await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [row.project_id]) : { rows: [] as { personal_for: string | null }[] };
     const personal = !!pp?.personal_for && pp.personal_for === meId && row.owner_id === meId;
-    if (!personal && !isLeadOrAdmin(roles)) throw forbidden('Only a lead can reopen a task.');
+    const head = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [row.project_id, meId])).rows.length > 0 : false;
+    if (!personal && !head && !isLeadOrAdmin(roles)) throw forbidden('Only a lead, or the project’s owner or lead, can reopen a task.');
     const reason = personal ? (input.reason?.trim() || 'Reopened') : needReason(input.reason);
     if (row.version !== input.version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
     if (row.status_category === 'open') throw bad('invalid_body', 'The task is already open.');

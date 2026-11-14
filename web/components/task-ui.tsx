@@ -536,6 +536,12 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             {canEdit && open
               ? <textarea className="drawer-title" rows={2} value={edit.title} maxLength={200} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Task" />
               : <h2 className="drawer-title static">{t.title}</h2>}
+            {/* Why the date moved, under the name, so everyone who opens it sees it (the PM's call, 15 Nov): the latest push. */}
+            {t.renegotiations.length > 0 && (() => {
+              const r = t.renegotiations[t.renegotiations.length - 1];
+              const who = r.by === meId ? 'you' : r.by ? (names[r.by] ?? 'someone').split(' ')[0] : null;
+              return <p className="small drawer-pushed">Date pushed to {fmtDate(r.to)}{who ? ` by ${who}` : ''}{r.reason ? <>: “{r.reason}”</> : ''}{t.renegotiations.length > 1 ? <span className="dim"> · pushed {t.renegotiations.length}×</span> : ''}</p>;
+            })()}
             {canEdit && open
               ? <><SayBox value={edit.description} max={600} names={people.map((p) => p.name)} onChange={(v) => setEdit((x) => ({ ...x, description: v }))}><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="Add details"
                   onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" /></SayBox><Count value={edit.description} max={600} /></>
@@ -543,8 +549,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {open ? (
               <div className="status-picker" role="group" aria-label="Status">
-                {PICK.filter((s) => s === key || canMoveTo(t, s, meId, isLead)).map((s) => (
-                  <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={!can || busy} onClick={() => setStatus(s)}>
+                {PICK.filter((s) => s === key || canMoveTo(t, s, meId, isLead, !!t.projectHead)).map((s) => (
+                  <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={(!can && !(t.projectHead && !readOnly && s === 'dropped')) || busy} onClick={() => setStatus(s)}>
                     <StatusIcon s={s} />{STATUS[s].word}
                   </button>
                 ))}
@@ -605,7 +611,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
-                <div className="small"><b>{firstDate ? 'Give it a date.' : { status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
+                <div className="small"><b>{firstDate ? 'Give it a date.' : { status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. A lead, or the project’s owner or lead, can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
                 {!firstDate && <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
@@ -720,7 +726,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             <div className="drawer-foot">
               {open && can && <button className="act danger" onClick={() => setMode('drop')}>Drop task…</button>}
-              {!open && isLead && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
+              {!open && (isLead || t.projectHead) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
               <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
             </div>
 
