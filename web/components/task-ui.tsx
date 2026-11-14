@@ -312,7 +312,9 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
             {when && <><span className="st-menu-when">{when}</span><span className="st-menu-sep" role="separator" /></>}
             {statuses.map((s) => (
               <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
-                <StatusIcon s={s} /><span>{STATUS[s].word}</span>
+                {/* Each status in its own coloured pill, as on the rows (the PM's call, 15 Nov); the current one is ticked. */}
+                <span className={`st st-status tone-${STATUS[s].tone}`}><StatusIcon s={s} />{STATUS[s].word}</span>
+                {s === current && <span className="st-opt-tick" aria-hidden>✓</span>}
               </button>
             ))}
             {!askOnly && <>

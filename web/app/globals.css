@@ -1215,7 +1215,11 @@ button.st-pick:disabled { cursor: default; opacity: .85; }
 /* The status menu: each status with its icon in its tone colour, then the actions under a rule */
 .st-menu > .st-opt, .st-menu > .st-act { display: flex; align-items: center; gap: var(--space-xs); white-space: nowrap; }
 .st-opt .st-icon { color: var(--sf, var(--tone-fg, var(--ink-3))); }
-.st-opt[aria-checked="true"] { background: var(--sunk); font-weight: 600; }
+.st-opt[aria-checked="true"] { background: none; font-weight: inherit; }
+/* Status menu items as coloured pills (15 Nov); the current one carries a tick. */
+.st-opt { justify-content: space-between; gap: var(--space-sm); }
+.st-opt > .st { pointer-events: none; }
+.st-opt-tick { color: var(--ink-2); font-size: 13px; }
 .st-act { color: var(--ink-2); }
 .menu > .st-act:disabled, .menu > .st-act:disabled:hover { color: var(--ink-3); background: none; cursor: default; } /* ✓ Asked: already asked for an update */
 .menu > .st-menu-sep { height: var(--rule); padding: 0; margin: var(--space-xxs) var(--space-xs); background: var(--hairline); cursor: default; }
@@ -2055,7 +2059,30 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .email-sugg { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); display: grid; padding: var(--space-xxs); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); box-shadow: var(--pop-shadow, var(--card-shadow)); }
 .email-sugg > span { padding: var(--space-xs) var(--space-sm); border-radius: calc(var(--radius-control) - 2px); cursor: pointer; display: flex; gap: var(--space-xs); align-items: baseline; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .email-sugg > span.on, .email-sugg > span:hover { background: var(--sunk); }
+/* Cc and Bcc as bubbles (15 Nov): an initial, the name and an ✕, in a box that looks like an input. */
+.email-box { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xxs); min-height: var(--button-height); padding: 3px var(--space-xs);
+  background: var(--surface); border: var(--rule) solid var(--line-strong, var(--hairline)); border-radius: var(--radius-control); cursor: text; }
+.email-box:focus-within { border-color: var(--primary); }
+.email-box input { flex: 1 1 120px; min-width: 120px; border: 0; outline: 0; padding: 4px 2px; background: transparent; font: var(--type-body); min-height: 0; box-shadow: none; }
+.email-chip { display: inline-flex; align-items: center; gap: var(--space-xxs); padding: 1px 4px 1px 2px; border: var(--rule) solid var(--line-strong, var(--hairline)); border-radius: 999px; font: var(--type-meta); background: var(--surface); max-width: 100%; }
+.email-chip .av { width: 20px; height: 20px; font-size: 9px; }
+.email-chip > span:not(.av) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.email-chip button { border: 0; background: none; cursor: pointer; color: var(--ink-2); font-size: 15px; line-height: 1; padding: 0 3px; border-radius: 50%; }
+.email-chip button:hover { color: var(--ink); background: var(--sunk); }
+.email-sugg .av { width: 20px; height: 20px; font-size: 9px; flex: none; align-self: center; }
 /* The ☰ beside Tasks that folds the sub-project panel (15 Nov). */
 .ws-toggle { display: inline-grid; place-items: center; width: 32px; height: 32px; margin-right: var(--space-xs); vertical-align: middle; border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); cursor: pointer; }
 .ws-toggle[aria-expanded="true"] { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
 .ws-toggle:hover { border-color: var(--line-strong); }
+/* Cc and Bcc full width, one under the other, so names never get cut (15 Nov). Each suggestion: name, then email. */
+.remind-copies { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-sm); } /* half and half (the PM's call) */
+@media (max-width: 600px) { .remind-copies { grid-template-columns: minmax(0, 1fr); } }
+.email-sugg { min-width: 280px; max-width: 100%; }
+.email-sugg > span { white-space: normal; align-items: center; }
+.email-sugg-text { display: grid; min-width: 0; line-height: 1.3; }
+.email-sugg-text > * { overflow-wrap: anywhere; }
+.email-chip > span:not(.av) { max-width: 180px; }
+/* Status menu (15 Nov): clear dividers under "Updated …" and after the statuses, and tighter rows. */
+.menu > .st-menu-sep { background: var(--line-strong, var(--hairline)); margin: var(--space-xs) var(--space-xs); }
+.menu > .st-opt { padding-top: 5px; padding-bottom: 5px; }
+.menu > .st-act, .menu > .help-host > .st-act { padding-top: 6px; padding-bottom: 6px; }

@@ -1812,3 +1812,12 @@ On a project with sub-projects, a ☰ beside "Tasks" folds the Sub-projects pane
 call). It starts open; this browser remembers a fold (localStorage, in try/catch). When folded the task table takes the
 full width.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Cc and Bcc as bubbles; the status menu as coloured pills
+
+- Reminders: Cc and Bcc sit side by side. Each address becomes a bubble with its initial, the name and an ✕; the box
+  stays ready for the next name (KeyboardDismiss leaves a box marked data-keep-focus open on Enter). Backspace in an
+  empty box takes the last bubble off. Suggestions show the name with the email under it, never cut.
+- The status menu shows each status as its coloured pill, as on the rows, with a tick on the current one, a clear divider
+  under "Updated …" and after the statuses, and tighter rows (the PM's call).
+Rollback: git revert the commit.

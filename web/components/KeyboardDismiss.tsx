@@ -34,7 +34,8 @@ export function KeyboardDismiss() {
     // Return or Done on a single-line field. A textarea keeps return for a new line.
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as Element | null;
-      if (isRealEnter(e) && t instanceof HTMLInputElement && TEXT_TYPES.has(t.type)) {
+      // A box marked data-keep-focus takes several entries in a row (Cc and Bcc, 15 Nov): Enter adds one, the box stays open.
+      if (isRealEnter(e) && t instanceof HTMLInputElement && TEXT_TYPES.has(t.type) && !t.closest('[data-keep-focus]')) {
         // Let a form submit first, then close the keyboard.
         setTimeout(() => { if (document.activeElement === t) t.blur(); }, 0);
       }

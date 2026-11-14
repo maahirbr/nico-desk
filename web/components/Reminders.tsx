@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReminderDraft } from '@/lib/reminders';
 import { bodyFor, subjectFor } from '@/lib/reminderText';
 import { fmtDate } from '@/lib/time';
@@ -36,45 +36,57 @@ const list = (s: string) => s.split(/[,;\s]+/).map((x) => x.trim()).filter(Boole
 export type Contact = { name: string; email: string };
 
 // Cc and Bcc (15 Nov, the PM's call): type part of a name or an address and the team's matches drop down, as in Gmail.
-// Enter (or a click) adds the highlighted one; Enter after a full address adds it as typed. The box keeps a comma list.
+// Enter (or a click) adds the highlighted one as a bubble with its initial and an ✕; Enter after a full address adds it
+// as typed. Backspace in an empty box takes the last bubble off. The parent keeps a comma list of the addresses.
 function EmailsField({ label, value, onChange, contacts, readOnly }: { label: string; value: string; onChange: (v: string) => void; contacts: Contact[]; readOnly: boolean }) {
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(0);
-  const parts = value.split(',');
-  const typed = parts[parts.length - 1].trim().toLowerCase();
-  const chosen = new Set(list(value).map((x) => x.toLowerCase()));
+  const [draft, setDraft] = useState('');
+  const input = useRef<HTMLInputElement>(null);
+  const emails = list(value);
+  const typed = draft.trim().toLowerCase();
+  const chosen = new Set(emails.map((x) => x.toLowerCase()));
   const matches = typed ? contacts.filter((c) => !chosen.has(c.email.toLowerCase()) && (c.name.toLowerCase().includes(typed) || c.email.toLowerCase().includes(typed))).slice(0, 6) : [];
-  const take = (email: string) => {
-    const kept = parts.slice(0, -1).map((x) => x.trim()).filter(Boolean);
-    onChange(`${[...kept, email].join(', ')}, `); setOpen(false); setHi(0);
-  };
+  const nameOf = (email: string) => contacts.find((c) => c.email.toLowerCase() === email.toLowerCase())?.name ?? email;
+  const set = (next: string[]) => onChange(next.join(', '));
+  // The cursor stays in the box after a bubble is added, so the next name can follow straight away.
+  const take = (email: string) => { if (!chosen.has(email.toLowerCase())) set([...emails, email]); setDraft(''); setOpen(false); setHi(0); requestAnimationFrame(() => input.current?.focus()); };
+  const drop = (email: string) => set(emails.filter((e) => e !== email));
   return (
-    <label className="f"><span>{label}</span>
+    <div className="f"><span>{label}</span>
       <span className="email-pick">
-        <input type="text" inputMode="email" autoComplete="off" value={value} readOnly={readOnly} placeholder="Name or email, then Enter"
-          role="combobox" aria-expanded={open && matches.length > 0} aria-autocomplete="list"
-          onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
-          onChange={(e) => { onChange(e.target.value); setOpen(true); setHi(0); }}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); setHi((h) => (h + 1) % matches.length); }
-            else if (e.key === 'ArrowUp' && matches.length) { e.preventDefault(); setHi((h) => (h - 1 + matches.length) % matches.length); }
-            else if (e.key === 'Escape') setOpen(false);
-            else if (isRealEnter(e)) {
-              e.preventDefault();
-              if (open && matches[hi]) take(matches[hi].email);
-              else if (typed.includes('@')) take(parts[parts.length - 1].trim());
-            }
-          }} />
+        <span className={`email-box${readOnly ? ' ro' : ''}`} data-keep-focus onClick={(e) => (e.currentTarget.querySelector('input') as HTMLInputElement | null)?.focus()}>
+          {emails.map((e) => (
+            <span key={e} className="email-chip" title={e}><Avatar name={nameOf(e)} /><span>{nameOf(e)}</span>
+              {!readOnly && <button type="button" aria-label={`Remove ${nameOf(e)}`} onClick={(ev) => { ev.stopPropagation(); drop(e); }}>×</button>}</span>
+          ))}
+          {!readOnly && <input key="typing" ref={input} type="text" inputMode="email" autoComplete="off" value={draft} aria-label={label}
+            placeholder={emails.length ? '' : 'Name or email, then Enter'}
+            role="combobox" aria-expanded={open && matches.length > 0} aria-autocomplete="list"
+            onFocus={() => setOpen(true)} onBlur={() => { setTimeout(() => setOpen(false), 150); if (draft.includes('@')) take(draft.trim()); }}
+            onChange={(e) => { setDraft(e.target.value); setOpen(true); setHi(0); }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); setHi((h) => (h + 1) % matches.length); }
+              else if (e.key === 'ArrowUp' && matches.length) { e.preventDefault(); setHi((h) => (h - 1 + matches.length) % matches.length); }
+              else if (e.key === 'Escape') setOpen(false);
+              else if (e.key === 'Backspace' && !draft && emails.length) drop(emails[emails.length - 1]);
+              else if (isRealEnter(e) || e.key === ',') {
+                e.preventDefault();
+                if (open && matches[hi]) take(matches[hi].email);
+                else if (draft.includes('@')) take(draft.trim().replace(/,$/, ''));
+              }
+            }} />}
+        </span>
         {open && matches.length > 0 && (
           <span className="email-sugg" role="listbox" aria-label={`${label} suggestions`}>
             {matches.map((c, i) => (
               <span key={c.email} role="option" aria-selected={i === hi} className={i === hi ? 'on' : ''}
-                onMouseDown={(e) => { e.preventDefault(); take(c.email); }}><b>{c.name}</b> <span className="dim small">{c.email}</span></span>
+                onMouseDown={(e) => { e.preventDefault(); take(c.email); }}><Avatar name={c.name} /><span className="email-sugg-text"><b>{c.name}</b><span className="dim small">{c.email}</span></span></span>
             ))}
           </span>
         )}
       </span>
-    </label>
+    </div>
   );
 }
 
@@ -149,7 +161,7 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
         <label className="f"><span>To</span><input type="text" inputMode="email" value={to} readOnly={readOnly} placeholder="No email on file. Add one, or copy the text instead" onChange={(e) => { setTo(e.target.value); setSent(false); }} /></label>
         {!readOnly && !copies && <button type="button" className="linkbtn" onClick={() => setCopies(true)}>Cc / Bcc</button>}
       </div>
-      {copies && <div className="row">
+      {copies && <div className="remind-copies">
         <EmailsField label="Cc" value={cc} onChange={setCc} contacts={contacts} readOnly={readOnly} />
         <EmailsField label="Bcc" value={bcc} onChange={setBcc} contacts={contacts} readOnly={readOnly} />
       </div>}
