@@ -9,7 +9,7 @@ import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flag
 import type { LogLine } from '@/lib/service';
 import type { Ask } from '@/lib/asks';
 import { ago } from '@/lib/updates';
-import { fmtDate, fmtStamp, istDate } from '@/lib/time';
+import { fmtDate, fmtStamp, istDate, NO_DATE } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
 import { StatusNudge } from './StatusNudge';
@@ -511,7 +511,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (edit.workstream !== (t.workstream ?? '')) body.workstream = edit.workstream || null;
   }
   const dirty = Object.keys(body).length > 0;
-  const okText = form.text.trim().length > 0;
+  // Giving a date to a Personal task that had none needs no reason (14 Nov).
+  const firstDate = !!t && mode === 'date' && t.dueOn === NO_DATE;
+  const okText = firstDate || form.text.trim().length > 0;
 
   return (
     <div className={`overlay drawer-overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
@@ -601,12 +603,12 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
-                <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
+                <div className="small"><b>{firstDate ? 'Give it a date.' : { status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
-                <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
+                {!firstDate && <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
                   <Count value={form.text} max={280} />
-                </label>
+                </label>}
                 {mode === 'blocked' && (
                   <label className="f"><span>Waiting on</span>
                     <Select value={form.person} onChange={(v) => setForm({ ...form, person: v })}>
@@ -666,7 +668,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               <dt>Due</dt>
               <dd>
                 <span className={dueText(t, today).late ? 'late-text' : ''}>{fmtDate(t.dueOn)}</span>
-                {can && open && mode !== 'date' && <button className="act" style={{ marginLeft: 10 }} onClick={() => setMode('date')}>Change date</button>}
+                {can && open && mode !== 'date' && <button className="act" style={{ marginLeft: 10 }} onClick={() => setMode('date')}>{t.dueOn === NO_DATE ? 'Set date' : 'Change date'}</button>}
                 {t.renegotiations.length > 0 && (
                   <div className="small dim">First given {fmtDate(t.firstDueOn)}{t.renegotiations.map((r) => ` → ${fmtDate(r.to)}`).join('')}</div>
                 )}

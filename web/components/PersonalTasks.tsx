@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { Task } from '@/lib/derive';
+import { NO_DATE } from '@/lib/time';
 import { DateField } from './DateField';
 import { Fold, FoldChev } from './Fold';
 import { useReadOnly } from './readonly';
@@ -28,7 +29,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today, p
   const [all, setAll] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const [title, setTitle] = useState('');
-  const [due, setDue] = useState(today);
+  const [due, setDue] = useState(''); // the date is optional here (14 Nov): none is stored as NO_DATE and shows as "No date"
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
   const [reopening, setReopening] = useState<Set<string>>(new Set()); // unticked, on its way back to open
@@ -47,14 +48,14 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today, p
   const list = picked ? tasks.filter(picked.match).sort((a, b) => a.dueOn.localeCompare(b.dueOn)) : open;
   const shown = all || picked ? list : list.slice(0, SHOWN);
   const add = async () => {
-    if (title.trim().length < 3 || !due) return;
+    if (title.trim().length < 3) return;
     setBusy(true);
     try {
       const r = await fetch('/api/v1/tasks', { method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ teamId, title: title.trim(), ownerId: meId, dueOn: due, projectId, ...(details.trim() ? { description: details.trim() } : {}) }) });
+        body: JSON.stringify({ teamId, title: title.trim(), ownerId: meId, dueOn: due || NO_DATE, projectId, ...(details.trim() ? { description: details.trim() } : {}) }) });
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error?.message ?? 'Could not add the task.');
-      setTitle(''); setDetails(''); router.refresh();
+      setTitle(''); setDetails(''); setDue(''); router.refresh();
     } catch (e) { notify((e as Error).message); } finally { setBusy(false); }
   };
   // Delete takes the task off the page. Underneath it is dropped, with the app's usual record, so nothing is lost.
@@ -97,8 +98,8 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today, p
             <input autoFocus value={title} maxLength={200} placeholder="Task name" aria-label="New task" onChange={(e) => setTitle(e.target.value)} />
             <input className="ptask-details" maxLength={600} value={details} placeholder="Details" aria-label="Details" onChange={(e) => setDetails(e.target.value)} />
           </div>
-          <DateField noQuick required min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
-          <button className="btn" disabled={busy || title.trim().length < 3 || !due}>Add</button>
+          <DateField noQuick min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date (optional)" />
+          <button className="btn" disabled={busy || title.trim().length < 3}>Add</button>
         </form>
       )}
       {list.length === 0 ? <p className="small dim">{picked ? 'None right now.' : 'Nothing to do here. Add something above.'}</p> : <div className="tlist">

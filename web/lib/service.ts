@@ -7,7 +7,7 @@ import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './l
 import { norm as nameKey } from './quickadd';
 import { isLeadOrAdmin } from './roles';
 import { seesProject, seesTask, seesTaskRow, sightOf, workingWith, type Sight } from './sight';
-import { addDays, istDate, mondayOf, today as todayIst } from './time';
+import { addDays, istDate, mondayOf, NO_DATE, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
 // Every write goes through here, so the rules in SPEC.md section 2 hold for the API and the pages alike.
@@ -337,6 +337,7 @@ async function joinProject(tx: Tx, projectId: string, personId: string, role: st
 export async function createTask(db: Db, meId: string, input: CreateInput): Promise<Task> {
   const today = todayIst();
   if (input.dueOn < today) throw bad('date_in_past', 'The due date must be today or later.', 'dueOn');
+  if (input.dueOn === NO_DATE && !input.projectId) throw bad('invalid_body', 'Pick a due date.', 'dueOn');
   const id = newId('tsk');
   await db.transaction(async (tx) => {
     const roles = await rolesIn(tx, input.teamId, meId);
@@ -353,6 +354,7 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
       if (rows[0].personal_for && (rows[0].personal_for !== meId || input.ownerId !== meId || partnerOwner)) {
         throw bad('invalid_body', 'A Personal task is yours alone. Put it in a team project to give it to someone.', 'projectId');
       }
+      if (input.dueOn === NO_DATE && !rows[0].personal_for) throw bad('invalid_body', 'Pick a due date.', 'dueOn');
       if (rows[0].archived_at) throw bad('project_archived', 'This project is archived. Restore it to add tasks.', 'projectId');
       if (input.ownerId) await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
@@ -409,7 +411,8 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
         if (pp?.personal_for && (pp.personal_for !== meId || owner !== meId || c.row.created_by !== meId)) {
           throw bad('invalid_body', 'Only a task you made and own can go in your Personal project, and it stays yours there.', 'projectId');
         }
-      }
+        if (!pp?.personal_for && c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it to a team project.', 'projectId');
+      } else if (c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it out of Personal.', 'projectId');
       if (input.ownerId !== undefined && (input.ownerId || null) !== c.row.owner_id) {
         if (input.ownerId) await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
         if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
@@ -436,6 +439,7 @@ function checkNewDate(newDueOn: string | undefined, current: string): string {
   if (!newDueOn) throw bad('reason_required', 'A new date is required.', 'newDueOn');
   if (newDueOn < todayIst()) throw bad('date_in_past', 'The new date must be today or later.', 'newDueOn');
   if (newDueOn === current) throw bad('invalid_body', 'The new date is the same as the current one.', 'newDueOn');
+  if (newDueOn === NO_DATE) throw bad('invalid_body', 'Pick a date.', 'newDueOn');
   return newDueOn;
 }
 
@@ -468,7 +472,8 @@ export async function setHealth(
 export async function renegotiate(db: Db, meId: string, id: string, input: { version: number; newDueOn: string; reason: string }): Promise<Task> {
   return mutate(db, meId, id, input.version, (c) => c.isOwner || c.isLead, (c) => {
     openOnly(c);
-    const reason = needReason(input.reason);
+    // Giving a date to a Personal task that had none is not a date move, so it needs no reason (14 Nov).
+    const reason = c.row.due_on === NO_DATE ? (input.reason?.trim() || 'Date set') : needReason(input.reason);
     return { set: { due_on: checkNewDate(input.newDueOn, c.row.due_on) }, reasons: { due_on: reason } };
   });
 }

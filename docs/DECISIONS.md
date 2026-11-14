@@ -1654,3 +1654,12 @@ highlighted and "Projects" as a link, and a small Got it ✓. Got it hides it fo
 in `update_seen` under the scope `news:<id>`, so no schema change. It does not show under View as, and nothing is sent.
 The note lives in `lib/news.ts` `NEWS`: a new id shows a new note to everyone; null shows none.
 Rollback: set `NEWS` to null, or git revert the commit. The `news:` rows in `update_seen` can stay.
+
+## 2026-11-14 · Opus 5.5 · A Personal task may have no date
+
+The PM's call: in Personal a task can be added without a due date. It is stored as `NO_DATE` (9999-12-31, in
+`lib/time.ts`), not as a null, because `due_on` is NOT NULL and every sort, filter, flag and late check reads it: so
+it sorts last, is never late or at risk, and shows as "No date". Giving it a date later is "Set date" and needs no
+reason (it is not a date move). Only a Personal task may carry it: creating one elsewhere, moving one out of Personal, or
+moving any date to it is refused. Claude sees its date as null. No schema change.
+Rollback: git revert the commit. Any no-date tasks already made keep 9999-12-31 and show that date.

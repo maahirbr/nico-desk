@@ -69,7 +69,12 @@ export function istLocal(at: Date): string {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // "26 Sep": fixed words, so it reads the same in every browser locale.
+// A Personal task may have no date (14 Nov). It is stored as this far-off day, so every sort, filter and late check
+// keeps working (it sorts last and is never late), and it shows as "No date". Only a Personal task may carry it.
+export const NO_DATE = '9999-12-31';
+
 export function fmtDate(date: string): string {
+  if (date === NO_DATE) return 'No date';
   return `${Number(date.slice(8, 10))} ${MONTHS[Number(date.slice(5, 7)) - 1]}`;
 }
 

@@ -16,7 +16,7 @@ import {
   unblockTask, type Person,
 } from './service';
 import { seesTask } from './sight';
-import { addDays, today as todayIst } from './time';
+import { addDays, NO_DATE, today as todayIst } from './time';
 import { projectFor, seenProjects, seenTasks, sightFor, taskFor } from './visibility';
 
 // The MCP server's protocol and tools (app/api/mcp/route.ts is the HTTP side). Every tool reads through the same
@@ -60,7 +60,7 @@ function brief(t: Task, l: Lookups, c: Ctx, today: string) {
     owner: l.names[t.ownerId] ?? t.ownerId,
     project: t.projectId ? l.projects[t.projectId] ?? null : null,
     projectId: t.projectId && l.projects[t.projectId] ? t.projectId : null,
-    dueOn: t.dueOn,
+    dueOn: t.dueOn === NO_DATE ? null : t.dueOn,
     priority: t.priority?.value ?? null,
     ...(t.blocked ? { blockedOn: t.blocked.onId ? l.names[t.blocked.onId] ?? null : null, blockReason: t.blocked.ask } : {}),
     url: `${c.origin}/tasks/${t.id}`,

@@ -3,7 +3,9 @@ import type { Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { addFile, getFile, myPage, restorePage, savePage } from '../lib/notes';
+import { flagKeyOf } from '../lib/flags';
 import { myProjects } from '../lib/plan';
+import { fmtDate, NO_DATE } from '../lib/time';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
 import { seesProject, seesTask, sightOf } from '../lib/sight';
@@ -123,5 +125,29 @@ describe('Your projects on Home', () => {
     const mine = await myProjects(db, TEAM_ID, 'per_cy');
     expect(mine[0]).toMatchObject({ name: 'Personal', role: '' });
     expect(mine.slice(1).every((p) => p.name !== 'Personal' && p.role)).toBe(true);
+  });
+});
+
+describe('a Personal task with no date', () => {
+  it('can be added, sorts last, is never late, and needs no reason to get a date', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const t = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Someday: read that book', ownerId: ME, dueOn: NO_DATE, projectId: pid });
+    expect(t.dueOn).toBe(NO_DATE);
+    expect(t.overdue).toBe(false);
+    expect(fmtDate(t.dueOn)).toBe('No date');
+    expect(flagKeyOf(t, '2026-10-09')).toBeNull();
+    const dated = await s.renegotiate(db, ME, t.id, { version: t.version, newDueOn: '2026-10-20', reason: '' });
+    expect(dated.dueOn).toBe('2026-10-20');
+  });
+  it('is refused outside Personal, and cannot leave Personal without a date', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    expect(await code(s.createTask(db, ME, { teamId: TEAM_ID, title: 'No date on a team task', ownerId: ME, dueOn: NO_DATE }))).toBe('400 invalid_body');
+    const team = (await s.listProjects(db, TEAM_ID)).find((p) => !p.personalFor && !p.archived)!;
+    expect(await code(s.createTask(db, ME, { teamId: TEAM_ID, title: 'No date on a team task', ownerId: ME, dueOn: NO_DATE, projectId: team.id }))).toBe('400 invalid_body');
+    const t = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Someday task', ownerId: ME, dueOn: NO_DATE, projectId: pid });
+    expect(await code(s.editTask(db, ME, t.id, { version: t.version, projectId: team.id }))).toBe('400 invalid_body');
+    expect(await code(s.editTask(db, ME, t.id, { version: t.version, projectId: null }))).toBe('400 invalid_body');
+    const other = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'A dated task', ownerId: ME, dueOn: '2026-10-12', projectId: pid });
+    expect(await code(s.renegotiate(db, ME, other.id, { version: other.version, newDueOn: NO_DATE, reason: 'x' }))).toBe('400 invalid_body');
   });
 });
