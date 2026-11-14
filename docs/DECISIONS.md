@@ -1743,3 +1743,13 @@ by Cy: Bandwidth issues". On a project's task table (under the description, like
 panel. The latest push only; open tasks only on the table. Project tables first, not Home or Team (the PM's call).
 `Renegotiation.by` carries who pushed it.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Anyone connects their own Google for Meet and Docs
+
+The PM's call: Google Meet and Google Doc minutes are open to everyone, not only leads. Each person connects their own
+Google account (the link is per person, `lib/meet.ts`), so it reads only their own meetings and the Docs they can open.
+Import minutes shows the Google Meet and Google Doc tabs to everyone when Google is switched on, with Connect Google in the
+tab for someone not yet connected; Connections shows the Google Meet card to everyone. View as still refuses every call.
+Granola, Fireflies and Fathom (one team key each) stay lead-only. Note: while the Google app is in testing mode, only its
+listed test users can connect.
+Rollback: git revert the commit.

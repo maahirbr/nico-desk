@@ -26,15 +26,17 @@ const PATH: Record<Provider, string> = { granola: 'granola', fireflies: 'firefli
 export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tasks'; busy: boolean; today: string; onRead: (b: Read) => void }) {
   const [tab, setTab] = useState<Source>('paste');
   const [f, setF] = useState({ title: '', date: today, text: '' });
-  const [meet, setMeet] = useState(false); // the Google Meet and Google Doc tabs show only for a lead who has connected Google
+  // The Google Meet and Google Doc tabs show to everyone when Google is switched on (anyone connects their own, 15 Nov);
+  // someone not yet connected is offered Connect Google inside the tab. null: switched off, or under View as.
+  const [meet, setMeet] = useState<boolean | null>(null);
   useEffect(() => {
-    fetch('/api/v1/connections/google-meet').then((r) => (r.ok ? r.json() : null)).then((s) => setMeet(!!s?.connected)).catch(() => setMeet(false));
+    fetch('/api/v1/connections/google-meet').then((r) => (r.ok ? r.json() : null)).then((s) => setMeet(s ? !!s.connected : null)).catch(() => setMeet(null));
   }, []);
   return (
     <div className="card imp-panel">
       <div className="imp-head"><h3>Import meeting minutes</h3></div>
       <nav className="tabs imp-tabs" aria-label="Where the minutes come from">
-        {(Object.keys(NAME) as Source[]).filter((k) => (k !== 'google_meet' && k !== 'google_doc') || meet).map((k) => (
+        {(Object.keys(NAME) as Source[]).filter((k) => (k !== 'google_meet' && k !== 'google_doc') || meet !== null).map((k) => (
           <button key={k} className="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{tab === k && <SlideInd group="tabs-minutes" className="tab-ind" />}{NAME[k]}</button>
         ))}
       </nav>
@@ -54,7 +56,7 @@ export function ImportPanel({ what, busy, today, onRead }: { what: 'plan' | 'tas
         </div>
       )}
       {(tab === 'granola' || tab === 'fireflies' || tab === 'fathom' || tab === 'google_meet') && <SourceList key={tab} provider={tab} busy={busy} onRead={onRead} />}
-      {tab === 'google_doc' && <DocForm busy={busy} today={today} onRead={onRead} />}
+      {tab === 'google_doc' && (meet ? <DocForm busy={busy} today={today} onRead={onRead} /> : <ConnectGoogle what="a Google Doc" />)}
       {tab === 'wispr' && (
         <div className="stack small">
           <p style={{ margin: 0 }}>This app can’t read Wispr Flow directly yet. Its Notetaker connects through a read-only MCP server for AI assistants such as Claude, not through a key.</p>
@@ -97,7 +99,8 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
   if (status === 'loading') return <p className="small dim">Checking the connection…</p>;
   if (status === 'off') return (
     <div className="stack small">
-      <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. {provider === 'google_meet' ? 'A lead connects their own Google account once' : `A lead adds the team’s ${NAME[provider]} API key once`}: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>
+      {provider === 'google_meet' ? <ConnectGoogle what="your Meet meetings" />
+        : <p style={{ margin: 0 }}>{NAME[provider]} isn’t connected yet. A lead adds the team’s {NAME[provider]} API key once: <a className="act" href="/connections">connect {NAME[provider]}</a>.</p>}
     </div>
   );
   return (
@@ -140,6 +143,25 @@ function SourceList({ provider, busy, onRead }: { provider: Provider; busy: bool
 }
 
 // A Google Doc of minutes, by its link, read with the lead's own Google link. Headings and bullets keep their shape.
+// Connect your own Google, from the import panel (15 Nov): it reads only your own meetings and Docs. Google sends you
+// back to Connections, where it says it worked.
+function ConnectGoogle({ what }: { what: string }) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const go = async () => {
+    setMsg(null);
+    const res = await fetch('/api/v1/connections/google-meet', { method: 'POST' }).catch(() => null);
+    const j = res?.ok ? ((await res.json().catch(() => null)) as { url?: string } | null) : null;
+    if (j?.url) window.location.assign(j.url); else setMsg('Could not reach Google. Try again in a moment.');
+  };
+  return (
+    <div className="stack small">
+      <p style={{ margin: 0 }}>Connect your Google account once to read {what}. Only you see what it reads.</p>
+      <div><button type="button" className="btn ghost" onClick={go}>Connect Google</button></div>
+      {msg && <p className="err small" role="alert">{msg}</p>}
+    </div>
+  );
+}
+
 function DocForm({ busy, today, onRead }: { busy: boolean; today: string; onRead: (b: Read) => void }) {
   const [link, setLink] = useState('');
   const [date, setDate] = useState(today);
