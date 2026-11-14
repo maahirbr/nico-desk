@@ -240,10 +240,12 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       </span>}
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
       {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar id={t.ownerId} name={owner} />{owner.split(' ')[0]}</PersonLink>}
-      <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
+      <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, pushed ${t.dateMoves}×` : undefined}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
-        {t.dateMoves > 0 && !closed && <Help term="moved_date"><span className="moved" role="img" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span></Help>}
+        {/* Late: the date it was due, under the count, so nobody has to work it out (the PM's call, 15 Nov). */}
+        {due.late && <span className="trow-was">due {fmtDate(t.dueOn)}</span>}
+        {t.dateMoves > 0 && !closed && <Help term="pushed"><span className="moved">pushed {t.dateMoves}×</span></Help>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (

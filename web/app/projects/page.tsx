@@ -78,7 +78,7 @@ export default async function Projects() {
   return (
     <div className="calm">
       <header className="page-head">
-        <div><h1>Projects</h1><p className="summary">{live.filter((p) => !p.personalFor).length} project{live.filter((p) => !p.personalFor).length === 1 ? '' : 's'} · soonest date first{archived.length > 0 && <> · {archived.length} archived</>}</p></div>
+        <div><h1>Projects</h1><p className="summary">{live.filter((p) => !p.personalFor).length} project{live.filter((p) => !p.personalFor).length === 1 ? '' : 's'} · soonest date first</p></div>{/* The archived count is on its own fold below (the PM's call, 15 Nov). */}
         {!readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
       </header>
       {live.length === 0 ? (

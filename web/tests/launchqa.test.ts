@@ -29,8 +29,8 @@ describe('a task row', () => {
     expect(out).not.toContain('aria-haspopup');
   });
 
-  it('gives the moved-date mark a role, so its label is allowed', () => {
-    expect(row(task({ dateMoves: 2 }))).toMatch(/class="moved"[^>]*role="img"|role="img"[^>]*class="moved"/);
+  it('says how many times the date was pushed, in words (15 Nov)', () => {
+    expect(row(task({ dateMoves: 2 }))).toMatch(/class="moved">pushed (<!-- -->)?2(<!-- -->)?×/);
   });
 });
 

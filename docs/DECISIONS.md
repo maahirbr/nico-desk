@@ -1691,3 +1691,24 @@ filter bar (it filters as you type, needs no Apply, and Enter does not send the 
 rows by `hidden`, but a card's or a phone-width row's own display rule beat it, so on a phone the Roster's find (13 Nov)
 did not hide anyone. `table.roster tr[hidden]` and `.remind-card[hidden]` now stay hidden.
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · View-only, Settings for everyone, asks to archive, and "pushed"
+
+The PM's calls, one batch:
+- View-only: someone who may view a project (project_viewers) but is not its owner, its lead or one of its people, and is
+  not an admin, only views it: no new tasks, no minutes, no plan changes and no comments (unless the task is theirs or
+  waits on them). A team lead added only as a viewer is view-only too. Copy link stays. `lib/sight.ts viewOnlyProjects`;
+  the server refuses, and the project page hides the controls with a line saying why.
+- Settings for everyone (`lib/plan.ts projectAccess`): the owner, the lead (either may change the other) and an admin, or
+  a team lead who is not just viewing, change anything. One of its people may only add people (`addProjectPeople`; they
+  cannot remove anyone or change the name, description, date, owner or lead), and may bring someone in by giving them a
+  task. A viewer reads Settings and closes it.
+- Archive always takes a reason (kept on the `_archived` event). A member who may not archive asks the owner and lead,
+  with a reason (`archive_asks`, one open ask per project). They see it on Home and as a banner on the project, with
+  Archive and Not now; the asker sees the answer once on Home. In the app only. NEW TABLE: run `npm run db:upgrade` on the
+  hosted database before a build with this is promoted.
+- "pushed N×" is the one word for a changed date, on every row, both skins, the task board, hovers, the person page and
+  the delivery record (Warm's ↻ mark is gone).
+- The status hover waits half a second (was one). Team, by status: each group folds from its heading, open on load.
+  The Projects line drops "N archived". A late row shows "due 5 Oct" under its count.
+Rollback: git revert the commit. The archive_asks table can stay; nothing else reads it.

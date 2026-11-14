@@ -44,7 +44,7 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (forced-colors: active) { .mark-wordmark { background: CanvasText; forced-color-adjust: none; } }
 /* Pieces only skin W shows (tokens.css): the logo tile, Home's own New task button, the moved-date mark,
    and a Late flag beside a red "3 days late". Every other skin keeps them hidden. */
-.mark-logo, .head-new, .mv-mark, .flag-again { display: none; }
+.mark-logo, .head-new, .flag-again { display: none; }
 .mark-text { display: block; }
 .kind-eyebrow::before { content: " · "; }
 .nav { display: flex; flex-direction: column; gap: var(--space-xxs); flex: 1; min-height: 0; overflow-y: auto; }
@@ -2019,5 +2019,21 @@ table.roster .roster-email { color: var(--ink-2); }
 /* Find a person on the Roster (14 Nov, components/RosterFind.tsx). */
 .roster-find { display: flex; align-items: center; flex-direction: row-reverse; gap: var(--space-sm); flex-wrap: wrap; margin-left: auto; }
 .roster-edit { font-size: 15px; padding: 0 var(--space-xxs); }
+
+/* A late row's date under its count (15 Nov, task-ui.tsx TaskRow): small, quiet, on its own line. */
+.trow-due .trow-was { display: block; font: var(--type-small); font-weight: 400; color: var(--ink-3); white-space: nowrap; }
 /* Rows and cards hidden by a find box (RosterFind, RemindFind): their own display rule would otherwise beat [hidden]. */
 table.roster tr[hidden], .remind-card[hidden] { display: none; }
+/* Settings for someone who may not change all of it (15 Nov, ProjectForm access): a bare fieldset, and the note on top. */
+.pform-plain { border: 0; padding: 0; margin: 0; min-width: 0; display: contents; }
+.pform-group:disabled, .pform-plain:disabled { opacity: 0.75; }
+.pform-lock { margin: 0 0 var(--space-sm); }
+/* A member's ask to archive the project (15 Nov, ProjectHeader). */
+.archive-ask { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; margin: var(--space-sm) 0; }
+.archive-ask-acts { gap: var(--space-xs); }
+.archive-asks { margin: var(--space-md) 0; }
+.archive-asks h2 { margin: 0 0 var(--space-xs); font: var(--type-heading); }
+.archive-asks-list { margin: 0; padding-left: var(--space-md); display: grid; gap: var(--space-xxs); }
+.archive-news { display: flex; gap: var(--space-sm); align-items: baseline; margin: var(--space-xs) 0 0; }
+/* Team, by status: a group's heading folds it (15 Nov). The heading keeps its look; only a chevron is added. */
+.group-toggle { display: inline-flex; align-items: center; gap: var(--space-xs); font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }

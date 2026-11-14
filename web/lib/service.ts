@@ -6,7 +6,7 @@ import { originNow } from './origin';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { norm as nameKey } from './quickadd';
 import { isLeadOrAdmin } from './roles';
-import { seesProject, seesTask, seesTaskRow, sightOf, workingWith, type Sight } from './sight';
+import { isViewOnly, seesProject, seesTask, seesTaskRow, sightOf, VIEW_ONLY, workingWith, type Sight } from './sight';
 import { addDays, istDate, mondayOf, NO_DATE, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
@@ -319,15 +319,16 @@ export type CreateInput = { teamId: string; title: string; description?: string 
 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
-// Only the project owner, its lead, a team lead or an admin may bring someone new in, the same rule as updateProject.
+// Anyone on the project may bring someone new in (15 Nov: members may add people, as in Settings); a viewer may not.
 async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined, meId: string, isLead: boolean): Promise<void> {
   const { rows } = await tx.query<{ owner_id: string; lead_id: string | null; member: boolean }>(
     `SELECT owner_id, lead_id, EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2) AS member FROM projects WHERE id = $1`,
     [projectId, personId]);
   const p = rows[0];
   if (!p || p.member) return;
-  if (p.owner_id !== personId && p.lead_id !== personId && p.owner_id !== meId && p.lead_id !== meId && !isLead) {
-    throw forbidden('Only the project owner, its lead or a team lead can add someone to this project. Pick one of its people.');
+  const { rows: [meOn] } = await tx.query(`SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`, [projectId, meId]);
+  if (p.owner_id !== personId && p.lead_id !== personId && p.owner_id !== meId && p.lead_id !== meId && !meOn && !isLead) {
+    throw forbidden('Only someone on this project can add someone new to it. Pick one of its people.');
   }
   const r = role === undefined ? 'Member' : role.trim();
   if (r.length < 2 || r.length > 60) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'ownerRole');
@@ -356,6 +357,7 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
       }
       if (input.dueOn === NO_DATE && !rows[0].personal_for) throw bad('invalid_body', 'Pick a due date.', 'dueOn');
       if (rows[0].archived_at) throw bad('project_archived', 'This project is archived. Restore it to add tasks.', 'projectId');
+      if (await isViewOnly(tx, input.teamId, input.projectId, meId)) throw forbidden(VIEW_ONLY);
       if (input.ownerId) await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
     const at = new Date().toISOString();

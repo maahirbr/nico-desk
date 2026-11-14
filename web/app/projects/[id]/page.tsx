@@ -1,3 +1,5 @@
+import { openArchiveAsk, projectAccess } from '@/lib/plan';
+import { viewOnlyProjects } from '@/lib/sight';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireMe } from '@/lib/auth';
@@ -64,14 +66,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
   const setup = await setupState(d, me, p.id); // null unless this person owns or leads the project, or is a lead or admin
   const split = plan ? lineSplit(plan.lines, now) : taskSplit(tasks, now);
+  // View-only (15 Nov): they see everything and can copy the link, but add nothing (lib/sight.ts viewOnlyProjects).
+  const viewOnly = (await viewOnlyProjects(d, me.team.id, me.person.id)).has(p.id);
 
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id} isAdmin={!readOnly && isAdmin}
-        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now} />
-      {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
-      <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
+        access={readOnly ? 'view' : await projectAccess(d, p, me.person.id)} today={now} archiveAsk={await openArchiveAsk(d, p.id)} />
+      {viewOnly && !p.archivedAt && <p className="small dim view-only-note">You can view this project. To add to it, ask its owner or lead to add you.</p>}
+      {/* An archived project is read-only: the board hides its write controls, as it does in View as, and for view-only people. */}
+      <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt || viewOnly}>
       {setup && <SetupList projectId={p.id} steps={setup} />}
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />

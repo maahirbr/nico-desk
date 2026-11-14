@@ -688,8 +688,6 @@
 :root[data-skin="w"] .trow-due { font-size: 13px; color: var(--ink-2); }
 :root[data-skin="w"] .trow-due.late { color: var(--late); font-weight: 600; }
 :root[data-skin="w"] .trow-due .moved { margin-left: 2px; color: var(--w-amber); font: 600 11.5px var(--font-sans); }
-:root[data-skin="w"] .mv-word { display: none; }
-:root[data-skin="w"] .mv-mark { display: inline; }
 :root[data-skin="w"] .trow-status { gap: 4px; }
 :root[data-skin="w"] :is(.st-pick, .status-sel) { font: 500 12px/1 var(--font-sans); color: var(--tone-fg, var(--ink-2)); background-color: var(--surface);
   border: 1px solid var(--line-strong); padding: 5px 24px 5px 10px; max-width: 120px; box-shadow: none;

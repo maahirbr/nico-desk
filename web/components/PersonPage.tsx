@@ -77,7 +77,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, name, f
             <div className="card stat"><div className="stat-n">{record.onTime}</div><div className="stat-l"><Help term="done_on_time">Done on time</Help></div></div>
             <div className={`card stat${record.late ? ' warn' : ''}`}><div className="stat-n">{record.late}</div><div className="stat-l"><Help term="done_late">Done late</Help></div></div>
             <div className={`card stat${record.openPastDue ? ' warn' : ''}`}><div className="stat-n">{record.openPastDue}</div><div className="stat-l"><Help term="open_past_due">Open and past due</Help></div></div>
-            <div className="card stat"><div className="stat-n">{record.renegotiated}</div><div className="stat-l"><Help term="date_moves">Date moves</Help></div></div>
+            <div className="card stat"><div className="stat-n">{record.renegotiated}</div><div className="stat-l"><Help term="date_moves">Pushed</Help></div></div>
           </div>
           <p className="small dim">Judged against the first date given. <Link className="rlink" href={`/ledger?person=${personId}`}>See the ledger for {mine ? 'you' : first}</Link></p>
         </section>

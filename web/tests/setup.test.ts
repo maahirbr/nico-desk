@@ -123,7 +123,8 @@ describe('setupState', () => {
 
   it('ticks work when a task exists on a task board', async () => {
     const p = await mk();
-    await s.createTask(db, LEAD, { teamId: TEAM_ID, title: 'Print the labels', dueOn: '2026-10-12', ownerId: OWNER, projectId: p.id });
+    // The owner adds it: the lead here is only a viewer, and since 15 Nov a viewer only views.
+    await s.createTask(db, OWNER, { teamId: TEAM_ID, title: 'Print the labels', dueOn: '2026-10-12', ownerId: OWNER, projectId: p.id });
     expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).work).toBe(true);
   });
 

@@ -35,7 +35,6 @@ export const HELP = {
   ledger_pastdue: 'Tasks that are not done, where today is after the current date. Click to see them.',
 
   // Dates, blocks, people
-  moved_date: 'Moved date. The date was changed after it was first given. Each move needs a reason. The first date stays on record.',
   moved_in_time: 'Moved in time. The new date was logged on or before the date it replaced.',
   blocked_on: 'Blocked on. The task cannot go on until this is sorted out. The person it waits on can clear the block.',
   project_owner: 'Project owner. The person accountable for the project. They, the project lead, and any team lead or admin, can change it and add people to it.',
@@ -73,7 +72,7 @@ export const HELP = {
 
   // Task board
   tile_open: 'Open. Tasks that are not done and not dropped.',
-  pushed: 'Pushed. The date was moved later. The number shows how many times. The first date stays on record.',
+  pushed: 'Pushed. How many times the date was changed after it was first given. Each change has a reason on record, and the first date stays.',
 
   // Plan board
   plan_status: 'Status of the line: Not started, In progress, Blocked or Done. A blocked or reopened line needs a reason.',
@@ -100,7 +99,7 @@ export const HELP = {
   done_on_time: 'Done on time. Tasks this person finished by the date first given.',
   done_late: 'Done late. Tasks this person finished after the date first given.',
   open_past_due: 'Open and past due. Tasks that are not done, where today is after the current date.',
-  date_moves: 'Date moves. How many times this person moved a date. Each move has a reason on record.',
+  date_moves: 'Pushed. How many times this person changed a date after first giving it. Each change has a reason on record.',
   recent_updates: 'Recent updates. The latest changes to this person\'s tasks, newest first.',
 
   // Chips and menus

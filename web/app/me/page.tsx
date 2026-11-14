@@ -1,3 +1,5 @@
+import { archiveAsksForMe, archiveNewsForMe } from '@/lib/plan';
+import { viewOnlyProjects } from '@/lib/sight';
 import { newsFor } from '@/lib/news';
 import { requireMe } from '@/lib/auth';
 import { latestEndedFirst } from '@/lib/derive';
@@ -29,6 +31,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
     myProjects(d, me.team.id, me.person.id, !me.viewingAs), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
   const handovers = await handoversForMe(d, me.person.id, me.team.id);
+  const viewOnly = await viewOnlyProjects(d, me.team.id, me.person.id); // no new tasks in these (15 Nov)
+  // Asks to archive (15 Nov): open ones on projects I own or lead, and the answers to mine.
+  const [archiveAsks, archiveNews] = await Promise.all([archiveAsksForMe(d, me.team.id, me.person.id), archiveNewsForMe(d, me.team.id, me.person.id)]);
   // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
   const news = await newsFor(d, me.person.id);
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
@@ -77,11 +82,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       names={names}
       projectNames={projectNames}
       people={activeOpts}
-      projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
+      projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt && !viewOnly.has(p.id)).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       myProjects={onProjects}
       welcome={welcome}
       news={news}
+      archiveAsks={archiveAsks}
+      archiveNews={archiveNews}
     />
   );
 }

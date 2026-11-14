@@ -145,8 +145,8 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
               <dl className="habit-facts">
                 <dt>When late</dt>
                 <dd>{median === null ? <span className="dim">Never late</span> : <N n={`usually ${median} day${median === 1 ? '' : 's'}`} title={`${p.name}: closed late`} list={l} />}</dd>
-                <dt><Help term="moved_date">Moved dates</Help></dt>
-                <dd>{moves.length ? <><N n={`${moves.length}×`} title={`${p.name}: dates moved`} list={mine.filter(MATCH.moved)} /> <span className="dim">· {early} in time, {moves.length - early} after the date</span></> : <span className="dim">None</span>}</dd>
+                <dt><Help term="pushed">Pushed</Help></dt>
+                <dd>{moves.length ? <><N n={`${moves.length}×`} title={`${p.name}: dates pushed`} list={mine.filter(MATCH.moved)} /> <span className="dim">· {early} in time, {moves.length - early} after the date</span></> : <span className="dim">None</span>}</dd>
                 <dt><Help term="slipped_silently">Slipped silently</Help></dt>
                 <dd><N n={silent.length} title={`${p.name}: slipped silently`} list={silent} warn={silent.length > 0} /></dd>
                 <dt>Right now</dt>

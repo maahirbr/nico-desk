@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { isPartnerProject } from '@/lib/planUtil';
 import { useEffect, useState } from 'react';
 import { countdown, membersExceptLead } from '@/lib/planUtil';
-import type { Member, Project } from '@/lib/plan';
+import type { ArchiveAsk, Member, Project } from '@/lib/plan';
 import { fmtDate } from '@/lib/time';
 import { Avatar, PersonLink } from './chips';
 import { CopyLink } from './CopyLink';
@@ -16,14 +16,18 @@ import { notify } from './toast';
 
 // The top of a project page: what it is, when it is due, who is on it. Settings edits all of it.
 
-export function ProjectHeader({ project: p, members, viewers, names, people, meId, canEdit, isAdmin = false, today }: {
-  project: Project; members: Member[]; viewers: string[]; names: Record<string, string>; people: Opt[]; meId: string; canEdit: boolean; isAdmin?: boolean; today: string;
+// access (15 Nov): what this person may do in Settings, which everyone sees (lib/plan.ts projectAccess). full: change
+// anything; people: add people only; view: read only. canEdit (archive, restore) is full access.
+// archiveAsk (15 Nov): a member's open ask to archive it. Everyone on the project sees it; full access answers it.
+export function ProjectHeader({ project: p, members, viewers, names, people, meId, access, isAdmin = false, today, archiveAsk = null }: {
+  project: Project; members: Member[]; viewers: string[]; names: Record<string, string>; people: Opt[]; meId: string; access: 'full' | 'people' | 'view'; isAdmin?: boolean; today: string; archiveAsk?: ArchiveAsk | null;
 }) {
+  const canEdit = access === 'full';
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   // The setup check-list's "Add people" and "Name the partner" open Settings from here, at the part the step names.
   const [focus, setFocus] = useState<'members' | 'partner' | undefined>();
-  const mayEdit = canEdit && !p.archivedAt;
+  const mayEdit = access !== 'view' && !p.archivedAt;
   useEffect(() => {
     if (!mayEdit) return;
     const open = (e: Event) => {
@@ -38,19 +42,30 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
   const [err, setErr] = useState<string | null>(null);
   // Archive is refused while work is open. The refusal opens a dialog that says how much, and a reason drops it all
   // and archives in one step (26 Oct). Delete for good is an admin's, on an archived project, with the name typed.
-  const [ask, setAsk] = useState<null | { kind: 'drop'; message: string } | { kind: 'delete' }>(null);
+  // archive: the reason first, for everyone (15 Nov). request: a member's ask to the owner and lead.
+  const [ask, setAsk] = useState<null | { kind: 'drop'; message: string } | { kind: 'delete' } | { kind: 'archive' } | { kind: 'request' }>(null);
   const [words, setWords] = useState('');
-  const move = async (what: 'archive' | 'restore', dropOpen?: string) => {
+  const move = async (what: 'archive' | 'restore', dropOpen?: string, reason?: string) => {
     setBusy(true); setErr(null);
     try {
-      await api(`/projects/${p.id}/${what}`, 'POST', dropOpen === undefined ? undefined : { dropOpen });
+      await api(`/projects/${p.id}/${what}`, 'POST', dropOpen !== undefined ? { dropOpen } : reason ? { reason } : undefined);
       notify(what === 'archive' ? 'Project archived' : 'Project restored');
       setAsk(null);
       router.refresh();
     } catch (e) {
-      if ((e as { code?: string }).code === 'open_work' && dropOpen === undefined) { setWords(''); setAsk({ kind: 'drop', message: (e as Error).message }); }
+      if ((e as { code?: string }).code === 'open_work' && dropOpen === undefined) { setWords(reason ?? ''); setAsk({ kind: 'drop', message: (e as Error).message }); }
       else setErr((e as Error).message);
     } finally { setBusy(false); }
+  };
+  const request = async () => {
+    setBusy(true); setErr(null);
+    try { await api(`/projects/${p.id}/archive-ask`, 'POST', { reason: words.trim() }); notify('Sent to the owner and lead'); setAsk(null); router.refresh(); }
+    catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  };
+  const notNow = async () => {
+    setBusy(true); setErr(null);
+    try { await api(`/projects/${p.id}/archive-ask`, 'DELETE'); notify('Kept. They will see your answer.'); router.refresh(); }
+    catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   const remove = async () => {
     setBusy(true); setErr(null);
@@ -83,6 +98,15 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
           {isPartnerProject(p) && p.partnerName && !p.partnerPeople.length && <span><b>Partner</b> {p.partnerName}</span>}
         </p>
         {p.archivedAt && <p className="archived-note">Archived. Its tasks stay readable and no new tasks can be added.</p>}
+        {archiveAsk && !p.archivedAt && (
+          <div className="callout archive-ask" role="status">
+            <span><b>{archiveAsk.askedBy === meId ? 'You' : archiveAsk.askedByName}</b> asked to archive this project on {fmtDate(archiveAsk.askedAt.slice(0, 10))}: “{archiveAsk.reason}”{access !== 'full' && <span className="dim"> The owner or lead will decide.</span>}</span>
+            {access === 'full' && <span className="row archive-ask-acts">
+              <button className="btn" disabled={busy} onClick={() => { setErr(null); setWords(archiveAsk.reason); setAsk({ kind: 'archive' }); }}>Archive</button>
+              <button className="btn ghost" disabled={busy} onClick={notNow}>Not now</button>
+            </span>}
+          </div>
+        )}
         {p.intro && <p className="phead-goal">{p.intro}</p>}
         {isPartnerProject(p) ? (
           <div className="phead-sides">
@@ -98,8 +122,12 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
       <div className="phead-actions">
         <div className="phead-btns">
           <CopyLink path={`/projects/${p.id}`} what="project" />
-          {canEdit && !p.archivedAt && <button className="btn ghost" onClick={() => { setFocus(undefined); setEditing(true); }}>Settings</button>}
-          {canEdit && <button className="btn ghost" disabled={busy} onClick={() => move(p.archivedAt ? 'restore' : 'archive')}>{p.archivedAt ? 'Restore project' : 'Archive project'}</button>}
+          {!p.archivedAt && <button className="btn ghost" onClick={() => { setFocus(undefined); setEditing(true); }}>Settings</button>}
+          {canEdit && p.archivedAt && <button className="btn ghost" disabled={busy} onClick={() => move('restore')}>Restore project</button>}
+          {canEdit && !p.archivedAt && <button className="btn ghost" disabled={busy} onClick={() => { setErr(null); setWords(''); setAsk({ kind: 'archive' }); }}>Archive project</button>}
+          {/* A member sees Archive too, as an ask to the owner and lead (the PM's call, 15 Nov). */}
+          {access === 'people' && !p.archivedAt && !p.personalFor && <button className="btn ghost" disabled={busy || !!archiveAsk} title={archiveAsk ? 'Already asked' : undefined}
+            onClick={() => { setErr(null); setWords(''); setAsk({ kind: 'request' }); }}>{archiveAsk ? 'Archive asked' : 'Archive project'}</button>}
           {isAdmin && p.archivedAt && <button className="btn ghost" disabled={busy} onClick={() => { setErr(null); setWords(''); setAsk({ kind: 'delete' }); }}>Delete for good</button>}
         </div>
         {err && !ask && <p className="err small" role="alert">{err}</p>}
@@ -115,6 +143,23 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
             {err && <p className="err small" role="alert">{err}</p>}
             <div className="row">
               <button className="btn" disabled={busy || !words.trim()} onClick={() => move('archive', words.trim())}>Drop and archive</button>
+              <button className="btn ghost" onClick={() => { setAsk(null); setErr(null); }}>Cancel</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {(ask?.kind === 'archive' || ask?.kind === 'request') && (
+        <Modal title={ask.kind === 'archive' ? 'Archive project' : 'Ask to archive'} onClose={() => { setAsk(null); setErr(null); }}>
+          <div className="drawer-form">
+            <p className="small dim">{ask.kind === 'archive'
+              ? 'It leaves the project list. Its tasks stay readable, and Restore brings it back.'
+              : 'Only the owner, lead or an admin can archive a project. This sends them your reason in the app, and they decide.'}</p>
+            <label className="f"><span>Reason <span className="req" aria-hidden="true">*</span></span>
+              <textarea rows={2} maxLength={280} value={words} placeholder="e.g. The launch is done" onChange={(e) => setWords(e.target.value)} />
+            </label>
+            {err && <p className="err small" role="alert">{err}</p>}
+            <div className="row">
+              <button className="btn" disabled={busy || !words.trim()} onClick={() => (ask.kind === 'archive' ? move('archive', undefined, words.trim()) : request())}>{ask.kind === 'archive' ? 'Archive' : 'Send request'}</button>
               <button className="btn ghost" onClick={() => { setAsk(null); setErr(null); }}>Cancel</button>
             </div>
           </div>
@@ -138,7 +183,7 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
       )}
       {editing && (
         <Modal title="Project Settings" onClose={() => setEditing(false)} wide>
-          <ProjectForm people={people} meId={meId} projectId={p.id} focus={focus} onDone={() => setEditing(false)} initial={{
+          <ProjectForm people={people} meId={meId} projectId={p.id} access={access} focus={focus} onDone={() => setEditing(false)} initial={{
             name: p.name, kind: p.kind, ownerId: p.ownerId, leadId: p.leadId, goal: p.intro ?? '', eyebrow: p.eyebrow ?? '', phase: p.phase ?? '',
             launchOn: p.launchOn ?? '', targetLabel: label, workstreams: p.kind === 'plan' ? p.pillars.filter((x) => x.key !== 'general').map((x) => x.label) : p.workstreams,
             members, partnerName: p.partnerName ?? '', partnerPeople: p.partnerPeople, viewers,

@@ -33,8 +33,9 @@ beforeEach(async () => {
   seenTask = mine.id;
   seenProject = mine.projectId!;
   // 15 Oct: only an admin sees every project, so LEAD and CY are given view of the two projects these tests use.
+  // Since 15 Nov a viewer only views (no comments), so the two who write here are on the projects as members.
   for (const pr of [HIDDEN, seenProject]) for (const id of [LEAD, CY])
-    await db.query(`INSERT INTO project_viewers (project_id, person_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [pr, id]);
+    await db.query(`INSERT INTO project_members (project_id, person_id, project_role) VALUES ($1, $2, 'Member') ON CONFLICT DO NOTHING`, [pr, id]);
 });
 
 async function meAs(id: string, viewingAs = false): Promise<Me> {
@@ -158,8 +159,11 @@ describe('comments and visibility', () => {
     expect(await status(deleteComment(db, dee, comment.id))).toBe(404);
   });
 
-  it('opens the thread once the person is given view on the project', async () => {
+  it('lets someone given view read the thread, and comment only once they are on the project (15 Nov)', async () => {
     await db.query(`INSERT INTO project_viewers (project_id, person_id, added_by) VALUES ($1, $2, $3)`, [HIDDEN, DEE, LEAD]);
+    expect(Array.isArray(await listComments(db, await meAs(DEE), 'project', HIDDEN))).toBe(true);
+    expect(await status(addComment(db, await meAs(DEE), 'project', HIDDEN, 'Now I can'))).toBe(403);
+    await db.query(`INSERT INTO project_members (project_id, person_id, project_role) VALUES ($1, $2, 'Member')`, [HIDDEN, DEE]);
     expect(await status(addComment(db, await meAs(DEE), 'project', HIDDEN, 'Now I can'))).toBe('ok');
   });
 });

@@ -1,5 +1,7 @@
 'use client';
 
+import { ArchiveAsksCard } from './ArchiveAsksCard';
+import type { ArchiveAsk, ArchiveNews } from '@/lib/plan';
 import { NewsCard } from './NewsCard';
 import type { News as NewsCardData } from '@/lib/news';
 import Link from 'next/link';
@@ -54,12 +56,13 @@ export function clearLine(personId: string, day: string): string {
   return CLEAR_LINES[h % CLEAR_LINES.length];
 }
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null, news = null }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null, news = null, archiveAsks = [], archiveNews = [] }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; handovers?: HandoverItem[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
   news?: NewsCardData | null; // the What's new note (lib/news.ts)
+  archiveAsks?: ArchiveAsk[]; archiveNews?: ArchiveNews[]; // asks to archive a project (15 Nov)
   welcome?: Welcome | null; // someone's first week (components/WelcomeCard.tsx)
 }) {
   const readOnly = useReadOnly();
@@ -144,6 +147,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
       {news && <NewsCard n={news} />}
 
       {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
+
+      <ArchiveAsksCard asks={archiveAsks} news={archiveNews} />
 
       <HandoverCard items={handovers} people={people} meId={meId} projectNames={projectNames} onOpen={(id) => open(id)} />
 

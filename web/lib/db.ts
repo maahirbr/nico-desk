@@ -114,6 +114,8 @@ export async function upgrade(db: Db) {
   await db.exec(PERSONAL_UPGRADE);
   await notesToPages(db);
   await checklistsInPages(db);
+  // 15 Nov: a member's ask to archive a project.
+  await db.exec(ARCHIVE_ASKS_UPGRADE);
   // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
@@ -225,6 +227,25 @@ DO $$ BEGIN
 END $$;`;
 
 // Idempotent: a project that is one person's own (Personal), its running notes page and attached files (RLS on). The same SQL as lib/schema.ts.
+export const ARCHIVE_ASKS_UPGRADE = `
+-- 15 Nov: a member asks the project's owner and lead to archive it, with a reason. One open ask per project. The owner,
+-- the lead or an admin archives (outcome archived) or says Not now (declined); the asker then sees what happened, once.
+CREATE TABLE IF NOT EXISTS archive_asks (
+  id          text PRIMARY KEY,
+  team_id     text NOT NULL REFERENCES teams(id),
+  project_id  text NOT NULL REFERENCES projects(id),
+  asked_by    text NOT NULL REFERENCES people(id),
+  reason      text NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 280),
+  asked_at    timestamptz NOT NULL DEFAULT now(),
+  decided_by  text REFERENCES people(id),
+  decided_at  timestamptz,
+  outcome     text CHECK (outcome IN ('archived','declined')),
+  seen_at     timestamptz
+);
+CREATE UNIQUE INDEX IF NOT EXISTS archive_asks_open ON archive_asks (project_id) WHERE outcome IS NULL;
+ALTER TABLE archive_asks ENABLE ROW LEVEL SECURITY;
+`;
+
 export const PERSONAL_UPGRADE = `
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS personal_for text REFERENCES people(id);
 CREATE UNIQUE INDEX IF NOT EXISTS projects_personal ON projects (personal_for) WHERE personal_for IS NOT NULL;

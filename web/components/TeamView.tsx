@@ -13,6 +13,7 @@ import { useRemembered, useRememberedParam, useUrlText } from './remember';
 import { Select } from './Select';
 import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
+import { Fold, FoldChev } from './Fold';
 import { EmptyMark, ICON } from './icons';
 
 type Person = { id: string; name: string; role: string };
@@ -30,6 +31,9 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
   const [startStatus, setStartStatus] = useState<RowAction | undefined>();
   const [q, setQ] = useUrlText('q');
   const [more, setMore] = useState<Record<string, boolean>>({});
+  // By status: each group folds, like Completed on a project (the PM's call, 15 Nov). All open when the page loads.
+  const [shut, setShut] = useState<Set<StatusKey>>(new Set());
+  const fold = (k: StatusKey) => setShut((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const needle = q.trim().toLowerCase();
   const found = (p: Person) => !needle || p.name.toLowerCase().includes(needle) || p.role.toLowerCase().includes(needle);
   const foundIds = new Set(people.filter(found).map((p) => p.id));
@@ -129,8 +133,10 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         if (!items.length) return null;
         return (
           <section key={k} className="group">
-            <h2><span className={`st st-status tone-${STATUS[k].tone}`}><Help term={`status_${k}`}>{STATUS[k].word}</Help></span> <span className="n">{items.length}</span></h2>
-            <Stagger id="team" className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</Stagger>
+            <h2><button type="button" className="log-toggle group-toggle" aria-expanded={!shut.has(k)} onClick={() => fold(k)}>
+              <FoldChev /> <span className={`st st-status tone-${STATUS[k].tone}`}><Help term={`status_${k}`}>{STATUS[k].word}</Help></span> <span className="n">{items.length}</span>
+            </button></h2>
+            <Fold open={!shut.has(k)}><Stagger id="team" className="tlist">{items.map((t) => row(t, names[t.ownerId] ?? '?'))}</Stagger></Fold>
           </section>
         );
       })}

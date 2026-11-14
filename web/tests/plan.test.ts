@@ -277,7 +277,7 @@ describe('starting a project', () => {
     const { createProject, archiveProject, myProjects } = await import('../lib/plan');
     const p = await createProject(db, ME, TEAM_ID, { ...base, name: 'Old run', leadId: 'per_cy' });
     expect((await myProjects(db, TEAM_ID, 'per_cy')).some((x) => x.id === p.id)).toBe(true);
-    await archiveProject(db, ME, p.id);
+    await archiveProject(db, ME, p.id, undefined, 'Wrapped up');
     for (const who of [ME, 'per_cy', 'per_bo']) expect((await myProjects(db, TEAM_ID, who)).some((x) => x.id === p.id)).toBe(false);
   });
 });
@@ -299,15 +299,14 @@ describe('a project task goes to one of its people', () => {
     expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy', 'per_dee']);
   });
 
-  it('lets only the project owner, a lead or an admin bring someone new in', async () => {
+  it('lets anyone on the project bring someone new in (members too, since 15 Nov)', async () => {
     const { createProject, projectMembers, projectsMayAddTo } = await import('../lib/plan');
     const s = await import('../lib/service');
     const p = await createProject(db, ME, TEAM_ID, base); // the lead owns it; per_bo is a member
-    // A member may give a task to the project's people, but not pull a teammate in.
-    const own = await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo', projectId: p.id });
-    expect(await code(s.createTask(db, 'per_bo', { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' }))).toBe('403 not_allowed');
-    expect(await code(s.editTask(db, 'per_bo', own.id, { version: own.version, ownerId: 'per_cy', ownerRole: 'Gift wrap' }))).toBe('403 not_allowed');
-    expect((await projectMembers(db, p.id)).map((m) => m.personId)).toEqual(['per_bo']);
+    // A member may give a task to someone new, who joins the project.
+    await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_bo', projectId: p.id });
+    expect(await code(s.createTask(db, 'per_bo', { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' }))).toBe('ok');
+    expect((await projectMembers(db, p.id)).map((m) => m.personId).sort()).toEqual(['per_bo', 'per_cy']);
     // An admin may.
     await s.createTask(db, ADMIN, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' });
     // A member who owns the project may.
@@ -315,7 +314,8 @@ describe('a project task goes to one of its people', () => {
     await s.createTask(db, 'per_bo', { ...task, ownerId: 'per_dee', projectId: q.id, ownerRole: 'Hampers' });
     expect(await projectMembers(db, q.id)).toEqual([{ personId: 'per_dee', role: 'Hampers' }]);
     // The owner picker offers "+ Add someone" on exactly these projects.
-    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toEqual([q.id]);
+    // Every live project they own, lead or are on (the fixtures put per_bo on some too).
+    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toEqual(expect.arrayContaining([p.id, q.id]));
     expect((await projectsMayAddTo(db, TEAM_ID, ME, true))).toEqual(expect.arrayContaining([p.id, q.id]));
   });
 
