@@ -1849,3 +1849,16 @@ late)" in italics). Then the ask and the link on one line, and "Best," with the 
 `lib/reminderText.ts` bodyFor (plain text, for Gmail and mail-app drafts) and bodyHtmlFor (bold headings, for Send);
 the editor's plain copy keeps bullets (`RichText.tsx plainOf`).
 Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Personal date, status hover everywhere, Leadership on a person page and invites
+
+- Personal: a date of my own with my own words for it (e.g. "Accomplishments"), set in Personal Settings, shown under
+  the title with a countdown. Stored in the project's own date fields; Clear removes it.
+- "Updated 18 Oct · Sam" on hover over a task's status is the rule on every task list (Home, Team, projects, Personal,
+  a person's page), and a small line under the status buttons in the task panel. Not on plan boards (the PM's call).
+- Leadership sees a person's whole page: all their open work and updates, even on projects the viewer is not on, and
+  their on-time record, and may open those tasks to read them. Team stays as it was. Their Personal stays theirs.
+- Leadership may send invites: an Invite column on the Roster for people who have never signed in (no Access, no Edit).
+  Activity already offers Invite to whoever may read it.
+- Fix: a person's page listed their own Personal project to every visitor (the name only). Only they see it now.
+Rollback: git revert the commit.

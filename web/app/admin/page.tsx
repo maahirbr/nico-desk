@@ -5,6 +5,7 @@ import { fmtDate, istDate } from '@/lib/time';
 import { teamAdoption } from '@/lib/activity';
 import { AddPeopleForm, AddPersonForm, PersonControls } from '@/components/client';
 import { RosterFind } from '@/components/RosterFind';
+import { EmailInvite } from '@/components/CopyLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,14 +19,16 @@ export default async function Admin() {
     `SELECT id, removed_reason, removed_at, removed_by FROM people WHERE removed_at IS NOT NULL`) : { rows: [] };
   const why = new Map(removed.map((r) => [r.id, r]));
   // Email invite only for people who have never signed in (the same test as Activity's "Never signed in", 4 Nov).
-  const notYet = new Set(isAdmin ? (await teamAdoption(d, me.team.id)).filter((r) => r.status === 'never').map((r) => r.id) : []);
+  // Leadership may invite too (15 Nov, the PM's call): an Invite column, without the admin's Access and Edit.
+  const inviter = !isAdmin && me.person.appRoles.includes('leadership');
+  const notYet = new Set(isAdmin || inviter ? (await teamAdoption(d, me.team.id)).filter((r) => r.status === 'never').map((r) => r.id) : []);
   return (
     <>
       {/* The find box sits at the right of the title (the PM's call, 15 Nov). */}
       <div className="page-head"><h1>Roster</h1><RosterFind total={people.length} /></div>
       <div className="card table-card"><table className="stacked roster">
         {/* Access (member, lead, admin, removed) is for admins only (the PM's call, 3 Nov). */}
-        <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <th>Access</th>}</tr></thead>
+        <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <th>Access</th>}{inviter && <th>Invite</th>}</tr></thead>
         <tbody>
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}
@@ -41,6 +44,7 @@ export default async function Admin() {
                   <div className="small dim">{[r.removed_reason, r.removed_at ? fmtDate(istDate(new Date(r.removed_at).toISOString())) : '', r.removed_by ? `by ${(names[r.removed_by] ?? '').split(' ')[0]}` : ''].filter(Boolean).join(' · ')}</div>
                 ); })()}
               </td>}
+              {inviter && <td data-label="Invite">{p.active && notYet.has(p.id) && !readOnly ? <EmailInvite email={p.email} name={p.fullName ?? p.displayName} from={me.person.displayName} /> : null}</td>}
             </tr>
           ))}
         </tbody>

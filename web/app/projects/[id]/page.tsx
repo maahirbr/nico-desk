@@ -46,7 +46,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <Link className="crumb" href="/projects">← All projects</Link>
         <ReadOnlyProvider readOnly={readOnly}>
         <div className={`personal-page accent-${p.accent ?? 'orange'}`}>
-          <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} />
+          <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} goalLabel={p.targetLabel} goalOn={p.launchOn} today={today()} />
           {/* Tasks on top unless Settings says notes first (13 Nov). */}
           {(() => {
             const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} projectNames={projectNames} />;

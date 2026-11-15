@@ -190,13 +190,21 @@ export async function teamTasks(db: Tx, teamId: string, today = todayIst(), with
 
 // My Personal project's settings (13 Nov): a description (emoji welcome) and the page's accent colour. The name stays
 // "Personal", as Home shows it.
-export async function updatePersonal(db: Db, meId: string, teamId: string, input: { description?: string | null; accent?: 'orange' | 'sage' | 'indigo' | null; notesFirst?: boolean }): Promise<{ ok: true }> {
+// goal (15 Nov, the PM's call): one date of my own with my own label, like "Accomplishments", shown as a countdown on the
+// page. Stored in the project's own date fields (launch_on, target_label); null clears it.
+export async function updatePersonal(db: Db, meId: string, teamId: string, input: { description?: string | null; accent?: 'orange' | 'sage' | 'indigo' | null; notesFirst?: boolean; goalLabel?: string | null; goalOn?: string | null }): Promise<{ ok: true }> {
   const id = await ensurePersonalProject(db, teamId, meId);
   const d = input.description?.trim() ?? null;
   if (d && d.length > 200) throw bad('invalid_body', 'A description holds 200 characters.', 'description');
   if (input.description !== undefined) await db.query(`UPDATE projects SET intro = $2 WHERE id = $1 AND personal_for = $3`, [id, d || null, meId]);
   if (input.accent !== undefined) await db.query(`UPDATE projects SET accent = $2 WHERE id = $1 AND personal_for = $3`, [id, input.accent, meId]);
   if (input.notesFirst !== undefined) await db.query(`UPDATE projects SET notes_first = $2 WHERE id = $1 AND personal_for = $3`, [id, input.notesFirst, meId]);
+  if (input.goalOn !== undefined) await db.query(`UPDATE projects SET launch_on = $2 WHERE id = $1 AND personal_for = $3`, [id, input.goalOn || null, meId]);
+  if (input.goalLabel !== undefined) {
+    const l = input.goalLabel?.trim() || null;
+    if (l && l.length > 40) throw bad('invalid_body', 'A label holds 40 characters.', 'goalLabel');
+    await db.query(`UPDATE projects SET target_label = $2 WHERE id = $1 AND personal_for = $3`, [id, l, meId]);
+  }
   return { ok: true };
 }
 
@@ -1303,8 +1311,12 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
   const person = await getPerson(db, teamId, personId);
   if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
   const viewerRoles = await rolesIn(db, teamId, meId);
-  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles) || (await workingWith(db, teamId, meId)).has(personId);
-  const sight = await sightOf(db, teamId, meId);
+  // Leadership (and admins) see a person's whole page (15 Nov, the PM's call): every task and update of theirs, even on
+  // projects the viewer is not on, and their on-time record. Their Personal stays theirs. Team stays as it is.
+  const oversee = viewerRoles.has('leadership') || viewerRoles.has('admin');
+  const mayRecord = meId === personId || oversee || isLeadOrAdmin(viewerRoles) || (await workingWith(db, teamId, meId)).has(personId);
+  const own = await sightOf(db, teamId, meId);
+  const sight: Sight = oversee ? { all: true, hidden: own.hidden } : own;
   const everything = await teamTasks(db, teamId, today);
   const tasks = everything.filter((t) => seesTask(sight, t));
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
@@ -1313,8 +1325,8 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     db.query<{ id: string; name: string; role: string }>(
       `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END AS name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
        LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
-       WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) ORDER BY pr.name`,
-      [teamId, personId],
+       WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) AND (pr.personal_for IS NULL OR pr.personal_for = $3) ORDER BY pr.name`,
+      [teamId, personId, meId],
     ),
     db.query<LogLine & { taskTitle: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null }>(
       `SELECT e.*, COALESCE(a.nickname, a.display_name) AS "actorName", t.title AS "taskTitle",

@@ -573,6 +573,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 {t.outcome && <span className="small dim">{t.outcome === 'late' ? 'Closed late' : t.outcome === 'ahead' ? 'Closed ahead' : 'Closed on time'}, judged against {fmtDate(t.firstDueOn)}</span>}
               </div>
             )}
+            {/* When the status last changed, and by whom (the same words as the hover on rows, 15 Nov). */}
+            {statusWhen(t, names, meId) && <p className="small dim drawer-when">{statusWhen(t, names, meId)}</p>}
 
             {askedOfMe.length > 0 && !readOnly && (
               <div className="drawer-form ask-reply" aria-label="Update asked">

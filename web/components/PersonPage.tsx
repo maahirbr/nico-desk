@@ -91,7 +91,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, name, f
             <p className="pg-proj">{pid ? <Link className="rlink" href={`/projects/${pid}`}>{projectNames[pid] ?? 'Project'}</Link> : 'No project'}</p>
             <Stagger id="person" className="tlist">
               {items.map((t) => (
-                <TaskRow key={t.id} t={t} today={today} sub={t.workstream ?? ''} canTick={false} onOpen={() => setOpenId(t.id)} />
+                <TaskRow key={t.id} t={t} today={today} names={names} sub={t.workstream ?? ''} canTick={false} onOpen={() => setOpenId(t.id)} />
               ))}
             </Stagger>
           </div>

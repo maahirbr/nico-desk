@@ -2089,3 +2089,8 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 /* Remove on an added task (15 Nov): easy to see, in the late colour. */
 .task-remove { color: var(--late); border-color: color-mix(in srgb, var(--late) 40%, var(--hairline)); font-weight: 600; }
 .task-remove:hover { background: color-mix(in srgb, var(--late) 8%, var(--surface)); }
+/* Personal: my goal date under the title (15 Nov). */
+.personal-goal { margin: var(--space-xs) 0 0; display: inline-flex; align-items: center; gap: var(--space-xxs); padding: 3px var(--space-sm); border-radius: 999px; background: var(--sunk); font: var(--type-meta); }
+.personal-goal-pick { gap: var(--space-sm); align-items: center; flex-wrap: wrap; }
+.personal-goal-pick > input { flex: 1 1 180px; }
+.drawer-when { margin: var(--space-xxs) 0 0; }

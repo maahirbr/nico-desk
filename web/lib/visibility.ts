@@ -30,7 +30,9 @@ export async function seenProjects(db: Tx, me: Me, sight?: Sight): Promise<Proje
 export async function taskFor(db: Tx, me: Me, id: string, today?: string): Promise<Task> {
   const t = await getTask(db, id, today);
   sameTeam(me, t.teamId);
-  if (!seesTask(await sightFor(db, me), t)) throw notFound('No such task.');
+  const sight = await sightFor(db, me);
+  // Leadership may open any task they reach from a person's page (15 Nov), read only by the usual rules; never a Personal one.
+  if (!seesTask(sight, t) && !(me.person.appRoles.includes('leadership') && !(t.projectId && sight.hidden?.has(t.projectId)))) throw notFound('No such task.');
   return t;
 }
 
