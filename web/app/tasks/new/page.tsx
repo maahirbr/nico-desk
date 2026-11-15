@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { viewOnlyProjects } from '@/lib/sight';
 import { requireMe } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { seenProjects } from '@/lib/visibility';
@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function NewTask() {
   const me = await requireMe();
-  if (me.viewingAs) redirect('/me'); // read-only view: nothing to create
+  // View as shows the form as they see it; ViewAsGuard stops the save (15 Nov).
   const { d, sight, activeOpts } = await lookups(me);
-  const projects = (await seenProjects(d, me, sight)).filter((p) => p.kind === 'tasks' && !p.archivedAt);
+  const viewOnly = await viewOnlyProjects(d, me.team.id, me.person.id); // only view these: no new tasks (15 Nov)
+  const projects = (await seenProjects(d, me, sight)).filter((p) => p.kind === 'tasks' && !p.archivedAt && !viewOnly.has(p.id));
   return (
     <NewTaskPage people={activeOpts} meId={me.person.id} today={today()}
       projects={projects.map((p) => ({ id: p.id, name: p.name }))}

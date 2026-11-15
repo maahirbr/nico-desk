@@ -59,12 +59,13 @@ const Err = ({ e }: { e: string | null }) => (e ? <p className="err" role="alert
 
 // ---------- frame ----------
 
-export function Nav({ isAdmin, isLead = false, activity = false }: { isAdmin: boolean; isLead?: boolean; activity?: boolean }) {
+// remind (15 Nov): Leadership or an admin, who draft reminders (lib/roles.ts mayOversee).
+export function Nav({ isAdmin, isLead = false, remind = false, activity = false }: { isAdmin: boolean; isLead?: boolean; remind?: boolean; activity?: boolean }) {
   const path = usePathname();
   const readOnly = useReadOnly();
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
   const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
-  const more = [['/ledger', 'Ledger'], ...(isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster'], ...(activity ? [['/activity', 'Activity']] : [])];
+  const more = [['/ledger', 'Ledger'], ...(remind || isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster'], ...(activity ? [['/activity', 'Activity']] : [])];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
@@ -395,6 +396,23 @@ export function MarkRead({ id }: { id: string }) {
 
 // ---------- roster ----------
 
+// Access is one choice (the PM's call, 15 Nov): Member, Leadership or Admin. Leadership is oversight and follow-up
+// (lib/roles.ts mayOversee); an admin has all of it, so Admin is stored alone. Lead is retired. Someone cannot take away
+// their own admin (lock). The form keeps its old `lead` field to mean Leadership.
+type Access = 'member' | 'leadership' | 'admin';
+const ACCESS: { key: Access; word: string }[] = [{ key: 'member', word: 'Member' }, { key: 'leadership', word: 'Leadership' }, { key: 'admin', word: 'Admin' }];
+const accessOf = (f: { lead: boolean; admin: boolean }): Access => (f.admin ? 'admin' : f.lead ? 'leadership' : 'member');
+function AccessPick({ value, onChange, lock = false }: { value: Access; onChange: (a: Access) => void; lock?: boolean }) {
+  return (
+    <fieldset className="f edit-access"><legend>Access</legend>
+      {ACCESS.map((a) => (
+        <label key={a.key} className="check"><input type="radio" name="access" checked={value === a.key} disabled={lock && a.key !== 'admin'}
+          onChange={() => onChange(a.key)} /> {a.word}</label>
+      ))}
+    </fieldset>
+  );
+}
+
 export function AddPersonForm({ teamId }: { teamId: string }) {
   const { busy, error, run } = useSubmit();
   const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false };
@@ -403,7 +421,7 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   return (
     <form className="card form-card stack" onSubmit={async (e) => {
       e.preventDefault();
-      const appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
+      const appRoles = [...(f.lead ? ['leadership'] : []), ...(f.admin ? ['admin'] : [])];
       if (await run(`/teams/${teamId}/people`, 'POST', { displayName: f.displayName, role: f.role, department: f.department, email: f.email, appRoles })) { setAdded(f.email); setF(blank); }
     }}>
       <div className="row">
@@ -413,8 +431,7 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
         <label className="f"><span>Email</span><input type="email" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
       </div>
       <div className="row">
-        <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
-        <label className="check"><input type="checkbox" checked={f.admin} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
+        <AccessPick value={accessOf(f)} onChange={(a) => setF({ ...f, lead: a === 'leadership', admin: a === 'admin' })} />
         <button className="btn" disabled={busy}>Add to roster</button>
       </div>
       <Err e={error} />
@@ -458,12 +475,13 @@ export function AddPeopleForm({ teamId }: { teamId: string }) {
 // The server holds the same rules (patchPerson): admin only, no one removes their own admin or changes their own email.
 type RosterPerson = { id: string; name: string; role: string; department: string; email: string; active: boolean; roles: string[] };
 // others: the active people who could take over this person's work if they are removed.
-// invite: they have never signed in, so Email invite shows. Once they have, it goes.
+// invite: they have never signed in, so Invite shows. Once they have, it goes.
 export function PersonControls({ person: p, self, others = [], me = '', invite = false }: { person: RosterPerson; self: boolean; others?: Opt[]; me?: string; invite?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="roster-acts">
-      <button className="act" onClick={() => setOpen(true)} aria-label={`Edit ${p.name}`}>Edit</button>
+      {/* A ✎, as on a task row, to save space (the PM's call, 15 Nov). */}
+      <button className="act roster-edit" title="Edit" onClick={() => setOpen(true)} aria-label={`Edit ${p.name}`}>✎</button>
       {p.active && invite && <EmailInvite email={p.email} name={p.name} from={me} />}
       {open && <EditPerson person={p} self={self} others={others} onClose={() => setOpen(false)} />}
     </span>
@@ -472,7 +490,7 @@ export function PersonControls({ person: p, self, others = [], me = '', invite =
 
 function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson; self: boolean; others: Opt[]; onClose: () => void }) {
   const { busy, error, run } = useSubmit();
-  const [f, setF] = useState({ name: p.name, role: p.role, department: p.department, email: p.email, active: p.active, lead: p.roles.includes('lead'), admin: p.roles.includes('admin') });
+  const [f, setF] = useState({ name: p.name, role: p.role, department: p.department, email: p.email, active: p.active, lead: p.roles.includes('leadership'), admin: p.roles.includes('admin') });
   const first = p.name.split(' ')[0];
   const emailChanged = f.email.trim().toLowerCase() !== p.email.toLowerCase();
   async function save(e: React.FormEvent) {
@@ -483,7 +501,7 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
     if (f.department.trim() !== p.department) body.department = f.department.trim();
     if (emailChanged) body.email = f.email.trim();
     if (f.active !== p.active) body.active = f.active;
-    if (f.lead !== p.roles.includes('lead') || f.admin !== p.roles.includes('admin')) body.appRoles = [...(f.lead ? ['lead'] : []), ...(f.admin ? ['admin'] : [])];
+    if (accessOf(f) !== accessOf({ lead: p.roles.includes('leadership'), admin: p.roles.includes('admin') })) body.appRoles = [...(f.lead ? ['leadership'] : []), ...(f.admin ? ['admin'] : [])];
     if (Object.keys(body).length === 0) { onClose(); return; }
     if (await run(`/people/${p.id}`, 'PATCH', body)) { notify(`Saved ${f.name.trim()}`); onClose(); }
   }
@@ -499,10 +517,7 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
           <input type="email" required value={f.email} disabled={self} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </label>
         <p className="hint" style={{ margin: 0 }}>{self ? 'Ask another admin to change your own email.' : emailChanged ? 'They sign in with this address from now on. The old one keeps working as a second address.' : 'The address they sign in with.'}</p>
-        <fieldset className="f edit-access"><legend>Access</legend>
-          <label className="check"><input type="checkbox" checked={f.lead} onChange={(e) => setF({ ...f, lead: e.target.checked })} /> Lead</label>
-          <label className="check"><input type="checkbox" checked={f.admin} disabled={self} onChange={(e) => setF({ ...f, admin: e.target.checked })} /> Admin</label>
-        </fieldset>
+        <AccessPick value={accessOf(f)} lock={self && p.roles.includes('admin')} onChange={(a) => setF({ ...f, lead: a === 'leadership', admin: a === 'admin' })} />
         <Err e={error} />
         <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>
           <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>

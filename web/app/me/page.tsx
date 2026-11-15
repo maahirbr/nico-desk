@@ -1,3 +1,5 @@
+import { archiveAsksForMe, archiveNewsForMe } from '@/lib/plan';
+import { viewOnlyProjects } from '@/lib/sight';
 import { newsFor } from '@/lib/news';
 import { requireMe } from '@/lib/auth';
 import { latestEndedFirst } from '@/lib/derive';
@@ -26,10 +28,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const updates = await homeUpdates(me, d, names, projectNames);
   const [mine, notices, all, projects, onProjects, replies, asks] = await Promise.all([
     myTasks(d, me.person.id, me.team.id, undefined, !me.viewingAs), listNotices(d, me.person.id, true, me.viewingAs), seenTasks(d, me, undefined, sight), seenProjects(d, me, sight),
-    myProjects(d, me.team.id, me.person.id), feedbackNewsForMe(d, me), asksForMe(d, me),
+    myProjects(d, me.team.id, me.person.id, !me.viewingAs), feedbackNewsForMe(d, me), asksForMe(d, me),
   ]);
   const handovers = await handoversForMe(d, me.person.id, me.team.id);
-  const news = me.viewingAs ? null : await newsFor(d, me.person.id);
+  const viewOnly = await viewOnlyProjects(d, me.team.id, me.person.id); // no new tasks in these (15 Nov)
+  // Asks to archive (15 Nov): open ones on projects I own or lead, and the answers to mine.
+  const [archiveAsks, archiveNews] = await Promise.all([archiveAsksForMe(d, me.team.id, me.person.id), archiveNewsForMe(d, me.team.id, me.person.id)]);
+  // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
+  const news = await newsFor(d, me.person.id);
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   const first = await firstSeenDay(d, me.realPerson.id);
@@ -38,7 +44,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
     `SELECT (photo_url IS NOT NULL OR nickname IS NOT NULL OR phone IS NOT NULL OR EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id)) AS done
        FROM people p WHERE id = $1`, [me.person.id]) : { rows: [] as { done: boolean }[] };
   const open = [...mine.assigned, ...mine.tasks];
-  const welcome = isNew && !me.viewingAs ? {
+  const welcome = isNew ? { // in View as too: it is what they see (15 Nov); its ticks live in this browser only
     firstName: me.person.displayName.split(' ')[0], projects: onProjects.map((p) => p.name), waiting: open.length,
     late: open.filter((x) => x.dueOn < t).length, dueToday: open.filter((x) => x.dueOn === t).length, profileDone: !!prof?.done,
     firstTaskId: [...open].sort((a, b) => a.dueOn.localeCompare(b.dueOn))[0]?.id ?? null,
@@ -76,11 +82,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       names={names}
       projectNames={projectNames}
       people={activeOpts}
-      projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }))}
+      projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt && !viewOnly.has(p.id)).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       myProjects={onProjects}
       welcome={welcome}
       news={news}
+      archiveAsks={archiveAsks}
+      archiveNews={archiveNews}
     />
   );
 }

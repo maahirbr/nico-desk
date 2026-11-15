@@ -6,8 +6,8 @@ import { originNow } from './origin';
 import { checkLinkUrl, LINK_LABEL_MAX, LINKS_PER_TASK, type TaskLink } from './links';
 import { norm as nameKey } from './quickadd';
 import { isLeadOrAdmin } from './roles';
-import { seesProject, seesTask, seesTaskRow, sightOf, workingWith, type Sight } from './sight';
-import { addDays, istDate, mondayOf, today as todayIst } from './time';
+import { isViewOnly, seesProject, seesTask, seesTaskRow, sightOf, VIEW_ONLY, workingWith, type Sight } from './sight';
+import { addDays, istDate, mondayOf, NO_DATE, today as todayIst } from './time';
 import { buildUpdates, groupUpdates, UPDATE_DAYS, type UpdateGroup, type UpdateItem } from './updates';
 
 // Every write goes through here, so the rules in SPEC.md section 2 hold for the API and the pages alike.
@@ -25,7 +25,7 @@ export type Person = {
   restricted: boolean; // sees only their own projects and the ones they may view (lib/sight.ts)
   repliesFeedback: boolean; // may reply to feedback notes (set on the Roster)
 };
-export type AppRole = 'member' | 'lead' | 'admin';
+export type AppRole = 'member' | 'lead' | 'leadership' | 'admin'; // 'lead' is retired (15 Nov), see lib/roles.ts
 
 let seq = 0;
 export function newId(prefix: string): string {
@@ -190,13 +190,21 @@ export async function teamTasks(db: Tx, teamId: string, today = todayIst(), with
 
 // My Personal project's settings (13 Nov): a description (emoji welcome) and the page's accent colour. The name stays
 // "Personal", as Home shows it.
-export async function updatePersonal(db: Db, meId: string, teamId: string, input: { description?: string | null; accent?: 'orange' | 'sage' | 'indigo' | null; notesFirst?: boolean }): Promise<{ ok: true }> {
+// goal (15 Nov, the PM's call): one date of my own with my own label, like "Accomplishments", shown as a countdown on the
+// page. Stored in the project's own date fields (launch_on, target_label); null clears it.
+export async function updatePersonal(db: Db, meId: string, teamId: string, input: { description?: string | null; accent?: 'orange' | 'sage' | 'indigo' | null; notesFirst?: boolean; goalLabel?: string | null; goalOn?: string | null }): Promise<{ ok: true }> {
   const id = await ensurePersonalProject(db, teamId, meId);
   const d = input.description?.trim() ?? null;
   if (d && d.length > 200) throw bad('invalid_body', 'A description holds 200 characters.', 'description');
   if (input.description !== undefined) await db.query(`UPDATE projects SET intro = $2 WHERE id = $1 AND personal_for = $3`, [id, d || null, meId]);
   if (input.accent !== undefined) await db.query(`UPDATE projects SET accent = $2 WHERE id = $1 AND personal_for = $3`, [id, input.accent, meId]);
   if (input.notesFirst !== undefined) await db.query(`UPDATE projects SET notes_first = $2 WHERE id = $1 AND personal_for = $3`, [id, input.notesFirst, meId]);
+  if (input.goalOn !== undefined) await db.query(`UPDATE projects SET launch_on = $2 WHERE id = $1 AND personal_for = $3`, [id, input.goalOn || null, meId]);
+  if (input.goalLabel !== undefined) {
+    const l = input.goalLabel?.trim() || null;
+    if (l && l.length > 40) throw bad('invalid_body', 'A label holds 40 characters.', 'goalLabel');
+    await db.query(`UPDATE projects SET target_label = $2 WHERE id = $1 AND personal_for = $3`, [id, l, meId]);
+  }
   return { ok: true };
 }
 
@@ -238,7 +246,8 @@ export async function taskLog(db: Tx, taskId: string, before?: string, limit = 5
 
 // ---------- writing tasks ----------
 
-type Ctx = { row: TaskRow; roles: Set<AppRole>; meId: string; isOwner: boolean; isLead: boolean };
+// isHead (15 Nov): the owner or lead of the task's project, who may drop and reopen any task in it (the PM's call).
+type Ctx = { row: TaskRow; roles: Set<AppRole>; meId: string; isOwner: boolean; isLead: boolean; isHead: boolean };
 type Change = { set: Partial<TaskRow>; reasons?: Partial<Record<keyof TaskRow, string>>; extra?: { field: string; after: unknown }[] };
 
 async function insertEvent(
@@ -290,7 +299,8 @@ async function mutate(
     const onProject = !row.owner_id && row.project_id ? (await tx.query(
       `SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2) UNION SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`,
       [row.project_id, meId])).rows.length > 0 : false;
-    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles) };
+    const isHead = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [row.project_id, meId])).rows.length > 0 : false;
+    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles), isHead };
     if (!allow(ctx)) throw forbidden();
     const change = build(ctx);
     const at = new Date().toISOString();
@@ -319,15 +329,16 @@ export type CreateInput = { teamId: string; title: string; description?: string 
 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
-// Only the project owner, its lead, a team lead or an admin may bring someone new in, the same rule as updateProject.
+// Anyone on the project may bring someone new in (15 Nov: members may add people, as in Settings); a viewer may not.
 async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined, meId: string, isLead: boolean): Promise<void> {
   const { rows } = await tx.query<{ owner_id: string; lead_id: string | null; member: boolean }>(
     `SELECT owner_id, lead_id, EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2) AS member FROM projects WHERE id = $1`,
     [projectId, personId]);
   const p = rows[0];
   if (!p || p.member) return;
-  if (p.owner_id !== personId && p.lead_id !== personId && p.owner_id !== meId && p.lead_id !== meId && !isLead) {
-    throw forbidden('Only the project owner, its lead or a team lead can add someone to this project. Pick one of its people.');
+  const { rows: [meOn] } = await tx.query(`SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`, [projectId, meId]);
+  if (p.owner_id !== personId && p.lead_id !== personId && p.owner_id !== meId && p.lead_id !== meId && !meOn && !isLead) {
+    throw forbidden('Only someone on this project can add someone new to it. Pick one of its people.');
   }
   const r = role === undefined ? 'Member' : role.trim();
   if (r.length < 2 || r.length > 60) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'ownerRole');
@@ -337,6 +348,7 @@ async function joinProject(tx: Tx, projectId: string, personId: string, role: st
 export async function createTask(db: Db, meId: string, input: CreateInput): Promise<Task> {
   const today = todayIst();
   if (input.dueOn < today) throw bad('date_in_past', 'The due date must be today or later.', 'dueOn');
+  if (input.dueOn === NO_DATE && !input.projectId) throw bad('invalid_body', 'Pick a due date.', 'dueOn');
   const id = newId('tsk');
   await db.transaction(async (tx) => {
     const roles = await rolesIn(tx, input.teamId, meId);
@@ -353,7 +365,9 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
       if (rows[0].personal_for && (rows[0].personal_for !== meId || input.ownerId !== meId || partnerOwner)) {
         throw bad('invalid_body', 'A Personal task is yours alone. Put it in a team project to give it to someone.', 'projectId');
       }
+      if (input.dueOn === NO_DATE && !rows[0].personal_for) throw bad('invalid_body', 'Pick a due date.', 'dueOn');
       if (rows[0].archived_at) throw bad('project_archived', 'This project is archived. Restore it to add tasks.', 'projectId');
+      if (await isViewOnly(tx, input.teamId, input.projectId, meId)) throw forbidden(VIEW_ONLY);
       if (input.ownerId) await joinProject(tx, input.projectId, input.ownerId, input.ownerRole, meId, isLeadOrAdmin(roles));
     }
     const at = new Date().toISOString();
@@ -409,7 +423,8 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
         if (pp?.personal_for && (pp.personal_for !== meId || owner !== meId || c.row.created_by !== meId)) {
           throw bad('invalid_body', 'Only a task you made and own can go in your Personal project, and it stays yours there.', 'projectId');
         }
-      }
+        if (!pp?.personal_for && c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it to a team project.', 'projectId');
+      } else if (c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it out of Personal.', 'projectId');
       if (input.ownerId !== undefined && (input.ownerId || null) !== c.row.owner_id) {
         if (input.ownerId) await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
         if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
@@ -436,6 +451,7 @@ function checkNewDate(newDueOn: string | undefined, current: string): string {
   if (!newDueOn) throw bad('reason_required', 'A new date is required.', 'newDueOn');
   if (newDueOn < todayIst()) throw bad('date_in_past', 'The new date must be today or later.', 'newDueOn');
   if (newDueOn === current) throw bad('invalid_body', 'The new date is the same as the current one.', 'newDueOn');
+  if (newDueOn === NO_DATE) throw bad('invalid_body', 'Pick a date.', 'newDueOn');
   return newDueOn;
 }
 
@@ -468,13 +484,14 @@ export async function setHealth(
 export async function renegotiate(db: Db, meId: string, id: string, input: { version: number; newDueOn: string; reason: string }): Promise<Task> {
   return mutate(db, meId, id, input.version, (c) => c.isOwner || c.isLead, (c) => {
     openOnly(c);
-    const reason = needReason(input.reason);
+    // Giving a date to a Personal task that had none is not a date move, so it needs no reason (14 Nov).
+    const reason = c.row.due_on === NO_DATE ? (input.reason?.trim() || 'Date set') : needReason(input.reason);
     return { set: { due_on: checkNewDate(input.newDueOn, c.row.due_on) }, reasons: { due_on: reason } };
   });
 }
 
 export async function closeTask(db: Db, meId: string, id: string, input: { version: number; as: 'done' | 'dropped'; reason?: string }): Promise<Task> {
-  return mutate(db, meId, id, input.version, (c) => c.isOwner || c.isLead, (c) => {
+  return mutate(db, meId, id, input.version, (c) => c.isOwner || c.isLead || (input.as === 'dropped' && c.isHead), (c) => {
     openOnly(c);
     if (input.as === 'done') {
       // Done is one tick; a note on what was delivered is welcome but not required.
@@ -516,7 +533,8 @@ export async function reopenTask(db: Db, meId: string, id: string, input: { vers
     // My own Personal task (13 Nov): I reopen it myself, no reason needed. Anything else: a lead, with a reason.
     const { rows: [pp] } = row.project_id ? await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [row.project_id]) : { rows: [] as { personal_for: string | null }[] };
     const personal = !!pp?.personal_for && pp.personal_for === meId && row.owner_id === meId;
-    if (!personal && !isLeadOrAdmin(roles)) throw forbidden('Only a lead can reopen a task.');
+    const head = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [row.project_id, meId])).rows.length > 0 : false;
+    if (!personal && !head && !isLeadOrAdmin(roles)) throw forbidden('Only a lead, or the project’s owner or lead, can reopen a task.');
     const reason = personal ? (input.reason?.trim() || 'Reopened') : needReason(input.reason);
     if (row.version !== input.version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
     if (row.status_category === 'open') throw bad('invalid_body', 'The task is already open.');
@@ -1294,8 +1312,12 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
   const person = await getPerson(db, teamId, personId);
   if (!person || person.appRoles.length === 0) throw notFound('That person is not on this team.');
   const viewerRoles = await rolesIn(db, teamId, meId);
-  const mayRecord = meId === personId || isLeadOrAdmin(viewerRoles) || (await workingWith(db, teamId, meId)).has(personId);
-  const sight = await sightOf(db, teamId, meId);
+  // Leadership (and admins) see a person's whole page (15 Nov, the PM's call): every task and update of theirs, even on
+  // projects the viewer is not on, and their on-time record. Their Personal stays theirs. Team stays as it is.
+  const oversee = viewerRoles.has('leadership') || viewerRoles.has('admin');
+  const mayRecord = meId === personId || oversee || isLeadOrAdmin(viewerRoles) || (await workingWith(db, teamId, meId)).has(personId);
+  const own = await sightOf(db, teamId, meId);
+  const sight: Sight = oversee ? { all: true, hidden: own.hidden } : own;
   const everything = await teamTasks(db, teamId, today);
   const tasks = everything.filter((t) => seesTask(sight, t));
   const byDue = (a: Task, b: Task) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
@@ -1304,8 +1326,8 @@ export async function personView(db: Db, teamId: string, meId: string, personId:
     db.query<{ id: string; name: string; role: string }>(
       `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END AS name, COALESCE(m.project_role, 'Lead') AS role FROM projects pr
        LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
-       WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) ORDER BY pr.name`,
-      [teamId, personId],
+       WHERE pr.team_id = $1 AND (pr.owner_id = $2 OR m.person_id = $2) AND (pr.personal_for IS NULL OR pr.personal_for = $3) ORDER BY pr.name`,
+      [teamId, personId, meId],
     ),
     db.query<LogLine & { taskTitle: string; project_id: string | null; owner_id: string; created_by: string | null; blocked_on_id: string | null }>(
       `SELECT e.*, COALESCE(a.nickname, a.display_name) AS "actorName", t.title AS "taskTitle",

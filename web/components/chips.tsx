@@ -44,10 +44,10 @@ export function StatusChips({ t, names }: { t: Task; names?: Record<string, stri
   );
 }
 
-// "Due 26 Sep (first given 23 Sep, moved once)", from SPEC.md FR-19.
+// "Due 26 Sep (first given 23 Sep, pushed once)", from SPEC.md FR-19 ("pushed", the PM's word, 15 Nov).
 export function dueLine(t: Task): string {
   if (t.dateMoves === 0) return `Due ${fmtDate(t.dueOn)}`;
-  const moved = t.dateMoves === 1 ? 'moved once' : `moved ${t.dateMoves} times`;
+  const moved = t.dateMoves === 1 ? 'pushed once' : `pushed ${t.dateMoves} times`;
   return `Due ${fmtDate(t.dueOn)} (first given ${fmtDate(t.firstDueOn)}, ${moved})`;
 }
 

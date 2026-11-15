@@ -1,3 +1,5 @@
+import { openArchiveAsk, projectAccess } from '@/lib/plan';
+import { viewOnlyProjects } from '@/lib/sight';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireMe } from '@/lib/auth';
@@ -44,7 +46,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <Link className="crumb" href="/projects">← All projects</Link>
         <ReadOnlyProvider readOnly={readOnly}>
         <div className={`personal-page accent-${p.accent ?? 'orange'}`}>
-          <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} />
+          <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} goalLabel={p.targetLabel} goalOn={p.launchOn} today={today()} />
           {/* Tasks on top unless Settings says notes first (13 Nov). */}
           {(() => {
             const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} projectNames={projectNames} />;
@@ -64,14 +66,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const tasks = p.kind === 'plan' ? [] : await projectTasks(d, p.id);
   const setup = await setupState(d, me, p.id); // null unless this person owns or leads the project, or is a lead or admin
   const split = plan ? lineSplit(plan.lines, now) : taskSplit(tasks, now);
+  // View-only (15 Nov): they see everything and can copy the link, but add nothing (lib/sight.ts viewOnlyProjects).
+  const viewOnly = (await viewOnlyProjects(d, me.team.id, me.person.id)).has(p.id);
 
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
       <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id} isAdmin={!readOnly && isAdmin}
-        canEdit={!readOnly && (p.ownerId === me.person.id || p.leadId === me.person.id || isLead || isAdmin)} today={now} />
-      {/* An archived project is read-only: the board hides its write controls, as it does in View as. */}
-      <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt}>
+        access={readOnly ? 'view' : await projectAccess(d, p, me.person.id)} today={now} archiveAsk={await openArchiveAsk(d, p.id)} />
+      {viewOnly && !p.archivedAt && <p className="small dim view-only-note">You can view this project. To add to it, ask its owner or lead to add you.</p>}
+      {/* An archived project is read-only: the board hides its write controls, as it does in View as, and for view-only people. */}
+      <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt || viewOnly}>
       {setup && <SetupList projectId={p.id} steps={setup} />}
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
@@ -84,6 +89,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           projectNames={projectNames}
           meId={me.person.id}
           isLead={isLead}
+          isHead={p.ownerId === me.person.id || p.leadId === me.person.id}
           today={now}
           workstreams={p.workstreams}
           partnerPeople={p.partnerName ? p.partnerPeople : []}

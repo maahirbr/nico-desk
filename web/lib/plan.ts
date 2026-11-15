@@ -1,6 +1,7 @@
 import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
+import { isViewOnly, VIEW_ONLY } from './sight';
 import { createTask, dropOpenTasks, newId, teamTasks } from './service';
 import { lineSplit, taskSplit, type StatusSplit } from './progress';
 import { modelOn } from './model';
@@ -220,6 +221,7 @@ const MINUTES_OPS = new Set(['importMinutes', 'acceptProposal', 'rejectProposal'
 export async function planOp(db: Db, meId: string, projectId: string, o: PlanOp, today = todayIst()): Promise<{ note?: string }> {
   const project = await getProject(db, projectId);
   if (project.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
+  if (await isViewOnly(db, project.teamId, projectId, meId)) throw forbidden(VIEW_ONLY);
   if (project.kind !== 'plan' && !MINUTES_OPS.has(o.op)) throw bad('not_a_plan', 'This project has no plan board.');
   // On a task board, an accepted step becomes a task, with all the task rules (owner, a date kept for good).
   if (project.kind === 'tasks' && (o.op === 'acceptProposal' || o.op === 'acceptSure')) return acceptAsTasks(db, meId, project, o);
@@ -631,13 +633,14 @@ async function setViewers(tx: Tx, teamId: string, projectId: string, meId: strin
 }
 
 // The live projects someone is on, as owner, lead or member, with their part in each. Home lists these; archived ones are left out.
-// My Personal project comes first and carries no part (13 Nov): it is just "Personal".
-export async function myProjects(db: Tx, teamId: string, personId: string): Promise<{ id: string; name: string; role: string }[]> {
+// My Personal project comes first and carries no part (13 Nov): it is just "Personal 🔒".
+// withPersonal false (an admin viewing as them, 15 Nov): their Personal stays private, as everywhere else.
+export async function myProjects(db: Tx, teamId: string, personId: string, withPersonal = true): Promise<{ id: string; name: string; role: string }[]> {
   const { rows } = await db.query<{ id: string; name: string; owner_id: string; lead_id: string | null; project_role: string | null; personal_for: string | null }>(
-    `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal' ELSE pr.name END AS name, pr.owner_id, pr.lead_id, m.project_role, pr.personal_for FROM projects pr
+    `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal 🔒' ELSE pr.name END AS name, pr.owner_id, pr.lead_id, m.project_role, pr.personal_for FROM projects pr
      LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
      WHERE pr.team_id = $1 AND pr.archived_at IS NULL AND (pr.owner_id = $2 OR pr.lead_id = $2 OR m.person_id IS NOT NULL) ORDER BY pr.personal_for IS NULL, pr.name`, [teamId, personId]);
-  return rows.map((r) => {
+  return rows.filter((r) => !r.personal_for || (withPersonal && r.personal_for === personId)).map((r) => {
     const owner = r.owner_id === personId, lead = (r.lead_id ?? r.owner_id) === personId;
     if (r.personal_for) return { id: r.id, name: r.name, role: '' };
     return { id: r.id, name: r.name, role: owner && lead ? 'Owner and lead' : owner ? 'Owner' : lead ? 'Lead' : r.project_role ?? 'Member' };
@@ -655,11 +658,13 @@ export async function projectPeopleMap(db: Tx, teamId: string): Promise<Record<s
   return out;
 }
 
-// Projects this person may bring someone new into: all of them for a lead or an admin, else the ones they own or lead.
-// Mirrors the joinProject rule in lib/service.ts, so the owner picker offers "+ Add someone" only where it will work.
+// Projects this person may bring someone new into: all of them for a lead or an admin, else the ones they own, lead or
+// are on (members too, 15 Nov). Mirrors the joinProject rule in lib/service.ts, so the owner picker offers "+ Add someone"
+// only where it will work.
 export async function projectsMayAddTo(db: Tx, teamId: string, personId: string, lead: boolean): Promise<string[]> {
   const { rows } = await db.query<{ id: string }>(
-    `SELECT id FROM projects WHERE team_id = $1 AND archived_at IS NULL AND ($3 OR owner_id = $2 OR lead_id = $2)`, [teamId, personId, lead]);
+    `SELECT id FROM projects WHERE team_id = $1 AND archived_at IS NULL AND ($3 OR owner_id = $2 OR lead_id = $2
+       OR id IN (SELECT project_id FROM project_members WHERE person_id = $2))`, [teamId, personId, lead]);
   return rows.map((r) => r.id);
 }
 
@@ -747,14 +752,16 @@ async function archiveContext(tx: Tx, meId: string, id: string): Promise<Project
   const p = toProject(rows[0]);
   const roles = await rolesOf(tx, p.teamId, meId);
   if (roles.size === 0) throw forbidden('You are not on this project’s team.');
-  if (p.ownerId !== meId && p.leadId !== meId && !isLeadOrAdmin(roles)) throw forbidden('Only the project owner, its lead or a team lead can archive or restore a project.');
+  if (p.ownerId !== meId && p.leadId !== meId && !isLeadOrAdmin(roles)) throw forbidden('Only the project owner, its lead or an admin can archive or restore a project. You can ask them to.');
   return p;
 }
 
-export async function archiveProject(db: Db, meId: string, id: string, dropOpen?: string): Promise<Project> {
+// reason (15 Nov): every archive says why (the PM's call). dropOpen, when given, is also the reason, and drops open work.
+export async function archiveProject(db: Db, meId: string, id: string, dropOpen?: string, reason?: string): Promise<Project> {
   await db.transaction(async (tx) => {
     const p = await archiveContext(tx, meId, id);
     if (p.archivedAt) throw bad('invalid_body', 'This project is already archived.');
+    const why = (dropOpen ?? reason ?? '').trim();
     if (dropOpen !== undefined) {
       await dropOpenTasks(tx, meId, id, dropOpen);
       const { rows: open } = await tx.query<{ id: string }>(
@@ -769,9 +776,12 @@ export async function archiveProject(db: Db, meId: string, id: string, dropOpen?
       l[0].n ? `${l[0].n} open ${l[0].n === 1 ? 'line of work' : 'lines of work'}` : '',
     ].filter(Boolean);
     if (parts.length) throw bad('open_work', `This project still has ${parts.join(' and ')}. Archiving drops them. Give a reason to go ahead.`);
+    if (!why) throw bad('reason_required', 'Say why you are archiving it.', 'reason');
     await tx.query(`UPDATE projects SET archived_at = now(), archived_by = $2 WHERE id = $1`, [id, meId]);
-    await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,'_archived',NULL,$3::jsonb,$4,'app',now())`,
-      [newId('evt'), id, JSON.stringify({ name: p.name }), meId]);
+    await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at, reason) VALUES ($1,'project',$2,'_archived',NULL,$3::jsonb,$4,'app',now(),$5)`,
+      [newId('evt'), id, JSON.stringify({ name: p.name }), meId, why.slice(0, 280)]);
+    // A member's ask to archive it is answered by this.
+    await tx.query(`UPDATE archive_asks SET outcome = 'archived', decided_by = $2, decided_at = now() WHERE project_id = $1 AND outcome IS NULL`, [id, meId]);
   });
   return getProject(db, id);
 }
@@ -814,6 +824,7 @@ export async function deleteProject(db: Db, meId: string, id: string, confirmNam
     const steps: [string, unknown[]][] = [
       [`DELETE FROM notices WHERE task_id = ANY($1::text[]) OR comment_id = ANY($2::text[]) OR message_id = ANY($3::text[])`, [tasks, comments, messages]],
       [`DELETE FROM update_asks WHERE task_id = ANY($1::text[])`, [tasks]],
+      [`DELETE FROM archive_asks WHERE project_id = $1`, [id]],
       [`DELETE FROM chat_task_links WHERE task_id = ANY($1::text[]) OR message_id = ANY($2::text[])`, [tasks, messages]],
       [`DELETE FROM chat_refs WHERE message_id = ANY($1::text[]) OR (ref_kind = 'task' AND ref_id = ANY($2::text[])) OR (ref_kind = 'project' AND ref_id = $3)`, [messages, tasks, id]],
       [`DELETE FROM comment_refs WHERE comment_id = ANY($1::text[]) OR (ref_kind = 'task' AND ref_id = ANY($2::text[])) OR (ref_kind = 'project' AND ref_id = $3)`, [comments, tasks, id]],
@@ -831,12 +842,49 @@ export async function deleteProject(db: Db, meId: string, id: string, confirmNam
   });
 }
 
+// What someone may do in a project's Settings (15 Nov, the PM's call). Everyone who can open the project sees them.
+// full: its owner or lead (either may change the other), an admin, or a team lead who is not just viewing it.
+// people: one of its people, who may add people and nothing else. view: everyone else who can open it (viewers).
+export type ProjectAccess = 'full' | 'people' | 'view';
+export async function projectAccess(db: Tx, p: Pick<Project, 'id' | 'teamId' | 'ownerId' | 'leadId'>, meId: string): Promise<ProjectAccess> {
+  if (p.ownerId === meId || p.leadId === meId) return 'full';
+  const roles = await rolesOf(db, p.teamId, meId);
+  if (roles.has('admin')) return 'full';
+  const { rows: [m] } = await db.query(`SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`, [p.id, meId]);
+  if (isLeadOrAdmin(roles) && !(await isViewOnly(db, p.teamId, p.id, meId))) return 'full';
+  return m ? 'people' : 'view';
+}
+
+// Add people to a project (15 Nov): anyone on it may, as Settings lets a member. Only adds: removing someone, or changing
+// a role, stays with full access (updateProject). Someone who was a viewer becomes one of its people.
+export async function addProjectPeople(db: Db, meId: string, id: string, add: { personId: string; role: string }[]): Promise<Project> {
+  const p = await getProject(db, id);
+  if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
+  if ((await projectAccess(db, p, meId)) === 'view') throw forbidden(VIEW_ONLY);
+  if (p.personalFor) throw bad('invalid_body', 'A Personal project is yours alone. No one else can be added to it.');
+  const list = add.map((a) => ({ personId: a.personId, role: a.role.trim() || 'Member' })).filter((a) => a.personId);
+  if (list.some((a) => a.role.length < 2 || a.role.length > 60)) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'members');
+  await db.transaction(async (tx) => {
+    const { rows: was } = await tx.query<{ person_id: string }>(`SELECT person_id FROM project_members WHERE project_id = $1`, [id]);
+    const on = new Set([p.ownerId, p.leadId, ...was.map((r) => r.person_id)]);
+    const fresh = list.filter((a) => !on.has(a.personId));
+    await checkPeople(tx, p.teamId, fresh.map((a) => a.personId));
+    for (const a of fresh) {
+      await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3) ON CONFLICT (project_id, person_id) DO NOTHING`, [id, a.personId, a.role]);
+      await tx.query(`DELETE FROM project_viewers WHERE project_id = $1 AND person_id = $2`, [id, a.personId]);
+    }
+    const names = await peopleNames(tx);
+    if (fresh.length) await log(tx, id, meId, `added ${fresh.map((a) => names[a.personId] ?? a.personId).join(', ')} to the project`);
+  });
+  return getProject(db, id);
+}
+
 export async function updateProject(db: Db, meId: string, id: string, input: ProjectInput): Promise<Project> {
   const p = await getProject(db, id);
-  const roles = await rolesOf(db, p.teamId, meId);
-  if (p.ownerId !== meId && p.leadId !== meId && !isLeadOrAdmin(roles)) throw forbidden('Only the project owner, its lead or a team lead can change the project.');
+  if ((await projectAccess(db, p, meId)) !== 'full') throw forbidden('Only the project owner, its lead or an admin can change these. You can add people.');
   if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
+  if (p.personalFor) throw bad('invalid_body', 'A Personal project is changed in its own Settings.');
   const c = clean(input);
   await db.transaction(async (tx) => {
     // Only people new to the project must be active. Someone deactivated while still on it stays until their tasks move,
@@ -883,4 +931,65 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
     }
   });
   return getProject(db, id);
+}
+
+// ---------- asks to archive (15 Nov, the PM's call) ----------
+// One of a project's people who may not archive it asks its owner and lead to, with a reason. They see it on Home and
+// on the project; the owner, the lead or an admin archives it (with that reason, or their own) or says Not now. The
+// asker sees the answer once on Home. In the app only: nothing is sent.
+export type ArchiveAsk = { id: string; projectId: string; projectName: string; askedBy: string; askedByName: string; reason: string; askedAt: string };
+export type ArchiveNews = { id: string; projectId: string; projectName: string; outcome: 'archived' | 'declined'; byName: string; at: string };
+
+export async function askToArchive(db: Db, meId: string, id: string, reason: string): Promise<ArchiveAsk> {
+  const p = await getProject(db, id);
+  if (p.archivedAt) throw bad('invalid_body', 'This project is already archived.');
+  if (p.personalFor) throw bad('invalid_body', 'A Personal project is not archived.');
+  const access = await projectAccess(db, p, meId);
+  if (access === 'view') throw forbidden(VIEW_ONLY);
+  if (access === 'full') throw bad('invalid_body', 'You can archive this project yourself.');
+  const why = reason.trim();
+  if (!why) throw bad('reason_required', 'Say why it should be archived.', 'reason');
+  const open = await openArchiveAsk(db, id);
+  if (open) throw bad('invalid_body', `${open.askedByName} already asked to archive it. Its owner or lead will answer.`);
+  const askId = newId('aas');
+  await db.query(`INSERT INTO archive_asks (id, team_id, project_id, asked_by, reason) VALUES ($1,$2,$3,$4,$5)`, [askId, p.teamId, id, meId, why.slice(0, 280)]);
+  return (await openArchiveAsk(db, id))!;
+}
+
+export async function declineArchiveAsk(db: Db, meId: string, id: string): Promise<void> {
+  const p = await getProject(db, id);
+  if ((await projectAccess(db, p, meId)) !== 'full') throw forbidden('Only the project owner, its lead or an admin can answer this.');
+  const { rows } = await db.query(`UPDATE archive_asks SET outcome = 'declined', decided_by = $2, decided_at = now() WHERE project_id = $1 AND outcome IS NULL RETURNING id`, [id, meId]);
+  if (!rows.length) throw notFound('There is no ask to archive this project.');
+}
+
+const ASK_SELECT = `SELECT a.id, a.project_id AS "projectId", pr.name AS "projectName", a.asked_by AS "askedBy",
+    COALESCE(p.nickname, p.display_name) AS "askedByName", a.reason, a.asked_at AS "askedAt"
+  FROM archive_asks a JOIN projects pr ON pr.id = a.project_id JOIN people p ON p.id = a.asked_by`;
+const iso = (v: unknown) => new Date(v as string).toISOString();
+
+export async function openArchiveAsk(db: Tx, projectId: string): Promise<ArchiveAsk | null> {
+  const { rows } = await db.query<ArchiveAsk>(`${ASK_SELECT} WHERE a.project_id = $1 AND a.outcome IS NULL`, [projectId]);
+  return rows[0] ? { ...rows[0], askedAt: iso(rows[0].askedAt) } : null;
+}
+
+// Open asks on projects I own or lead, for Home.
+export async function archiveAsksForMe(db: Tx, teamId: string, meId: string): Promise<ArchiveAsk[]> {
+  const { rows } = await db.query<ArchiveAsk>(
+    `${ASK_SELECT} WHERE a.team_id = $1 AND a.outcome IS NULL AND pr.archived_at IS NULL AND (pr.owner_id = $2 OR pr.lead_id = $2) AND a.asked_by <> $2
+     ORDER BY a.asked_at`, [teamId, meId]);
+  return rows.map((r) => ({ ...r, askedAt: iso(r.askedAt) }));
+}
+
+// What happened to my asks, until I mark it seen.
+export async function archiveNewsForMe(db: Tx, teamId: string, meId: string): Promise<ArchiveNews[]> {
+  const { rows } = await db.query<ArchiveNews>(
+    `SELECT a.id, a.project_id AS "projectId", pr.name AS "projectName", a.outcome, COALESCE(p.nickname, p.display_name) AS "byName", a.decided_at AS at
+       FROM archive_asks a JOIN projects pr ON pr.id = a.project_id JOIN people p ON p.id = a.decided_by
+      WHERE a.team_id = $1 AND a.asked_by = $2 AND a.outcome IS NOT NULL AND a.seen_at IS NULL ORDER BY a.decided_at`, [teamId, meId]);
+  return rows.map((r) => ({ ...r, at: iso(r.at) }));
+}
+
+export async function markArchiveNewsSeen(db: Db, meId: string, askId: string): Promise<void> {
+  await db.query(`UPDATE archive_asks SET seen_at = now() WHERE id = $1 AND asked_by = $2 AND outcome IS NOT NULL`, [askId, meId]);
 }

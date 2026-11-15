@@ -14,7 +14,7 @@ vi.mock('../lib/db', async (orig) => ({ ...(await orig<typeof import('../lib/db'
 import { COOKIE, VIEW_COOKIE, signSession, signView } from '../lib/auth';
 import { openDb, upgrade, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
-import { archiveProject, createProject, deleteProject, getProject, projectsMayAddTo, restoreProject, updateProject } from '../lib/plan';
+import { archiveAsksForMe, archiveNewsForMe, archiveProject, askToArchive, createProject, declineArchiveAsk, deleteProject, getProject, markArchiveNewsSeen, projectsMayAddTo, restoreProject, updateProject } from '../lib/plan';
 import * as s from '../lib/service';
 import { TEAM_ID } from '../lib/seed';
 import { groupLog } from '../components/logText';
@@ -57,21 +57,21 @@ describe('archiving a project', () => {
     const p = await createProject(db, LEAD, TEAM_ID, base);
     await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo', projectId: p.id });
     await s.createTask(db, LEAD, { ...task, title: 'Fold the paper', ownerId: 'per_bo', projectId: p.id });
-    expect(await code(archiveProject(db, LEAD, p.id))).toBe('400 open_work');
-    expect(await msg(archiveProject(db, LEAD, p.id))).toContain('2 open tasks');
+    expect(await code(archiveProject(db, LEAD, p.id, undefined, 'Wrapped up'))).toBe('400 open_work');
+    expect(await msg(archiveProject(db, LEAD, p.id, undefined, 'Wrapped up'))).toContain('2 open tasks');
     expect((await getProject(db, p.id)).archivedAt).toBeNull();
   });
 
   it('is refused while the partner plan has open lines', async () => {
-    expect(await msg(archiveProject(db, LEAD, 'prj_studio'))).toMatch(/open (task|line)/);
+    expect(await msg(archiveProject(db, LEAD, 'prj_studio', undefined, 'Wrapped up'))).toMatch(/open (task|line)/);
   });
 
   it('works once everything is closed, and restore brings it back', async () => {
     const { p } = await doneProject();
-    const a = await archiveProject(db, LEAD, p.id);
+    const a = await archiveProject(db, LEAD, p.id, undefined, 'Wrapped up');
     expect(a.archivedAt).toBeTruthy();
     expect(a.archivedBy).toBe(LEAD);
-    expect(await code(archiveProject(db, LEAD, p.id))).toBe('400 invalid_body'); // already archived
+    expect(await code(archiveProject(db, LEAD, p.id, undefined, 'Wrapped up'))).toBe('400 invalid_body'); // already archived
     const r = await restoreProject(db, LEAD, p.id);
     expect(r.archivedAt).toBeNull();
     expect(await code(restoreProject(db, LEAD, p.id))).toBe('400 invalid_body'); // not archived
@@ -80,17 +80,17 @@ describe('archiving a project', () => {
   it('is open to the project owner, a lead or an admin, and no one else', async () => {
     const own = await createProject(db, LEAD, TEAM_ID, { ...base, name: 'Owned by a member', ownerId: 'per_bo', members: [] });
     const other = await createProject(db, LEAD, TEAM_ID, { ...base, name: 'Lead project' });
-    expect(await code(archiveProject(db, 'per_cy', other.id))).toBe('403 not_allowed');
-    expect(await code(archiveProject(db, 'per_bo', other.id))).toBe('403 not_allowed'); // a member of it, not owner
-    expect(await code(archiveProject(db, 'per_bo', own.id))).toBe('ok'); // its owner
+    expect(await code(archiveProject(db, 'per_cy', other.id, undefined, 'Wrapped up'))).toBe('403 not_allowed');
+    expect(await code(archiveProject(db, 'per_bo', other.id, undefined, 'Wrapped up'))).toBe('403 not_allowed'); // a member of it, not owner
+    expect(await code(archiveProject(db, 'per_bo', own.id, undefined, 'Wrapped up'))).toBe('ok'); // its owner
     expect(await code(restoreProject(db, 'per_cy', own.id))).toBe('403 not_allowed');
     expect(await code(restoreProject(db, ADMIN, own.id))).toBe('ok'); // an admin
-    expect(await code(archiveProject(db, LEAD, own.id))).toBe('ok'); // a lead
+    expect(await code(archiveProject(db, LEAD, own.id, undefined, 'Wrapped up'))).toBe('ok'); // a lead
   });
 
   it('refuses new tasks, moves into it, reopening and edits to the project, until restored', async () => {
     const { p, t } = await doneProject();
-    await archiveProject(db, LEAD, p.id);
+    await archiveProject(db, LEAD, p.id, undefined, 'Wrapped up');
     expect(await code(s.createTask(db, LEAD, { ...task, ownerId: 'per_bo', projectId: p.id }))).toBe('400 project_archived');
     const closed = await s.getTask(db, t.id);
     expect(await code(s.reopenTask(db, LEAD, t.id, { version: closed.version, reason: 'Needs another look' }))).toBe('400 project_archived');
@@ -104,7 +104,7 @@ describe('archiving a project', () => {
   it('keeps tasks readable and leaves the project out of the "add someone" list', async () => {
     const { p, t } = await doneProject();
     expect(await projectsMayAddTo(db, TEAM_ID, LEAD, true)).toContain(p.id);
-    await archiveProject(db, LEAD, p.id);
+    await archiveProject(db, LEAD, p.id, undefined, 'Wrapped up');
     expect((await s.getTask(db, t.id)).title).toBe(task.title);
     expect(await projectsMayAddTo(db, TEAM_ID, LEAD, true)).not.toContain(p.id);
     expect((await s.listProjects(db, TEAM_ID)).find((x) => x.id === p.id)?.archived).toBe(true);
@@ -112,7 +112,7 @@ describe('archiving a project', () => {
 
   it('logs both moves on the project, and the log reads one sentence for each', async () => {
     const { p } = await doneProject();
-    await archiveProject(db, LEAD, p.id);
+    await archiveProject(db, LEAD, p.id, undefined, 'Wrapped up');
     await restoreProject(db, LEAD, p.id);
     const log = await s.projectLog(db, p.id);
     const ev = log.filter((e) => e.entity_type === 'project');
@@ -166,7 +166,7 @@ describe('telling the previous owner a task moved away', () => {
 describe('the upgrade', () => {
   it('can run again on an upgraded database and loses nothing', async () => {
     const { p } = await doneProject();
-    await archiveProject(db, LEAD, p.id);
+    await archiveProject(db, LEAD, p.id, undefined, 'Wrapped up');
     await upgrade(db);
     await upgrade(db);
     expect((await getProject(db, p.id)).archivedAt).toBeTruthy();
@@ -184,8 +184,8 @@ describe('the upgrade', () => {
 });
 
 describe('the routes during view-as', () => {
-  const post = (url: string) =>
-    new Request(`http://localhost${url}`, { method: 'POST', headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' }, body: '{}' });
+  const post = (url: string, body = '{}') =>
+    new Request(`http://localhost${url}`, { method: 'POST', headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' }, body });
 
   it('refuse archive and restore with 403 viewing_as, and change nothing', async () => {
     const { p } = await doneProject();
@@ -195,7 +195,7 @@ describe('the routes during view-as', () => {
     expect(a.status).toBe(403);
     expect((await a.json()).error.code).toBe('viewing_as');
     expect((await getProject(db, p.id)).archivedAt).toBeNull();
-    await archiveProject(db, LEAD, p.id);
+    await archiveProject(db, LEAD, p.id, undefined, 'Wrapped up');
     const r = await restoreRoute(post(`/api/v1/projects/${p.id}/restore`), params);
     expect(r.status).toBe(403);
     expect((await getProject(db, p.id)).archivedAt).toBeTruthy();
@@ -205,7 +205,8 @@ describe('the routes during view-as', () => {
     const { p } = await doneProject();
     state.jar = { [COOKIE]: signSession(ADMIN) };
     const params = { params: Promise.resolve({ id: p.id }) };
-    expect((await archiveRoute(post(`/api/v1/projects/${p.id}/archive`), params)).status).toBe(200);
+    expect((await archiveRoute(post(`/api/v1/projects/${p.id}/archive`), params)).status).toBe(400); // a reason is needed (15 Nov)
+    expect((await archiveRoute(post(`/api/v1/projects/${p.id}/archive`, JSON.stringify({ reason: 'Wrapped up' })), params)).status).toBe(200);
     expect((await restoreRoute(post(`/api/v1/projects/${p.id}/restore`), params)).status).toBe(200);
   });
 });
@@ -217,7 +218,7 @@ describe('a project lead who does not own it', () => {
 
   it('can archive, restore, edit and add a person, as the owner can', async () => {
     const p = await createProject(db, LEAD, TEAM_ID, withLead);
-    expect(await code(archiveProject(db, 'per_cy', p.id))).toBe('ok');
+    expect(await code(archiveProject(db, 'per_cy', p.id, undefined, 'Wrapped up'))).toBe('ok');
     expect((await getProject(db, p.id)).archivedAt).not.toBeNull();
     expect(await code(restoreProject(db, 'per_cy', p.id))).toBe('ok');
     expect(await code(updateProject(db, 'per_cy', p.id, { ...withLead, goal: 'Edited by the lead' }))).toBe('ok');
@@ -225,12 +226,13 @@ describe('a project lead who does not own it', () => {
     expect(await projectsMayAddTo(db, TEAM_ID, 'per_cy', false)).toContain(p.id); // per_cy also owns a fixture project
   });
 
-  it('is not a stand-in for a plain member, who can do none of it', async () => {
+  it('is not a stand-in for a plain member, who may only add people (15 Nov)', async () => {
     const p = await createProject(db, LEAD, TEAM_ID, withLead);
-    expect(await code(archiveProject(db, 'per_bo', p.id))).toBe('403 not_allowed');
+    expect(await code(archiveProject(db, 'per_bo', p.id, undefined, 'Wrapped up'))).toBe('403 not_allowed');
     expect(await code(updateProject(db, 'per_bo', p.id, { ...withLead, goal: 'Nope' }))).toBe('403 not_allowed');
-    expect(await code(s.createTask(db, 'per_bo', { ...joiner, ownerId: 'per_dee', projectId: p.id }))).toBe('403 not_allowed');
-    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toEqual([]);
+    // Since 15 Nov a member may bring someone in (as Settings lets them add people).
+    expect(await code(s.createTask(db, 'per_bo', { ...joiner, ownerId: 'per_dee', projectId: p.id }))).toBe('ok');
+    expect(await projectsMayAddTo(db, TEAM_ID, 'per_bo', false)).toContain(p.id);
   });
 
   it('logs a change of owner or lead as a project event', async () => {
@@ -352,5 +354,54 @@ describe('a project with a deactivated member (28 Oct)', () => {
     expect(on).toEqual(expect.arrayContaining(['per_bo', 'per_dee']));
     await db.query(`UPDATE people SET active = false WHERE id = 'per_cy'`);
     expect(await code(updateProject(db, ADMIN, p.id, { ...withDee, members: [...withDee.members, { personId: 'per_cy', role: 'Tags' }] }))).toBe('400 owner_not_on_roster');
+  });
+});
+
+describe('asking to archive (15 Nov)', () => {
+  it('needs a reason; a member asks, the owner sees it and answers', async () => {
+    const { rows: [m] } = await db.query<{ project_id: string; person_id: string }>(
+      `SELECT m.project_id, m.person_id FROM project_members m JOIN projects pr ON pr.id = m.project_id
+        WHERE pr.archived_at IS NULL AND pr.personal_for IS NULL AND pr.owner_id <> m.person_id AND COALESCE(pr.lead_id, '') <> m.person_id
+          AND NOT EXISTS (SELECT 1 FROM team_members t WHERE t.person_id = m.person_id AND t.app_role IN ('lead','admin')) LIMIT 1`);
+    const p = await getProject(db, m.project_id);
+    // The owner archives only with a reason.
+    expect(await code(archiveProject(db, p.ownerId, p.id, undefined, '  '))).toMatch(/400 (reason_required|open_work)/);
+    // The member cannot archive, but can ask, once, with a reason.
+    expect(await code(archiveProject(db, m.person_id, p.id, undefined, 'Done'))).toBe('403 not_allowed');
+    expect(await code(askToArchive(db, m.person_id, p.id, ' '))).toBe('400 reason_required');
+    const a = await askToArchive(db, m.person_id, p.id, 'The launch is done');
+    expect(a.reason).toBe('The launch is done');
+    expect(await code(askToArchive(db, m.person_id, p.id, 'Again'))).toBe('400 invalid_body');
+    expect((await archiveAsksForMe(db, p.teamId, p.ownerId)).map((x) => x.id)).toContain(a.id);
+    // Not now: only full access; the asker then sees it once.
+    expect(await code(declineArchiveAsk(db, m.person_id, p.id))).toBe('403 not_allowed');
+    await declineArchiveAsk(db, p.ownerId, p.id);
+    const news = await archiveNewsForMe(db, p.teamId, m.person_id);
+    expect(news.map((n) => n.outcome)).toEqual(['declined']);
+    await markArchiveNewsSeen(db, m.person_id, news[0].id);
+    expect(await archiveNewsForMe(db, p.teamId, m.person_id)).toEqual([]);
+    // Ask again, and archiving answers it.
+    await askToArchive(db, m.person_id, p.id, 'Really done now');
+    await archiveProject(db, p.ownerId, p.id, 'Really done now');
+    expect((await archiveNewsForMe(db, p.teamId, m.person_id)).map((n) => n.outcome)).toEqual(['archived']);
+  });
+});
+
+describe('a project owner or lead drops and reopens its tasks (15 Nov)', () => {
+  it('drops and reopens a task someone else owns in it; a plain member cannot', async () => {
+    // per_cy leads, per_bo is a plain member; neither holds the lead or admin role on the team.
+    const p = await createProject(db, LEAD, TEAM_ID, { ...base, leadId: 'per_cy' });
+    const t = await s.createTask(db, LEAD, { ...task, ownerId: 'per_bo', projectId: p.id });
+    const other = await s.createTask(db, LEAD, { ...task, title: 'Second', ownerId: 'per_bo', projectId: p.id });
+    expect(await code(s.closeTask(db, 'per_cy', t.id, { version: t.version, as: 'done' }))).toBe('403 not_allowed'); // drop, not done
+    const dropped = await s.closeTask(db, 'per_cy', t.id, { version: t.version, as: 'dropped', reason: 'No longer needed' });
+    expect(dropped.statusCategory).toBe('dropped');
+    expect(await code(s.reopenTask(db, 'per_cy', t.id, { version: dropped.version, reason: 'Back on' }))).toBe('ok');
+    const { rows: [m] } = await db.query<{ person_id: string }>(`SELECT person_id FROM project_members WHERE project_id = $1 AND person_id = 'per_bo'`, [p.id]);
+    expect(m).toBeTruthy();
+    await s.createTask(db, LEAD, { ...task, title: 'Third', ownerId: 'per_dee', projectId: p.id, ownerRole: 'Help' });
+    const third = (await s.projectTasks(db, p.id)).find((x) => x.title === 'Third')!;
+    expect(await code(s.closeTask(db, 'per_bo', third.id, { version: third.version, as: 'dropped', reason: 'Not mine' }))).toBe('403 not_allowed');
+    expect(other.statusCategory).toBe('open');
   });
 });

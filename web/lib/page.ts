@@ -7,7 +7,8 @@ import type { Me } from './auth';
 import { seesProject } from './sight';
 import { sightFor } from './visibility';
 
-export const PERSONAL_NAME = 'Personal';
+// What people see (14 Nov): the lock says it is private. Matching (Quick Add, paste, Claude) uses the plain "Personal".
+export const PERSONAL_NAME = 'Personal 🔒';
 
 // Lookups every page needs: names by id and project names by id.
 export async function lookups(me: Me) {
@@ -29,7 +30,9 @@ export async function lookups(me: Me) {
     activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),
-    readOnly: me.viewingAs, // an admin viewing as someone else: no write control shows (lib/http.ts refuses the writes)
+    // View as (15 Nov, option B): controls show as the viewed person sees them; components/ViewAsGuard.tsx stops the
+    // changes and the server refuses them (lib/http.ts). readOnly stays false here; archived and view-only still hide.
+    readOnly: false,
   };
 }
 

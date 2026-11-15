@@ -4,7 +4,7 @@ import { bad, forbidden, notFound } from './errors';
 import { assertNotViewing } from './http';
 import { via } from './origin';
 import { newId } from './service';
-import { seesProject, seesTaskRow, sightOf, type Sight } from './sight';
+import { isViewOnly, seesProject, seesTaskRow, sightOf, VIEW_ONLY, type Sight } from './sight';
 import { today as todayIst } from './time';
 import { projectFor, sightFor, taskFor } from './visibility';
 
@@ -164,6 +164,13 @@ export async function addComment(db: Db, me: Me, kind: SubjectKind, subjectId: s
   assertNotViewing(me);
   return db.transaction(async (tx) => {
     await assertSees(tx, me, kind, subjectId);
+    // View-only (15 Nov, the PM's call): someone who only views a project does not comment in it, unless the task is theirs
+    // or waits on them.
+    const { rows: [on] } = kind === 'project'
+      ? { rows: [{ project_id: subjectId, mine: false }] }
+      : await tx.query<{ project_id: string | null; mine: boolean }>(
+        `SELECT project_id, (owner_id = $2 OR blocked_on_id = $2) AS mine FROM tasks WHERE id = $1`, [subjectId, me.person.id]);
+    if (on?.project_id && !on.mine && await isViewOnly(tx, me.team.id, on.project_id, me.person.id)) throw forbidden(VIEW_ONLY);
     const sight = await sightFor(tx, me);
     const { body, refs } = await checkBody(tx, me, sight, raw);
     const id = newId('cmt');

@@ -1669,3 +1669,220 @@ highlighted and "Projects" as a link, and a small Got it ✓. Got it hides it fo
 in `update_seen` under the scope `news:<id>`, so no schema change. It does not show under View as, and nothing is sent.
 The note lives in `lib/news.ts` `NEWS`: a new id shows a new note to everyone; null shows none.
 Rollback: set `NEWS` to null, or git revert the commit. The `news:` rows in `update_seen` can stay.
+
+## 2026-11-14 · Opus 5.5 · A Personal task may have no date
+
+The PM's call: in Personal a task can be added without a due date. It is stored as `NO_DATE` (9999-12-31, in
+`lib/time.ts`), not as a null, because `due_on` is NOT NULL and every sort, filter, flag and late check reads it: so
+it sorts last, is never late or at risk, and shows as "No date". Giving it a date later is "Set date" and needs no
+reason (it is not a date move). Only a Personal task may carry it: creating one elsewhere, moving one out of Personal, or
+moving any date to it is refused. Claude sees its date as null. No schema change.
+Rollback: git revert the commit. Any no-date tasks already made keep 9999-12-31 and show that date.
+
+## 2026-11-15 · Opus 5.5 · Personal 🔒, What's new under View as, and finding people on the Roster
+
+- Personal shows with its lock again where people see it: the page title, Home's Your projects, the Projects list, a
+  task's project name on rows and in the drawer, and search results. Matching (Quick Add, paste, Claude, the search
+  filter) keeps the plain "Personal", so typing "personal" still finds it.
+- An admin viewing as someone sees the What's new note as they do (shown until they press Got it), with no Got it.
+- A fix: under View as, Home's Your projects listed that person's Personal. It is now left out, as everywhere else.
+- The Roster has a find box at the right of its title (name, job title, department or email; it only hides rows on the
+  page). Edit is a ✎ to save space, and "Email invite" is "Invite".
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Cool reads and sits the same as Warm
+
+The PM's call: switching skin should not change how big the text is or where a page sits. Cool was a little smaller
+and wider because it followed its macOS source (13 to 14px text, 1360px pages), not by choice. Now Cool takes Warm's
+type sizes and line spacing (it keeps Geist and its own weights), Warm's page width (1120px), page padding, task-row
+height and padding, date and status column widths, group heading style and avatar sizes. Its colours, glass sidebar and
+top bar, rounder corners, segmented toggles, plain chips and normal-case flags stay its own. `tokens.css` only.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Reminders: Find a person sits in the filter bar, and find boxes really hide
+
+The PM's call: Find a person on Reminders is part of the filters, not a separate box. It now sits at the right end of the
+filter bar (it filters as you type, needs no Apply, and Enter does not send the form). A fix with it: a find box hides
+rows by `hidden`, but a card's or a phone-width row's own display rule beat it, so on a phone the Roster's find (13 Nov)
+did not hide anyone. `table.roster tr[hidden]` and `.remind-card[hidden]` now stay hidden.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · View-only, Settings for everyone, asks to archive, and "pushed"
+
+The PM's calls, one batch:
+- View-only: someone who may view a project (project_viewers) but is not its owner, its lead or one of its people, and is
+  not an admin, only views it: no new tasks, no minutes, no plan changes and no comments (unless the task is theirs or
+  waits on them). A team lead added only as a viewer is view-only too. Copy link stays. `lib/sight.ts viewOnlyProjects`;
+  the server refuses, and the project page hides the controls with a line saying why.
+- Settings for everyone (`lib/plan.ts projectAccess`): the owner, the lead (either may change the other) and an admin, or
+  a team lead who is not just viewing, change anything. One of its people may only add people (`addProjectPeople`; they
+  cannot remove anyone or change the name, description, date, owner or lead), and may bring someone in by giving them a
+  task. A viewer reads Settings and closes it.
+- Archive always takes a reason (kept on the `_archived` event). A member who may not archive asks the owner and lead,
+  with a reason (`archive_asks`, one open ask per project). They see it on Home and as a banner on the project, with
+  Archive and Not now; the asker sees the answer once on Home. In the app only. NEW TABLE: run `npm run db:upgrade` on the
+  hosted database before a build with this is promoted.
+- "pushed N×" is the one word for a changed date, on every row, both skins, the task board, hovers, the person page and
+  the delivery record (Warm's ↻ mark is gone).
+- The status hover waits half a second (was one). Team, by status: each group folds from its heading, open on load.
+  The Projects line drops "N archived". A late row shows "due 5 Oct" under its count.
+Rollback: git revert the commit. The archive_asks table can stay; nothing else reads it.
+
+## 2026-11-15 · Opus 5.5 · Roster Access is one choice, and a project's people use the header's full width
+
+- Access on the Roster (Add and Edit) is one choice: Member, Lead or Admin. Admin is stored alone, as every rule reads
+  admin as lead too (`isLeadOrAdmin`). Someone cannot take away their own admin. The PM's call: no descriptions.
+- On a project page the people sit under the title across the full width, including under Copy link, Settings and
+  Archive, so a long list needs fewer rows. The header is a grid: title and its line on the left, the buttons on the
+  right, the rest full width. On a phone the buttons drop below, as before. CSS only.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Quick Add says "You can add 1 or more tasks"
+
+The PM's wording for the Quick Add hint: "Type or say it the way you'd tell someone. You can add 1 or more tasks, or paste
+a WhatsApp chat." (was "Add one task or a few"). Words only.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · A project's owner and lead drop and reopen its tasks
+
+The PM's call: the owner or lead of a project may drop any task in it (with a reason) and reopen a closed one, even
+when they are not a team lead. Only that: marking someone else's task Done, moving its date or giving it to someone else
+still needs its owner or a lead. `lib/service.ts` Ctx.isHead; the board's status menu and the task panel offer Drop and
+Reopen to them (`components/statusRules.ts` canMoveTo head).
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The latest push and its reason, under a task's name
+
+When a task's date was pushed, a small line under its name says the latest push, who made it and why: "Pushed to 16 Oct
+by Cy: Bandwidth issues". On a project's task table (under the description, like a block) and under the name in the task
+panel. The latest push only; open tasks only on the table. Project tables first, not Home or Team (the PM's call).
+`Renegotiation.by` carries who pushed it.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Anyone connects their own Google for Meet and Docs
+
+The PM's call: Google Meet and Google Doc minutes are open to everyone, not only leads. Each person connects their own
+Google account (the link is per person, `lib/meet.ts`), so it reads only their own meetings and the Docs they can open.
+Import minutes shows the Google Meet and Google Doc tabs to everyone when Google is switched on, with Connect Google in the
+tab for someone not yet connected; Connections shows the Google Meet card to everyone. View as still refuses every call.
+Granola, Fireflies and Fathom (one team key each) stay lead-only. Note: while the Google app is in testing mode, only its
+listed test users can connect.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · View as shows the controls the person sees (option B)
+
+The PM's call: View as is the truest picture of someone's screen. Every page now shows the controls they see (Import
+minutes, + Add task, Settings, status menus, Got it, the new-task form, the welcome card, Connections), where before View as
+hid them. `components/ViewAsGuard.tsx` stops the changes: any call that is not a GET to /api is answered in the page with
+"You're viewing as … This is look only." and never sent, and opening a mail draft is stopped the same way. Leaving View
+as and signing out still go through. The server still refuses every write in View as (`lib/http.ts` route(),
+assertNotViewing). Private things stay hidden: their Personal page and notes, and their Google link.
+Rollback: git revert the commit (View as hides the controls again).
+
+## 2026-11-15 · Opus 5.5 · "pushed 2×" sits under the date, with the history on hover
+
+On task rows (Home, Team, Personal), "pushed 2×" now sits under the date, not beside it. Hovering it shows the history,
+one line each: "First given 5 Oct", "Pushed to 12 Oct: why", "Then pushed to 16 Oct: why" (`task-ui.tsx pushHistory`,
+through WhenTip, half a second). Phones have no hover; the task panel shows the latest push.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Leadership replaces the team Lead role
+
+The PM's call: the team "Lead" role did not make sense any more, now that a project's owner and lead run their own
+project. It is retired. In its place, Leadership: oversight and follow-up, with no extra power over tasks or projects.
+- Leadership may: draft and send reminders to anyone on the team (the drafts cover every team task, Personal left out,
+  even on projects they cannot open), read Activity, and connect and use the team's meeting-tool keys (Granola, Fireflies,
+  Fathom) and Gmail sending. `lib/roles.ts mayOversee`.
+- Leadership does not see every project (only what they own, lead, are on or may view), and has no lead power over
+  tasks (`isLeadOrAdmin` stays lead or admin). Admins keep everything.
+- The Roster offers Member, Leadership or Admin; the API no longer accepts 'lead'. The database allows 'leadership'
+  (upgrade step) and still reads 'lead' so nothing breaks before the conversion.
+- Everyone who was a Lead becomes a Member: `npm run db:leads-to-members` lists them, `-- --apply` removes the lead
+  rows (run once on the hosted database, after db:upgrade). Admins stay admins. The PM gives Leadership after go-live.
+- Project owners and leads are unchanged.
+Rollback: git revert the commit; re-add the listed people's lead rows (the script prints them).
+
+## 2026-11-15 · Opus 5.5 · A pictorial Guide, a friendlier reminder card, and the pushed line fix
+
+- The Guide (/guide) is pictorial: one short section per feature, each with a picture of the real screen, two short clips
+  (Quick Add, a note line made a task), links to jump to each section, a "Who sees what" table, and plain words only for
+  what is not obvious. Connect Claude and Help and shortcuts come first (the PM's call). The pictures live in
+  public/guide and come from a demo copy with made-up people only, never a real roster or live data (the repo is
+  public); `scripts/guide-shots.cjs` retakes them. Clips pause under reduced motion.
+- Reminders: Cc and Bcc suggest teammates as you type, like Gmail, and Enter adds one. The email toolbar is B, I, U and
+  one Lists menu (bulleted or numbered, as in Personal notes); the Link button is gone. Every draft ends "Best," and
+  the sender's nickname, else their first name. A card's header drops the item count and keeps "reminded … ago".
+  A late item reads "overdue since 13 Oct".
+- Fix: "pushed 2×" now really sits under the date (its hover wrapper kept it on the date's line).
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The Guide drops "Who sees what" and "Phone and feedback"
+
+The PM's call: two sections left the Guide, "Who sees what" (the roles table) and "Phone and feedback". The rest stays.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The sub-project panel folds away
+
+On a project with sub-projects, a ☰ beside "Tasks" folds the Sub-projects panel away and brings it back (the PM's
+call). It starts open; this browser remembers a fold (localStorage, in try/catch). When folded the task table takes the
+full width.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Cc and Bcc as bubbles; the status menu as coloured pills
+
+- Reminders: Cc and Bcc sit side by side. Each address becomes a bubble with its initial, the name and an ✕; the box
+  stays ready for the next name (KeyboardDismiss leaves a box marked data-keep-focus open on Enter). Backspace in an
+  empty box takes the last bubble off. Suggestions show the name with the email under it, never cut.
+- The status menu shows each status as its coloured pill, as on the rows, with a tick on the current one, a clear divider
+  under "Updated …" and after the statuses, and tighter rows (the PM's call).
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Reminders: "Nothing goes out until you press Send."
+
+The PM's wording for the last sentence of the Reminders line (was "Nothing is sent until you check it and press Send.").
+The rest of the line is unchanged. Words only.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Adding a task has no Note field
+
+The PM's call: when adding a task, Note repeated Details, so it is gone from the add form. Details holds anything the
+owner should know. A task's note can still be read and edited on the task itself; nothing stored changes.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Status hover on Home and Team; a clearer Remove
+
+- Hovering a task's status on Home and Team shows "Updated 18 Oct · Sam" after half a second, as on a project's table
+  (TaskRow takes `names`).
+- "✕ Remove" on an added task in the add form is a red outlined button, easy to see.
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · The reminder email, grouped by project
+
+The PM's pick of three styles. "Hi Sam," then one plain line ("These 4 tasks need an update, 3 past their date:"),
+then each project as a heading with its tasks under it, most late first, the project said once ("due 13 Oct (33 days
+late)" in italics). Then the ask and the link on one line, and "Best," with the sender's nickname or first name.
+`lib/reminderText.ts` bodyFor (plain text, for Gmail and mail-app drafts) and bodyHtmlFor (bold headings, for Send);
+the editor's plain copy keeps bullets (`RichText.tsx plainOf`).
+Rollback: git revert the commit.
+
+## 2026-11-15 · Opus 5.5 · Personal date, status hover everywhere, Leadership on a person page and invites
+
+- Personal: a date of my own with my own words for it (e.g. "Accomplishments"), set in Personal Settings, shown under
+  the title with a countdown. Stored in the project's own date fields; Clear removes it.
+- "Updated 18 Oct · Sam" on hover over a task's status is the rule on every task list (Home, Team, projects, Personal,
+  a person's page), and a small line under the status buttons in the task panel. Not on plan boards (the PM's call).
+- Leadership sees a person's whole page: all their open work and updates, even on projects the viewer is not on, and
+  their on-time record, and may open those tasks to read them. Team stays as it was. Their Personal stays theirs.
+- Leadership may send invites: an Invite column on the Roster for people who have never signed in (no Access, no Edit).
+  Activity already offers Invite to whoever may read it.
+- Fix: a person's page listed their own Personal project to every visitor (the name only). Only they see it now.
+Rollback: git revert the commit.
+
+## 2026-11-16 · Opus 5.5 · A Personal project takes no one else
+
+Found while merging the 14 to 15 Nov batch: anyone on a project may now add people (`addProjectPeople`), and a Personal
+project's owner counts as on it, so a teammate could be added to someone's Personal. Sight still hid its tasks, but the
+teammate's Home listed "Personal 🔒" (the name only, and it would not open). Now `addProjectPeople` and `updateProject`
+refuse a Personal project (its own Settings change it), and Home's Your projects lists only the person's own Personal.
+One test in `tests/personal.test.ts`; it fails without the fix.
+Rollback: git revert the commit.

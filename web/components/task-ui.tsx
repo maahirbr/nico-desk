@@ -9,7 +9,7 @@ import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flag
 import type { LogLine } from '@/lib/service';
 import type { Ask } from '@/lib/asks';
 import { ago } from '@/lib/updates';
-import { fmtDate, fmtStamp, istDate } from '@/lib/time';
+import { fmtDate, fmtStamp, istDate, NO_DATE } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
 import { StatusNudge } from './StatusNudge';
@@ -169,6 +169,11 @@ export async function moveWithWords(t: Task, s: StatusKey, text: string, onId: s
   return quickMove(t, s, text);
 }
 
+// A task's date history, one line each, for the hover on "pushed 2×": "First given 5 Oct", then "Pushed to 12 Oct: why".
+export function pushHistory(t: Pick<Task, 'firstDueOn' | 'renegotiations'>): string {
+  return [`First given ${fmtDate(t.firstDueOn)}`, ...(t.renegotiations ?? []).map((r, i) => `${i === 0 ? 'Pushed' : 'Then pushed'} to ${fmtDate(r.to)}${r.reason ? `: ${r.reason}` : ''}`)].join('\n');
+}
+
 // "Today", "Tomorrow", "3 days late", or the date.
 export function dueText(t: Task, today: string): { text: string; late: boolean } {
   if (t.statusCategory !== 'open') return { text: fmtDate(t.dueOn), late: false };
@@ -198,9 +203,12 @@ export async function api(path: string, method: string, body?: unknown) {
 // onReopen: a finished task shows its tick, and unticking it opens it again (Personal, 13 Nov).
 // onEdit: a ✎ at the row's end, as on a project's table, that opens the task to change it (Personal, 13 Nov).
 // onDelete: a ✕ beside it; the first press asks (it turns red), the second removes the task.
-export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void;
+// names (15 Nov): when given, hovering the status shows "Updated 18 Oct · Sam", as on a project's table (Home, Team).
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete, names }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void; names?: Record<string, string>;
 }) {
+  const { meId: viewerId } = useViewer();
+  const when = names ? statusWhen(t, names, viewerId) : null;
   const desc = t.description;
   const router = useRouter();
   const undo = useUndo();
@@ -240,14 +248,17 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
       </span>}
       {t.links.length > 0 ? <div className="trow-body">{main}<TaskLinkChips links={t.links} onMore={onOpen} /></div> : main}
       {owner !== undefined && <PersonLink id={t.ownerId} className="trow-owner"><Avatar id={t.ownerId} name={owner} />{owner.split(' ')[0]}</PersonLink>}
-      <span className={`trow-due${due.late ? ' late' : ''}`} title={t.dateMoves ? `First given ${fmtDate(t.firstDueOn)}, moved ${t.dateMoves}×` : undefined}>
+      <span className={`trow-due${due.late ? ' late' : ''}`}>
         {oldDate !== undefined && <span className="date-old" aria-hidden>{fmtDate(oldDate)}</span>}
         <span className={oldDate !== undefined ? 'date-new' : undefined}>{due.text}</span>
-        {t.dateMoves > 0 && !closed && <Help term="moved_date"><span className="moved" role="img" aria-label={`moved ${t.dateMoves} times`}><span className="mv-word" aria-hidden>moved {t.dateMoves}×</span><span className="mv-mark" aria-hidden>↻{t.dateMoves}</span></span></Help>}
+        {/* Late: the date it was due, under the count, so nobody has to work it out (the PM's call, 15 Nov). */}
+        {due.late && <span className="trow-was">due {fmtDate(t.dueOn)}</span>}
+        {/* Under the date, with the whole history on hover (the PM's call, 15 Nov): the first date, then each push and why. */}
+        {t.dateMoves > 0 && !closed && <WhenTip text={pushHistory(t)} side="below"><span className="moved">pushed {t.dateMoves}×</span></WhenTip>}
       </span>
       <span className="trow-status">
         {onStatus && !closed && canTick ? (
-          <StatusMenu t={t} current={key} disabled={ticked} set={stateFrom !== undefined}
+          <StatusMenu t={t} current={key} disabled={ticked} set={stateFrom !== undefined} when={when}
             statuses={PICK.filter((s) => s !== 'blocked' || canBlock || key === 'blocked')} canReassign={canReassign} canAsk={canAsk}
             onPick={async (a) => {
               if (a === 'date' || a === 'reassign' || a === 'ask') return onStatus(a);
@@ -259,8 +270,8 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
               catch (er) { setTicked(false); setErr((er as Error).message); }
             }} />
         ) : onStatus && !closed && canAsk ? (
-          <StatusMenu t={t} current={key} disabled={false} set={stateFrom !== undefined} statuses={[]} canReassign={false} canAsk askOnly onPick={(a) => onStatus(a)} />
-        ) : <span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span>}
+          <StatusMenu t={t} current={key} disabled={false} set={stateFrom !== undefined} when={when} statuses={[]} canReassign={false} canAsk askOnly onPick={(a) => onStatus(a)} />
+        ) : <WhenTip text={when}><span className={`st st-status tone-${STATUS[key].tone}${stateFrom !== undefined ? ' state-set' : ''}`}><StatusIcon s={key} /><Help term={`status_${key}`}>{STATUS[key].word}</Help></span></WhenTip>}
         <FlagChip t={t} today={today} hideLate={due.late} />
       </span>
       {onEdit !== undefined && <span className="trow-acts">{!readOnly && <>
@@ -304,7 +315,9 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
             {when && <><span className="st-menu-when">{when}</span><span className="st-menu-sep" role="separator" /></>}
             {statuses.map((s) => (
               <button key={s} type="button" role="menuitemradio" aria-checked={s === current} className={`st-opt tone-${STATUS[s].tone}`} onClick={() => pick(s)}>
-                <StatusIcon s={s} /><span>{STATUS[s].word}</span>
+                {/* Each status in its own coloured pill, as on the rows (the PM's call, 15 Nov); the current one is ticked. */}
+                <span className={`st st-status tone-${STATUS[s].tone}`}><StatusIcon s={s} />{STATUS[s].word}</span>
+                {s === current && <span className="st-opt-tick" aria-hidden>✓</span>}
               </button>
             ))}
             {!askOnly && <>
@@ -511,7 +524,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
     if (edit.workstream !== (t.workstream ?? '')) body.workstream = edit.workstream || null;
   }
   const dirty = Object.keys(body).length > 0;
-  const okText = form.text.trim().length > 0;
+  // Giving a date to a Personal task that had none needs no reason (14 Nov).
+  const firstDate = !!t && mode === 'date' && t.dueOn === NO_DATE;
+  const okText = firstDate || form.text.trim().length > 0;
 
   return (
     <div className={`overlay drawer-overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
@@ -532,6 +547,12 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             {canEdit && open
               ? <textarea className="drawer-title" rows={2} value={edit.title} maxLength={200} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Task" />
               : <h2 className="drawer-title static">{t.title}</h2>}
+            {/* Why the date moved, under the name, so everyone who opens it sees it (the PM's call, 15 Nov): the latest push. */}
+            {t.renegotiations.length > 0 && (() => {
+              const r = t.renegotiations[t.renegotiations.length - 1];
+              const who = r.by === meId ? 'you' : r.by ? (names[r.by] ?? 'someone').split(' ')[0] : null;
+              return <p className="small drawer-pushed">Date pushed to {fmtDate(r.to)}{who ? ` by ${who}` : ''}{r.reason ? <>: “{r.reason}”</> : ''}{t.renegotiations.length > 1 ? <span className="dim"> · pushed {t.renegotiations.length}×</span> : ''}</p>;
+            })()}
             {canEdit && open
               ? <><SayBox value={edit.description} max={600} names={people.map((p) => p.name)} onChange={(v) => setEdit((x) => ({ ...x, description: v }))}><textarea className="drawer-desc" rows={2} maxLength={600} value={edit.description} placeholder="Add details"
                   onChange={(e) => setEdit({ ...edit, description: e.target.value })} aria-label="Description" /></SayBox><Count value={edit.description} max={600} /></>
@@ -539,8 +560,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             {open ? (
               <div className="status-picker" role="group" aria-label="Status">
-                {PICK.filter((s) => s === key || canMoveTo(t, s, meId, isLead)).map((s) => (
-                  <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={!can || busy} onClick={() => setStatus(s)}>
+                {PICK.filter((s) => s === key || canMoveTo(t, s, meId, isLead, !!t.projectHead)).map((s) => (
+                  <button key={s} className={`tone-${STATUS[s].tone}`} aria-pressed={key === s} disabled={(!can && !(t.projectHead && !readOnly && s === 'dropped')) || busy} onClick={() => setStatus(s)}>
                     <StatusIcon s={s} />{STATUS[s].word}
                   </button>
                 ))}
@@ -552,6 +573,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 {t.outcome && <span className="small dim">{t.outcome === 'late' ? 'Closed late' : t.outcome === 'ahead' ? 'Closed ahead' : 'Closed on time'}, judged against {fmtDate(t.firstDueOn)}</span>}
               </div>
             )}
+            {/* When the status last changed, and by whom (the same words as the hover on rows, 15 Nov). */}
+            {statusWhen(t, names, meId) && <p className="small dim drawer-when">{statusWhen(t, names, meId)}</p>}
 
             {askedOfMe.length > 0 && !readOnly && (
               <div className="drawer-form ask-reply" aria-label="Update asked">
@@ -601,12 +624,12 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
-                <div className="small"><b>{{ status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. Only a lead can.' }[mode]}</b></div>
+                <div className="small"><b>{firstDate ? 'Give it a date.' : { status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. A lead, or the project’s owner or lead, can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
-                <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
+                {!firstDate && <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
                   <Count value={form.text} max={280} />
-                </label>
+                </label>}
                 {mode === 'blocked' && (
                   <label className="f"><span>Waiting on</span>
                     <Select value={form.person} onChange={(v) => setForm({ ...form, person: v })}>
@@ -666,7 +689,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
               <dt>Due</dt>
               <dd>
                 <span className={dueText(t, today).late ? 'late-text' : ''}>{fmtDate(t.dueOn)}</span>
-                {can && open && mode !== 'date' && <button className="act" style={{ marginLeft: 10 }} onClick={() => setMode('date')}>Change date</button>}
+                {can && open && mode !== 'date' && <button className="act" style={{ marginLeft: 10 }} onClick={() => setMode('date')}>{t.dueOn === NO_DATE ? 'Set date' : 'Change date'}</button>}
                 {t.renegotiations.length > 0 && (
                   <div className="small dim">First given {fmtDate(t.firstDueOn)}{t.renegotiations.map((r) => ` → ${fmtDate(r.to)}`).join('')}</div>
                 )}
@@ -716,7 +739,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             <div className="drawer-foot">
               {open && can && <button className="act danger" onClick={() => setMode('drop')}>Drop task…</button>}
-              {!open && isLead && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
+              {!open && (isLead || t.projectHead) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
               <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
             </div>
 
@@ -777,7 +800,7 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
           )}
         </div>
       )}
-      <label className="f"><span>Note</span><input maxLength={140} value={d.note} onChange={(e) => set({ ...d, note: e.target.value })} /></label>
+      {/* No Note field (15 Nov): Details already holds anything the owner should know. */}
     </>
   );
 }
@@ -889,7 +912,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       {extra.map((d, i) => (
         <div key={d.key} className="task-more">
           <div className="task-more-head"><h3 className="task-more-h">Task {i + 2}</h3>
-            <button type="button" className="mini-btn" onClick={() => setExtra((all) => all.filter((x) => x.key !== d.key))} aria-label={`Remove task ${i + 2}`}>✕ Remove</button></div>
+            <button type="button" className="btn ghost task-remove" onClick={() => setExtra((all) => all.filter((x) => x.key !== d.key))} aria-label={`Remove task ${i + 2}`}>✕ Remove</button></div>
           <TaskFields d={d} set={(nd) => setExtraAt(i, nd)} people={people} today={today} projects={projects} workstreams={wsFor(d.projectId)} />
         </div>
       ))}

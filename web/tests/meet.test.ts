@@ -150,10 +150,10 @@ describe('the switch', () => {
 });
 
 describe('connecting', () => {
-  it('refuses a member, and allows a lead and an admin', async () => {
+  it('lets anyone connect their own Google (15 Nov): a member, a lead and an admin', async () => {
     signIn((await member()).id);
-    expect(await status(meetPost(post('/api/v1/connections/google-meet'), none))).toBe(403);
-    expect(await status(meetDelete(del('/api/v1/connections/google-meet'), none))).toBe(403);
+    expect(await status(meetPost(post('/api/v1/connections/google-meet'), none))).toBe(200);
+    expect(await status(meetDelete(del('/api/v1/connections/google-meet'), none))).toBe(200);
     expect((await start(LEAD)).res.status).toBe(200);
     expect((await start(ADMIN)).res.status).toBe(200);
   });
@@ -237,7 +237,7 @@ describe('connecting', () => {
     expect(await link()).toBeUndefined();
   });
 
-  it('refuses View as, a member, a cancelled screen, a missing refresh token and a missing scope', async () => {
+  it('refuses View as, someone else\'s start, a cancelled screen, a missing refresh token and a missing scope', async () => {
     const g = fakeGoogle();
     const ok = await start(LEAD);
     signIn(ADMIN, signView(ADMIN, LEAD));
@@ -245,7 +245,8 @@ describe('connecting', () => {
     expect(g.fn).not.toHaveBeenCalled();
     const m = await member();
     signIn(m.id);
-    expect(where(await callback({ code: 'c', state: ok.state }, ok.nonce))).toBe('?meet=not_allowed');
+    // A member may connect their own Google since 15 Nov; with the lead's state it is still refused (another person's start).
+    expect(where(await callback({ code: 'c', state: ok.state }, ok.nonce))).toBe('?meet=state');
     signIn(LEAD);
     expect(where(await callback({ error: 'access_denied', state: ok.state }, ok.nonce))).toBe('?meet=cancelled');
     fakeGoogle({ refresh: null });
@@ -427,7 +428,7 @@ describe('listing and reading', () => {
     await expect(readMeetMeeting(db, LEAD, 'a/b')).rejects.toMatchObject({ status: 404 });
   });
 
-  it('reads through the routes for a lead, and refuses a member', async () => {
+  it('reads through the routes for a lead; a member not yet connected is told so', async () => {
     fakeGoogle({ routes: { ...base, 'https://meet.googleapis.com/v2/conferenceRecords?': () => json({ conferenceRecords: [] }) } });
     signIn(LEAD);
     const one = await meetingGet(get('/api/v1/connections/google-meet/meetings/rec-1'), { params: Promise.resolve({ id: 'rec-1' }) });
@@ -438,8 +439,8 @@ describe('listing and reading', () => {
     expect(st).toMatchObject({ enabled: true, connected: true, email: leadEmail.toLowerCase() });
     expect(JSON.stringify(st)).not.toContain('refresh');
     signIn((await member()).id);
-    expect(await status(meetingsGet(get('/api/v1/connections/google-meet/meetings'), none))).toBe(403);
-    expect(await status(meetingGet(get('/api/v1/connections/google-meet/meetings/rec-1'), { params: Promise.resolve({ id: 'rec-1' }) }))).toBe(403);
+    expect(await status(meetingsGet(get('/api/v1/connections/google-meet/meetings'), none))).toBe(400);
+    expect(await status(meetingGet(get('/api/v1/connections/google-meet/meetings/rec-1'), { params: Promise.resolve({ id: 'rec-1' }) }))).toBe(400);
   });
 
   it('keeps a lead\'s meetings from an admin who views as that lead', async () => {
@@ -530,10 +531,10 @@ describe('reading a Google Doc', () => {
     expect(call.auth).toBe(`Bearer ${ACCESS}`);
   });
 
-  it('refuses a member, a View as session and a link that is not a Doc, before Google is asked', async () => {
+  it('refuses someone not connected, a View as session and a link that is not a Doc, before Google is asked', async () => {
     const g = fakeGoogle({ routes: docRoutes });
     signIn((await member()).id);
-    expect(await status(readDoc(DOC_ID))).toBe(403);
+    expect(await status(readDoc(DOC_ID))).toBe(400);
     signIn(ADMIN, signView(ADMIN, LEAD));
     expect(await status(readDoc(DOC_ID))).toBe(403);
     signIn(LEAD);

@@ -4,11 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHelpOn } from './HelpMode';
 
-// "Updated 22 Sep · You" under a task's status pill, after a 1-second hover (the PM's call, 3 Nov). Light grey, like
+// "Updated 22 Sep · You" under a task's status pill, after a half-second hover (the PM's call, 3 Nov; 1 second until 15 Nov). Light grey, like
 // the ? button. It floats in a portal, fixed under the pill, so a table that scrolls sideways never clips it. Leaving,
 // clicking or scrolling hides it. With help mode (?) on, the help text has this spot, so this stays away.
 // Phones have no hover; there the same line heads the status menu.
-const DELAY = 1000;
+const DELAY = 500;
 
 // off: hide it for now (the status menu is open) without changing what is rendered. The wrapper always stays, so the
 // pill inside is never rebuilt: rebuilding it mid-click closed the status menu as it opened (fixed 3 Nov).

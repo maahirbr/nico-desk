@@ -89,8 +89,8 @@ function openInviteEmail(email: string, name: string, from: string) {
   notify('Opened in Gmail. Check it and press Send there.');
 }
 
-// The Roster's one button (4 Nov): Email invite, straight to the filled-in email. Hidden under "View as".
+// The Roster's one button (4 Nov): Invite (named so on 15 Nov), straight to the filled-in email. Hidden under "View as".
 export function EmailInvite({ email, name, from, className = 'act' }: { email: string; name: string; from: string; className?: string }) {
   if (useReadOnly()) return null;
-  return <button className={className} type="button" onClick={() => openInviteEmail(email, name, from)}>Email invite</button>;
+  return <button className={className} type="button" title="Email them an invite" onClick={() => openInviteEmail(email, name, from)}>Invite</button>;
 }

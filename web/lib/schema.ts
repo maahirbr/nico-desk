@@ -75,7 +75,7 @@ ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;
 CREATE TABLE team_members (
   team_id    text NOT NULL REFERENCES teams(id),
   person_id  text NOT NULL REFERENCES people(id),
-  app_role   text NOT NULL CHECK (app_role IN ('member','lead','admin')),
+  app_role   text NOT NULL CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin')), -- 15 Nov: leadership; lead retired
   PRIMARY KEY (team_id, person_id, app_role)
 );
 ${EMAIL_LOCK}
@@ -404,6 +404,22 @@ CREATE TABLE personal_files (
 );
 CREATE INDEX personal_files_person ON personal_files (person_id, created_at);
 ALTER TABLE personal_files ENABLE ROW LEVEL SECURITY;
+-- 15 Nov: a member asks the project's owner and lead to archive it, with a reason. One open ask per project. The owner,
+-- the lead or an admin archives (outcome archived) or says Not now (declined); the asker then sees what happened, once.
+CREATE TABLE archive_asks (
+  id          text PRIMARY KEY,
+  team_id     text NOT NULL REFERENCES teams(id),
+  project_id  text NOT NULL REFERENCES projects(id),
+  asked_by    text NOT NULL REFERENCES people(id),
+  reason      text NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 280),
+  asked_at    timestamptz NOT NULL DEFAULT now(),
+  decided_by  text REFERENCES people(id),
+  decided_at  timestamptz,
+  outcome     text CHECK (outcome IN ('archived','declined')),
+  seen_at     timestamptz
+);
+CREATE UNIQUE INDEX archive_asks_open ON archive_asks (project_id) WHERE outcome IS NULL;
+ALTER TABLE archive_asks ENABLE ROW LEVEL SECURITY;
 
 -- Links on a task (Docs, Sheets, Figma, decks, any web page). The task keeps its own version; a link change is logged as an event.
 CREATE TABLE task_links (
@@ -646,6 +662,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   handovers: `team_id = ${TEAM}`,
   personal_pages: `team_id = ${TEAM}`,
   personal_files: `team_id = ${TEAM}`,
+  archive_asks: `team_id = ${TEAM}`,
   events: kindOf('entity_type', 'entity_id'),
   comments: kindOf('subject_kind', 'subject_id'),
   comment_refs: `comment_id IN (SELECT id FROM comments)`,

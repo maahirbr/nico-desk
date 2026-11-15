@@ -64,3 +64,19 @@ export async function workingWith(db: Tx, teamId: string, personId: string): Pro
     [teamId, personId]);
   return new Set([personId, ...rows.map((r) => r.id)]);
 }
+
+// View-only (15 Nov, the PM's call): someone who may view a project (project_viewers) but is not its owner, its lead or
+// one of its people, and is not an admin. They only view: no new tasks, no minutes, no plan changes. Copy link stays.
+export const VIEW_ONLY = 'You can view this project, not change it. Ask its owner or lead to add you.';
+export async function viewOnlyProjects(db: Tx, teamId: string, personId: string): Promise<Set<string>> {
+  const { rows } = await db.query<{ project_id: string }>(
+    `SELECT v.project_id FROM project_viewers v JOIN projects pr ON pr.id = v.project_id
+      WHERE pr.team_id = $1 AND v.person_id = $2 AND pr.owner_id <> $2 AND COALESCE(pr.lead_id, '') <> $2
+        AND NOT EXISTS (SELECT 1 FROM project_members m WHERE m.project_id = pr.id AND m.person_id = $2)
+        AND NOT EXISTS (SELECT 1 FROM team_members t WHERE t.team_id = $1 AND t.person_id = $2 AND t.app_role = 'admin')`,
+    [teamId, personId]);
+  return new Set(rows.map((r) => r.project_id));
+}
+export async function isViewOnly(db: Tx, teamId: string, projectId: string, personId: string): Promise<boolean> {
+  return (await viewOnlyProjects(db, teamId, personId)).has(projectId);
+}

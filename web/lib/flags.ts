@@ -1,3 +1,4 @@
+import { NO_DATE } from './time';
 import type { Task } from './derive';
 
 // The status word and the derived flag of a task, as pure functions. The task rows (components/task-ui.tsx, a client
@@ -20,6 +21,7 @@ export const daysTo = (d: string, today: string) => Math.round((Date.parse(`${d}
 
 // Late, at risk, ahead and on time are worked out from the dates and never stored.
 export function flagKeyOf(t: Task, today: string): FlagKey | null {
+  if (t.firstDueOn === NO_DATE || t.dueOn === NO_DATE) return null; // a Personal task with no date is never ahead, late or at risk
   if (t.statusCategory === 'done') return t.outcome === 'ahead' ? 'ahead' : t.outcome === 'late' ? 'late' : t.outcome === 'on_time' ? 'on_time' : null;
   if (t.statusCategory !== 'open') return null;
   const n = daysTo(t.dueOn, today);

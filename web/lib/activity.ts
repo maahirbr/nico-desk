@@ -6,7 +6,9 @@ import { addDays, today } from './time';
 // never what was written. Admins read it, and when NICO_ACTIVITY_EMAILS is set, only the admins listed there. A visit is one
 // visit_days row per person per day, written on their first signed-in request of the day.
 
+// Leadership reads it too (15 Nov, the PM's call); NICO_ACTIVITY_EMAILS, when set, narrows only which admins may.
 export function mayReadActivity(me: Me): boolean {
+  if (me.person.appRoles.includes('leadership')) return true;
   if (!me.person.appRoles.includes('admin')) return false;
   const list = (process.env.NICO_ACTIVITY_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
   return list.length === 0 || list.includes(me.person.email.toLowerCase());

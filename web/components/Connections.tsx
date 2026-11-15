@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Help } from './HelpMode';
 
-// Where a lead connects the team's meeting-notes tools. Keys are checked against the tool before
+// Where leadership or an admin connects the team's meeting-notes tools (a lead before 15 Nov). Keys are checked against the tool before
 // they are kept, stored on the server only, and shown back only as their last four characters.
 
 type Name = 'granola' | 'fireflies' | 'fathom';
@@ -39,7 +39,7 @@ const MEET_CODES: Record<string, { err: boolean; text: string }> = {
   state: { err: true, text: 'Google Meet was not connected. The request expired or came from another browser. Try again.' },
   no_refresh: { err: true, text: 'Google did not give a lasting link. Remove this app at myaccount.google.com/permissions, then try again.' },
   viewing_as: { err: true, text: 'Nothing was saved. You are viewing as someone else, and that view is read-only.' },
-  not_allowed: { err: true, text: 'Only a lead can connect Google Meet.' },
+  not_allowed: { err: true, text: 'Google Meet could not be connected for this account.' },
   google: { err: true, text: 'Google did not accept the request. Try again.' },
   email: { err: true, text: 'Google did not confirm your email address. Try again.' },
 };
@@ -103,7 +103,7 @@ function Card({ p, s, canManage, onChange }: { p: Name; s: State; canManage: boo
             {s.connected && <button className="btn ghost" disabled={busy} onClick={() => send('DELETE')}>Disconnect</button>}
           </div>
         </>
-      ) : <p className="small" style={{ margin: 0 }}>{s.connected ? 'Ready to use in Import minutes.' : 'Ask a lead to connect it.'}</p>}
+      ) : <p className="small" style={{ margin: 0 }}>{s.connected ? 'Ready to use in Import minutes.' : 'Ask leadership or an admin to connect it.'}</p>}
       {msg && <p className={msg.err ? 'err' : 'ok'} role={msg.err ? 'alert' : 'status'}>{msg.text}</p>}
     </section>
   );

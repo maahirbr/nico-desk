@@ -49,12 +49,16 @@ function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChang
   );
 }
 
-export function ProjectForm({ people, meId, initial, projectId, onDone, focus }: {
-  people: Opt[]; meId: string; initial?: ProjectValues; projectId?: string; onDone: () => void;
+// access (15 Nov): full changes anything; people (one of the project's people) may only add people; view only reads.
+// The parts someone may not change sit in disabled fieldsets, so they read the same but cannot be touched.
+export function ProjectForm({ people, meId, initial, projectId, onDone, focus, access = 'full' }: {
+  people: Opt[]; meId: string; initial?: ProjectValues; projectId?: string; onDone: () => void; access?: 'full' | 'people' | 'view';
   focus?: 'members' | 'partner'; // set when a setup step opened Settings: that part is brought into view
 }) {
   const router = useRouter();
   const editing = !!projectId;
+  const lock = access !== 'full';
+  const firstN = initial?.members.length ?? 0; // the people already on it: in people access, these stay as they are
   // Brings back the setup check-list this person hid on this project (components/SetupList.tsx).
   const showSetup = () => {
     try { localStorage.removeItem(setupKey(meId, projectId!)); } catch { /* storage blocked: the list was never hidden */ }
@@ -103,6 +107,15 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus }:
   return (
     <form className="pform" onSubmit={async (e) => {
       e.preventDefault();
+      if (access === 'view') { onDone(); return; }
+      if (access === 'people') {
+        const added = f.members.slice(firstN).filter((m) => m.personId);
+        if (!added.length) { onDone(); return; }
+        setBusy(true); setErr(null);
+        try { await api(`/projects/${projectId}/people`, 'POST', { members: added }); notify(added.length === 1 ? 'Person added' : `${added.length} people added`); onDone(); router.refresh(); }
+        catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
+        return;
+      }
       if (why) { setTried(true); return; }
       setBusy(true); setErr(null);
       const body = {
@@ -119,7 +132,8 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus }:
       } catch (er) { setErr((er as Error).message); } finally { setBusy(false); }
     }}>
       {/* Basics, People, Partner (on a partner project), then More options folded (the PM's layout, 2 Nov). */}
-      <fieldset className="pform-group">
+      {lock && <p className="small dim pform-lock">{access === 'people' ? 'You can add people. The owner, lead or an admin changes the rest.' : 'Only the owner, lead or an admin can change these.'}</p>}
+      <fieldset className="pform-group" disabled={lock}>
         <label className="f"><span>Project Name <span className="req" aria-hidden="true">*</span></span><input ref={focus ? undefined : focusOnDesktop} maxLength={80} aria-invalid={tried && f.name.trim().length < 2 ? true : undefined} enterKeyHint="next" autoComplete="off" value={f.name} onChange={(e) => set('name', e.target.value)} /></label>
         {!editing && (
           <div className="kind-pick" role="radiogroup" aria-label="Kind of project">
@@ -149,6 +163,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus }:
       <fieldset className="pform-group">
         <legend>People</legend>
         {partner && <span className="pform-side">Nicobar</span>}
+        <fieldset className="pform-plain" disabled={lock}>
         <label className="f"><span>Project Owner <span className="req" aria-hidden="true">*</span></span>
           <Select value={f.ownerId} onChange={(v) => setF({ ...f, ownerId: v, leadId: f.leadId === v ? '' : f.leadId, members: f.members.filter((m) => m.personId !== v) })}>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -170,24 +185,27 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus }:
             </Select>
           </label>
         )}
+        </fieldset>
         <span className="pform-sub" ref={peopleRef}>Team Members</span>
         <p className="dim small pform-note">Only people added here can own tasks in this project.</p>
         {f.members.map((m, i) => (
-          <div key={i} className="member-row">
+          <fieldset key={i} className="pform-plain" disabled={access === 'view' || (lock && i < firstN)}>
+          <div className="member-row">
             <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v } : x)))}>
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
             <input value={m.role} maxLength={60} enterKeyHint="done" autoComplete="off" placeholder={i === 0 ? 'Their role in this project, e.g. Sourcing, Design, etc.' : undefined} aria-label="Role on this project"
               onChange={(e) => set('members', f.members.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))} />
-            <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>
+            {!(lock && i < firstN) && <button type="button" className="row-btn del" aria-label="Remove person" onClick={() => set('members', f.members.filter((_, j) => j !== i))}>✕</button>}
           </div>
+          </fieldset>
         ))}
-        {free.length > 0 && <button type="button" className="mini-btn member-add" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
+        {access !== 'view' && free.length > 0 && <button type="button" className="mini-btn member-add" onClick={() => set('members', [...f.members, { personId: '', role: '' }])}>+ Add person</button>}
       </fieldset>
 
       {partner && (
-        <fieldset className="pform-group">
+        <fieldset className="pform-group" disabled={lock}>
           <legend>Partner</legend>
           <label className="f"><span>Partner Name <span className="req" aria-hidden="true">*</span></span><input ref={partnerRef} maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. TheCRUX" onChange={(e) => set('partnerName', e.target.value)} /></label>
           <div className="f"><span>Partner Team</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="Names. Press Enter after each" /></div>
@@ -197,7 +215,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus }:
       <div className="pform-more">
         <button type="button" className="log-toggle small-toggle" aria-expanded={more} onClick={() => setMore(!more)}><FoldChev /> More options</button>
         <Fold open={more} scroll={false}>
-          <div className="pform-more-in">
+          <fieldset className="pform-more-in pform-plain" disabled={lock}>
             {f.viewers && (
               <div className="f">
                 <span>Viewer</span>
@@ -218,16 +236,18 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus }:
               </div>
             )}
             <div className="f"><span>Sub-Projects</span><ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Design, Sourcing, Marketing, Launch. Press Enter after each" /></div>
-          </div>
+          </fieldset>
         </Fold>
       </div>
 
       {err && <p className="err banner" role="alert">{err}</p>}
       {tried && why && <p className="err small pform-why" id="pform-why" role="alert">{why}</p>}
       <div className="row pform-actions">
-        {editing && <button type="button" className="act pform-setup" onClick={showSetup}>Show the setup list</button>}
+        {editing && !lock && <button type="button" className="act pform-setup" onClick={showSetup}>Show the setup list</button>}
+        {access === 'view' ? <button type="button" className="btn" onClick={onDone}>Close</button> : (<>
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn" disabled={busy} aria-describedby={tried && why ? 'pform-why' : undefined}>{editing ? 'Save project' : 'Start project'}</button>
+        <button className="btn" disabled={busy} aria-describedby={tried && why && !lock ? 'pform-why' : undefined}>{access === 'people' ? 'Add people' : editing ? 'Save project' : 'Start project'}</button>
+        </>)}
       </div>
     </form>
   );

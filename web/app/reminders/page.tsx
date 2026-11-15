@@ -1,3 +1,4 @@
+import { mayOversee } from '@/lib/roles';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -9,6 +10,7 @@ import { reminderDrafts } from '@/lib/reminders';
 import { staleAsks, ASK_STALE_DAYS } from '@/lib/asks';
 import { AskReminders } from '@/components/AskReminders';
 import { ReminderCards } from '@/components/Reminders';
+import { RemindFind } from '@/components/RemindFind';
 import { gmailSendEnabled, gmailStatus } from '@/lib/gmailSend';
 import { Select } from '@/components/Select';
 
@@ -25,13 +27,16 @@ const GMAIL_SAID: Record<string, string> = {
   google: 'Gmail was not connected: Google returned an error. Try again in a moment.',
   email: 'Gmail was not connected: Google did not confirm the address. Try again.',
   viewing_as: 'Gmail cannot be connected while you view as someone else.',
-  not_allowed: 'Only a lead can connect Gmail.',
+  not_allowed: 'Only leadership or an admin can connect Gmail for reminders.',
 };
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
-  const { d, sight, isLead, isAdmin, names } = await lookups(me);
-  if (!isLead && !isAdmin) return (<><h1>Reminders</h1><p className="lede">Only a lead drafts reminders.</p></>);
+  const { d, sight, names, people } = await lookups(me);
+  if (!mayOversee(me.person.appRoles)) return (<><h1>Reminders</h1><p className="lede">Only leadership or an admin drafts reminders.</p></>);
+  // Leadership reminds anyone (15 Nov, the PM's call): the drafts cover every team task, even on projects they cannot
+  // open. They still open only their own projects; Personal tasks stay out (sight.hidden).
+  const remindSight = me.person.appRoles.includes('leadership') ? { all: true as const, hidden: sight.hidden } : sight;
   const sp = await searchParams;
   const mode = one(sp.mode) === 'window' ? 'window' : 'overdue';
   const days = Math.min(Math.max(Number(one(sp.days) ?? 2) || 2, 1), 30);
@@ -41,7 +46,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
   const sendOn = gmailSendEnabled() && !me.viewingAs;
   const [{ drafts, skipped }, projects, asks, link] = await Promise.all([
-    reminderDrafts(d, me.team.id, { mode, days, projectId, sight }, appUrl),
+    reminderDrafts(d, me.team.id, { mode, days, projectId, sight: remindSight }, appUrl),
     seenProjects(d, me, sight),
     staleAsks(d, me, projectId),
     sendOn ? gmailStatus(d, me.realPerson.id) : null,
@@ -64,7 +69,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
       <h1>Reminders</h1>
       <p className="lede">{sendOn
         ? 'One draft email per person, from the address you signed in with. Check it, then press Send, or open it in Gmail.'
-        : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing is sent until you check it and press Send.'}</p>
+        : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing goes out until you press Send.'}</p>
       {gmail && <p className="small" role="status">{gmail}</p>}
       <form className="bar" action="/reminders" method="get">
         <span className="seg" role="group" aria-label="What to include">
@@ -84,13 +89,16 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
           </Select>
         </label>
         <button className="btn ghost">Apply</button>
+        {drafts.length > 1 && <RemindFind />}
       </form>
       {asks.length > 0 && <AskReminders appUrl={appUrl} days={ASK_STALE_DAYS} items={asks.map((a) => ({
         id: a.id, taskId: a.taskId, title: a.title, ownerId: a.ownerId, ownerName: first(a.ownerId), askerName: first(a.askerId), question: a.question, days: a.days, to: mail.get(a.ownerId) ?? null,
       }))} />}
       {skipped.length > 0 && <p className="small dim">Not reminded, by choice: {skipped.join(', ')}.</p>}
       {drafts.length === 0 ? <div className="card"><p className="empty card-pad">Nothing to chase. Everyone is on time for this view.</p></div>
-        : <ReminderCards drafts={drafts} appUrl={appUrl} send={send} />}
+        : <ReminderCards drafts={drafts} appUrl={appUrl} send={send}
+            signOff={me.person.nickname?.trim() || me.person.displayName.split(' ')[0]}
+            contacts={people.filter((p) => p.active && p.email).map((p) => ({ name: p.fullName ?? p.displayName, email: p.email }))} />}
     </>
   );
 }

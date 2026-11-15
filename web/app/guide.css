@@ -53,3 +53,31 @@
   .guide-note a { display: inline-flex; align-items: center; min-height: var(--touch-min); }
   .guide-note-x { width: var(--touch-min); height: var(--touch-min); }
 }
+
+/* ---------- the pictorial guide (15 Nov) ---------- */
+.gtoc { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: var(--space-md) 0 0; }
+.gtoc a { font: var(--type-small); color: var(--ink-2); text-decoration: none; padding: 2px var(--space-sm); border: var(--rule) solid var(--hairline); border-radius: var(--radius-pill); background: var(--surface); }
+.gtoc a:hover { color: var(--ink); border-color: var(--line-strong); }
+.gsec { position: relative; padding-top: var(--space-md); border-top: var(--rule) solid var(--hairline); scroll-margin-top: var(--space-xl); }
+.gsec > h2 { display: inline; }
+.gsec-emoji { margin-left: var(--space-xs); font-size: 18px; }
+.gsec > h2 + .gsec-emoji + * { margin-top: var(--space-sm); }
+.gshot { display: block; width: 100%; height: auto; margin: var(--space-sm) 0; border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); box-shadow: var(--card-shadow); background: var(--surface); }
+.gshot-small { max-width: 260px; }
+.gpair { display: grid; gap: var(--space-md); align-items: start; }
+.gpair-side { grid-template-columns: minmax(0, 1fr) 260px; }
+.gsec-go { margin-top: var(--space-xs); }
+.gsec-go a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.gsec-tip { font: var(--type-meta); color: var(--ink-2); }
+.gwho { width: 100%; border-collapse: collapse; margin-top: var(--space-sm); }
+.gwho th, .gwho td { text-align: left; padding: var(--space-xs) var(--space-sm) var(--space-xs) 0; border-top: var(--rule) solid var(--hairline); vertical-align: top; font: var(--type-body); }
+.gwho thead th { border-top: 0; font: var(--type-small); color: var(--ink-3); }
+.gwho tbody th { font-weight: 600; white-space: nowrap; width: 1%; }
+.gsteps { list-style: none; margin: var(--space-sm) 0; padding: 0; display: grid; gap: var(--space-xs); }
+.gsteps li { display: flex; gap: var(--space-sm); align-items: baseline; padding: var(--space-sm) var(--space-md); background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); }
+.gsteps li > b { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: var(--on-primary); font: var(--type-state); }
+@media (max-width: 860px) {
+  .gpair-side { grid-template-columns: minmax(0, 1fr); }
+  .gwho tbody th { white-space: normal; width: auto; }
+}
+.gclip { max-width: 560px; }

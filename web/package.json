@@ -11,7 +11,8 @@
     "db:reset": "node scripts/reset-db.mjs",
     "job:reminders": "node scripts/run-job.mjs reminders",
     "db:remote": "tsx --env-file=.env.remote.local scripts/db-remote.ts --remote",
-    "db:upgrade": "tsx --env-file=.env.remote.local scripts/db-upgrade.ts"
+    "db:upgrade": "tsx --env-file=.env.remote.local scripts/db-upgrade.ts",
+    "db:leads-to-members": "tsx --env-file=.env.remote.local scripts/leads-to-members.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

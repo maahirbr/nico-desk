@@ -87,8 +87,9 @@ export function Palette({ title, swatches, current, onPick, children }: {
 }
 
 // One button for lists (13 Nov): it shows the kind in use and opens Checklist, Bulleted or Numbered.
-export function ListMenu({ bullets, numbers, checks, onBullets, onNumbers, onChecks }: {
-  bullets: boolean; numbers: boolean; checks: boolean; onBullets: () => void; onNumbers: () => void; onChecks: () => void;
+// onChecks left out: no Checklist in the menu (the reminder email, 15 Nov), just bulleted and numbered.
+export function ListMenu({ bullets, numbers, checks = false, onBullets, onNumbers, onChecks }: {
+  bullets: boolean; numbers: boolean; checks?: boolean; onBullets: () => void; onNumbers: () => void; onChecks?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLSpanElement>(null);
@@ -106,7 +107,7 @@ export function ListMenu({ bullets, numbers, checks, onBullets, onNumbers, onChe
         onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen(!open)}>{checks ? ICON.checklist : numbers ? ICON.numbers : ICON.bullets}<span className="rn-caret" aria-hidden>▾</span></button>
       {open && (
         <span className="rn-menu" role="menu" aria-label="Lists">
-          <button type="button" role="menuitemcheckbox" aria-checked={checks} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(onChecks)}>{ICON.checklist}<span>Checklist</span></button>
+          {onChecks && <button type="button" role="menuitemcheckbox" aria-checked={checks} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(onChecks)}>{ICON.checklist}<span>Checklist</span></button>}
           <button type="button" role="menuitemcheckbox" aria-checked={bullets} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(onBullets)}>{ICON.bullets}<span>Bulleted list</span></button>
           <button type="button" role="menuitemcheckbox" aria-checked={numbers} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(onNumbers)}>{ICON.numbers}<span>Numbered list</span></button>
         </span>

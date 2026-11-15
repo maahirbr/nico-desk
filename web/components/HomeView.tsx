@@ -1,5 +1,7 @@
 'use client';
 
+import { ArchiveAsksCard } from './ArchiveAsksCard';
+import type { ArchiveAsk, ArchiveNews } from '@/lib/plan';
 import { NewsCard } from './NewsCard';
 import type { News as NewsCardData } from '@/lib/news';
 import Link from 'next/link';
@@ -54,12 +56,13 @@ export function clearLine(personId: string, day: string): string {
   return CLEAR_LINES[h % CLEAR_LINES.length];
 }
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null, news = null }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null, news = null, archiveAsks = [], archiveNews = [] }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
   assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; handovers?: HandoverItem[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
   news?: NewsCardData | null; // the What's new note (lib/news.ts)
+  archiveAsks?: ArchiveAsk[]; archiveNews?: ArchiveNews[]; // asks to archive a project (15 Nov)
   welcome?: Welcome | null; // someone's first week (components/WelcomeCard.tsx)
 }) {
   const readOnly = useReadOnly();
@@ -145,6 +148,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
 
+      <ArchiveAsksCard asks={archiveAsks} news={archiveNews} />
+
       <HandoverCard items={handovers} people={people} meId={meId} projectNames={projectNames} onOpen={(id) => open(id)} />
 
       <AsksCard items={asks} now={updates.now} onOpen={(id) => open(id)} />
@@ -184,7 +189,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {suggested && (
         <Stagger id="home-suggested" className="tlist">
-          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
         </Stagger>
       )}
 
@@ -192,7 +197,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}><Help term={HEAD[g.key]}>{g.label}</Help> <span className="n">{g.items.length}</span></h2>
           <Stagger id="home" className="tlist">
-            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </Stagger>
         </section>
       ))}
@@ -216,7 +221,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             </button></Help>
             {showDone && done.length > 1 && <SortPick value={doneSort} onChange={setDoneSort} />}
           </div>
-          <Fold open={showDone}><div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
+          <Fold open={showDone}><div className="tlist">{sortEnded(done, doneSort).map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
         </section>
       )}
 
@@ -228,7 +233,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             </button></Help>
             {showDropped && dropped.length > 1 && <SortPick value={droppedSort} onChange={setDroppedSort} />}
           </div>
-          <Fold open={showDropped}><div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
+          <Fold open={showDropped}><div className="tlist">{sortEnded(dropped, droppedSort).map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick={false} onOpen={() => open(t.id)} />)}</div></Fold>
         </section>
       )}
 
