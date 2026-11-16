@@ -2094,3 +2094,22 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .personal-goal-pick { gap: var(--space-sm); align-items: center; flex-wrap: wrap; }
 .personal-goal-pick > input { flex: 1 1 180px; }
 .drawer-when { margin: var(--space-xxs) 0 0; }
+/* The feedback ask on Home (15 Nov, components/FeedbackAskCard.tsx): warm, one row, the count for everyone. */
+.fask { margin: var(--space-md) 0; border-color: color-mix(in srgb, var(--primary) 30%, var(--hairline)); background: color-mix(in srgb, var(--primary) 4%, var(--surface)); display: grid; gap: var(--space-sm); }
+.fask h2 { margin: 0; font: var(--type-heading); }
+.fask-lede { margin: 0; max-width: 70ch; }
+.fask textarea { width: 100%; }
+.fask-actions { align-items: center; gap: var(--space-sm); }
+.fask-count { margin: 0; }
+.fask-done p { margin: 0; }
+.fask-quiet { padding-top: var(--space-xs); padding-bottom: var(--space-xs); }
+.fask-kind { justify-self: start; }
+.fask-lede { max-width: none; } /* the full width of the card, so it reads in two lines (the PM's call) */
+.fask-row { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
+.fask-row .fask-kind { flex: none; }
+.fask-text { flex: 1 1 220px; min-width: 0; }
+.fask-clip { position: relative; display: grid; place-items: center; width: var(--button-height); height: var(--button-height); border: var(--rule) solid var(--hairline); border-radius: var(--radius-control); background: var(--surface); color: var(--ink-2); cursor: pointer; flex: none; }
+.fask-clip:hover { color: var(--ink); border-color: var(--line-strong); }
+.fask-n { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 999px; background: var(--primary); color: var(--on-primary); font: 600 10px/16px var(--font-sans); }
+.fask-foot { margin: 0; display: flex; gap: var(--space-sm); align-items: center; }
+.fask-quiet { display: flex; gap: var(--space-xs); align-items: center; padding: var(--space-xs) var(--space-md); }

@@ -1886,3 +1886,13 @@ teammate's Home listed "Personal 🔒" (the name only, and it would not open). N
 refuse a Personal project (its own Settings change it), and Home's Your projects lists only the person's own Personal.
 One test in `tests/personal.test.ts`; it fails without the fix.
 Rollback: git revert the commit.
+
+## 2026-11-16 · Opus 5.5 · The feedback ask on Home
+
+The PM's call: a card at the top of Home asks everyone for one note on the way to V3: "Khushi, you're one of NicoDesk's
+first users 🙏", then To improve ("What's confusing, missing or wrong?") or Working well, a line, an optional
+screenshot (📎) and Send, on one row. It goes into the Feedback page like any note. It ticks itself off once the person
+has sent a note (from the card or the Feedback button) since 15 Nov; Later hides it for the day in this browser. Everyone
+sees "N of M have given feedback so far"; an admin also sees who has not, on hover. It runs to 30 Nov
+(`lib/feedbackAsk.ts FEEDBACK_ASK`). In the app only: nothing is sent.
+Rollback: git revert the commit, or set the dates in the past.

@@ -1,3 +1,4 @@
+import { feedbackAskFor } from '@/lib/feedbackAsk';
 import { archiveAsksForMe, archiveNewsForMe } from '@/lib/plan';
 import { viewOnlyProjects } from '@/lib/sight';
 import { newsFor } from '@/lib/news';
@@ -36,6 +37,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const [archiveAsks, archiveNews] = await Promise.all([archiveAsksForMe(d, me.team.id, me.person.id), archiveNewsForMe(d, me.team.id, me.person.id)]);
   // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
   const news = await newsFor(d, me.person.id);
+  // The feedback ask (15 Nov): until they share one note, or the ask ends. An admin sees the count.
+  const feedbackAsk = await feedbackAskFor(d, me.person.id, me.team.id, t, me.person.appRoles.includes('admin'));
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   const first = await firstSeenDay(d, me.realPerson.id);
@@ -87,6 +90,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       myProjects={onProjects}
       welcome={welcome}
       news={news}
+      feedbackAsk={feedbackAsk}
       archiveAsks={archiveAsks}
       archiveNews={archiveNews}
     />
