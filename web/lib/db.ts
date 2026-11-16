@@ -116,6 +116,8 @@ export async function upgrade(db: Db) {
   await checklistsInPages(db);
   // 15 Nov: a member's ask to archive a project.
   await db.exec(ARCHIVE_ASKS_UPGRADE);
+  // 15 Nov: several named notes in Personal.
+  await db.exec(PERSONAL_NOTES_UPGRADE);
   // 15 Nov: the Leadership role (lib/roles.ts mayOversee). The retired 'lead' stays allowed so old rows still read.
   await db.exec(`ALTER TABLE team_members DROP CONSTRAINT IF EXISTS team_members_app_role_check;
     ALTER TABLE team_members ADD CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin'));`);
@@ -230,6 +232,32 @@ DO $$ BEGIN
 END $$;`;
 
 // Idempotent: a project that is one person's own (Personal), its running notes page and attached files (RLS on). The same SQL as lib/schema.ts.
+export const PERSONAL_NOTES_UPGRADE = `
+-- 15 Nov: several named notes in Personal (the PM's call). Each person's old single page becomes their first note,
+-- "Notes" (lib/notes.ts ensureNotes copies it the first time). Only that person reads or writes them.
+CREATE TABLE IF NOT EXISTS personal_notes (
+  id          text PRIMARY KEY,
+  person_id   text NOT NULL REFERENCES people(id),
+  team_id     text NOT NULL REFERENCES teams(id),
+  name        text NOT NULL CHECK (char_length(name) BETWEEN 1 AND 80),
+  named       boolean NOT NULL DEFAULT true,   -- false: the name follows the note's first line (Apple Notes style, 16 Nov)
+  deleted_at  timestamptz,                     -- in Recently Deleted (16 Nov); cleared for good after 30 days
+  position    integer NOT NULL DEFAULT 0,
+  doc         jsonb NOT NULL,
+  prev_doc    jsonb,
+  prev_at     timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CHECK (octet_length(doc::text) <= 400000)
+);
+CREATE INDEX IF NOT EXISTS personal_notes_person ON personal_notes (person_id, position);
+ALTER TABLE personal_notes ADD COLUMN IF NOT EXISTS named boolean NOT NULL DEFAULT true;
+ALTER TABLE personal_notes ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+-- A note moved from the old single page could read as edited before it was made: make it start when it was last edited.
+UPDATE personal_notes SET created_at = updated_at WHERE updated_at < created_at;
+ALTER TABLE personal_notes ENABLE ROW LEVEL SECURITY;
+`;
+
 export const ARCHIVE_ASKS_UPGRADE = `
 -- 15 Nov: a member asks the project's owner and lead to archive it, with a reason. One open ask per project. The owner,
 -- the lead or an admin archives (outcome archived) or says Not now (declined); the asker then sees what happened, once.

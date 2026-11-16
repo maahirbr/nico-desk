@@ -1872,3 +1872,18 @@ has sent a note (from the card or the Feedback button) since 15 Nov; Later hides
 sees "N of M have given feedback so far"; an admin also sees who has not, on hover. It runs to 30 Nov
 (`lib/feedbackAsk.ts FEEDBACK_ASK`). In the app only: nothing is sent.
 Rollback: git revert the commit, or set the dates in the past.
+
+## 2026-11-16 · Opus 5.5 · Several notes in Personal, Apple Notes style
+
+The PM's call, after Apple Notes. Personal's notes become several notes (new table `personal_notes`; each person's old
+single page becomes their first note, "Notes", so nothing is lost; the old table stays and is no longer written).
+- Above the notes: ☰ shows or hides the list (remembered in this browser), ✎ makes a new untitled note whose name follows
+  its first line until it is renamed (a click on the name renames it), and 🗑 at the far right.
+- The list: newest first under Today, Yesterday, Previous 7 Days, Previous 30 Days, then by month and year; each note as
+  its name, a time, weekday or date, and the start of its text. The open note is tinted in the page's accent.
+- Above the page: "Created 16 Nov 2026 · Edited 2:37 PM".
+- 🗑 moves a note to Recently Deleted at the bottom of the list, for 30 days: it opens read only with Recover; 🗑 there
+  deletes it for good; after 30 days it goes by itself. Deleting the last live note leaves an empty "Notes".
+- A save that names no note (anything older that still calls /api/v1/me/notes) goes to the first note made.
+NEW TABLE: run `npm run db:upgrade` on the hosted database before a build with this is promoted.
+Rollback: git revert the commit. The old personal_pages rows are untouched, so going back loses only notes written since.

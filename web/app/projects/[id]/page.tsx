@@ -18,10 +18,10 @@ import { ProjectHeader } from '@/components/ProjectHeader';
 import { ProjectHealth } from '@/components/ProjectHealth';
 import { SetupList } from '@/components/SetupList';
 import { TaskBoard } from '@/components/TaskBoard';
-import { PersonalNotes } from '@/components/PersonalNotes';
+import { NotesShelf } from '@/components/NotesShelf';
 import { PersonalTasks } from '@/components/PersonalTasks';
 import { PersonalHeader } from '@/components/PersonalHeader';
-import { myPage } from '@/lib/notes';
+import { getNote, listNotes } from '@/lib/notes';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +40,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const active = people.filter((x) => x.active).map((x) => ({ id: x.id, name: x.displayName, role: x.role, department: x.department }));
   // My Personal project (11 Nov): only I reach this page (lib/sight.ts). One view: my tasks on top, my running notes below.
   if (p.personalFor) {
-    const [tasks, page] = await Promise.all([projectTasks(d, p.id), myPage(d, me)]);
+    // Several named notes (15 Nov): the list, and the first one open.
+    const [tasks, notes] = await Promise.all([projectTasks(d, p.id), listNotes(d, me)]);
+    const page = notes.length ? await getNote(d, me, notes[0].id) : null;
     return (
       <>
         <Link className="crumb" href="/projects">← All projects</Link>
@@ -50,7 +52,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           {/* Tasks on top unless Settings says notes first (13 Nov). */}
           {(() => {
             const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} projectNames={projectNames} />;
-            const n = page ? <PersonalNotes key="n" page={page} projectId={p.id} meId={me.person.id} teamId={me.team.id} today={today()} /> : null;
+            const n = page ? <NotesShelf key="n" notes={notes} open={page} projectId={p.id} meId={me.person.id} teamId={me.team.id} today={today()} /> : null;
             return p.notesFirst ? <>{n}{t}</> : <>{t}{n}</>;
           })()}
         </div>

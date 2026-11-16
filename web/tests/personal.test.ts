@@ -99,7 +99,7 @@ describe('Personal running notes', () => {
   it('keeps yesterday’s page to restore, and restore can be undone', async () => {
     const me = await meAs(ME);
     await savePage(db, me, doc('yesterday'));
-    await db.query(`UPDATE personal_pages SET updated_at = now() - interval '2 days' WHERE person_id = $1`, [ME]);
+    await db.query(`UPDATE personal_notes SET updated_at = now() - interval '2 days' WHERE person_id = $1`, [ME]); // notes live here since 15 Nov
     await savePage(db, me, doc('today'));
     expect((await myPage(db, me))!.prevAt).not.toBe(null);
     expect(JSON.stringify((await restorePage(db, me)).doc)).toContain('yesterday');
@@ -150,5 +150,49 @@ describe('a Personal task with no date', () => {
     expect(await code(s.editTask(db, ME, t.id, { version: t.version, projectId: null }))).toBe('400 invalid_body');
     const other = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'A dated task', ownerId: ME, dueOn: '2026-10-12', projectId: pid });
     expect(await code(s.renegotiate(db, ME, other.id, { version: other.version, newDueOn: NO_DATE, reason: 'x' }))).toBe('400 invalid_body');
+  });
+});
+
+describe('several named notes (15 Nov)', () => {
+  it('turns the old page into "Notes", and makes, renames, saves and deletes notes', async () => {
+    const { createNote, deleteNote, getNote, listNotes, renameNote, saveNote } = await import('../lib/notes');
+    const me = await meAs(ME);
+    const doc = (text: string) => ({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
+    await db.query(`INSERT INTO personal_pages (person_id, team_id, doc) VALUES ($1, $2, $3::jsonb)`, [ME, TEAM_ID, JSON.stringify(doc('Old page'))]);
+    const first = await listNotes(db, me);
+    expect(first.map((n) => n.name)).toEqual(['Notes']);
+    expect(JSON.stringify((await getNote(db, me))!.doc)).toContain('Old page');
+    const ideas = await createNote(db, me, '  Ideas   for the window ');
+    expect(ideas.name).toBe('Ideas for the window');
+    await saveNote(db, me, ideas.id, doc('Brass and ivory'));
+    expect(JSON.stringify((await getNote(db, me, ideas.id))!.doc)).toContain('Brass and ivory');
+    expect(JSON.stringify((await getNote(db, me))!.doc)).toContain('Old page'); // the first note is untouched
+    await renameNote(db, me, ideas.id, 'Window ideas');
+    expect((await listNotes(db, me)).map((n) => n.name)).toEqual(['Window ideas', 'Notes']); // newest first (16 Nov)
+    // An untitled note (✎) takes its first line as its name until renamed, and the list shows a preview.
+    const fresh = await createNote(db, me);
+    expect(fresh.name).toBe('New note');
+    const saved = await saveNote(db, me, fresh.id, { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Hamper ideas' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Brass bowls' }] }] });
+    expect(saved).toMatchObject({ name: 'Hamper ideas', preview: 'Brass bowls' });
+    await renameNote(db, me, fresh.id, 'Gifting');
+    expect((await saveNote(db, me, fresh.id, doc('Something else'))).name).toBe('Gifting');
+    // Someone else cannot read or change my note.
+    const other = await meAs(OTHER);
+    expect(await code(getNote(db, other, ideas.id))).toBe('404 not_found');
+    expect(await code(renameNote(db, other, ideas.id, 'Mine now'))).toBe('404 not_found');
+    // Delete moves a note to Recently Deleted; it can be recovered, or deleted for good from there (16 Nov).
+    const { recoverNote } = await import('../lib/notes');
+    await deleteNote(db, me, ideas.id);
+    const after = await listNotes(db, me);
+    expect(after.find((n) => n.id === ideas.id)?.deletedAt).toBeTruthy();
+    expect(await code(saveNote(db, me, ideas.id, doc('nope')))).toBe('400 invalid_body'); // read only while deleted
+    await recoverNote(db, me, ideas.id);
+    expect((await listNotes(db, me)).find((n) => n.id === ideas.id)?.deletedAt).toBeNull();
+    await deleteNote(db, me, ideas.id); await deleteNote(db, me, ideas.id); // the second press deletes it for good
+    expect((await listNotes(db, me)).some((n) => n.id === ideas.id)).toBe(false);
+    // Deleting every live note leaves one empty "Notes" to write in.
+    for (const n of (await listNotes(db, me)).filter((x) => !x.deletedAt)) await deleteNote(db, me, n.id);
+    expect((await listNotes(db, me)).filter((n) => !n.deletedAt).map((n) => n.name)).toEqual(['Notes']);
   });
 });

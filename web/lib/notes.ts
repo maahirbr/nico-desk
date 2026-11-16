@@ -52,42 +52,167 @@ function cleanDoc(d: unknown): Doc {
   return out;
 }
 
-export async function myPage(db: Db, me: Me): Promise<Page | null> {
-  if (me.viewingAs) return null;
-  const { rows } = await db.query<{ doc: Doc; updated_at: string | Date; prev_at: string | Date | null }>(
-    `SELECT doc, updated_at, prev_at FROM personal_pages WHERE person_id = $1`, [me.person.id]);
-  const r = rows[0];
-  return r ? { doc: r.doc, updatedAt: new Date(r.updated_at).toISOString(), prevAt: r.prev_at ? new Date(r.prev_at).toISOString() : null }
-    : { doc: EMPTY, updatedAt: null, prevAt: null };
+// ---------- several named notes (15 Nov, the PM's call) ----------
+// A person has one or more notes, each with a name, in the order they made them. The first time, their old single page
+// (personal_pages) becomes the first note, "Notes", so nothing is lost. Calls without a note id use the first note.
+// Apple Notes style (16 Nov, the PM's pick): newest first, each with its created date and a short preview. A note made
+// with ✎ is untitled (named false) and takes its first line as its name until it is renamed.
+export type NoteMeta = { id: string; name: string; updatedAt: string | null; createdAt: string; preview: string; deletedAt?: string | null };
+export const KEEP_DELETED_DAYS = 30;
+const UNTITLED = 'New note';
+
+// The text of a note, one entry per paragraph, heading or list item, blank ones left out.
+function lines(doc: Doc): string[] {
+  const out: string[] = [];
+  const text = (n: unknown): string => {
+    const o = n as { text?: string; content?: unknown[] };
+    return typeof o?.text === 'string' ? o.text : Array.isArray(o?.content) ? o.content.map(text).join('') : '';
+  };
+  const walk = (n: unknown) => {
+    const o = n as { type?: string; content?: unknown[] };
+    if (!o || !Array.isArray(o.content)) return;
+    if (o.type === 'paragraph' || o.type === 'heading') { const t = text(o).trim(); if (t) out.push(t); return; }
+    o.content.forEach(walk);
+  };
+  walk(doc);
+  return out;
+}
+const firstLine = (doc: Doc) => (lines(doc)[0] ?? '').slice(0, 80);
+// The preview under the name: what follows the first line when the name is that line, else the start of the note.
+const previewOf = (doc: Doc, named: boolean) => (named ? lines(doc) : lines(doc).slice(1)).join(' ').slice(0, 90);
+export const NOTES_MAX = 50;
+const iso = (v: string | Date | null) => (v ? new Date(v).toISOString() : null);
+
+async function ensureNotes(db: Db, me: Me): Promise<void> {
+  // Notes in Recently Deleted for more than 30 days go for good.
+  await db.query(`DELETE FROM personal_notes WHERE person_id = $1 AND deleted_at < now() - interval '${KEEP_DELETED_DAYS} days'`, [me.person.id]);
+  const { rows: [any] } = await db.query(`SELECT 1 FROM personal_notes WHERE person_id = $1 AND deleted_at IS NULL LIMIT 1`, [me.person.id]);
+  if (any) return;
+  const { rows: [had] } = await db.query(`SELECT 1 FROM personal_notes WHERE person_id = $1 LIMIT 1`, [me.person.id]);
+  if (had) { // only deleted notes left: start a fresh, empty one
+    await db.query(`INSERT INTO personal_notes (id, person_id, team_id, name, position, doc) VALUES ($1,$2,$3,'Notes',0,$4::jsonb)`, [newId('pnt'), me.person.id, me.team.id, JSON.stringify(EMPTY)]);
+    return;
+  }
+  const { rows: [old] } = await db.query<{ doc: Doc; prev_doc: Doc | null; prev_at: string | Date | null; updated_at: string | Date }>(
+    `SELECT doc, prev_doc, prev_at, updated_at FROM personal_pages WHERE person_id = $1`, [me.person.id]);
+  await db.query(
+    `INSERT INTO personal_notes (id, person_id, team_id, name, position, doc, prev_doc, prev_at, updated_at, created_at)
+     VALUES ($1, $2, $3, 'Notes', 0, $4::jsonb, $5::jsonb, $6, COALESCE($7, now()), COALESCE($7, now()))`,
+    [newId('pnt'), me.person.id, me.team.id, JSON.stringify(old?.doc ?? EMPTY), old?.prev_doc ? JSON.stringify(old.prev_doc) : null, old?.prev_at ?? null, old?.updated_at ?? null]);
 }
 
-// Saved as I type. The first save on a new day keeps the page as it was, for Restore.
-export async function savePage(db: Db, me: Me, doc: unknown): Promise<{ updatedAt: string; prevAt: string | null }> {
+export async function listNotes(db: Db, me: Me): Promise<NoteMeta[]> {
+  if (me.viewingAs) return [];
+  await ensureNotes(db, me);
+  // Live notes newest first, then Recently Deleted (most recently deleted first).
+  const { rows } = await db.query<{ id: string; name: string; named: boolean; doc: Doc; updated_at: string | Date; created_at: string | Date; deleted_at: string | Date | null }>(
+    `SELECT id, name, named, doc, updated_at, created_at, deleted_at FROM personal_notes WHERE person_id = $1
+      ORDER BY deleted_at IS NOT NULL, deleted_at DESC, updated_at DESC, created_at DESC`, [me.person.id]);
+  return rows.map((r) => ({ id: r.id, name: r.name, updatedAt: iso(r.updated_at), createdAt: iso(r.created_at)!, preview: previewOf(r.doc, r.named), deletedAt: iso(r.deleted_at) }));
+}
+
+async function noteId(db: Db, me: Me, id?: string | null): Promise<string> {
+  await ensureNotes(db, me);
+  const { rows } = id
+    ? await db.query<{ id: string }>(`SELECT id FROM personal_notes WHERE id = $1 AND person_id = $2`, [id, me.person.id])
+    // No id: the first note made ("Notes"), so a save from elsewhere always lands in the same place.
+    : await db.query<{ id: string }>(`SELECT id FROM personal_notes WHERE person_id = $1 AND deleted_at IS NULL ORDER BY position, created_at LIMIT 1`, [me.person.id]);
+  if (!rows[0]) throw notFound('No such note.');
+  return rows[0].id;
+}
+
+export async function getNote(db: Db, me: Me, id?: string | null): Promise<(Page & { id: string; name: string; createdAt: string; deletedAt: string | null }) | null> {
+  if (me.viewingAs) return null;
+  const nid = await noteId(db, me, id);
+  // A note never saved (made, but nothing written yet) has no saved time, so the editor does not say "Saved".
+  const { rows: [r] } = await db.query<{ id: string; name: string; doc: Doc; updated_at: string | Date; prev_at: string | Date | null; created_at: string | Date; deleted_at: string | Date | null; fresh: boolean }>(
+    `SELECT id, name, doc, updated_at, prev_at, created_at, deleted_at, updated_at = created_at AS fresh FROM personal_notes WHERE id = $1`, [nid]);
+  return { id: r.id, name: r.name, doc: r.doc, updatedAt: r.fresh ? null : iso(r.updated_at), prevAt: iso(r.prev_at), createdAt: iso(r.created_at)!, deletedAt: iso(r.deleted_at) };
+}
+
+// The page as it was before today is kept on the first save of a new day, for Restore.
+export async function saveNote(db: Db, me: Me, id: string | null | undefined, doc: unknown): Promise<{ updatedAt: string; prevAt: string | null; name: string; preview: string }> {
   assertNotViewing(me);
   const clean = cleanDoc(doc);
   const text = JSON.stringify(clean);
   if (text.length > PAGE_MAX) throw bad('invalid_body', 'The page is too long to save. Move some of it to a Doc and link to it.', 'doc');
-  const { rows } = await db.query<{ updated_at: string | Date; prev_at: string | Date | null }>(
-    `INSERT INTO personal_pages (person_id, team_id, doc) VALUES ($1, $2, $3::jsonb)
-     ON CONFLICT (person_id) DO UPDATE SET
-       prev_doc = CASE WHEN personal_pages.updated_at < date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'
-                       THEN personal_pages.doc ELSE personal_pages.prev_doc END,
-       prev_at = CASE WHEN personal_pages.updated_at < date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'
-                      THEN personal_pages.updated_at ELSE personal_pages.prev_at END,
-       doc = EXCLUDED.doc, updated_at = now()
-     RETURNING updated_at, prev_at`, [me.person.id, me.team.id, text]);
-  return { updatedAt: new Date(rows[0].updated_at).toISOString(), prevAt: rows[0].prev_at ? new Date(rows[0].prev_at).toISOString() : null };
+  const nid = await noteId(db, me, id);
+  const day = `date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'`;
+  // An untitled note takes its first line as its name (Apple Notes style).
+  const { rows } = await db.query<{ updated_at: string | Date; prev_at: string | Date | null; name: string; named: boolean }>(
+    `UPDATE personal_notes SET
+       prev_doc = CASE WHEN updated_at < ${day} THEN doc ELSE prev_doc END,
+       prev_at = CASE WHEN updated_at < ${day} THEN updated_at ELSE prev_at END,
+       name = CASE WHEN named THEN name ELSE $3 END,
+       doc = $2::jsonb, updated_at = now()
+     WHERE id = $1 AND deleted_at IS NULL RETURNING updated_at, prev_at, name, named`, [nid, text, firstLine(clean) || UNTITLED]);
+  if (!rows[0]) throw bad('invalid_body', 'This note is in Recently Deleted. Recover it to write in it.', 'id');
+  return { updatedAt: iso(rows[0].updated_at)!, prevAt: iso(rows[0].prev_at), name: rows[0].name, preview: previewOf(clean, rows[0].named) };
 }
 
-// Swap the page and the one kept from before, so Restore can itself be undone by pressing it again.
-export async function restorePage(db: Db, me: Me): Promise<Page> {
+export async function restoreNote(db: Db, me: Me, id?: string | null): Promise<Page> {
   assertNotViewing(me);
+  const nid = await noteId(db, me, id);
   const { rows } = await db.query<{ doc: Doc; updated_at: string | Date; prev_at: string | Date | null }>(
-    `UPDATE personal_pages SET doc = prev_doc, prev_doc = doc, prev_at = updated_at, updated_at = now()
-      WHERE person_id = $1 AND prev_doc IS NOT NULL RETURNING doc, updated_at, prev_at`, [me.person.id]);
+    `UPDATE personal_notes SET doc = prev_doc, prev_doc = doc, prev_at = updated_at, updated_at = now()
+      WHERE id = $1 AND prev_doc IS NOT NULL RETURNING doc, updated_at, prev_at`, [nid]);
   if (!rows[0]) throw notFound('There is no earlier version to restore.');
-  return { doc: rows[0].doc, updatedAt: new Date(rows[0].updated_at).toISOString(), prevAt: rows[0].prev_at ? new Date(rows[0].prev_at).toISOString() : null };
+  return { doc: rows[0].doc, updatedAt: iso(rows[0].updated_at), prevAt: iso(rows[0].prev_at) };
 }
+
+const cleanName = (name: string) => {
+  const n = name.trim().replace(/\s+/g, ' ');
+  if (!n) throw bad('invalid_body', 'Give the note a name.', 'name');
+  if (n.length > 80) throw bad('invalid_body', 'A note name holds 80 characters.', 'name');
+  return n;
+};
+
+// No name (✎): an untitled note whose name follows its first line. With a name: that name, kept.
+export async function createNote(db: Db, me: Me, name?: string | null): Promise<NoteMeta> {
+  assertNotViewing(me);
+  await ensureNotes(db, me);
+  const { rows: [c] } = await db.query<{ n: number; pos: number }>(
+    `SELECT count(*)::int AS n, COALESCE(max(position), 0)::int AS pos FROM personal_notes WHERE person_id = $1`, [me.person.id]);
+  if (c.n >= NOTES_MAX) throw bad('invalid_body', `You have ${NOTES_MAX} notes. Delete one to make another.`, 'name');
+  const id = newId('pnt');
+  const named = !!name?.trim();
+  const nm = named ? cleanName(name!) : UNTITLED;
+  const { rows: [r] } = await db.query<{ created_at: string | Date }>(
+    `INSERT INTO personal_notes (id, person_id, team_id, name, named, position, doc) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb) RETURNING created_at`,
+    [id, me.person.id, me.team.id, nm, named, c.pos + 1, JSON.stringify(EMPTY)]);
+  return { id, name: nm, updatedAt: null, createdAt: iso(r.created_at)!, preview: '' };
+}
+
+export async function renameNote(db: Db, me: Me, id: string, name: string): Promise<void> {
+  assertNotViewing(me);
+  const { rows } = await db.query(`UPDATE personal_notes SET name = $3, named = true WHERE id = $1 AND person_id = $2 RETURNING id`, [id, me.person.id, cleanName(name)]);
+  if (!rows[0]) throw notFound('No such note.');
+}
+
+// Delete (16 Nov, Apple Notes style): a live note moves to Recently Deleted for 30 days; deleting it there, or with
+// `forever`, removes it for good. Deleting the only live note leaves an empty "Notes", so there is always one to write in.
+export async function deleteNote(db: Db, me: Me, id: string, forever = false): Promise<void> {
+  assertNotViewing(me);
+  const { rows: [n] } = await db.query<{ deleted_at: string | Date | null }>(`SELECT deleted_at FROM personal_notes WHERE id = $1 AND person_id = $2`, [id, me.person.id]);
+  if (!n) throw notFound('No such note.');
+  if (forever || n.deleted_at) await db.query(`DELETE FROM personal_notes WHERE id = $1 AND person_id = $2`, [id, me.person.id]);
+  else await db.query(`UPDATE personal_notes SET deleted_at = now() WHERE id = $1 AND person_id = $2`, [id, me.person.id]);
+  const { rows: [left] } = await db.query(`SELECT 1 FROM personal_notes WHERE person_id = $1 AND deleted_at IS NULL LIMIT 1`, [me.person.id]);
+  if (!left) await db.query(`INSERT INTO personal_notes (id, person_id, team_id, name, position, doc) VALUES ($1,$2,$3,'Notes',0,$4::jsonb)`,
+    [newId('pnt'), me.person.id, me.team.id, JSON.stringify(EMPTY)]);
+}
+
+// Bring a note back from Recently Deleted.
+export async function recoverNote(db: Db, me: Me, id: string): Promise<void> {
+  assertNotViewing(me);
+  const { rows } = await db.query(`UPDATE personal_notes SET deleted_at = NULL WHERE id = $1 AND person_id = $2 AND deleted_at IS NOT NULL RETURNING id`, [id, me.person.id]);
+  if (!rows[0]) throw notFound('That note is not in Recently Deleted.');
+}
+
+// The single-page calls, kept for anything that still uses them: they mean the first note.
+export async function myPage(db: Db, me: Me): Promise<Page | null> { return getNote(db, me); }
+export async function savePage(db: Db, me: Me, doc: unknown) { return saveNote(db, me, null, doc); }
+export async function restorePage(db: Db, me: Me): Promise<Page> { return restoreNote(db, me); }
 
 // A picture or file for the page. The kind is checked against its first bytes for pictures, and against a short list
 // for documents; anything else is refused.

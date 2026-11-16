@@ -2113,3 +2113,37 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .fask-n { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 999px; background: var(--primary); color: var(--on-primary); font: 600 10px/16px var(--font-sans); }
 .fask-foot { margin: 0; display: flex; gap: var(--space-sm); align-items: center; }
 .fask-quiet { display: flex; gap: var(--space-xs); align-items: center; padding: var(--space-xs) var(--space-md); }
+/* Several notes in Personal, Apple Notes style (16 Nov, components/NotesShelf.tsx): icons above, a plain list grouped by
+   time (name, date, preview), Recently Deleted at the bottom, the open note tinted, Created and Edited above the page. */
+.rnotes-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 0; align-items: stretch; border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); background: var(--surface); overflow: hidden; }
+.rnotes-grid > .rnotes-card { border: 0; border-radius: 0; box-shadow: none; border-left: var(--rule) solid var(--hairline); }
+@media (max-width: 720px) { .rnotes-grid { grid-template-columns: minmax(0, 1fr); } .rnotes-grid > .rnotes-card { border-left: 0; border-top: var(--rule) solid var(--hairline); } }
+.nshelf-head { display: inline-flex; align-items: center; gap: var(--space-sm); }
+.nshelf-tools { display: inline-flex; gap: 2px; }
+.nshelf-tool { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; border: 0; border-radius: var(--radius-control); background: none; color: var(--ink-2); cursor: pointer; }
+.nshelf-tool:hover { background: var(--sunk); color: var(--ink); }
+.nshelf-tool.on { background: var(--sunk); color: var(--ink); }
+.nshelf-tool.sure { color: var(--late); }
+.nshelf-sure { font: var(--type-state); font-weight: 600; }
+.nshelf-name { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: baseline; gap: var(--space-xxs); max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nshelf-name:disabled { cursor: default; }
+.nshelf-pen { font-size: 13px; color: var(--ink-3); opacity: 0; transition: opacity var(--dur-state) var(--ease); }
+.nshelf-name:hover .nshelf-pen, .nshelf-name:focus-visible .nshelf-pen { opacity: 1; }
+.nshelf-rename { font: inherit; padding: 2px var(--space-xs); min-width: 200px; }
+.nshelf-side { padding: var(--space-xs) var(--space-xs) var(--space-md); max-height: 640px; overflow-y: auto; background: color-mix(in srgb, var(--sunk) 45%, var(--surface)); }
+.nshelf-group + .nshelf-group { margin-top: var(--space-sm); }
+.nshelf-glabel { margin: var(--space-xs) var(--space-sm) var(--space-xxs); font: var(--type-small); font-weight: 600; color: var(--ink-3); }
+.nshelf-item { display: grid; gap: 1px; width: 100%; text-align: left; padding: var(--space-xs) var(--space-sm); border: 0; border-radius: var(--radius-control); background: none; cursor: pointer; color: var(--ink); }
+.nshelf-item + .nshelf-item { box-shadow: inset 0 var(--rule) 0 var(--hairline); }
+.nshelf-item:hover { background: var(--sunk); }
+.nshelf-item[aria-current="true"] { background: color-mix(in srgb, var(--primary) 16%, var(--surface)); box-shadow: none; }
+.nshelf-item[aria-current="true"] + .nshelf-item { box-shadow: none; }
+.nshelf-item b { font: var(--type-line); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nshelf-meta { display: flex; gap: var(--space-xs); font: var(--type-small); min-width: 0; }
+.nshelf-when { color: var(--ink); flex: none; }
+.nshelf-prev { color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rnotes-date { margin: var(--space-xs) 0 0; text-align: center; font: var(--type-small); color: var(--ink-3); }
+.rnotes-right { display: inline-flex; align-items: center; gap: var(--space-sm); margin-left: auto; }
+.nshelf-trash { margin-top: var(--space-md); padding-top: var(--space-xs); border-top: var(--rule) solid var(--hairline); }
+.nshelf-trash-h { border: 0; background: none; cursor: pointer; display: flex; gap: var(--space-xxs); align-items: baseline; padding: 0; }
+.nshelf-gone { color: var(--late); }
