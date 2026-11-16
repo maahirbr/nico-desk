@@ -4,6 +4,7 @@ import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { teamAdoption } from '../lib/activity';
 import { addFile, getFile, myPage, restorePage, savePage } from '../lib/notes';
+import { myFocus, setFocus } from '../lib/focus';
 import { flagKeyOf } from '../lib/flags';
 import { addProjectPeople, myProjects } from '../lib/plan';
 import { fmtDate, NO_DATE } from '../lib/time';
@@ -199,3 +200,61 @@ describe('a Personal project stays one person\'s', () => {
   });
 });
 
+
+describe("Today's 3 on Personal", () => {
+  const task = (owner: string, title: string, projectId?: string) =>
+    s.createTask(db, owner, { teamId: TEAM_ID, title, ownerId: owner, dueOn: '2026-10-12', ...(projectId ? { projectId } : {}) });
+  const ids = async (who: Me) => (await myFocus(db, who))!.picks.map((x) => x.id);
+
+  it('takes up to 3 of my own open tasks, from any project, and nothing else', async () => {
+    const me = await meAs(ME);
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const [a, b, c, d] = [await task(ME, 'Team task one'), await task(ME, 'Team task two'), await task(ME, 'Book a dentist', pid), await task(ME, 'One too many')];
+    await setFocus(db, me, [a.id, b.id, c.id]);
+    expect(await ids(me)).toEqual([a.id, b.id, c.id]);
+    expect(await code(setFocus(db, me, [a.id, b.id, c.id, d.id]))).toBe('400 invalid_body');
+    const theirs = await task(OTHER, 'Not mine');
+    expect(await code(setFocus(db, me, [theirs.id]))).toBe('400 invalid_body');
+    const shut = await s.closeTask(db, ME, d.id, { version: d.version, as: 'done' });
+    expect(await code(setFocus(db, me, [shut.id]))).toBe('400 invalid_body');
+    expect((await myFocus(db, await meAs(OTHER)))!.picks).toEqual([]); // mine are not theirs
+  });
+
+  it('shows nothing and saves nothing while an admin views as me', async () => {
+    const t = await task(ME, 'Private plan');
+    await setFocus(db, await meAs(ME), [t.id]);
+    expect(await myFocus(db, await meAs(ME, true))).toBe(null);
+    expect(await code(setFocus(db, await meAs(ME, true), []))).toBe('403 viewing_as');
+    expect(await ids(await meAs(ME))).toEqual([t.id]);
+  });
+
+  it('keeps a done pick for the day, and drops a pick once it is dropped or handed on', async () => {
+    const me = await meAs(ME);
+    const [a, b, c] = [await task(ME, 'Finish the brief'), await task(ME, 'Drop me'), await task(ME, 'Hand me on')];
+    await setFocus(db, me, [a.id, b.id, c.id]);
+    await s.closeTask(db, ME, a.id, { version: a.version, as: 'done' });
+    await s.closeTask(db, ME, b.id, { version: b.version, as: 'dropped', reason: 'Not needed' });
+    await s.editTask(db, ME, c.id, { version: c.version, ownerId: OTHER });
+    const left = (await myFocus(db, me))!.picks;
+    expect(left.map((x) => [x.id, x.statusCategory])).toEqual([[a.id, 'done']]);
+    expect(await code(setFocus(db, me, [a.id]))).toBe('ok'); // a done pick already in today's list may stay
+  });
+
+  it('starts empty the next day, with my unfinished picks offered to bring back', async () => {
+    const me = await meAs(ME);
+    const [a, b] = [await task(ME, 'Carry me over'), await task(ME, 'Done yesterday')];
+    await setFocus(db, me, [a.id, b.id]);
+    await s.closeTask(db, ME, b.id, { version: b.version, as: 'done' });
+    process.env.NICO_TODAY = '2026-10-10';
+    expect(await myFocus(db, me)).toEqual({ picks: [], carry: [a.id] });
+    await setFocus(db, me, (await myFocus(db, me))!.carry);
+    expect(await ids(me)).toEqual([a.id]);
+  });
+
+  it('leaves my running notes as they were', async () => {
+    const me = await meAs(ME);
+    const t = await task(ME, 'Pick me');
+    await setFocus(db, me, [t.id]);
+    expect((await myPage(db, me))!.updatedAt).toBe(null);
+  });
+});

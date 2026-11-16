@@ -1896,3 +1896,22 @@ has sent a note (from the card or the Feedback button) since 15 Nov; Later hides
 sees "N of M have given feedback so far"; an admin also sees who has not, on hover. It runs to 30 Nov
 (`lib/feedbackAsk.ts FEEDBACK_ASK`). In the app only: nothing is sent.
 Rollback: git revert the commit, or set the dates in the past.
+
+## 2026-11-16 · Opus 5.5 · Today's 3 on Personal
+
+The repo owner's call, from a list of ideas to make Personal more useful: a "Today" band at the top of my Personal page,
+where I pick up to 3 of my own open tasks, from any project, to focus on today. It changes Personal only: Home, Team,
+projects, reminders and Activity stay as they were, since Home already groups my tasks by Late, Today and This week.
+- A pick is the task's own row: ticking it, or changing its status, goes through the task's usual rules. ✕ only takes it
+  off today's list. When every pick is done, one plain line says so.
+- The next day starts empty. "Bring back N from last time" puts back my unfinished picks with one press; nothing carries
+  over by itself.
+- "Today's notes" in the band does what "+ Today" does in the notes, and brings today's heading into view.
+- Only I see my picks. They live in a new table, `personal_focus` (one row per person, RLS on, a `team_fence` policy,
+  in `upgrade()`), so the notes page and its Restore are untouched. A pick shows only while the task is mine, visible to
+  me and not dropped (`lib/focus.ts`). View as shows no band and refuses a save. Activity and Claude do not read them.
+- The Personal page now has one task drawer for the band and its task list (`components/PersonalDrawer.tsx`), so a task
+  never opens twice; a team task opens with the team to pick from, as on Home.
+Five tests in `tests/personal.test.ts`; each fails without its rule. **The hosted database needs `npm run db:upgrade`
+before this is deployed**: the Personal page reads the new table.
+Rollback: git revert the commit. The `personal_focus` table can stay (nothing else reads it), or `DROP TABLE personal_focus`.

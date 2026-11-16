@@ -15,6 +15,7 @@ import type { Doc, Page } from '@/lib/notes';
 import { dayHeading } from '@/lib/time';
 import { ago } from '@/lib/updates';
 import { DateField } from './DateField';
+import { TODAY_NOTES } from './PersonalDrawer';
 import { useReadOnly } from './readonly';
 import { shrinkImage } from './shrinkImage';
 import { SpeechButton, useSpeech } from './speech';
@@ -121,6 +122,18 @@ export function PersonalNotes({ page, projectId, meId, teamId, today }: { page: 
     const heading = editor.state.doc.firstChild;
     editor.chain().setTextSelection(heading ? heading.nodeSize + 1 : 1).focus().scrollIntoView().run();
   };
+  // "Today's notes" in the Today band (16 Nov) does the same as "+ Today" here.
+  useEffect(() => {
+    // The band sits far above the notes, so bring today's heading well into view, not just the cursor line.
+    const go = () => {
+      addToday();
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // After the editor's own scroll to the cursor, which would otherwise win.
+      requestAnimationFrame(() => (editor?.view.dom.firstElementChild as HTMLElement | null)?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }));
+    };
+    window.addEventListener(TODAY_NOTES, go);
+    return () => window.removeEventListener(TODAY_NOTES, go);
+  });
   // A meeting block under today's heading (made if missing): a title to type, then Notes, Decisions and To-dos.
   const addMeeting = () => {
     if (!editor) return;
