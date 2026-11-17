@@ -624,7 +624,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {mode && mode !== 'reassign' && (
               <div className="drawer-form">
-                <div className="small"><b>{firstDate ? 'Give it a date.' : { status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task. A lead, or the project’s owner or lead, can.' }[mode]}</b></div>
+                <div className="small"><b>{firstDate ? 'Give it a date.' : { status: `Back to “${STATUS[target].word}”. Why did work stop? Anyone who can see this task sees the reason in its history.`, blocked: 'Why is it blocked?', date: 'Move the date. The first date stays on record. Moving it early counts as on time.', drop: 'Reason to drop the task', reopen: 'Reopen this task, with a short reason. Its owner, or the project’s owner or lead, can.' }[mode]}</b></div>
                 {mode === 'date' && <label className="f"><span>New date</span><DateField min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>}
                 {!firstDate && <label className="f"><span>{mode === 'blocked' ? 'Block reason' : 'Reason'} <span className="req" aria-hidden="true">*</span></span>
                   <textarea rows={2} maxLength={280} value={form.text} placeholder={mode === 'blocked' ? 'What is it waiting for?' : 'A short reason'} onChange={(e) => setForm({ ...form, text: e.target.value })} />
@@ -739,7 +739,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
 
             <div className="drawer-foot">
               {open && can && <button className="act danger" onClick={() => setMode('drop')}>Drop task…</button>}
-              {!open && (isLead || t.projectHead) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
+              {!open && (isLead || t.projectHead || t.ownerId === meId) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
               <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
             </div>
 

@@ -27,8 +27,9 @@ describe('which changes have an Undo', () => {
     expect(canUndo(snap({ readOnly: true }), ['health'], me, AS_OF)).toBe(false);
     expect(canUndo(snap(), [], me, AS_OF)).toBe(false);
   });
-  it('lets only a lead or admin undo a close, since that is a reopen', () => {
-    expect(canUndo(snap(), ['category', 'blocked'], me, AS_OF)).toBe(false);
+  it('lets the owner, or a lead or admin, undo a close, since that is a reopen (17 Nov)', () => {
+    expect(canUndo(snap(), ['category', 'blocked'], me, AS_OF)).toBe(true);
+    expect(canUndo(snap(), ['category', 'blocked'], { meId: 'someone-else', isLead: false }, AS_OF)).toBe(false);
     expect(canUndo(snap(), ['category', 'blocked'], lead, AS_OF)).toBe(true);
   });
   it('lets a plain owner undo a reopen, which is a close', () => {
@@ -119,13 +120,13 @@ async function pick() {
 }
 
 describe('undo through the real rules', () => {
-  it('a lead undoes a Done: the task is open again and the log only grew', async () => {
-    const { t, leadId } = await pick();
+  it('the owner undoes a Done: the task is open again and the log only grew (17 Nov)', async () => {
+    const { t, ownerId } = await pick();
     const before = await s.getTask(db, t.id, AS_OF);
     const logBefore = (await s.taskLog(db, t.id)).length;
-    const closed = await s.closeTask(db, leadId, t.id, { version: before.version, as: 'done' });
-    expect(canUndo(before, statusFields(before, 'done'), { meId: leadId, isLead: true }, AS_OF)).toBe(true);
-    await apply(leadId, t.id, closed.version, planUndo(before, closed, statusFields(before, 'done')));
+    const closed = await s.closeTask(db, ownerId, t.id, { version: before.version, as: 'done' });
+    expect(canUndo(before, statusFields(before, 'done'), { meId: ownerId, isLead: false }, AS_OF)).toBe(true);
+    await apply(ownerId, t.id, closed.version, planUndo(before, closed, statusFields(before, 'done')));
     const after = await s.getTask(db, t.id, AS_OF);
     expect(after.statusCategory).toBe('open');
     expect((await s.taskLog(db, t.id)).length).toBeGreaterThan(logBefore + 1);
@@ -157,11 +158,9 @@ describe('undo through the real rules', () => {
     expect((await s.getTask(db, t.id, AS_OF)).blocked?.ask).toBe('Waiting on a sample');
   });
 
-  it('a plain owner who marks done gets no Undo, since a reopen is lead-only', async () => {
-    const { t, ownerId } = await pick();
+  it('someone who is not the owner gets no Undo of a Done (a reopen is theirs only, or a lead’s)', async () => {
+    const { t } = await pick();
     const before = await s.getTask(db, t.id, AS_OF);
-    expect(canUndo(before, statusFields(before, 'done'), { meId: ownerId, isLead: false }, AS_OF)).toBe(false);
-    const closed = await s.closeTask(db, ownerId, t.id, { version: before.version, as: 'done' });
-    await expect(apply(ownerId, t.id, closed.version, planUndo(before, closed, ['category']))).rejects.toThrow();
+    expect(canUndo(before, statusFields(before, 'done'), { meId: 'someone-else', isLead: false }, AS_OF)).toBe(false);
   });
 });

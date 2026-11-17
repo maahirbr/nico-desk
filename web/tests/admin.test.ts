@@ -129,8 +129,9 @@ describe('status controls match the service', () => {
     expect(canMoveTo(t, 'doing', 'o', false)).toBe(true);
     expect(canMoveTo(t, 'done', 'm', false)).toBe(false);
   });
-  it('a closed task can only be moved (reopened) by a lead/admin; mirrors are read-only', () => {
-    expect(canMoveTo({ ...t, statusCategory: 'done' }, 'doing', 'o', false)).toBe(false);
+  it('a closed task is reopened by its owner or a lead/admin (17 Nov); mirrors are read-only', () => {
+    expect(canMoveTo({ ...t, statusCategory: 'done' }, 'doing', t.ownerId, false)).toBe(true);
+    expect(canMoveTo({ ...t, statusCategory: 'done' }, 'doing', 'someone-else', false)).toBe(false);
     expect(canMoveTo({ ...t, statusCategory: 'done' }, 'doing', 'lead', true)).toBe(true);
     expect(canMoveTo({ ...t, readOnly: true }, 'done', 'o', true)).toBe(false);
   });

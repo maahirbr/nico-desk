@@ -1937,3 +1937,11 @@ The PM's call: a dropdown left of "Find a person" on the Roster (All, Admin, Lea
 time, together with the find box. Admins only, as only admins see access on the Roster. It hides rows on the page
 (each row's data-role); nothing is fetched.
 Rollback: git revert the commit.
+
+## 2026-11-17 · Opus 5.5 · Who reopens a task
+
+The PM's call: a Done or Dropped task can be reopened by the project's owner, the project's lead, the task's own owner,
+and an admin (an admin has every right a project lead has). Not Leadership, not anyone else on the project. A reopen
+takes a short reason, except on one's own Personal task. So the owner now also gets Undo after marking a task Done.
+`lib/service.ts reopenTask`, `components/statusRules.ts canMoveTo`, `lib/undo.ts canUndo`.
+Rollback: git revert the commit.
