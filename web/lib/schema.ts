@@ -392,6 +392,25 @@ CREATE TABLE personal_pages (
   CHECK (octet_length(doc::text) <= 400000)
 );
 ALTER TABLE personal_pages ENABLE ROW LEVEL SECURITY;
+-- 15 Nov: several named notes in Personal (the PM's call). Each person's old single page becomes their first note,
+-- "Notes" (lib/notes.ts ensureNotes copies it the first time). Only that person reads or writes them.
+CREATE TABLE personal_notes (
+  id          text PRIMARY KEY,
+  person_id   text NOT NULL REFERENCES people(id),
+  team_id     text NOT NULL REFERENCES teams(id),
+  name        text NOT NULL CHECK (char_length(name) BETWEEN 1 AND 80),
+  named       boolean NOT NULL DEFAULT true,   -- false: the name follows the note's first line (Apple Notes style, 16 Nov)
+  deleted_at  timestamptz,                     -- in Recently Deleted (16 Nov); cleared for good after 30 days
+  position    integer NOT NULL DEFAULT 0,
+  doc         jsonb NOT NULL,
+  prev_doc    jsonb,
+  prev_at     timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CHECK (octet_length(doc::text) <= 400000)
+);
+CREATE INDEX personal_notes_person ON personal_notes (person_id, position);
+ALTER TABLE personal_notes ENABLE ROW LEVEL SECURITY;
 CREATE TABLE personal_files (
   id          text PRIMARY KEY,
   team_id     text NOT NULL REFERENCES teams(id),
@@ -669,6 +688,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   update_asks: inTask('task_id'),
   handovers: `team_id = ${TEAM}`,
   personal_pages: `team_id = ${TEAM}`,
+  personal_notes: `team_id = ${TEAM}`,
   personal_files: `team_id = ${TEAM}`,
   personal_focus: `team_id = ${TEAM}`,
   archive_asks: `team_id = ${TEAM}`,

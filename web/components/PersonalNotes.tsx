@@ -36,7 +36,14 @@ async function api(path: string, method: string, body?: unknown) {
   return data;
 }
 
-export function PersonalNotes({ page, projectId, meId, teamId, today }: { page: Page; projectId: string; meId: string; teamId: string; today: string }) {
+// noteId, heading and aside (15 Nov): which of my named notes this is, what the heading shows, and the list of notes
+// beside the page (components/NotesShelf.tsx). Without them it is the single page, as before.
+// dateLine and onSaved (16 Nov): the line above the page ("2 October 2026 at 1:27 AM"), and word back after each save
+// (the note's name and preview, for the list).
+export function PersonalNotes({ page, projectId, meId, teamId, today, noteId, heading, aside, dateLine, onSaved, actions }: {
+  page: Page; projectId: string; meId: string; teamId: string; today: string; noteId?: string; heading?: React.ReactNode; aside?: React.ReactNode;
+  dateLine?: React.ReactNode; onSaved?: (r: { updatedAt: string; name: string; preview: string }) => void; actions?: React.ReactNode; // at the far right of the heading row
+}) {
   const readOnly = useReadOnly();
   const router = useRouter();
   const [state, setState] = useState<'saved' | 'saving' | 'error' | 'idle'>(page.updatedAt ? 'saved' : 'idle');
@@ -48,7 +55,7 @@ export function PersonalNotes({ page, projectId, meId, teamId, today }: { page: 
 
   const save = async (doc: Doc) => {
     setState('saving');
-    try { const r = await api('/notes', 'PUT', { doc }); setSavedAt(r.updatedAt); setPrevAt(r.prevAt); setState('saved'); }
+    try { const r = await api('/notes', 'PUT', { doc, ...(noteId ? { id: noteId } : {}) }); setSavedAt(r.updatedAt); setPrevAt(r.prevAt); setState('saved'); onSaved?.(r); }
     catch (e) { setState('error'); notify((e as Error).message); }
   };
   const editor = useEditor({
@@ -77,7 +84,7 @@ export function PersonalNotes({ page, projectId, meId, teamId, today }: { page: 
     const reload = async () => {
       if (timer.current || document.visibilityState === 'hidden') return;
       try {
-        const p: Page | null = await api('/notes', 'GET');
+        const p: Page | null = await api(noteId ? `/notes?id=${encodeURIComponent(noteId)}` : '/notes', 'GET');
         if (p?.updatedAt && p.updatedAt !== savedRef.current && !timer.current) {
           editor.commands.setContent(p.doc as JSONContent, { emitUpdate: false }); setSavedAt(p.updatedAt); setPrevAt(p.prevAt); setState('saved');
         }
@@ -164,12 +171,17 @@ export function PersonalNotes({ page, projectId, meId, teamId, today }: { page: 
   return (
     <section className="rnotes" aria-labelledby="rnotes-h">
       <div className="psec-head">
-        <h2 id="rnotes-h">Notes</h2>
-        <span className="rnotes-state small dim" aria-live="polite">
-          {state === 'saving' ? 'Saving…' : state === 'error' ? 'Not saved, check your connection' : savedAt ? `Saved ${ago(savedAt, new Date().toISOString())}` : ''}
+        <h2 id="rnotes-h">{heading ?? 'Notes'}</h2>
+        <span className="rnotes-right">
+          <span className="rnotes-state small dim" aria-live="polite">
+            {state === 'saving' ? 'Saving…' : state === 'error' ? 'Not saved, check your connection' : savedAt ? `Saved ${ago(savedAt, new Date().toISOString())}` : ''}
+          </span>
+          {actions}
         </span>
       </div>
+      <div className={aside ? 'rnotes-grid' : undefined}>{aside}
       <div className="card rnotes-card">
+        {dateLine && <p className="rnotes-date">{dateLine}</p>}
         {!readOnly && editor && <Toolbar editor={editor} onImage={() => file.current?.click()} onToday={addToday} onMeeting={addMeeting} onTask={startTask} speech={speech} />}
         {tasking && (
           <div className="rnotes-task">
@@ -183,6 +195,7 @@ export function PersonalNotes({ page, projectId, meId, teamId, today }: { page: 
           onPaste={(e) => { const fs = Array.from(e.clipboardData?.files ?? []); if (fs.length && !readOnly) { e.preventDefault(); void attach(fs); } }}
           onDrop={(e) => { const fs = Array.from(e.dataTransfer?.files ?? []); if (fs.length && !readOnly) { e.preventDefault(); void attach(fs); } }} />
         <input ref={file} type="file" hidden multiple onChange={(e) => { void attach(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
+      </div>
       </div>
     </section>
   );

@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { readBody, route } from '@/lib/http';
-import { myPage, savePage } from '@/lib/notes';
+import { getNote, saveNote } from '@/lib/notes';
 
-// My running notes page (11 Nov). GET: the page. PUT: save it (the editor sends it a moment after each pause).
-export const GET = route(async ({ me, db }) => myPage(db, me));
-export const PUT = route(async ({ req, me, db }) => savePage(db, me, (await readBody(req, z.object({ doc: z.unknown() }).strict())).doc));
+// My notes in Personal (11 Nov; several named notes since 15 Nov). GET ?id=: one note, the first without an id.
+// PUT: save a note (the editor sends it a moment after each pause); without an id, the first note.
+export const GET = route(async ({ req, me, db }) => getNote(db, me, new URL(req.url).searchParams.get('id')));
+export const PUT = route(async ({ req, me, db }) => {
+  const b = await readBody(req, z.object({ doc: z.unknown(), id: z.string().min(1).max(80).optional() }).strict());
+  return saveNote(db, me, b.id, b.doc);
+});
