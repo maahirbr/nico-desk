@@ -1930,3 +1930,10 @@ projects, reminders and Activity stay as they were, since Home already groups my
 Five tests in `tests/personal.test.ts`; each fails without its rule. **The hosted database needs `npm run db:upgrade`
 before this is deployed**: the Personal page reads the new table.
 Rollback: git revert the commit. The `personal_focus` table can stay (nothing else reads it), or `DROP TABLE personal_focus`.
+
+## 2026-11-17 · Opus 5.5 · Roster: filter by access
+
+The PM's call: a dropdown left of "Find a person" on the Roster (All, Admin, Leadership, Member) shows one access at a
+time, together with the find box. Admins only, as only admins see access on the Roster. It hides rows on the page
+(each row's data-role); nothing is fetched.
+Rollback: git revert the commit.

@@ -25,14 +25,15 @@ export default async function Admin() {
   return (
     <>
       {/* The find box sits at the right of the title (the PM's call, 15 Nov). */}
-      <div className="page-head"><h1>Roster</h1><RosterFind total={people.length} /></div>
+      <div className="page-head"><h1>Roster</h1><RosterFind total={people.length} roles={isAdmin} /></div>
       <div className="card table-card"><table className="stacked roster">
         {/* Access (member, lead, admin, removed) is for admins only (the PM's call, 3 Nov). */}
         <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <th>Access</th>}{inviter && <th>Invite</th>}</tr></thead>
         <tbody>
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}
-              data-find={[p.displayName, p.fullName, p.nickname, p.role, p.department, p.email].filter(Boolean).join(' ').toLowerCase()}>
+              data-find={[p.displayName, p.fullName, p.nickname, p.role, p.department, p.email].filter(Boolean).join(' ').toLowerCase()}
+              data-role={isAdmin ? (!p.active ? 'removed' : p.appRoles.includes('admin') ? 'admin' : p.appRoles.includes('leadership') ? 'leadership' : 'member') : undefined}>
               <td><Person name={p.displayName} id={p.id} />{p.nickname && <span className="dim"> ({p.fullName})</span>}{!p.active && <span className="dim"> (inactive)</span>}</td>
               <td data-label="Job title"><span className="clip clip-title" title={p.role}>{p.role}</span></td>
               <td data-label="Department"><span className="clip clip-dept" title={p.department}>{p.department}</span></td>

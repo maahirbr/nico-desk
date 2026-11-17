@@ -2027,7 +2027,7 @@ table.roster .roster-email { color: var(--ink-2); }
 .news .news-ok { min-height: 0; height: 24px; padding: 0 8px; font-size: 11.5px; border-radius: 6px; }
 
 /* Find a person on the Roster (14 Nov, components/RosterFind.tsx). */
-.roster-find { display: flex; align-items: center; flex-direction: row-reverse; gap: var(--space-sm); flex-wrap: wrap; margin-left: auto; }
+.roster-find { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin-left: auto; } /* access filter, then the find box (17 Nov) */
 .roster-edit { font-size: 15px; padding: 0 var(--space-xxs); }
 
 /* A late row's date under its count (15 Nov, task-ui.tsx TaskRow): small, quiet, on its own line. */
@@ -2169,3 +2169,4 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .ptoday-pick-meta { font: var(--type-small); color: var(--ink-3); }
 .ptoday-pick-meta.late-text { color: var(--late); }
 .ptoday-pick > .linkbtn { display: inline-block; margin: var(--space-xs) var(--space-sm); background: none; border: 0; cursor: pointer; padding: 0; }
+.roster-roles { min-width: 150px; } /* the access dropdown beside Find a person (17 Nov) */
