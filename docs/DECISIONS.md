@@ -1637,6 +1637,21 @@ a long name ends in "…" at every desktop width, not only up to 1280px. Checked
 every row before and on none after. CSS only.
 Rollback: git revert the commit.
 
+## 2026-11-13 · Opus 5.5 · Personal 🔒 stays private when someone is removed, in View as and in Activity
+
+A review of the Personal push before it went live found three paths that still showed Personal work to others:
+- Remove: the admin's handover list showed the leaver's Personal task titles, and Remove handed those tasks (and the
+  Personal project) to the new holder, whose Home then named them. Now `handoffLoad` leaves out Personal tasks, Personal
+  projects and Personal tasks waiting on the leaver; they stay with their owner.
+- View as: due-today and overdue notices on Personal tasks showed on the viewed person's Home. `listNotices` now takes
+  the viewing flag, so the View as sight hides them.
+- Activity: the change count and the comment count still counted Personal tasks and the Personal project. Both now
+  leave them out. Last active still counts them: working on one's own Personal tasks is still using the app.
+Three tests in `tests/personal.test.ts`; each fails without its fix. Known and left for later: someone on two teams
+gets no working Personal project on the second team (the pilot has one team), uploaded files cannot be deleted, a
+notes page near the size limit fails to save without a message, and the stored name `Personal · <id>` shows in
+Search, the Ledger and Home's project list.
+
 ## 2026-11-13 · Opus 5.5 · Personal shows as "Personal", first on Home
 
 A Personal project is stored as "Personal · <person id>", because project names are unique on a team. Some places read
@@ -1863,6 +1878,15 @@ Rollback: git revert the commit.
 - Fix: a person's page listed their own Personal project to every visitor (the name only). Only they see it now.
 Rollback: git revert the commit.
 
+## 2026-11-16 · Opus 5.5 · A Personal project takes no one else
+
+Found while merging the 14 to 15 Nov batch: anyone on a project may now add people (`addProjectPeople`), and a Personal
+project's owner counts as on it, so a teammate could be added to someone's Personal. Sight still hid its tasks, but the
+teammate's Home listed "Personal 🔒" (the name only, and it would not open). Now `addProjectPeople` and `updateProject`
+refuse a Personal project (its own Settings change it), and Home's Your projects lists only the person's own Personal.
+One test in `tests/personal.test.ts`; it fails without the fix.
+Rollback: git revert the commit.
+
 ## 2026-11-16 · Opus 5.5 · The feedback ask on Home
 
 The PM's call: a card at the top of Home asks everyone for one note on the way to V3: "Khushi, you're one of NicoDesk's
@@ -1887,3 +1911,22 @@ single page becomes their first note, "Notes", so nothing is lost; the old table
 - A save that names no note (anything older that still calls /api/v1/me/notes) goes to the first note made.
 NEW TABLE: run `npm run db:upgrade` on the hosted database before a build with this is promoted.
 Rollback: git revert the commit. The old personal_pages rows are untouched, so going back loses only notes written since.
+
+## 2026-11-16 · Opus 5.5 · Today's 3 on Personal
+
+The repo owner's call, from a list of ideas to make Personal more useful: a "Today" band at the top of my Personal page,
+where I pick up to 3 of my own open tasks, from any project, to focus on today. It changes Personal only: Home, Team,
+projects, reminders and Activity stay as they were, since Home already groups my tasks by Late, Today and This week.
+- A pick is the task's own row: ticking it, or changing its status, goes through the task's usual rules. ✕ only takes it
+  off today's list. When every pick is done, one plain line says so.
+- The next day starts empty. "Bring back N from last time" puts back my unfinished picks with one press; nothing carries
+  over by itself.
+- "Today's notes" in the band does what "+ Today" does in the notes, and brings today's heading into view.
+- Only I see my picks. They live in a new table, `personal_focus` (one row per person, RLS on, a `team_fence` policy,
+  in `upgrade()`), so the notes page and its Restore are untouched. A pick shows only while the task is mine, visible to
+  me and not dropped (`lib/focus.ts`). View as shows no band and refuses a save. Activity and Claude do not read them.
+- The Personal page now has one task drawer for the band and its task list (`components/PersonalDrawer.tsx`), so a task
+  never opens twice; a team task opens with the team to pick from, as on Home.
+Five tests in `tests/personal.test.ts`; each fails without its rule. **The hosted database needs `npm run db:upgrade`
+before this is deployed**: the Personal page reads the new table.
+Rollback: git revert the commit. The `personal_focus` table can stay (nothing else reads it), or `DROP TABLE personal_focus`.

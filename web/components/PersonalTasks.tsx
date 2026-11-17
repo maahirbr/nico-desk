@@ -7,9 +7,9 @@ import { NO_DATE } from '@/lib/time';
 import { DateField } from './DateField';
 import { Fold, FoldChev } from './Fold';
 import { useReadOnly } from './readonly';
-import { flagOf, statusKey, TaskDrawer, TaskRow, type RowAction } from './task-ui';
+import { flagOf, statusKey, TaskRow } from './task-ui';
 import { Help } from './HelpMode';
-import { useOpenTask } from './taskUrl';
+import { usePersonalOpen } from './PersonalDrawer';
 import { notify } from './toast';
 
 // Tasks in my Personal project (11 Nov), on top of the page, kept short: open ones by date, the first few showing,
@@ -19,13 +19,12 @@ import { notify } from './toast';
 // The row menu has the statuses and Move date; nothing to ask or hand on, as nobody else sees them.
 const SHOWN = 5;
 
-export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today, projectNames }: {
-  tasks: Task[]; projectId: string; teamId: string; meId: string; meName: string; today: string; projectNames: Record<string, string>;
+export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }: {
+  tasks: Task[]; projectId: string; teamId: string; meId: string; meName: string; today: string;
 }) {
   const router = useRouter();
   const readOnly = useReadOnly();
-  const [openId, setOpenId] = useOpenTask();
-  const [startStatus, setStartStatus] = useState<RowAction | undefined>();
+  const openTask = usePersonalOpen(); // the page's one drawer (PersonalDrawer.tsx)
   const [all, setAll] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const [title, setTitle] = useState('');
@@ -72,7 +71,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today, p
   };
   // Clicking a task opens it, to change its name, details, date or note, as on any project.
   const row = (t: Task) => <TaskRow key={t.id} t={t} today={today} names={{ [meId]: meName }} canTick={!readOnly} canBlock={!readOnly}
-    onOpen={() => { setOpenId(t.id); setStartStatus(undefined); }} onStatus={(s) => { setOpenId(t.id); setStartStatus(s); }} onEdit={() => { setOpenId(t.id); setStartStatus(undefined); }} onDelete={() => void remove(t)} />;
+    onOpen={() => openTask(t.id)} onStatus={(s) => openTask(t.id, s)} onEdit={() => openTask(t.id)} onDelete={() => void remove(t)} />;
   return (
     <section className="ptasks" aria-labelledby="ptasks-h">
       <div className="stats tiles">
@@ -105,17 +104,15 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today, p
       {list.length === 0 ? <p className="small dim">{picked ? 'None right now.' : 'Nothing to do here. Add something above.'}</p> : <div className="tlist">
         {/* Column headings, as on a project's table (13 Nov). */}
         <div className="trow trow-head has-acts" aria-hidden><span /><span>Task</span><span>Due date</span><span>Status</span><span /></div>
-        {shown.map((t) => (t.statusCategory === 'open' ? row(t) : <TaskRow key={t.id} t={t} today={today} names={{ [meId]: meName }} canTick={false} onOpen={() => setOpenId(t.id)} />))}</div>}
+        {shown.map((t) => (t.statusCategory === 'open' ? row(t) : <TaskRow key={t.id} t={t} today={today} names={{ [meId]: meName }} canTick={false} onOpen={() => openTask(t.id)} />))}</div>}
       {!picked && open.length > SHOWN && <button type="button" className="mini-btn" onClick={() => setAll(!all)}>{all ? 'Show fewer' : `${open.length - SHOWN} more`}</button>}
       {!picked && done.length > 0 && (<>
         <button type="button" className="log-toggle small-toggle" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}><FoldChev /> Done <span className="count-badge">{done.length}</span></button>
         {/* Ticked by mistake? Untick it and it is open again (my own Personal task: no reason needed, 13 Nov). */}
         <Fold open={showDone}><div className="tlist">{done.filter((t) => !reopening.has(t.id)).map((t) => (
-          <TaskRow key={t.id} t={t} today={today} names={{ [meId]: meName }} canTick={false} onOpen={() => setOpenId(t.id)} onReopen={() => void reopen(t)} onEdit={() => setOpenId(t.id)} />
+          <TaskRow key={t.id} t={t} today={today} names={{ [meId]: meName }} canTick={false} onOpen={() => openTask(t.id)} onReopen={() => void reopen(t)} onEdit={() => openTask(t.id)} />
         ))}</div></Fold>
       </>)}
-      {openId && <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={false}
-        people={[{ id: meId, name: meName }]} today={today} projectNames={projectNames} onClose={() => setOpenId(null)} />}
     </section>
   );
 }

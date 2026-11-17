@@ -8,7 +8,7 @@ import { lookups } from '@/lib/page';
 import { pendingProposals, planState, projectMembers, projectViewers, type Project } from '@/lib/plan';
 import { lineSplit, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
-import { projectLog, projectTasks } from '@/lib/service';
+import { myTasks, projectLog, projectTasks } from '@/lib/service';
 import { setupState } from '@/lib/setup';
 import { projectFor } from '@/lib/visibility';
 import { fmtStamp, istDate, today } from '@/lib/time';
@@ -22,13 +22,16 @@ import { NotesShelf } from '@/components/NotesShelf';
 import { PersonalTasks } from '@/components/PersonalTasks';
 import { PersonalHeader } from '@/components/PersonalHeader';
 import { getNote, listNotes } from '@/lib/notes';
+import { myFocus } from '@/lib/focus';
+import { PersonalDrawerHost } from '@/components/PersonalDrawer';
+import { PersonalToday } from '@/components/PersonalToday';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const me = await requireMe();
   const { id } = await params;
-  const { d, names, people, projectNames, isLead, isAdmin, readOnly } = await lookups(me);
+  const { d, names, people, projectNames, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
   let p: Project;
   try {
     p = await projectFor(d, me, id); // hidden or on another team reads as missing
@@ -40,22 +43,27 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const active = people.filter((x) => x.active).map((x) => ({ id: x.id, name: x.displayName, role: x.role, department: x.department }));
   // My Personal project (11 Nov): only I reach this page (lib/sight.ts). One view: my tasks on top, my running notes below.
   if (p.personalFor) {
-    // Several named notes (15 Nov): the list, and the first one open.
-    const [tasks, notes] = await Promise.all([projectTasks(d, p.id), listNotes(d, me)]);
+    // Today's 3 (16 Nov): my picks, and my open tasks from any project to pick from (lib/focus.ts). Several notes (15 Nov).
+    const [tasks, notes, focus, mine] = await Promise.all([projectTasks(d, p.id), listNotes(d, me), myFocus(d, me), myTasks(d, me.person.id, me.team.id)]);
     const page = notes.length ? await getNote(d, me, notes[0].id) : null;
     return (
       <>
         <Link className="crumb" href="/projects">← All projects</Link>
         <ReadOnlyProvider readOnly={readOnly}>
+        <PersonalDrawerHost personalIds={tasks.map((x) => x.id)} meId={me.person.id} meName={me.person.displayName} isLead={isLead}
+          people={activeOpts} today={today()} projectNames={projectNames}>
         <div className={`personal-page accent-${p.accent ?? 'orange'}`}>
           <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} goalLabel={p.targetLabel} goalOn={p.launchOn} today={today()} />
+          {focus && <PersonalToday picks={focus.picks} carry={focus.carry} options={[...mine.assigned, ...mine.tasks]} today={today()} meId={me.person.id}
+            meName={me.person.displayName} personalId={p.id} projectNames={projectNames} />}
           {/* Tasks on top unless Settings says notes first (13 Nov). */}
           {(() => {
-            const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} projectNames={projectNames} />;
+            const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} />;
             const n = page ? <NotesShelf key="n" notes={notes} open={page} projectId={p.id} meId={me.person.id} teamId={me.team.id} today={today()} /> : null;
             return p.notesFirst ? <>{n}{t}</> : <>{t}{n}</>;
           })()}
         </div>
+        </PersonalDrawerHost>
         </ReadOnlyProvider>
       </>
     );

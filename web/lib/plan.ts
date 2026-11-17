@@ -640,7 +640,7 @@ export async function myProjects(db: Tx, teamId: string, personId: string, withP
     `SELECT pr.id, CASE WHEN pr.personal_for IS NOT NULL THEN 'Personal 🔒' ELSE pr.name END AS name, pr.owner_id, pr.lead_id, m.project_role, pr.personal_for FROM projects pr
      LEFT JOIN project_members m ON m.project_id = pr.id AND m.person_id = $2
      WHERE pr.team_id = $1 AND pr.archived_at IS NULL AND (pr.owner_id = $2 OR pr.lead_id = $2 OR m.person_id IS NOT NULL) ORDER BY pr.personal_for IS NULL, pr.name`, [teamId, personId]);
-  return rows.filter((r) => withPersonal || !r.personal_for).map((r) => {
+  return rows.filter((r) => !r.personal_for || (withPersonal && r.personal_for === personId)).map((r) => {
     const owner = r.owner_id === personId, lead = (r.lead_id ?? r.owner_id) === personId;
     if (r.personal_for) return { id: r.id, name: r.name, role: '' };
     return { id: r.id, name: r.name, role: owner && lead ? 'Owner and lead' : owner ? 'Owner' : lead ? 'Lead' : r.project_role ?? 'Member' };
@@ -861,6 +861,7 @@ export async function addProjectPeople(db: Db, meId: string, id: string, add: { 
   const p = await getProject(db, id);
   if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if ((await projectAccess(db, p, meId)) === 'view') throw forbidden(VIEW_ONLY);
+  if (p.personalFor) throw bad('invalid_body', 'A Personal project is yours alone. No one else can be added to it.');
   const list = add.map((a) => ({ personId: a.personId, role: a.role.trim() || 'Member' })).filter((a) => a.personId);
   if (list.some((a) => a.role.length < 2 || a.role.length > 60)) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'members');
   await db.transaction(async (tx) => {
@@ -883,6 +884,7 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
   if ((await projectAccess(db, p, meId)) !== 'full') throw forbidden('Only the project owner, its lead or an admin can change these. You can add people.');
   if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
+  if (p.personalFor) throw bad('invalid_body', 'A Personal project is changed in its own Settings.');
   const c = clean(input);
   await db.transaction(async (tx) => {
     // Only people new to the project must be active. Someone deactivated while still on it stays until their tasks move,

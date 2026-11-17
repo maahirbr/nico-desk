@@ -423,6 +423,14 @@ CREATE TABLE personal_files (
 );
 CREATE INDEX personal_files_person ON personal_files (person_id, created_at);
 ALTER TABLE personal_files ENABLE ROW LEVEL SECURITY;
+-- 16 Nov: Today's 3 on someone's Personal page, up to three of their own tasks picked for the day (lib/focus.ts).
+CREATE TABLE personal_focus (
+  person_id   text PRIMARY KEY REFERENCES people(id),
+  team_id     text NOT NULL REFERENCES teams(id),
+  day         date NOT NULL,                          -- the day they were picked (IST)
+  task_ids    text[] NOT NULL CHECK (cardinality(task_ids) <= 3)
+);
+ALTER TABLE personal_focus ENABLE ROW LEVEL SECURITY;
 -- 15 Nov: a member asks the project's owner and lead to archive it, with a reason. One open ask per project. The owner,
 -- the lead or an admin archives (outcome archived) or says Not now (declined); the asker then sees what happened, once.
 CREATE TABLE archive_asks (
@@ -682,6 +690,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   personal_pages: `team_id = ${TEAM}`,
   personal_notes: `team_id = ${TEAM}`,
   personal_files: `team_id = ${TEAM}`,
+  personal_focus: `team_id = ${TEAM}`,
   archive_asks: `team_id = ${TEAM}`,
   events: kindOf('entity_type', 'entity_id'),
   comments: kindOf('subject_kind', 'subject_id'),

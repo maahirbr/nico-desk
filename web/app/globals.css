@@ -2147,3 +2147,25 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .nshelf-trash { margin-top: var(--space-md); padding-top: var(--space-xs); border-top: var(--rule) solid var(--hairline); }
 .nshelf-trash-h { border: 0; background: none; cursor: pointer; display: flex; gap: var(--space-xxs); align-items: baseline; padding: 0; }
 .nshelf-gone { color: var(--late); }
+
+/* Today's 3 on the Personal page (16 Nov): a light band in the page's accent, the picks as task rows with a ✕ to take
+   one off today's list, and a short list to pick from. */
+.ptoday { margin-bottom: var(--space-xl); padding: var(--space-md) var(--card-pad); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface)); display: flex; flex-direction: column; gap: var(--space-sm); }
+.ptoday > .psec-head { margin: 0; }
+.ptoday-date { margin-left: var(--space-xs); font: var(--type-meta); color: var(--ink-3); }
+.ptoday-hint { margin: 0; }
+.ptoday-item { display: flex; align-items: center; gap: var(--space-xxs); padding-right: var(--space-xs); border-top: var(--rule) solid var(--hairline); }
+.ptoday-item:first-child { border-top: 0; }
+.ptoday-item > .trow { flex: 1; min-width: 0; border-top: 0; }
+.ptoday .trow-check input { border-radius: 3px; }
+.ptoday-acts { gap: var(--space-sm); flex-wrap: wrap; }
+.ptoday-clear { margin: 0; font: var(--type-body); color: var(--ink-2); }
+.ptoday-pick { background: var(--surface); border: var(--rule) solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-xxs); }
+.ptoday-pick ul { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow-y: auto; }
+.ptoday-pick li button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: var(--touch-min); padding: var(--space-xs) var(--space-sm);
+  border: 0; border-radius: var(--radius-control); background: none; cursor: pointer; text-align: left; font: var(--type-body); color: var(--ink); transition: background var(--dur-state) var(--ease); }
+.ptoday-pick li button:hover:not(:disabled), .ptoday-pick li button:focus-visible { background: var(--sunk); }
+.ptoday-pick-meta { font: var(--type-small); color: var(--ink-3); }
+.ptoday-pick-meta.late-text { color: var(--late); }
+.ptoday-pick > .linkbtn { display: inline-block; margin: var(--space-xs) var(--space-sm); background: none; border: 0; cursor: pointer; padding: 0; }

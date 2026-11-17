@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
+import { teamAdoption } from '../lib/activity';
 import { addFile, getFile, myPage, restorePage, savePage } from '../lib/notes';
+import { myFocus, setFocus } from '../lib/focus';
 import { flagKeyOf } from '../lib/flags';
-import { myProjects } from '../lib/plan';
+import { addProjectPeople, myProjects } from '../lib/plan';
 import { fmtDate, NO_DATE } from '../lib/time';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
@@ -119,6 +121,40 @@ describe('Personal running notes', () => {
   });
 });
 
+// 13 Nov review: three more paths kept Personal work in view of others.
+describe('Personal work stays private beyond the lists', () => {
+  it('is never listed or handed on when its owner is removed', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const secret = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Private errand', ownerId: ME, dueOn: '2026-10-12', projectId: pid });
+    const team = await s.createTask(db, LEAD, { teamId: TEAM_ID, title: 'Team handover work', ownerId: ME, dueOn: '2026-10-12' });
+    const load = await s.handoffLoad(db, ADMIN, TEAM_ID, ME);
+    expect(load.tasks.map((t) => t.id)).toContain(team.id);
+    expect(load.tasks.some((t) => t.id === secret.id)).toBe(false);
+    expect(load.projects.some((p) => p.id === pid)).toBe(false);
+    await s.removePerson(db, ADMIN, TEAM_ID, ME, OTHER, 'Left the team');
+    expect((await s.getTask(db, secret.id)).ownerId).toBe(ME);
+    expect((await s.getTask(db, team.id)).ownerId).toBe(OTHER);
+    expect(JSON.stringify(await s.handoversForMe(db, OTHER, TEAM_ID))).not.toContain('Private errand');
+  });
+
+  it('shows its due notices to the owner, not to an admin viewing as them', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const t = await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Private due today', ownerId: ME, dueOn: '2026-10-09', projectId: pid });
+    await s.runReminders(db, '2026-10-09');
+    expect((await s.listNotices(db, ME)).some((n) => n.taskId === t.id)).toBe(true);
+    expect((await s.listNotices(db, ME, false, true)).some((n) => n.taskId === t.id)).toBe(false);
+  });
+
+  it('adds nothing to the Activity counts', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const before = (await teamAdoption(db, TEAM_ID)).find((r) => r.id === ME)!;
+    await s.createTask(db, ME, { teamId: TEAM_ID, title: 'Private count check', ownerId: ME, dueOn: '2026-10-12', projectId: pid });
+    const after = (await teamAdoption(db, TEAM_ID)).find((r) => r.id === ME)!;
+    expect(after.changes7).toBe(before.changes7);
+    expect(after.interactions.total).toBe(before.interactions.total);
+  });
+});
+
 describe('Your projects on Home', () => {
   it('puts Personal first, by that name, with no part', async () => {
     await s.ensurePersonalProject(db, TEAM_ID, 'per_cy');
@@ -194,5 +230,75 @@ describe('several named notes (15 Nov)', () => {
     // Deleting every live note leaves one empty "Notes" to write in.
     for (const n of (await listNotes(db, me)).filter((x) => !x.deletedAt)) await deleteNote(db, me, n.id);
     expect((await listNotes(db, me)).filter((n) => !n.deletedAt).map((n) => n.name)).toEqual(['Notes']);
+  });
+});
+
+// 16 Nov review: a Personal project takes no one else, and Home lists only my own.
+describe('a Personal project stays one person\'s', () => {
+  it('refuses new people and never shows on someone else\'s Home', async () => {
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    expect(await code(addProjectPeople(db, ME, pid, [{ personId: OTHER, role: 'Member' }]))).toBe('400 invalid_body');
+    await db.query(`INSERT INTO project_members VALUES ($1,$2,'Member')`, [pid, OTHER]); // as if it got in some other way
+    expect((await myProjects(db, TEAM_ID, OTHER)).some((p) => p.id === pid)).toBe(false);
+    expect((await myProjects(db, TEAM_ID, ME)).some((p) => p.id === pid)).toBe(true);
+  });
+});
+
+
+describe("Today's 3 on Personal", () => {
+  const task = (owner: string, title: string, projectId?: string) =>
+    s.createTask(db, owner, { teamId: TEAM_ID, title, ownerId: owner, dueOn: '2026-10-12', ...(projectId ? { projectId } : {}) });
+  const ids = async (who: Me) => (await myFocus(db, who))!.picks.map((x) => x.id);
+
+  it('takes up to 3 of my own open tasks, from any project, and nothing else', async () => {
+    const me = await meAs(ME);
+    const pid = await s.ensurePersonalProject(db, TEAM_ID, ME);
+    const [a, b, c, d] = [await task(ME, 'Team task one'), await task(ME, 'Team task two'), await task(ME, 'Book a dentist', pid), await task(ME, 'One too many')];
+    await setFocus(db, me, [a.id, b.id, c.id]);
+    expect(await ids(me)).toEqual([a.id, b.id, c.id]);
+    expect(await code(setFocus(db, me, [a.id, b.id, c.id, d.id]))).toBe('400 invalid_body');
+    const theirs = await task(OTHER, 'Not mine');
+    expect(await code(setFocus(db, me, [theirs.id]))).toBe('400 invalid_body');
+    const shut = await s.closeTask(db, ME, d.id, { version: d.version, as: 'done' });
+    expect(await code(setFocus(db, me, [shut.id]))).toBe('400 invalid_body');
+    expect((await myFocus(db, await meAs(OTHER)))!.picks).toEqual([]); // mine are not theirs
+  });
+
+  it('shows nothing and saves nothing while an admin views as me', async () => {
+    const t = await task(ME, 'Private plan');
+    await setFocus(db, await meAs(ME), [t.id]);
+    expect(await myFocus(db, await meAs(ME, true))).toBe(null);
+    expect(await code(setFocus(db, await meAs(ME, true), []))).toBe('403 viewing_as');
+    expect(await ids(await meAs(ME))).toEqual([t.id]);
+  });
+
+  it('keeps a done pick for the day, and drops a pick once it is dropped or handed on', async () => {
+    const me = await meAs(ME);
+    const [a, b, c] = [await task(ME, 'Finish the brief'), await task(ME, 'Drop me'), await task(ME, 'Hand me on')];
+    await setFocus(db, me, [a.id, b.id, c.id]);
+    await s.closeTask(db, ME, a.id, { version: a.version, as: 'done' });
+    await s.closeTask(db, ME, b.id, { version: b.version, as: 'dropped', reason: 'Not needed' });
+    await s.editTask(db, ME, c.id, { version: c.version, ownerId: OTHER });
+    const left = (await myFocus(db, me))!.picks;
+    expect(left.map((x) => [x.id, x.statusCategory])).toEqual([[a.id, 'done']]);
+    expect(await code(setFocus(db, me, [a.id]))).toBe('ok'); // a done pick already in today's list may stay
+  });
+
+  it('starts empty the next day, with my unfinished picks offered to bring back', async () => {
+    const me = await meAs(ME);
+    const [a, b] = [await task(ME, 'Carry me over'), await task(ME, 'Done yesterday')];
+    await setFocus(db, me, [a.id, b.id]);
+    await s.closeTask(db, ME, b.id, { version: b.version, as: 'done' });
+    process.env.NICO_TODAY = '2026-10-10';
+    expect(await myFocus(db, me)).toEqual({ picks: [], carry: [a.id] });
+    await setFocus(db, me, (await myFocus(db, me))!.carry);
+    expect(await ids(me)).toEqual([a.id]);
+  });
+
+  it('leaves my running notes as they were', async () => {
+    const me = await meAs(ME);
+    const t = await task(ME, 'Pick me');
+    await setFocus(db, me, [t.id]);
+    expect((await myPage(db, me))!.updatedAt).toBe(null);
   });
 });

@@ -303,7 +303,14 @@ CREATE TABLE IF NOT EXISTS personal_files (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS personal_files_person ON personal_files (person_id, created_at);
-ALTER TABLE personal_files ENABLE ROW LEVEL SECURITY;`;
+ALTER TABLE personal_files ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS personal_focus (
+  person_id   text PRIMARY KEY REFERENCES people(id),
+  team_id     text NOT NULL REFERENCES teams(id),
+  day         date NOT NULL,                          -- the day they were picked (IST)
+  task_ids    text[] NOT NULL CHECK (cardinality(task_ids) <= 3)
+);
+ALTER TABLE personal_focus ENABLE ROW LEVEL SECURITY;`;
 
 // Idempotent: why and when someone was removed, and the handovers table (RLS on). The same SQL as lib/schema.ts.
 export const HANDOVER_UPGRADE = `
