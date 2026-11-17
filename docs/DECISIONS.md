@@ -1930,3 +1930,13 @@ single page becomes their first note, "Notes", so nothing is lost; the old table
 - A save that names no note (anything older that still calls /api/v1/me/notes) goes to the first note made.
 NEW TABLE: run `npm run db:upgrade` on the hosted database before a build with this is promoted.
 Rollback: git revert the commit. The old personal_pages rows are untouched, so going back loses only notes written since.
+
+## 2026-11-17 · Opus 5.5 · Merged and deployed several notes in Personal with Today's 3
+
+The repo owner asked to merge the PM's 16 Nov notes push and deploy it before the leads' presentation. Both pushes
+changed the Personal page, so the merge keeps both: the Today band on top, and the notes list (`NotesShelf`) in place of
+the single notes page. Today's notes still adds today's heading to the open note. Typecheck, 946 tests, evals and build
+green; checked in the browser at desktop and 375px. Backup taken, `npm run db:upgrade` run on the hosted database
+(`personal_notes` has RLS, `deny_public_api` and `team_fence`), then deployed.
+Rollback: `vercel promote nico-desk-jn3zli2t2-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The
+`personal_notes` table can stay: the older build does not read it, and `personal_pages` was not changed.
