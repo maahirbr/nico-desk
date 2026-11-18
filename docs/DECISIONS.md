@@ -1953,3 +1953,9 @@ the role box at once, and it stays editable. A plain "Member" shows as the job t
 On the server an empty role takes the job title, else "Member" (`createProject`, `updateProject`, `addProjectPeople`,
 `joinProject`, via `jobTitleOf` in `lib/service.ts`).
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Today's 3 parked off the Personal page
+
+The PM's call: keep Personal simple for now. The "Pick up to 3 of your tasks to focus on today" block no longer shows.
+`lib/focus.ts` and `components/PersonalToday.tsx` stay, so it can come back.
+Rollback: git revert the commit.

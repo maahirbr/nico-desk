@@ -8,7 +8,7 @@ import { lookups } from '@/lib/page';
 import { pendingProposals, planState, projectMembers, projectViewers, type Project } from '@/lib/plan';
 import { lineSplit, taskSplit } from '@/lib/progress';
 import { ReadOnlyProvider } from '@/components/readonly';
-import { myTasks, projectLog, projectTasks } from '@/lib/service';
+import { projectLog, projectTasks } from '@/lib/service';
 import { setupState } from '@/lib/setup';
 import { projectFor } from '@/lib/visibility';
 import { fmtStamp, istDate, today } from '@/lib/time';
@@ -22,9 +22,7 @@ import { NotesShelf } from '@/components/NotesShelf';
 import { PersonalTasks } from '@/components/PersonalTasks';
 import { PersonalHeader } from '@/components/PersonalHeader';
 import { getNote, listNotes } from '@/lib/notes';
-import { myFocus } from '@/lib/focus';
 import { PersonalDrawerHost } from '@/components/PersonalDrawer';
-import { PersonalToday } from '@/components/PersonalToday';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,8 +41,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const active = people.filter((x) => x.active).map((x) => ({ id: x.id, name: x.displayName, role: x.role, department: x.department }));
   // My Personal project (11 Nov): only I reach this page (lib/sight.ts). One view: my tasks on top, my running notes below.
   if (p.personalFor) {
-    // Today's 3 (16 Nov): my picks, and my open tasks from any project to pick from (lib/focus.ts). Several notes (15 Nov).
-    const [tasks, notes, focus, mine] = await Promise.all([projectTasks(d, p.id), listNotes(d, me), myFocus(d, me), myTasks(d, me.person.id, me.team.id)]);
+    // Several notes (15 Nov). Today's 3 (16 Nov, lib/focus.ts) is parked off this page (18 Nov, the PM's call: keep it simple).
+    const [tasks, notes] = await Promise.all([projectTasks(d, p.id), listNotes(d, me)]);
     const page = notes.length ? await getNote(d, me, notes[0].id) : null;
     return (
       <>
@@ -54,8 +52,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           people={activeOpts} today={today()} projectNames={projectNames}>
         <div className={`personal-page accent-${p.accent ?? 'orange'}`}>
           <PersonalHeader description={p.intro} accent={p.accent} notesFirst={p.notesFirst} goalLabel={p.targetLabel} goalOn={p.launchOn} today={today()} />
-          {focus && <PersonalToday picks={focus.picks} carry={focus.carry} options={[...mine.assigned, ...mine.tasks]} today={today()} meId={me.person.id}
-            meName={me.person.displayName} personalId={p.id} projectNames={projectNames} />}
           {/* Tasks on top unless Settings says notes first (13 Nov). */}
           {(() => {
             const t = <PersonalTasks key="t" tasks={tasks} projectId={p.id} teamId={me.team.id} meId={me.person.id} meName={me.person.displayName} today={today()} />;
