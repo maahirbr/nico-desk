@@ -1940,3 +1940,18 @@ green; checked in the browser at desktop and 375px. Backup taken, `npm run db:up
 (`personal_notes` has RLS, `deny_public_api` and `team_fence`), then deployed.
 Rollback: `vercel promote nico-desk-jn3zli2t2-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The
 `personal_notes` table can stay: the older build does not read it, and `personal_pages` was not changed.
+
+## 2026-11-17 · Opus 5.5 · Roster: filter by access
+
+The PM's call: a dropdown left of "Find a person" on the Roster (All, Admin, Leadership, Member) shows one access at a
+time, together with the find box. Admins only, as only admins see access on the Roster. It hides rows on the page
+(each row's data-role); nothing is fetched.
+Rollback: git revert the commit.
+
+## 2026-11-17 · Opus 5.5 · Who reopens a task
+
+The PM's call: a Done or Dropped task can be reopened by the project's owner, the project's lead, the task's own owner,
+and an admin (an admin has every right a project lead has). Not Leadership, not anyone else on the project. A reopen
+takes a short reason, except on one's own Personal task. So the owner now also gets Undo after marking a task Done.
+`lib/service.ts reopenTask`, `components/statusRules.ts canMoveTo`, `lib/undo.ts canUndo`.
+Rollback: git revert the commit.

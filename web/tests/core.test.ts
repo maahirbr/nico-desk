@@ -168,13 +168,19 @@ describe('roles and mirrors', () => {
     expect(await code(s.addUpdate(db, LEAD, m.id, 'hello'))).toBe('403 read_only_mirror');
   });
 
-  it('needs a reason to drop, and only a lead reopens (FR-7)', async () => {
+  it('needs a reason to drop; the owner reopens with a reason, a plain teammate cannot (17 Nov)', async () => {
     const t = await openAppTask();
     expect(await code(s.closeTask(db, t.ownerId, t.id, { version: t.version, as: 'dropped' }))).toBe('400 reason_required');
     const d = await s.closeTask(db, t.ownerId, t.id, { version: t.version, as: 'done' });
     expect(d.statusCategory).toBe('done');
-    expect(await code(s.reopenTask(db, t.ownerId, t.id, { version: d.version, reason: 'Found a mistake in it.' }))).toBe('403 not_allowed');
-    const o = await s.reopenTask(db, LEAD, t.id, { version: d.version, reason: 'Found a mistake in it.' });
+    // Someone who is not the owner, not the project's owner or lead, and not an admin may not reopen it.
+    const { rows: [x] } = await db.query<{ id: string }>(
+      `SELECT p.id FROM people p JOIN team_members m ON m.person_id = p.id AND m.team_id = $1 WHERE p.active AND p.id <> $2
+         AND NOT EXISTS (SELECT 1 FROM team_members a WHERE a.person_id = p.id AND a.app_role = 'admin')
+         AND NOT EXISTS (SELECT 1 FROM projects pr WHERE pr.id = $3 AND (pr.owner_id = p.id OR pr.lead_id = p.id)) LIMIT 1`, [TEAM_ID, t.ownerId, t.projectId]);
+    expect(await code(s.reopenTask(db, x.id, t.id, { version: d.version, reason: 'Found a mistake in it.' }))).toBe('403 not_allowed');
+    expect(await code(s.reopenTask(db, t.ownerId, t.id, { version: d.version, reason: ' ' }))).toBe('400 reason_required');
+    const o = await s.reopenTask(db, t.ownerId, t.id, { version: d.version, reason: 'Found a mistake in it.' });
     expect([o.statusCategory, o.closedAt]).toEqual(['open', null]);
   });
 

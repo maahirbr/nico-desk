@@ -534,7 +534,10 @@ export async function reopenTask(db: Db, meId: string, id: string, input: { vers
     const { rows: [pp] } = row.project_id ? await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [row.project_id]) : { rows: [] as { personal_for: string | null }[] };
     const personal = !!pp?.personal_for && pp.personal_for === meId && row.owner_id === meId;
     const head = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [row.project_id, meId])).rows.length > 0 : false;
-    if (!personal && !head && !isLeadOrAdmin(roles)) throw forbidden('Only a lead, or the project’s owner or lead, can reopen a task.');
+    // Who reopens (17 Nov, the PM's call): the project's owner or lead, the task's own owner, or an admin. Not Leadership,
+    // not anyone else on the project.
+    const owner = row.owner_id === meId;
+    if (!personal && !head && !owner && !roles.has('admin')) throw forbidden('Only the task’s owner, or the project’s owner or lead, can reopen it.');
     const reason = personal ? (input.reason?.trim() || 'Reopened') : needReason(input.reason);
     if (row.version !== input.version) throw new ApiError(409, 'version_conflict', 'Someone changed this task. Reload and try again.');
     if (row.status_category === 'open') throw bad('invalid_body', 'The task is already open.');

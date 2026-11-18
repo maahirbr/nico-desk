@@ -23,8 +23,8 @@ export function canUndo(before: UndoSnap, fields: UndoField[], who: { meId: stri
   if (before.readOnly || fields.length === 0) return false;
   const owns = before.ownerId === who.meId;
   for (const f of fields) {
-    // Undoing a close is a reopen, which only a lead or admin may do. A plain owner gets no Undo.
-    if (f === 'category' && before.statusCategory === 'open' && !who.isLead) return false;
+    // Undoing a close is a reopen: the task's owner may (since 17 Nov), as may a lead or admin.
+    if (f === 'category' && before.statusCategory === 'open' && !(owns || who.isLead)) return false;
     // Putting a block back is a new block, which only the owner or a lead may make.
     if (f === 'blocked' && before.blocked && !(owns || who.isLead)) return false;
     // Only not started and in progress can be set; any other stored health has no inverse.
