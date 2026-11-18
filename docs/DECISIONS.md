@@ -1966,3 +1966,11 @@ title, is replaced. A title longer than 60 characters is clipped to the 60 a rol
 the job title rides on the people lists the pages already send (`Opt.role`, as the Team and project pages already did), and `roleFor` in
 `components/OwnerPicker.tsx` holds the rule. Three tests in `tests/rolefor.test.ts`.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Deployed the PM's 17 Nov push and the role auto-fill
+
+The repo owner asked to push and deploy `maahir/mvp`: the Roster access filter and the task owner's reopen (the PM's
+17 Nov push, merged as `dce8745`), and a new project role starting as the job title (`5308390`). No schema change, so no
+`db:upgrade`. Typecheck, 949 tests, evals and build green (9 tests that timed out on a busy machine passed on rerun).
+`maahir/mvp` is still on Next 16.4.3, the version the build warns about; the 16.4.6 fix sits on `fable/cleanup-motion-pass`.
+Rollback: `vercel promote nico-desk-yu0w9ilf3-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
