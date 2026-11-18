@@ -1989,3 +1989,15 @@ The PM and the repo owner built the same change in parallel (the entries above).
 also fills an empty role on the server and shows an old "Member" as the job title, and keeps the one client rule in
 `roleFor` (`components/OwnerPicker.tsx`), so both pickers share it and a title is clipped to 60 characters.
 Rollback: git revert the merge commit with `-m 1`.
+
+## 2026-11-18 · Opus 5.5 · Next.js 16.4.3 to 16.4.5, pinned
+
+A build on 18 Nov stopped once with "Your version of Next.js is affected by a known security vulnerability". Two moderate
+advisories cover 16.4.3: GHSA-mfr8-8qww-v76h (CVE-2026-119790, `'use cache'` called through `unstable_cache()` leaks
+across root params) and GHSA-vc7v-qv4w-wrv8 (CVE-2026-119351, nested `'use cache'` leaks across root param values). Both
+are fixed first in 16.4.5. The app uses neither `'use cache'` nor `unstable_cache`, so the real exposure was low. At the
+repo owner's yes, `next` is pinned to exactly 16.4.5, the smallest fixed patch, so a later patch never installs unseen.
+`eslint-config-next` is not a dependency on this branch. `fable/cleanup-motion-pass` (not merged) sets `^16.4.6`, so a
+merge of that branch will conflict in `web/package.json` and the lockfile: keep one version there.
+Typecheck, 950 tests, evals and build green, with no security stop.
+Rollback: git revert the commit, then `npm install` in `web/`.
