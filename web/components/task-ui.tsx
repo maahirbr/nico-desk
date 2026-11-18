@@ -44,7 +44,7 @@ import { Fold, FoldChev } from './Fold';
 // Shared pieces for the calm task views: one status word per task, a one-line row, a side
 // panel with everything else, and a plain pop-up. Every change still goes through /api/v1.
 
-// role: the person's job title from the Roster, used to fill their project role when they join a project (18 Nov).
+// role (17 Nov): their Roster job title, which a new project role starts from.
 export type Opt = { id: string; name: string; role?: string };
 
 // ---------- status: one word per task, picked by a person ----------

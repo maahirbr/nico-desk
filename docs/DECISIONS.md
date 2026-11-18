@@ -1974,3 +1974,18 @@ The repo owner asked to push and deploy `maahir/mvp`: the Roster access filter a
 `db:upgrade`. Typecheck, 949 tests, evals and build green (9 tests that timed out on a busy machine passed on rerun).
 `maahir/mvp` is still on Next 16.4.3, the version the build warns about; the 16.4.6 fix sits on `fable/cleanup-motion-pass`.
 Rollback: `vercel promote nico-desk-yu0w9ilf3-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
+## 2026-11-18 · Opus 5.5 · A project role starts as the Roster job title
+
+The PM's call: picking a person for a project (Settings, or + Add someone in a task) fills their Roster job title into
+the role box at once, and it stays editable. A plain "Member" shows as the job title in Settings and the project header.
+On the server an empty role takes the job title, else "Member" (`createProject`, `updateProject`, `addProjectPeople`,
+`joinProject`, via `jobTitleOf` in `lib/service.ts`).
+Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Merged the PM's role auto-fill with the repo owner's
+
+The PM and the repo owner built the same change in parallel (the entries above). The merge keeps the PM's version, which
+also fills an empty role on the server and shows an old "Member" as the job title, and keeps the one client rule in
+`roleFor` (`components/OwnerPicker.tsx`), so both pickers share it and a title is clipped to 60 characters.
+Rollback: git revert the merge commit with `-m 1`.

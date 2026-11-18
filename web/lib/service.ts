@@ -330,6 +330,13 @@ export type CreateInput = { teamId: string; title: string; description?: string 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
 // Anyone on the project may bring someone new in (15 Nov: members may add people, as in Settings); a viewer may not.
+// A person's Roster job title, for a project role left empty (17 Nov); "Member" for someone with none.
+export async function jobTitleOf(db: Tx, personId: string): Promise<string> {
+  const { rows: [r] } = await db.query<{ role: string | null }>(`SELECT role FROM people WHERE id = $1`, [personId]);
+  const t = (r?.role ?? '').trim();
+  return t.length >= 2 ? t.slice(0, 60) : 'Member';
+}
+
 async function joinProject(tx: Tx, projectId: string, personId: string, role: string | undefined, meId: string, isLead: boolean): Promise<void> {
   const { rows } = await tx.query<{ owner_id: string; lead_id: string | null; member: boolean }>(
     `SELECT owner_id, lead_id, EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2) AS member FROM projects WHERE id = $1`,
@@ -340,7 +347,8 @@ async function joinProject(tx: Tx, projectId: string, personId: string, role: st
   if (p.owner_id !== personId && p.lead_id !== personId && p.owner_id !== meId && p.lead_id !== meId && !meOn && !isLead) {
     throw forbidden('Only someone on this project can add someone new to it. Pick one of its people.');
   }
-  const r = role === undefined ? 'Member' : role.trim();
+  // No role given (minutes, imports, or left empty): their Roster job title (17 Nov), else Member.
+  const r = role === undefined || !role.trim() ? await jobTitleOf(tx, personId) : role.trim();
   if (r.length < 2 || r.length > 60) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'ownerRole');
   await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3) ON CONFLICT (project_id, person_id) DO NOTHING`, [projectId, personId, r]);
 }

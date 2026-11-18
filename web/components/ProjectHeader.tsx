@@ -83,7 +83,7 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
       <PersonLink id={p.ownerId} className="tm"><Avatar id={p.ownerId} name={names[p.ownerId] ?? '?'} /><span><b>{names[p.ownerId]}</b><span className="dim">{p.leadId === p.ownerId ? <><Help term="project_owner">Project owner</Help> and <Help term="project_lead">lead</Help></> : <Help term="project_owner">Project owner</Help>}</span></span></PersonLink>
       {p.leadId !== p.ownerId && <PersonLink id={p.leadId} className="tm"><Avatar id={p.leadId} name={names[p.leadId] ?? '?'} /><span><b>{names[p.leadId]}</b><span className="dim"><Help term="project_lead">Project lead</Help></span></span></PersonLink>}
       {membersExceptLead(membersExceptLead(members, p.ownerId), p.leadId).map((m) => (
-        <PersonLink key={m.personId} id={m.personId} className="tm"><Avatar id={m.personId} name={names[m.personId] ?? '?'} /><span><b>{names[m.personId]}</b><span className="dim">{m.role}</span></span></PersonLink>
+        <PersonLink key={m.personId} id={m.personId} className="tm"><Avatar id={m.personId} name={names[m.personId] ?? '?'} /><span><b>{names[m.personId]}</b><span className="dim">{m.role === 'Member' ? (people.find((x) => x.id === m.personId)?.role || m.role) : m.role}</span></span></PersonLink>
       ))}
     </>
   );

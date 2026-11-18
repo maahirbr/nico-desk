@@ -14,7 +14,7 @@ export function ProjectPeopleProvider({ value, mayAddTo, children }: { value: Re
   return <ProjectPeople.Provider value={value}><MayAddTo.Provider value={mayAddTo}>{children}</MayAddTo.Provider></ProjectPeople.Provider>;
 }
 
-type Opt = { id: string; name: string; role?: string }; // role: the job title from the Roster
+type Opt = { id: string; name: string; role?: string }; // role: their Roster job title (17 Nov)
 const ADD = '__add';
 
 // The role someone joins a project with starts as their job title from the Roster (18 Nov, a pilot teammate's
@@ -50,6 +50,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   if (adding) {
     return (
       <div className="owner-add">
+        {/* Picking someone fills their role with their Roster job title (17 Nov), unless one was typed; it can be changed. */}
         <Select value={pick} aria-label="Person to add to the project" onChange={(v) => { const r = roleFor(people, role, pick, v); setPick(v); setRole(r); onChange(v, r); }}>
           <option value="" disabled>Choose a person</option>
           {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
