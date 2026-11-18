@@ -6,6 +6,7 @@ import { DateField } from './DateField';
 import { Fold, FoldChev } from './Fold';
 import { focusOnDesktop } from './motion';
 import { Select } from './Select';
+import { roleFor } from './OwnerPicker';
 import { SHOW_SETUP_EVENT, setupKey } from './setupEvents';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
@@ -191,7 +192,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
         {f.members.map((m, i) => (
           <fieldset key={i} className="pform-plain" disabled={access === 'view' || (lock && i < firstN)}>
           <div className="member-row">
-            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v } : x)))}>
+            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v, role: roleFor(people, x.role, x.personId, v) } : x)))}>
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>

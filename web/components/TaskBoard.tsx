@@ -417,7 +417,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
       })()}
 
       {openId && (
-        <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name }))} workstreams={wsList}
+        <TaskDrawer key={`${openId}-${startStatus ?? ''}`} startStatus={startStatus} id={openId} meId={meId} isLead={isLead} people={people.map((p) => ({ id: p.id, name: p.name, role: p.role }))} workstreams={wsList}
           projectNames={projectNames} today={today} onClose={() => setOpenId(null)} />
       )}
     </>

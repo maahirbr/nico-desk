@@ -1955,3 +1955,14 @@ and an admin (an admin has every right a project lead has). Not Leadership, not 
 takes a short reason, except on one's own Personal task. So the owner now also gets Undo after marking a task Done.
 `lib/service.ts reopenTask`, `components/statusRules.ts canMoveTo`, `lib/undo.ts canUndo`.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · A new project role starts as the job title
+
+From a pilot teammate's feedback note (18 Nov): giving everyone a project-specific role by hand is slow. The repo owner
+asked to build it. When someone is picked to join a project (a Team Members row in the project form, or "+ Add someone
+to this project" in a task's owner picker), their role box fills with their job title from the Roster. It stays
+editable. A role the person typed is kept if they then pick someone else; only an empty role, or the previous person's
+title, is replaced. A title longer than 60 characters is clipped to the 60 a role may hold. No server or schema change:
+the job title rides on the people lists the pages already send (`Opt.role`, as the Team and project pages already did), and `roleFor` in
+`components/OwnerPicker.tsx` holds the rule. Three tests in `tests/rolefor.test.ts`.
+Rollback: git revert the commit.

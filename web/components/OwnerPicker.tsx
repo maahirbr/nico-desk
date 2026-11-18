@@ -14,8 +14,16 @@ export function ProjectPeopleProvider({ value, mayAddTo, children }: { value: Re
   return <ProjectPeople.Provider value={value}><MayAddTo.Provider value={mayAddTo}>{children}</MayAddTo.Provider></ProjectPeople.Provider>;
 }
 
-type Opt = { id: string; name: string };
+type Opt = { id: string; name: string; role?: string }; // role: the job title from the Roster
 const ADD = '__add';
+
+// The role someone joins a project with starts as their job title from the Roster (18 Nov, a pilot teammate's
+// feedback: typing a role for everyone was slow). It stays editable. A role the person typed is kept when they pick
+// someone else; only an empty role, or the last person's title, is replaced. Clipped to the 60 a role may hold.
+export function roleFor(people: Opt[], role: string, fromId: string, toId: string): string {
+  const title = (id: string) => (people.find((p) => p.id === id)?.role ?? '').trim().slice(0, 60);
+  return !role.trim() || role === title(fromId) ? title(toId) : role;
+}
 
 // onChange gets the owner, and a role when that person is joining the project (empty until typed).
 export function OwnerPicker({ projectId, value, onChange, people, disabled = false }: {
@@ -42,7 +50,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   if (adding) {
     return (
       <div className="owner-add">
-        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => { setPick(v); onChange(v, role); }}>
+        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => { const r = roleFor(people, role, pick, v); setPick(v); setRole(r); onChange(v, r); }}>
           <option value="" disabled>Choose a person</option>
           {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>
