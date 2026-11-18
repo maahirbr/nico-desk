@@ -1959,3 +1959,9 @@ Rollback: git revert the commit.
 The PM's call: keep Personal simple for now. The "Pick up to 3 of your tasks to focus on today" block no longer shows.
 `lib/focus.ts` and `components/PersonalToday.tsx` stay, so it can come back.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · The welcome card comes first on Home
+
+The PM's call: in someone's first 7 days, the welcome card sits above What's new and the feedback ask. Who sees it is
+unchanged. `components/HomeView.tsx`.
+Rollback: git revert the commit.

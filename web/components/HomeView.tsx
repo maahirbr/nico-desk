@@ -147,11 +147,12 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         {!readOnly && <button className="btn head-new" onClick={() => setAdding(true)}>+ New task</button>}
       </header>
 
+      {/* The welcome comes first, above What's new and the feedback ask (18 Nov, the PM's call). */}
+      {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
+
       {news && <NewsCard n={news} />}
 
       {feedbackAsk && <FeedbackAskCard ask={feedbackAsk} today={today} firstName={greeting.split(', ').pop() ?? ''} />}
-
-      {welcome && <WelcomeCard w={welcome} meId={meId} onOpenTask={(id) => open(id)} />}
 
       <ArchiveAsksCard asks={archiveAsks} news={archiveNews} />
 
