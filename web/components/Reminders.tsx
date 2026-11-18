@@ -29,7 +29,8 @@ async function record(personId: string, channel: string, subject: string, itemKe
   }).catch(() => {});
 }
 
-export type SendState = { enabled: boolean; connected: boolean; from: string };
+// enabled: Gmail send is on. resend: the From line when Resend sends for a lead without Gmail (18 Nov), else null.
+export type SendState = { enabled: boolean; connected: boolean; from: string; resend?: string | null };
 
 const list = (s: string) => s.split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean);
 
@@ -125,6 +126,8 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
   };
   const none = on.size === 0;
   const can = !!to && !none;
+  const viaResend = !send.connected && !!send.resend; // a connected Gmail wins, as on the server
+  const canSend = send.connected || viaResend;
   const extra = (k: string, v: string) => (list(v).length ? `&${k}=${encodeURIComponent(list(v).join(','))}` : '');
   const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}${extra('cc', cc)}${extra('bcc', bcc)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}${extra('cc', cc)}${extra('bcc', bcc)}&body=${encodeURIComponent(body)}`;
@@ -158,7 +161,8 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
           </li>
         ))}
       </ul>
-      <p className="small remind-from"><span className="dim">From</span> {send.from}</p>
+      <p className="small remind-from"><span className="dim">From</span> {viaResend ? <>{send.resend} <span className="dim">· replies come to you</span></> : send.from}
+        {viaResend && send.enabled && !readOnly && <> <button type="button" className="linkbtn" onClick={() => connectGmail(setSaid)}>Send from your Gmail instead</button></>}</p>
       <div className="remind-to">
         <label className="f"><span>To</span><input type="text" inputMode="email" value={to} readOnly={readOnly} placeholder="No email on file. Add one, or copy the text instead" onChange={(e) => { setTo(e.target.value); setSent(false); }} /></label>
         {!readOnly && !copies && <button type="button" className="linkbtn" onClick={() => setCopies(true)}>Cc / Bcc</button>}
@@ -171,10 +175,10 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
       <div className="f"><span>Email</span>
         <RichText key={seed.n} initial={seed.html} label="Email" readOnly={readOnly} onChange={(h, t) => { setHtml(h); setBody(t); }} /></div>
       {!readOnly && <div className="row remind-actions">
-        {send.enabled && (send.connected
-          ? <Help term="remind_send" host><button className="btn" disabled={!can || busy || sent} onClick={sendNow}>{sent ? 'Sent' : busy ? 'Sending…' : 'Send'}</button></Help>
+        {(send.enabled || viaResend) && (canSend
+          ? <Help term={viaResend ? 'remind_send_resend' : 'remind_send'} host><button className="btn" disabled={!can || busy || sent} onClick={sendNow}>{sent ? 'Sent' : busy ? 'Sending…' : 'Send'}</button></Help>
           : <Help term="remind_send" host><button className="btn" onClick={() => connectGmail(setSaid)}>Connect Gmail to send</button></Help>)}
-        <Help term="remind_gmail" host><a className={`btn${send.enabled ? ' ghost' : ''}${can ? '' : ' disabled'}`} href={can ? gmail : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!can}
+        <Help term="remind_gmail" host><a className={`btn${send.enabled || viaResend ? ' ghost' : ''}${can ? '' : ' disabled'}`} href={can ? gmail : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!can}
           onClick={(e) => { if (!can) { e.preventDefault(); return; } mark('gmail'); setSaid('Opened in Gmail. Check it and press Send there.'); }}>Open in Gmail</a></Help>
         <Help term="remind_mail" host><a className={`btn ghost${can ? '' : ' disabled'}`} href={can ? mailto : undefined} aria-disabled={!can}
           onClick={(e) => { if (!can) { e.preventDefault(); return; } mark('mail_app'); setSaid('Opened in your mail app.'); }}>Mail app</a></Help>

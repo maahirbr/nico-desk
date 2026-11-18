@@ -1955,3 +1955,20 @@ and an admin (an admin has every right a project lead has). Not Leadership, not 
 takes a short reason, except on one's own Personal task. So the owner now also gets Undo after marking a task Done.
 `lib/service.ts reopenTask`, `components/statusRules.ts canMoveTo`, `lib/undo.ts canUndo`.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Reminders can be sent through Resend when Gmail is not connected
+
+The repo owner's call, with their yes on 18 Nov: the company's Resend team (its domain already verified, so no DNS work)
+is a second way to send a reminder. A lead who has not connected Gmail can press Send, and the email goes through
+Resend from one company sender (`NICO_RESEND_FROM`), named "<lead> via nico-desk", with Reply-To set to the lead's own
+address. A lead with Gmail connected still sends from their own Gmail; the server picks Gmail first. This widens
+"Nothing else sends": a reminder can now leave from a company address, not only from the lead's mailbox. The rule that
+nothing is sent without the sender's yes still holds: only the lead's press of Send sends, only to the addresses they
+typed, and View as refuses it. The From line names the company sender before Send, and "Send from your Gmail instead"
+stays one click away. The name in From keeps only letters, digits, spaces, dots, apostrophes and hyphens; the HTML goes
+through the same `cleanHtml` as Gmail. Resend's 401 or 403 (wrong key or sender) reads "Tell an admin"; 422 reads
+"Check the addresses". Logged as `sent`, so no schema change. Off unless `NICO_RESEND_SEND=1`, `RESEND_API_KEY` and a
+plain `NICO_RESEND_FROM` are set; the key lives only in `web/.env.local` and Vercel env vars. These emails go out under
+the company's domain and count towards its sending reputation. `lib/resendSend.ts`, `app/api/v1/reminders/send/route.ts`,
+tests in `tests/resendSend.test.ts`. Steps in `web/README.md` Hosting.
+Rollback: unset `NICO_RESEND_SEND` (Send goes back to Gmail only), then git revert the commit.
