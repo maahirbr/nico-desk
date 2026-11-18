@@ -1989,3 +1989,10 @@ The PM and the repo owner built the same change in parallel (the entries above).
 also fills an empty role on the server and shows an old "Member" as the job title, and keeps the one client rule in
 `roleFor` (`components/OwnerPicker.tsx`), so both pickers share it and a title is clipped to 60 characters.
 Rollback: git revert the merge commit with `-m 1`.
+
+## 2026-11-18 · Opus 5.5 · Deployed the merged role auto-fill
+
+The repo owner asked to push and deploy the merge of the PM's role auto-fill (`8208029`): an empty project role takes
+the Roster job title on the server too, and an old "Member" shows as the job title. No schema change, so no
+`db:upgrade`. Typecheck, 950 tests and build green.
+Rollback: `vercel promote nico-desk-3n76upevm-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
