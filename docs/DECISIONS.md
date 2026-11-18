@@ -2008,3 +2008,10 @@ Rollback: git revert the commit.
 The PM's call: in someone's first 7 days, the welcome card sits above What's new and the feedback ask. Who sees it is
 unchanged. `components/HomeView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Deployed the PM's afternoon push
+
+The repo owner asked to push and deploy the merge of the PM's two 18 Nov afternoon commits (`49bfdd7`): Today's 3 parked
+off the Personal page, and the welcome card first on Home. No schema change, so no `db:upgrade`. Typecheck, 950 tests and
+build green.
+Rollback: `vercel promote nico-desk-kjen0wevk-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
