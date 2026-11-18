@@ -27,7 +27,7 @@ export async function lookups(me: Me) {
     names: Object.fromEntries(people.map((p) => [p.id, p.active ? p.displayName : `${p.displayName} (inactive)`])) as Record<string, string>,
     // A Personal project is stored under a unique name; it shows as "Personal".
     projectNames: Object.fromEntries(projects.map((p) => [p.id, p.personalFor ? PERSONAL_NAME : p.name])) as Record<string, string>,
-    activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName })),
+    activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName, role: p.role })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),
     // View as (15 Nov, option B): controls show as the viewed person sees them; components/ViewAsGuard.tsx stops the

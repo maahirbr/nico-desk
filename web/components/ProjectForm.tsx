@@ -65,7 +65,10 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
     window.dispatchEvent(new Event(SHOW_SETUP_EVENT));
     notify('The setup list is back on the project page');
   };
-  const [f, setF] = useState<ProjectValues>(initial ? { ...initial, targetLabel: initial.targetLabel === 'Deadline' ? 'Due Date' : initial.targetLabel } : {
+  // A plain "Member" (the old default) opens as the person's Roster job title (18 Nov, the PM's call), still editable;
+  // saving keeps it.
+  const titled = (ms: ProjectValues['members']) => ms.map((m) => (m.role.trim() === 'Member' && people.find((p) => p.id === m.personId)?.role ? { ...m, role: people.find((p) => p.id === m.personId)!.role! } : m));
+  const [f, setF] = useState<ProjectValues>(initial ? { ...initial, members: titled(initial.members), targetLabel: initial.targetLabel === 'Deadline' ? 'Due Date' : initial.targetLabel } : {
     name: '', kind: 'tasks', ownerId: meId, leadId: meId, goal: '', eyebrow: '', phase: '', launchOn: '', targetLabel: 'Due Date',
     workstreams: [], members: [], partnerName: '', partnerPeople: [], viewers: [],
   });
@@ -191,7 +194,13 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
         {f.members.map((m, i) => (
           <fieldset key={i} className="pform-plain" disabled={access === 'view' || (lock && i < firstN)}>
           <div className="member-row">
-            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v } : x)))}>
+            {/* Picking someone fills their role with their Roster job title (17 Nov), unless a role was typed; it can be changed. */}
+            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => {
+              if (j !== i) return x;
+              const was = people.find((p) => p.id === x.personId)?.role ?? '';
+              const typed = x.role.trim() && x.role !== was;
+              return { ...x, personId: v, role: typed ? x.role : (people.find((p) => p.id === v)?.role ?? '') };
+            }))}>
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>

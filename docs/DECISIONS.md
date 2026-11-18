@@ -1945,3 +1945,11 @@ and an admin (an admin has every right a project lead has). Not Leadership, not 
 takes a short reason, except on one's own Personal task. So the owner now also gets Undo after marking a task Done.
 `lib/service.ts reopenTask`, `components/statusRules.ts canMoveTo`, `lib/undo.ts canUndo`.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · A project role starts as the Roster job title
+
+The PM's call: picking a person for a project (Settings, or + Add someone in a task) fills their Roster job title into
+the role box at once, and it stays editable. A plain "Member" shows as the job title in Settings and the project header.
+On the server an empty role takes the job title, else "Member" (`createProject`, `updateProject`, `addProjectPeople`,
+`joinProject`, via `jobTitleOf` in `lib/service.ts`).
+Rollback: git revert the commit.

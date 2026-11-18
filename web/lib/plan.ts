@@ -2,7 +2,7 @@ import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
 import { isViewOnly, VIEW_ONLY } from './sight';
-import { createTask, dropOpenTasks, newId, teamTasks } from './service';
+import { createTask, dropOpenTasks, jobTitleOf, newId, teamTasks } from './service';
 import { lineSplit, taskSplit, type StatusSplit } from './progress';
 import { modelOn } from './model';
 import { today as todayIst } from './time';
@@ -711,12 +711,22 @@ async function rolesOf(tx: Tx, teamId: string, personId: string): Promise<Set<st
   return new Set(rows.map((r) => r.app_role));
 }
 
+// A person's project role starts as their Roster job title (17 Nov, the PM's call): an empty role takes it (or "Member"
+// for someone with none), and it can be changed for the project in Settings.
+async function withJobTitles(db: Tx, input: ProjectInput): Promise<ProjectInput> {
+  const blank = input.members.filter((m) => m.personId && !m.role.trim()).map((m) => m.personId);
+  if (!blank.length) return input;
+  const { rows } = await db.query<{ id: string; role: string | null }>(`SELECT id, role FROM people WHERE id = ANY($1::text[])`, [blank]);
+  const title = new Map(rows.map((r) => [r.id, (r.role ?? '').trim()]));
+  return { ...input, members: input.members.map((m) => (m.personId && !m.role.trim() ? { ...m, role: ((title.get(m.personId) ?? '').length >= 2 ? title.get(m.personId)! : 'Member').slice(0, 60) } : m)) };
+}
+
 export async function createProject(db: Db, meId: string, teamId: string, input: ProjectInput): Promise<Project> {
   // Anyone on the team may start a project, big or small, at the PM's call (13 Oct). Editing it stays with its owner,
   // its lead, a team lead or an admin (updateProject).
   const roles = await rolesOf(db, teamId, meId);
   if (roles.size === 0) throw forbidden('You are not on this team.');
-  const c = clean(input);
+  const c = clean(await withJobTitles(db, input));
   const id = newId('prj');
   await db.transaction(async (tx) => {
     await checkPeople(tx, teamId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)]);
@@ -862,7 +872,7 @@ export async function addProjectPeople(db: Db, meId: string, id: string, add: { 
   if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if ((await projectAccess(db, p, meId)) === 'view') throw forbidden(VIEW_ONLY);
   if (p.personalFor) throw bad('invalid_body', 'A Personal project is yours alone. No one else can be added to it.');
-  const list = add.map((a) => ({ personId: a.personId, role: a.role.trim() || 'Member' })).filter((a) => a.personId);
+  const list = await Promise.all(add.filter((a) => a.personId).map(async (a) => ({ personId: a.personId, role: a.role.trim() || await jobTitleOf(db, a.personId) })));
   if (list.some((a) => a.role.length < 2 || a.role.length > 60)) throw bad('invalid_body', 'Give their role on this project (2 to 60 characters).', 'members');
   await db.transaction(async (tx) => {
     const { rows: was } = await tx.query<{ person_id: string }>(`SELECT person_id FROM project_members WHERE project_id = $1`, [id]);
@@ -885,7 +895,7 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
   if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   if (input.kind !== p.kind) throw bad('invalid_body', 'A project keeps its board type.', 'kind');
   if (p.personalFor) throw bad('invalid_body', 'A Personal project is changed in its own Settings.');
-  const c = clean(input);
+  const c = clean(await withJobTitles(db, input));
   await db.transaction(async (tx) => {
     // Only people new to the project must be active. Someone deactivated while still on it stays until their tasks move,
     // so the project can still be edited (and others added) in the meantime.

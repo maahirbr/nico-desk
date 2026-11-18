@@ -68,7 +68,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       </>
     );
   }
-  const opts = active.map((x) => ({ id: x.id, name: x.name }));
+  const opts = active.map((x) => ({ id: x.id, name: x.name, role: x.role }));
   const [members, viewers] = await Promise.all([projectMembers(d, p.id), projectViewers(d, p.id)]);
   const now = today();
   // The lead's health line reads the same work the board shows: tasks on a task board, lines on a plan board.

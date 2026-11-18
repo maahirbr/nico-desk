@@ -14,7 +14,7 @@ export function ProjectPeopleProvider({ value, mayAddTo, children }: { value: Re
   return <ProjectPeople.Provider value={value}><MayAddTo.Provider value={mayAddTo}>{children}</MayAddTo.Provider></ProjectPeople.Provider>;
 }
 
-type Opt = { id: string; name: string };
+type Opt = { id: string; name: string; role?: string }; // role: their Roster job title (17 Nov)
 const ADD = '__add';
 
 // onChange gets the owner, and a role when that person is joining the project (empty until typed).
@@ -42,7 +42,12 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
   if (adding) {
     return (
       <div className="owner-add">
-        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => { setPick(v); onChange(v, role); }}>
+        {/* Picking someone fills their role with their Roster job title (17 Nov), unless one was typed; it can be changed. */}
+        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => {
+          const was = people.find((p) => p.id === pick)?.role ?? '';
+          const next = role.trim() && role !== was ? role : (people.find((p) => p.id === v)?.role ?? '');
+          setPick(v); setRole(next); onChange(v, next);
+        }}>
           <option value="" disabled>Choose a person</option>
           {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>

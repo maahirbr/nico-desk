@@ -286,16 +286,16 @@ describe('a project task goes to one of its people', () => {
   const base = { name: 'Gift wrap drive', kind: 'tasks' as const, ownerId: ME, goal: '', workstreams: [], members: [{ personId: 'per_bo', role: 'Packaging POC' }] };
   const task = { teamId: TEAM_ID, title: 'Cut the hamper ribbon', dueOn: '2026-10-20' };
 
-  it('brings a new owner onto the project with their role, or as Member', async () => {
+  it('brings a new owner onto the project with their role, or their job title (17 Nov)', async () => {
     const { createProject, projectMembers, projectPeopleMap } = await import('../lib/plan');
     const s = await import('../lib/service');
     const p = await createProject(db, ME, TEAM_ID, base);
-    expect(await code(s.createTask(db, ME, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: ' ' }))).toBe('400 invalid_body');
     const t = await s.createTask(db, ME, { ...task, ownerId: 'per_cy', projectId: p.id, ownerRole: 'Gift wrap' });
     expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_cy', role: 'Gift wrap' });
     const e = await s.editTask(db, ME, t.id, { version: t.version, ownerId: 'per_dee' }); // no role given, as from an import
     expect(e.ownerId).toBe('per_dee');
-    expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_dee', role: 'Member' });
+    const deeTitle = (await db.query<{ role: string }>(`SELECT role FROM people WHERE id = 'per_dee'`)).rows[0].role;
+    expect(await projectMembers(db, p.id)).toContainEqual({ personId: 'per_dee', role: deeTitle.trim().length >= 2 ? deeTitle.trim() : 'Member' });
     expect((await projectPeopleMap(db, TEAM_ID))[p.id].sort()).toEqual(['per_ada', 'per_bo', 'per_cy', 'per_dee']);
   });
 
@@ -396,5 +396,23 @@ describe('header counts and member list', () => {
     const members = [{ personId: 'per_ada', role: 'Lead' }, { personId: 'per_bo', role: 'Design' }];
     expect(membersExceptLead(members, 'per_ada')).toEqual([{ personId: 'per_bo', role: 'Design' }]);
     expect(membersExceptLead(members, 'per_zed')).toEqual(members);
+  });
+});
+
+describe('a new project role starts as the Roster job title (17 Nov)', () => {
+  it('fills an empty role from the job title, keeps a typed one, and uses it when a task brings someone in', async () => {
+    const { createProject, projectMembers, addProjectPeople } = await import('../lib/plan');
+    const s = await import('../lib/service');
+    const title = async (id: string) => (await db.query<{ role: string }>(`SELECT role FROM people WHERE id = $1`, [id])).rows[0].role;
+    const base = { name: 'Window refresh', kind: 'tasks' as const, ownerId: ME, goal: '', workstreams: [] };
+    const task = { teamId: TEAM_ID, title: 'Measure the windows', dueOn: '2026-10-20' };
+    const p = await createProject(db, ME, TEAM_ID, { ...base, members: [{ personId: 'per_bo', role: '' }, { personId: 'per_cy', role: 'Shoot lead' }] });
+    const roles = Object.fromEntries((await projectMembers(db, p.id)).map((m) => [m.personId, m.role]));
+    expect(roles.per_bo).toBe(await title('per_bo'));
+    expect(roles.per_cy).toBe('Shoot lead');
+    await addProjectPeople(db, ME, p.id, [{ personId: 'per_dee', role: '' }]);
+    expect((await projectMembers(db, p.id)).find((m) => m.personId === 'per_dee')?.role).toBe(await title('per_dee'));
+    await s.createTask(db, ME, { ...task, ownerId: 'per_eli', projectId: p.id });
+    expect((await projectMembers(db, p.id)).find((m) => m.personId === 'per_eli')?.role).toBe(await title('per_eli'));
   });
 });
