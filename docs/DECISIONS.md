@@ -2036,3 +2036,10 @@ now carries a ✓ Done or Dropped tag, and "Priya’s task" is left out when Pri
 (`lib/updates.ts`). No schema change. And Home's welcome card now goes by the viewed person's first day, so an admin in
 View as sees it when that person would (`app/me/page.tsx`).
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deployed the PM's 19 Nov push
+
+The repo owner asked to push and deploy the merge of the PM's three 19 Nov commits: One-off labels on tasks with no
+project, Projects as a grid or a list, and one-off Done lines in Updates with the welcome card in View as. No schema
+change, so no `db:upgrade`. Evals OK, 953 tests passed, typecheck silent, build green.
+Rollback: `vercel promote nico-desk-32thc8prr-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
