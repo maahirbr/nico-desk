@@ -31,7 +31,7 @@ describe('updates for you, grouped', () => {
       ev({ field: 'status_category', before: 'open', after: 'done', actor_id: 'ana', entity_id: 't3', at: '2026-10-11T03:00:00.000Z' }),
     ];
     const out = g(e, 'bo', ts);
-    expect(out.map((x) => x.name)).toEqual(['Gift hampers', 'No project']);
+    expect(out.map((x) => x.name)).toEqual(['Gift hampers', 'One-off tasks']);
     expect(out[0].rows).toEqual([expect.objectContaining({
       title: 'Draft copy', summary: 'Meera assigned it to you, due 10 Oct, then moved it to 12 Oct (was 10 Oct), “samples late”', due: { label: 'Due today', tone: 'soon' },
     })]);

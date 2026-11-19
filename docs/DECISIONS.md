@@ -1965,3 +1965,10 @@ Rollback: git revert the commit.
 The PM's call: in someone's first 7 days, the welcome card sits above What's new and the feedback ask. Who sees it is
 unchanged. `components/HomeView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · A task on no project says One-off
+
+The PM's call: a task on no project reads "One-off", plus "from <first name>" when someone else gave it ("from you" for
+the giver). On Home and Team rows and the task drawer; the Updates group and the load lists say "One-off tasks" instead of
+"No project". `components/task-ui.tsx oneOffWord`.
+Rollback: git revert the commit.

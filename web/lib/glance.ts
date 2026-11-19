@@ -77,7 +77,7 @@ const byLoad = (a: LoadRow, b: LoadRow) => b.open - a.open || b.late - a.late ||
 // Tasks with no project go in one row at the end. Rows with open work come first, the biggest at the top.
 export function loadByProject(tasks: Task[], personId: string, projects: { id: string; name: string }[], projectNames: Record<string, string>, today: string): LoadRow[] {
   const rows = new Map<string, LoadRow>(projects.map((p) => [p.id, { id: p.id, name: p.name, open: 0, late: 0 }]));
-  const none: LoadRow = { id: null, name: 'No project', open: 0, late: 0 };
+  const none: LoadRow = { id: null, name: 'One-off tasks', open: 0, late: 0 };
   for (const t of tasks) {
     if (t.ownerId !== personId || t.statusCategory !== 'open') continue;
     let row = none;

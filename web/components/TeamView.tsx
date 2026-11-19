@@ -11,7 +11,7 @@ import { Help } from './HelpMode';
 import { useOpenTask } from './taskUrl';
 import { useRemembered, useRememberedParam, useUrlText } from './remember';
 import { Select } from './Select';
-import { STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
+import { oneOffWord, STATUS, statusKey, TaskDrawer, TaskRow, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { Fold, FoldChev } from './Fold';
 import { EmptyMark, ICON } from './icons';
@@ -50,7 +50,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
     if (q) p.set('q', q);
     return `/team?${p}`;
   };
-  const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : '', t.workstream ?? ''].filter(Boolean).join(' · ');
+  const sub = (t: Task) => [t.projectId ? projectNames[t.projectId] : oneOffWord(t, names, meId), t.workstream ?? ''].filter(Boolean).join(' · ');
   const row = (t: Task, owner?: string) => (
     <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} owner={owner} canTick={!t.readOnly && (t.ownerId === meId || isLead)} canBlock={!t.readOnly && (t.ownerId === meId || isLead)} canReassign={!t.readOnly && (isLead || t.ownerId === meId)}
       canAsk={!t.readOnly && !!t.ownerId && t.ownerId !== meId}

@@ -199,7 +199,7 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
   const groups = new Map<string, UpdateGroup>();
   for (const r of rows) {
     const key = r.projectId ?? '';
-    if (!groups.has(key)) groups.set(key, { projectId: r.projectId, name: r.projectId ? projectNames[r.projectId] ?? 'Project' : 'No project', rows: [] });
+    if (!groups.has(key)) groups.set(key, { projectId: r.projectId, name: r.projectId ? projectNames[r.projectId] ?? 'Project' : 'One-off tasks', rows: [] });
     const { projectId: _p, ...row } = r;
     groups.get(key)!.rows.push(row);
   }

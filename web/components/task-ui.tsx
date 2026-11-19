@@ -339,6 +339,14 @@ export function StatusMenu({ t, current, statuses, canReassign, canAsk = false, 
 
 // "Updated 28 Oct · Sam": when a task's status was last updated, and by whom, in the words of the pilot teammate who
 // asked for it (the PM's call, 3 Nov; was "Sam set this on 28 Oct"). Your own reads "You"; an import gives the date only.
+// A task on no project (19 Nov, the PM's call): "One-off", and who gave it when that was someone else.
+export function oneOffWord(t: Pick<Task, 'projectId' | 'createdBy' | 'ownerId'>, names: Record<string, string>, meId: string): string {
+  if (t.projectId) return '';
+  const by = t.createdBy;
+  if (!by || by === t.ownerId) return 'One-off';
+  return `One-off · from ${by === meId ? 'you' : (names[by] ?? 'someone').split(' ')[0]}`;
+}
+
 export function statusWhen(t: Task, names: Record<string, string>, meId: string): string | null {
   if (!t.statusSet) return null;
   const day = fmtDate(istDate(t.statusSet.at));
@@ -534,7 +542,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
       <motion.aside className="drawer" role="dialog" aria-modal="true" aria-label="Task" {...drawerMotion(closing)}>
         <div className="drawer-top">
           <span className="small dim">
-            {t && (t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId] ?? 'Project'}</Link> : 'No project')}
+            {t && (t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId] ?? 'Project'}</Link> : oneOffWord(t, names, meId))}
             {t?.workstream && <> · {t.workstream}</>}
           </span>
           {t && <button className="mini-btn drawer-copy" type="button" onClick={async () => {
