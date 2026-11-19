@@ -115,7 +115,6 @@ export const HELP = {
 
   // Reminders
   remind_gmail: 'Opens a draft in your Gmail, from your address. You press Send there. Bold, italics and lists stay behind: a draft link carries plain text.',
-  remind_mail: 'Opens a draft in your mail app. You press Send. The app sends nothing.',
   remind_flag: 'Why this may not need a reminder. It starts left out of the email. Tick it to put it back in.',
   remind_copy: 'Copies the subject and the text, so you can paste them into any email or chat.',
   remind_send: 'Sends the email now from your own Gmail, with your Cc, Bcc and formatting. The first time, Google asks you to allow it. Only you can press Send.',

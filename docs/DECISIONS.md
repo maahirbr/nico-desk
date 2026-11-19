@@ -2161,3 +2161,9 @@ the avatar on a phone; no banner. Only an admin gets it: `lib/auth.ts resolveMe`
 for an admin, and View as wins over it. It is kept per browser, so no schema change. The few service checks that read the
 role from the database still see the admin.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Reminders: no Mail app button
+
+The PM's call: the "Mail app" button (a mailto draft) is gone from a reminder card; Send, Open in Gmail and Copy stay.
+Its help text went with it. `components/Reminders.tsx`.
+Rollback: git revert the commit.
