@@ -100,6 +100,29 @@ describe('resolveMe', () => {
   });
 });
 
+describe('Hide admin tools (19 Nov)', () => {
+  it('treats an admin as Leadership, and leaves everyone else alone', async () => {
+    const me = (await resolveMe(db, ADMIN, undefined, true))!;
+    expect(me.adminHidden).toBe(true);
+    expect(me.person.appRoles).toContain('leadership');
+    expect(me.person.appRoles).not.toContain('admin');
+    expect(me.realPerson.appRoles).not.toContain('admin'); // so View as is off too
+    const lead = (await resolveMe(db, LEAD, undefined, true))!;
+    expect(lead.adminHidden).toBeUndefined();
+  });
+  it('sees only their own projects, as Leadership does, not the whole team', async () => {
+    const { sightFor } = await import('../lib/visibility');
+    expect((await sightFor(db, (await resolveMe(db, ADMIN))!)).all).toBe(true);
+    expect((await sightFor(db, (await resolveMe(db, ADMIN, undefined, true))!)).all).toBe(false);
+  });
+  it('gives way to View as', async () => {
+    const people = await s.listPeople(db, TEAM_ID);
+    const m = people.find((p) => p.active && !p.appRoles.includes('admin') && p.id !== LEAD)!;
+    const me = (await resolveMe(db, ADMIN, signView(ADMIN, m.id), true))!;
+    expect(me.viewingAs).toBe(true);
+  });
+});
+
 describe('the read-only guard', () => {
   it('assertNotViewing throws 403 viewing_as only while viewing', async () => {
     const viewing = (await resolveMe(db, ADMIN, signView(ADMIN, LEAD)))!;

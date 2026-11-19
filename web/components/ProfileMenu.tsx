@@ -14,9 +14,10 @@ import { setView, type ViewPerson } from './ViewAs';
 // data-skin and data-theme before first paint.
 
 // viewPeople is null unless the real session person is an admin; the server checks again on every call.
-type Props = { meId: string; name: string; email: string; role: string; initial: SkinId; initialTheme: ThemeId; viewPeople: ViewPerson[] | null; viewingId: string | null };
+// adminTools (19 Nov): 'shown' or 'hidden' for an admin, who can switch "Hide admin tools"; null for everyone else.
+type Props = { meId: string; name: string; email: string; role: string; initial: SkinId; initialTheme: ThemeId; viewPeople: ViewPerson[] | null; viewingId: string | null; adminTools?: 'shown' | 'hidden' | null };
 
-export function ProfileMenu({ meId, name, email, role, initial, initialTheme, viewPeople, viewingId }: Props) {
+export function ProfileMenu({ meId, name, email, role, initial, initialTheme, viewPeople, viewingId, adminTools = null }: Props) {
   const router = useRouter();
   const [skin, setSkin] = useState<SkinId>(initial);
   const [theme, setTheme] = useState<ThemeId>(initialTheme);
@@ -68,6 +69,12 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, vi
     if (id === viewingId) return;
     if (await setView(id)) { router.push('/'); router.refresh(); }
   };
+  // Hide admin tools: a cookie the server reads on every page (lib/auth.ts HIDE_ADMIN_COOKIE), then a fresh render.
+  const toggleAdminTools = () => {
+    setOpen(false);
+    document.cookie = adminTools === 'hidden' ? 'nd_hide_admin=; path=/; max-age=0; SameSite=Lax' : 'nd_hide_admin=1; path=/; max-age=31536000; SameSite=Lax';
+    router.refresh();
+  };
   const signOut = async () => {
     setOpen(false);
     await fetch('/api/v1/session', { method: 'DELETE' });
@@ -77,11 +84,14 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, vi
 
   return (
     <div className="menu-wrap profile-wrap" ref={wrap}>
-      <button ref={btn} className="who" aria-haspopup="menu" aria-expanded={open} aria-label={`${name}, account menu`} onClick={() => setOpen(!open)}>
+      <button ref={btn} className={`who${adminTools === 'hidden' ? ' who-tools-hidden' : ''}`} aria-haspopup="menu" aria-expanded={open} aria-label={`${name}, account menu`} onClick={() => setOpen(!open)}>
         <Avatar id={meId} name={name} you />
         <span className="who-text">
           <span className="who-name">{name}</span>
-          <span className="who-role">{role}</span>
+          {/* Hide admin tools is on (19 Nov): said quietly here, in place of the role, rather than in a bar across the page. */}
+          {adminTools === 'hidden'
+            ? <span className="who-role who-hidden"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 3l18 18" /><path d="M10.6 5.1A10 10 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.5 7 9.5 7a9.6 9.6 0 0 0 4.4-1" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>Admin tools hidden</span>
+            : <span className="who-role">{role}</span>}
         </span>
         <span className="who-chev" aria-hidden>⌃</span>
       </button>
@@ -135,6 +145,11 @@ export function ProfileMenu({ meId, name, email, role, initial, initialTheme, vi
               </div>
             )}
           </div>
+          {adminTools && (
+            <button role="menuitemcheckbox" aria-checked={adminTools === 'hidden'} className="pm-hide-admin" onClick={toggleAdminTools}>
+              <span className="pm-tick" aria-hidden>{adminTools === 'hidden' ? '✓' : ''}</span>Hide admin tools
+            </button>
+          )}
           <Link role="menuitem" className="pm-sep" href="/me/profile" onClick={() => setOpen(false)}>Your profile</Link>
           <Link role="menuitem" href="/guide" onClick={() => setOpen(false)}>Guide</Link>
           <button role="menuitem" onClick={() => { setOpen(false); window.dispatchEvent(new Event('nd:shortcuts')); }}>Keyboard shortcuts</button>

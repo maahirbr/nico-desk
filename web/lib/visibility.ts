@@ -12,7 +12,7 @@ import type { Task } from './derive';
 // Pages never import teamTasks or teamProjects directly; tests/visibility.test.ts holds that line.
 
 // View as never shows the person's own Personal project (11 Nov).
-export const sightFor = (db: Tx, me: Me): Promise<Sight> => sightOf(db, me.team.id, me.person.id, me.viewingAs);
+export const sightFor = (db: Tx, me: Me): Promise<Sight> => sightOf(db, me.team.id, me.person.id, me.viewingAs, !!me.adminHidden);
 
 export async function seenTasks(db: Tx, me: Me, today?: string, sight?: Sight): Promise<Task[]> {
   const [s, ts] = await Promise.all([sight ?? sightFor(db, me), teamTasks(db, me.team.id, today)]);

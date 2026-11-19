@@ -2154,3 +2154,33 @@ is `qhh7p8x2s`: `/team` loads with the CSP enforced, the Claude connector return
 logs show no errors.
 Rollback: from `web/`, `vercel promote https://nico-desk-kcclib6v5-maahirbharatram-3547s-projects.vercel.app --yes`.
 The old fence policies need no rollback: the new ones give the same rows.
+
+## 2026-11-19 · Opus 5.5 · Pop-up windows on top of the page, and project roles on Home
+
+Every pop-up window (`Modal` in `components/task-ui.tsx`) is now drawn at the end of the page. Opened from the Roster's
+pinned Access column, Edit Person was painted under the pinned cells of the rows below it. And Home's Your projects shows
+a role only when it says something (Owner, Lead, Contributor), not when it is just the person's job title or Member
+(the PM's call). `app/me/page.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Hide admin tools
+
+The PM's call: an admin can tick "Hide admin tools" in the account menu to see and use NicoDesk with Leadership rights,
+without the admin tools (View as, Roster editing). Under their name it then says "Admin tools hidden", with a small dot on
+the avatar on a phone; no banner. Only an admin gets it: `lib/auth.ts resolveMe` honours the `nd_hide_admin` cookie only
+for an admin, and View as wins over it. It is kept per browser, so no schema change. The few service checks that read the
+role from the database still see the admin.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Reminders: no Mail app button
+
+The PM's call: the "Mail app" button (a mailto draft) is gone from a reminder card; Send, Open in Gmail and Copy stay.
+Its help text went with it. `components/Reminders.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Hide admin tools also hides the projects you are not on
+
+With admin tools hidden, an admin saw every project still, as `lib/sight.ts` read the admin role from the database. Now
+`sightFor` passes `me.adminHidden`, and `sightOf` then works out the projects as for Leadership: the ones they own, lead,
+are on or may view. Projects, Team, Home and search all follow.
+Rollback: git revert the commit.

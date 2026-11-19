@@ -130,7 +130,6 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
   const canSend = send.connected || viaResend;
   const extra = (k: string, v: string) => (list(v).length ? `&${k}=${encodeURIComponent(list(v).join(','))}` : '');
   const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}${extra('cc', cc)}${extra('bcc', bcc)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}${extra('cc', cc)}${extra('bcc', bcc)}&body=${encodeURIComponent(body)}`;
   const sendNow = async () => {
     if (!can || busy) return;
     setBusy(true); setSaid('Sending…');
@@ -180,8 +179,6 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
           : <Help term="remind_send" host><button className="btn" onClick={() => connectGmail(setSaid)}>Connect Gmail to send</button></Help>)}
         <Help term="remind_gmail" host><a className={`btn${send.enabled || viaResend ? ' ghost' : ''}${can ? '' : ' disabled'}`} href={can ? gmail : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!can}
           onClick={(e) => { if (!can) { e.preventDefault(); return; } mark('gmail'); setSaid('Opened in Gmail. Check it and press Send there.'); }}>Open in Gmail</a></Help>
-        <Help term="remind_mail" host><a className={`btn ghost${can ? '' : ' disabled'}`} href={can ? mailto : undefined} aria-disabled={!can}
-          onClick={(e) => { if (!can) { e.preventDefault(); return; } mark('mail_app'); setSaid('Opened in your mail app.'); }}>Mail app</a></Help>
         <Help term="remind_copy" host><button className="btn ghost" disabled={none} onClick={async () => {
           try { await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`); mark('copy'); setSaid('Copied. Paste it into an email or chat.'); }
           catch { setSaid('Could not copy. Select the text and copy it.'); }

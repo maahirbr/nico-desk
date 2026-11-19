@@ -10,21 +10,22 @@ import type { Task } from './derive';
 export type Sight = { all: true; hidden?: Set<string> } | { all: false; personId: string; projects: Set<string>; hidden?: Set<string> };
 export const SEE_ALL: Sight = { all: true };
 
-export async function sightOf(db: Tx, teamId: string, personId: string, viewing = false): Promise<Sight> {
+// asLeader (19 Nov): an admin with admin tools hidden sees what Leadership sees, their own projects, not the whole team.
+export async function sightOf(db: Tx, teamId: string, personId: string, viewing = false, asLeader = false): Promise<Sight> {
   const { rows: own } = await db.query<{ id: string; personal_for: string }>(
     `SELECT id, personal_for FROM projects WHERE team_id = $1 AND personal_for IS NOT NULL`, [teamId]);
   const hidden = new Set(own.filter((r) => viewing || r.personal_for !== personId).map((r) => r.id));
-  const s = await sightBase(db, teamId, personId);
+  const s = await sightBase(db, teamId, personId, asLeader);
   return hidden.size ? { ...s, hidden } : s;
 }
 
-async function sightBase(db: Tx, teamId: string, personId: string): Promise<Sight> {
+async function sightBase(db: Tx, teamId: string, personId: string, asLeader = false): Promise<Sight> {
   const { rows } = await db.query<{ app_role: string }>(
     `SELECT m.app_role FROM people p JOIN team_members m ON m.person_id = p.id
      WHERE m.team_id = $1 AND p.id = $2 AND p.active`, [teamId, personId]);
   // Not an active member of this team: nothing.
   if (rows.length === 0) return { all: false, personId, projects: new Set() };
-  if (rows.some((r) => r.app_role === 'admin')) return SEE_ALL;
+  if (!asLeader && rows.some((r) => r.app_role === 'admin')) return SEE_ALL;
   const { rows: ps } = await db.query<{ id: string }>(
     `SELECT id FROM projects WHERE team_id = $1 AND (owner_id = $2 OR lead_id = $2)
      UNION SELECT m.project_id FROM project_members m JOIN projects pr ON pr.id = m.project_id WHERE pr.team_id = $1 AND m.person_id = $2

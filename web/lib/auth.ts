@@ -19,7 +19,8 @@ const VIEW_MAX_AGE_S = 60 * 60 * 12;
 // person is who the pages and rules treat as the signed-in user. When an admin is "viewing as" someone,
 // person is that someone and viewingAs is true; realPerson is always the signed-in session person. Audit and
 // the read-only guard (lib/http.ts) use realPerson. Nothing is written while viewingAs.
-export type Me = { person: Person; realPerson: Person; viewingAs: boolean; team: { id: string; name: string; teamType: string } };
+// adminHidden (19 Nov): an admin turned on "Hide admin tools", so the app treats them as Leadership on every screen.
+export type Me = { person: Person; realPerson: Person; viewingAs: boolean; team: { id: string; name: string; teamType: string }; adminHidden?: boolean };
 
 let cached: string | null = null;
 function secret(): string {
@@ -58,6 +59,8 @@ function verify(token: string | undefined): string | null {
 // person viewed and an expiry, and is signed with its own label so a session token cannot stand in for it.
 // It counts only while the session person is an admin (resolveMe); anyone else's copy is ignored.
 export const VIEW_COOKIE = 'nd_view';
+// "Hide admin tools" (19 Nov, the PM's call): an admin sees and uses the app with Leadership rights. Kept in this browser.
+export const HIDE_ADMIN_COOKIE = 'nd_hide_admin';
 
 export function signView(realId: string, targetId: string): string {
   const payload = `${realId}.${targetId}.${Math.floor(Date.now() / 1000) + VIEW_MAX_AGE_S}`;
@@ -161,7 +164,7 @@ type Database = Awaited<ReturnType<typeof db>>;
 
 // The signed-in person, plus the person being viewed when an admin has chosen "View as" (viewToken).
 // The pure core of currentMe, so tests can call it without request cookies.
-export async function resolveMe(d: Database, sessionId: string | null, viewToken?: string): Promise<Me | null> {
+export async function resolveMe(d: Database, sessionId: string | null, viewToken?: string, hideAdmin = false): Promise<Me | null> {
   if (!sessionId) return null;
   const [team] = await teamsOf(d, sessionId);
   if (!team) return null;
@@ -174,6 +177,10 @@ export async function resolveMe(d: Database, sessionId: string | null, viewToken
       const viewed = await getPerson(d, team.id, target);
       if (ok(viewed)) return { person: viewed, realPerson: real, viewingAs: true, team };
     }
+    if (hideAdmin) {
+      const lead: Person = { ...real, appRoles: [...new Set([...real.appRoles.filter((r) => r !== 'admin' && r !== 'lead'), 'leadership' as const])] };
+      return { person: lead, realPerson: lead, viewingAs: false, team, adminHidden: true };
+    }
   }
   return { person: real, realPerson: real, viewingAs: false, team };
 }
@@ -185,7 +192,7 @@ export async function currentMe(): Promise<Me | null> {
   const d = await db();
   const signedIn = verify(jar.get(COOKIE)?.value);
   const id = signedIn ?? (openDemo() ? await demoPerson(d) : null);
-  const me = await resolveMe(d, id, jar.get(VIEW_COOKIE)?.value);
+  const me = await resolveMe(d, id, jar.get(VIEW_COOKIE)?.value, jar.get(HIDE_ADMIN_COOKIE)?.value === '1');
   if (me && signedIn) await noteVisit(d, me.realPerson.id); // the activity log's "opened the app"
   return me;
 }
