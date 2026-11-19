@@ -63,6 +63,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const movedAway = notices.filter((n) => n.kind === 'reassigned_away').map((n) => ({
     noticeId: n.id, taskId: n.taskId, title: n.taskTitle, toName: names[ownerNow.get(n.taskId) ?? ''] ?? null, canOpen: n.canOpen,
   }));
+  // Your projects (19 Nov, the PM's call): a role shows only when it says something, like Owner, Lead or Contributor.
+  // A role that is just your Roster job title (the default since 18 Nov), or plain Member, is left out.
+  const myTitle = (me.person.role ?? '').trim().toLowerCase();
+  const shownProjects = onProjects.map((p) => ({ ...p, role: !p.role || p.role === 'Member' || p.role.trim().toLowerCase() === myTitle ? '' : p.role }));
   return (
     <HomeView
       greeting={`${greeting()}, ${me.person.displayName.split(' ')[0]}`}
@@ -88,7 +92,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       people={activeOpts}
       projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt && !viewOnly.has(p.id)).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
-      myProjects={onProjects}
+      myProjects={shownProjects}
       welcome={welcome}
       news={news}
       feedbackAsk={feedbackAsk}

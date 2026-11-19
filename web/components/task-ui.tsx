@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Task } from '@/lib/derive';
 import { daysTo, flagKeyOf, RISK_DAYS, statusOf, type FlagKey } from '@/lib/flags';
 import type { LogLine } from '@/lib/service';
@@ -363,7 +364,11 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, [close]);
-  return (
+  // Drawn at the end of the page (19 Nov), not inside whatever opened it: a window opened from a pinned table cell (the
+  // Roster's Access column) was painted under the pinned cells of the rows below it.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  const win = (
     <div className={`overlay${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
       <motion.div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} {...modalMotion(closing)}>
         <div className="modal-head"><h2>{title}</h2><button className="x" aria-label="Close" onClick={close}>×</button></div>
@@ -371,6 +376,7 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
       </motion.div>
     </div>
   );
+  return ready ? createPortal(win, document.body) : win;
 }
 
 type Mode = null | 'blocked' | 'date' | 'drop' | 'reopen' | 'status' | 'reassign';

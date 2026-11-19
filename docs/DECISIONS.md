@@ -1986,3 +1986,11 @@ now carries a ✓ Done or Dropped tag, and "Priya’s task" is left out when Pri
 (`lib/updates.ts`). No schema change. And Home's welcome card now goes by the viewed person's first day, so an admin in
 View as sees it when that person would (`app/me/page.tsx`).
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Pop-up windows on top of the page, and project roles on Home
+
+Every pop-up window (`Modal` in `components/task-ui.tsx`) is now drawn at the end of the page. Opened from the Roster's
+pinned Access column, Edit Person was painted under the pinned cells of the rows below it. And Home's Your projects shows
+a role only when it says something (Owner, Lead, Contributor), not when it is just the person's job title or Member
+(the PM's call). `app/me/page.tsx`.
+Rollback: git revert the commit.
