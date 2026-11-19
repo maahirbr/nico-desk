@@ -17,7 +17,6 @@ import { addDays, fmtDate } from '@/lib/time';
 // "Tuesday, 3 Nov" in the summary line (the PM's call, 3 Nov). The day is read as a calendar day, so no zone shifts it.
 const weekdayName = (d: string) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(`${d}T00:00:00Z`).getUTCDay()];
 import type { UpdateGroup, UpdateItem } from '@/lib/updates';
-import { PersonLink } from './chips';
 import type { HelpTerm } from './help';
 import { Help } from './HelpMode';
 import { useRemembered } from './remember';
@@ -33,7 +32,7 @@ import { UpdatesCard } from './UpdatesCard';
 import { WelcomeCard, markWelcomeStep, type Welcome } from './WelcomeCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
-import { AddTaskForm, Modal, oneOffWord, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
+import { AddTaskForm, Modal, oneOffWord, TaskDrawer, TaskRow, api, type Opt, type RowAction } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { Fold, FoldChev } from './Fold';

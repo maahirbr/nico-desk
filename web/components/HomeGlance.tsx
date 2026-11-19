@@ -16,7 +16,7 @@ import { useRemembered } from './remember';
 // number alone: each bar has its count written beside it, and each chart has a plain sentence for screen readers.
 // The draw-in plays once per browser tab (CSS in globals.css, .glance-in) and not at all under reduced motion.
 
-// The pieces below are also used by the person page and the project page (PersonGlance, components/ProjectVisuals.tsx).
+// The pieces below are also used by the person page and the project page (PersonGlance).
 export function Card({ title, href, link, summary, wide, children }: { title: string; href?: string; link?: string; summary: string; wide?: boolean; children: React.ReactNode }) {
   return (
     <section className={`card glance-card${wide ? ' wide' : ''}`} aria-label={title}>

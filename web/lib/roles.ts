@@ -3,7 +3,7 @@
 // Leadership (15 Nov, the PM's call): oversight and follow-up. Reminders to anyone, the Activity page and the team's
 // meeting-tool keys, with no extra power over tasks or projects and no wider view of projects. An admin has all of it.
 // 'lead' is the retired team role: kept so old rows still read, never given any more (the Roster offers Member,
-// Leadership and Admin); scripts/leads-to-members.ts turns the hosted database's leads into members.
+// Leadership and Admin). The hosted database's leads were turned into members on 15 Nov.
 export function mayOversee(roles: Iterable<string>): boolean {
   for (const r of roles) if (r === 'leadership' || r === 'lead' || r === 'admin') return true;
   return false;

@@ -13,13 +13,11 @@ vi.mock('../lib/db', async (orig) => ({ ...(await orig<typeof import('../lib/db'
 
 import type { Me } from '../lib/auth';
 import { openDb, type Db } from '../lib/db';
-import { markMeetingHeld, setMeetingRhythm } from '../lib/meetings';
 import { createProject, type ProjectInput } from '../lib/plan';
 import * as s from '../lib/service';
 import { TEAM_ID } from '../lib/seed';
 import { SETUP_SINCE, setupState, setupSteps, type SetupInput } from '../lib/setup';
 
-const TODAY = '2026-10-09';
 const LEAD = 'per_ada'; // a team lead
 const ADMIN = 'per_fay';
 const OWNER = 'per_bo'; // a plain member who owns the project

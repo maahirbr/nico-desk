@@ -44,7 +44,7 @@ project transfer keeps the project and its `.vercel.app` address, so use a trans
    settings, transfer `nico-desk` to that org. The repo owner must own the source org (true today). The project,
    its data and `DATABASE_URL` stay the same. If the Nicobar org is on the free plan, it must have room for one more
    free project. Supabase Pro adds daily backups, which would replace step 7.
-4. **GitHub.** Settings → Transfer ownership → the Nicobar GitHub org. Old URLs redirect. Collaborators carry over
+4. **GitHub.** Settings → Transfer ownership → the Nicobar GitHub org, `nicosoul-app` (members may create repos there, so the repo owner can do it). Old URLs redirect. Collaborators carry over
    as outside collaborators. Then update the local remote: `git remote set-url origin <new url>`.
 5. **Vercel.** Make a Nicobar Vercel team. Hobby is for non-commercial use, so the company team needs Pro. Transfer
    `nico-desk` to it (project Settings → Transfer). Then check in the new team:
@@ -59,11 +59,25 @@ project transfer keeps the project and its `.vercel.app` address, so use a trans
    `launchctl bootout gui/$(id -u)/com.nicodesk.backup`.
 8. **Local files.** Hand the git-ignored files in item 8 to the new owner by a private channel, never through git.
    They hold real names and the database password.
-9. **Remove the repo owner.** Last, after everything above is checked: take the repo owner off the Supabase org,
-   the Vercel team, the GitHub org and the Google Cloud project. Ask the new owner to rotate the Supabase database
-   password and then update `DATABASE_URL` in Vercel and `web/.env.remote.local`.
+9. **Keep the repo owner on.** The repo owner keeps working on nico-desk after the move (their call, 19 Nov). So
+   they stay a member everywhere instead of being removed: Admin or Maintain on the GitHub repo, a Member seat in
+   the Nicobar Vercel team (a paid Pro seat), and Developer or Administrator in the Supabase org. Their personal
+   copies go: the old Hobby team keeps no `nico-desk` project, and the old Supabase org keeps no project. Once
+   the move is checked, the new owner rotates the Supabase database password and updates `DATABASE_URL` in Vercel
+   and `web/.env.remote.local`.
 
 Do steps 3 to 5 on the same day, so the site is at risk for as short a time as possible.
+
+## Resend (reminders without Gmail)
+
+The code is live but off. The Nicobar Resend team has one domain, `alerts.nicosoul.app`, and on 19 Nov it was not
+verified ("Not Started"; no DNS records). An API key alone is not enough: Resend only sends from a verified domain.
+To turn it on:
+1. Someone with Cloudflare access for `nicosoul.app` adds the 3 records Resend shows for `alerts.nicosoul.app`
+   (Resend can add them to Cloudflare in one click), then presses Verify in Resend.
+2. Make a key with Sending access only. Set `RESEND_API_KEY` in Vercel by hand. Set
+   `NICO_RESEND_FROM=reminders@alerts.nicosoul.app` and `NICO_RESEND_SEND=1`, then redeploy.
+3. Send one test reminder to a teammate who has not connected Gmail.
 
 ## Not covered here
 

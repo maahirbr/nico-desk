@@ -2089,3 +2089,14 @@ that failed builds. Resend stays off in production until `NICO_RESEND_SEND`, `RE
 set, so this deploy changes nothing a lead sees yet. No schema change. Evals OK, 961 tests passed, typecheck silent,
 build green on the first try.
 Rollback: `vercel promote nico-desk-dg4kv8f8s-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
+## 2026-11-19 · Opus 5.5 · Code cleanup before the move to Nicobar
+
+The repo owner asked for a cleanup before the security pass and the accounts move. Removed: three components no page
+used (`ProjectVisuals`, `MentionsCard`, `GuideNote`) and their CSS; 22 unused imports and variables; four one-off
+database scripts that had done their job (`upgrade-meetings`, `upgrade-project-archive`, `upgrade-task-links`, whose
+statements live in `upgrade()`, and `leads-to-members`, with no lead rows left in production). `tsconfig.json` now has
+`noUnusedLocals` and `noUnusedParameters`, so unused code fails the typecheck. Kept on purpose: `PersonalToday` (the
+PM parked Today's 3) and `CommentThread` (comments are off in the app for V1, but the MCP still uses them). The
+handover doc now keeps the repo owner on every Nicobar account and says what Resend needs. 961 tests passed, build green.
+Rollback: git revert the commit.

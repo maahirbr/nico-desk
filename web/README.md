@@ -250,7 +250,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   minutes opens the existing import. Meeting held (project owner or lead, team lead, admin) sets the last meeting to
   today and moves the next date on. The project list shows "Meets Thu, next 15 Oct". API: `GET` and `PUT`
   `/api/v1/projects/:id/meeting`, `POST /api/v1/projects/:id/meeting/held`. For a hosted database run
-  `npx tsx --env-file=.env.remote.local scripts/upgrade-meetings.ts` (or `npm run db:upgrade`) before promoting.
+  `npm run db:upgrade` before promoting.
 
 ## Hosting
 

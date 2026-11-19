@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import type { SetupAction, SetupStep } from '@/lib/setup';
 import { Fold } from './Fold';
 import { Help } from './HelpMode';
-import { IMPORT_EVENT } from './MeetingSection';
 import { OPEN_ADD_EVENT, OPEN_SETTINGS_EVENT, SHOW_SETUP_EVENT, setupKey } from './setupEvents';
 import { useReadOnly } from './readonly';
 import { useViewer } from './viewer';

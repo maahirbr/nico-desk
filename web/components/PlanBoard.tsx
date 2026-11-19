@@ -7,7 +7,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import type { PlanState, Project } from '@/lib/plan';
 import {
   daysBetween, dueWords, lineLate, needsWhy, nextCheckpoint, ownerPending, sortedCheckpoints, stampRel, STATUSES, targetDate, totalPushes,
-  type PlanAction, type PlanLine, type Proposal,
+  type PlanAction, type PlanLine,
 } from '@/lib/planUtil';
 import { fmtDate } from '@/lib/time';
 import { IMPORT_EVENT } from './MeetingSection';
@@ -68,7 +68,7 @@ function doneText(b: Record<string, unknown>): string | null {
   }
 }
 
-export function PlanBoard({ project, state, people, names, meId, today }: {
+export function PlanBoard({ project, state, people, names, today }: {
   project: Project; state: PlanState; people: P[]; names: Record<string, string>; meId: string; today: string;
 }) {
   const router = useRouter();

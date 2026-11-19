@@ -7,13 +7,13 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined }), headers: async () => new Headers() }));
 
 import type { Me } from '../lib/auth';
-import { addComment, deleteComment } from '../lib/comments';
+import { addComment } from '../lib/comments';
 import { openDb, type Db } from '../lib/db';
 import { flagKeyOf, statusOf } from '../lib/flags';
-import { search, searchCandidates, type SearchHit } from '../lib/search';
+import { search, type SearchHit } from '../lib/search';
 import { TEAM_ID } from '../lib/seed';
 import * as s from '../lib/service';
-import { SEE_ALL, sightOf } from '../lib/sight';
+import { sightOf } from '../lib/sight';
 
 const AS_OF = '2026-10-09';
 const LEAD = 'per_ada';

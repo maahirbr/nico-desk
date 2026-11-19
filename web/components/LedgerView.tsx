@@ -7,7 +7,7 @@ import { attentionList } from '@/lib/attention';
 import { endedSortOf } from '@/lib/remember';
 import type { LedgerRow } from '@/lib/service';
 import { fmtDate, fmtStamp, istDate } from '@/lib/time';
-import { Avatar, Person, PersonLink } from './chips';
+import { Avatar, PersonLink } from './chips';
 import type { HelpTerm } from './help';
 import { Help } from './HelpMode';
 import { SortPick } from './SortPick';
@@ -51,7 +51,7 @@ type Drill = { title: string; tasks: Task[] } | null;
 
 // countOnly: tasks a member may not open, stripped on the server; they count in every number and show in no list.
 // noLink: tasks a lead or admin reads in full here but cannot open, being outside their projects.
-export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow, waitingOn, countOnly, noLink, people, names, projectNames, seeAll }: {
+export function LedgerView({ weeks, today, tasks, prev, openNow, waitingOn, countOnly, noLink, people, names, projectNames, seeAll }: {
   weeks: number; from: string; to: string; today: string; rows: LedgerRow[]; tasks: Task[]; prev: Task[]; openNow: Task[]; waitingOn: Task[];
   countOnly: string[]; noLink: string[];
   people: { id: string; name: string; role: string }[]; names: Record<string, string>; projectNames: Record<string, string>; seeAll: boolean;
@@ -67,8 +67,6 @@ export function LedgerView({ weeks, from, to, today, rows, tasks, prev, openNow,
     list.length ? <button className={`num-btn${warn ? ' warn' : ''}`} onClick={() => show(title, list)} title="See the tasks">{n}</button> : <span className="num-zero">{n}</span>;
   const kAll = keptOf(tasks);
   const period = weeks === 1 ? 'this week' : `last ${weeks} weeks`;
-  const pastDue = tasks.filter(MATCH.pastdue);
-  const silent = tasks.filter(MATCH.silent);
   // Blocked tasks come from the open list, so a block shows even when its first date is outside the window.
   const attention = attentionList([...tasks, ...openNow.filter((t) => t.blocked)].filter(shown), names, today);
   const byId = new Map([...tasks, ...openNow].map((t) => [t.id, t]));

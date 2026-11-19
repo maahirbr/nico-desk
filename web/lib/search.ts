@@ -1,6 +1,6 @@
 import { plainOf } from './comments';
 import type { Tx } from './db';
-import { fold, scoreText } from './fuzzy';
+import { scoreText } from './fuzzy';
 import { planState, teamProjects } from './plan';
 import { otherPasses, parseQuery, resolveFilters, taskPasses } from './searchQuery';
 import { listPeople, teamTasks } from './service';

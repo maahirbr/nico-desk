@@ -1,4 +1,4 @@
-/* The Guide page (components/GuideView.tsx) and the first-visit note on Home (components/GuideNote.tsx).
+/* The Guide page (components/GuideView.tsx).
    Tokens only, so every skin works in day and night. No new colour, size or radius. */
 
 /* ---------- the reading column ---------- */
@@ -39,19 +39,8 @@
 .gf-today.gf-late { fill: var(--late); }
 .gf-late-text { fill: var(--late); font-weight: 600; }
 
-/* ---------- Home: the first-visit note ---------- */
-.guide-note { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); margin: 0 0 var(--space-md); padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
-  background: var(--sunk); border-radius: var(--radius-control); font: var(--type-meta); color: var(--ink); }
-.guide-note a { color: var(--primary); }
-.guide-note-x { flex: none; display: grid; place-items: center; width: var(--button-height); height: var(--button-height); padding: 0; background: none; border: 0; border-radius: var(--radius-control); color: var(--ink-2); cursor: pointer;
-  transition: background var(--dur-state) var(--ease), transform var(--dur-state) var(--ease); }
-.guide-note-x:hover { background: var(--pill); color: var(--ink); }
-.guide-note-x:active { transform: scale(var(--press-scale)); }
-
 @media (max-width: 860px) {
   .guide-week li, .guide-defs > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-xxs); }
-  .guide-note a { display: inline-flex; align-items: center; min-height: var(--touch-min); }
-  .guide-note-x { width: var(--touch-min); height: var(--touch-min); }
 }
 
 /* ---------- the pictorial guide (15 Nov) ---------- */

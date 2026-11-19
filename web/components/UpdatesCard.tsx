@@ -17,7 +17,7 @@ import { TaskLink } from './TaskLink';
 
 const SHOWN = 6;
 
-export function UpdatesCard({ items, groups, meId, now, onOpen }: { items: UpdateItem[]; groups: UpdateGroup[]; meId: string; now: string; onOpen: (taskId: string) => void }) {
+export function UpdatesCard({ items, groups, now, onOpen }: { items: UpdateItem[]; groups: UpdateGroup[]; meId: string; now: string; onOpen: (taskId: string) => void }) {
   const router = useRouter();
   const [all, setAll] = useState(false);
   const readOnly = useReadOnly(); // "seen" is saved on that person's account: not while viewing as them
