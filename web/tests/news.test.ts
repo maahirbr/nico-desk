@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../lib/db';
 import { ApiError } from '../lib/errors';
 import { markNewsSeen, NEWS, newsFor } from '../lib/news';
-import { TEAM_ID } from '../lib/seed';
 
 // What's new (13 Nov): the note shows on Home until Got it, which holds per person; a lead sees how many have pressed it.
 let db: Db;

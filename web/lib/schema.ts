@@ -4,7 +4,7 @@
 // The activity log is append-only, like events. The one exception is deleteProject, which sets
 // nico.purging to the project's id for its own transaction so the project's log can go with it.
 export const PLAN_ACTIVITY_GUARD = `
-CREATE OR REPLACE FUNCTION plan_activity_guard() RETURNS trigger LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION plan_activity_guard() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS
 $$ BEGIN
   IF TG_OP = 'DELETE' AND OLD.project_id = current_setting('nico.purging', true) THEN RETURN OLD; END IF;
   RAISE EXCEPTION 'plan_activity is append-only';
@@ -156,7 +156,7 @@ CREATE TABLE tasks (
 CREATE UNIQUE INDEX tasks_origin_ref ON tasks (origin, origin_ref) WHERE origin_ref IS NOT NULL;
 CREATE INDEX tasks_team_open ON tasks (team_id, owner_id, due_on) WHERE status_category = 'open';
 
-CREATE FUNCTION tasks_first_due_locked() RETURNS trigger LANGUAGE plpgsql AS
+CREATE FUNCTION tasks_first_due_locked() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS
 $$ BEGIN
   IF NEW.first_due_on <> OLD.first_due_on THEN
     RAISE EXCEPTION 'first_due_on is locked';
@@ -182,7 +182,7 @@ CREATE TABLE events (
 );
 CREATE INDEX events_entity ON events (entity_type, entity_id, at);
 
-CREATE FUNCTION events_append_only() RETURNS trigger LANGUAGE plpgsql AS
+CREATE FUNCTION events_append_only() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS
 $$ BEGIN RAISE EXCEPTION 'events is append-only'; END $$;
 CREATE TRIGGER events_no_change BEFORE UPDATE OR DELETE ON events
   FOR EACH ROW EXECUTE FUNCTION events_append_only();
@@ -655,7 +655,8 @@ END $$;`;
 // Feedback is fenced by the writer's team. Sign-in, the reminders cron and the dev picker stay on the owner connection.
 // Idempotent: upgrade() and reseed run it last, after the public API lock.
 // Rollback: DROP POLICY team_fence on each table; REVOKE ALL ON ALL TABLES IN SCHEMA public FROM nico_app; DROP ROLE nico_app.
-const TEAM = `current_setting('app.team_id', true)`;
+// Wrapped in a SELECT so Postgres reads the setting once per query, not once per row (Supabase lint auth_rls_initplan).
+const TEAM = `(SELECT current_setting('app.team_id', true))`;
 const ON_TEAM = `person_id IN (SELECT person_id FROM team_members)`;
 const inProject = (col: string) => `${col} IN (SELECT id FROM projects)`;
 const inTask = (col: string) => `${col} IN (SELECT id FROM tasks)`;

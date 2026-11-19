@@ -1897,21 +1897,6 @@ sees "N of M have given feedback so far"; an admin also sees who has not, on hov
 (`lib/feedbackAsk.ts FEEDBACK_ASK`). In the app only: nothing is sent.
 Rollback: git revert the commit, or set the dates in the past.
 
-## 2026-11-16 · Opus 5.5 · Several notes in Personal, Apple Notes style
-
-The PM's call, after Apple Notes. Personal's notes become several notes (new table `personal_notes`; each person's old
-single page becomes their first note, "Notes", so nothing is lost; the old table stays and is no longer written).
-- Above the notes: ☰ shows or hides the list (remembered in this browser), ✎ makes a new untitled note whose name follows
-  its first line until it is renamed (a click on the name renames it), and 🗑 at the far right.
-- The list: newest first under Today, Yesterday, Previous 7 Days, Previous 30 Days, then by month and year; each note as
-  its name, a time, weekday or date, and the start of its text. The open note is tinted in the page's accent.
-- Above the page: "Created 16 Nov 2026 · Edited 2:37 PM".
-- 🗑 moves a note to Recently Deleted at the bottom of the list, for 30 days: it opens read only with Recover; 🗑 there
-  deletes it for good; after 30 days it goes by itself. Deleting the last live note leaves an empty "Notes".
-- A save that names no note (anything older that still calls /api/v1/me/notes) goes to the first note made.
-NEW TABLE: run `npm run db:upgrade` on the hosted database before a build with this is promoted.
-Rollback: git revert the commit. The old personal_pages rows are untouched, so going back loses only notes written since.
-
 ## 2026-11-16 · Opus 5.5 · Today's 3 on Personal
 
 The repo owner's call, from a list of ideas to make Personal more useful: a "Today" band at the top of my Personal page,
@@ -1931,6 +1916,31 @@ Five tests in `tests/personal.test.ts`; each fails without its rule. **The hoste
 before this is deployed**: the Personal page reads the new table.
 Rollback: git revert the commit. The `personal_focus` table can stay (nothing else reads it), or `DROP TABLE personal_focus`.
 
+## 2026-11-16 · Opus 5.5 · Several notes in Personal, Apple Notes style
+
+The PM's call, after Apple Notes. Personal's notes become several notes (new table `personal_notes`; each person's old
+single page becomes their first note, "Notes", so nothing is lost; the old table stays and is no longer written).
+- Above the notes: ☰ shows or hides the list (remembered in this browser), ✎ makes a new untitled note whose name follows
+  its first line until it is renamed (a click on the name renames it), and 🗑 at the far right.
+- The list: newest first under Today, Yesterday, Previous 7 Days, Previous 30 Days, then by month and year; each note as
+  its name, a time, weekday or date, and the start of its text. The open note is tinted in the page's accent.
+- Above the page: "Created 16 Nov 2026 · Edited 2:37 PM".
+- 🗑 moves a note to Recently Deleted at the bottom of the list, for 30 days: it opens read only with Recover; 🗑 there
+  deletes it for good; after 30 days it goes by itself. Deleting the last live note leaves an empty "Notes".
+- A save that names no note (anything older that still calls /api/v1/me/notes) goes to the first note made.
+NEW TABLE: run `npm run db:upgrade` on the hosted database before a build with this is promoted.
+Rollback: git revert the commit. The old personal_pages rows are untouched, so going back loses only notes written since.
+
+## 2026-11-17 · Opus 5.5 · Merged and deployed several notes in Personal with Today's 3
+
+The repo owner asked to merge the PM's 16 Nov notes push and deploy it before the leads' presentation. Both pushes
+changed the Personal page, so the merge keeps both: the Today band on top, and the notes list (`NotesShelf`) in place of
+the single notes page. Today's notes still adds today's heading to the open note. Typecheck, 946 tests, evals and build
+green; checked in the browser at desktop and 375px. Backup taken, `npm run db:upgrade` run on the hosted database
+(`personal_notes` has RLS, `deny_public_api` and `team_fence`), then deployed.
+Rollback: `vercel promote nico-desk-jn3zli2t2-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`. The
+`personal_notes` table can stay: the older build does not read it, and `personal_pages` was not changed.
+
 ## 2026-11-17 · Opus 5.5 · Roster: filter by access
 
 The PM's call: a dropdown left of "Find a person" on the Roster (All, Admin, Leadership, Member) shows one access at a
@@ -1946,6 +1956,34 @@ takes a short reason, except on one's own Personal task. So the owner now also g
 `lib/service.ts reopenTask`, `components/statusRules.ts canMoveTo`, `lib/undo.ts canUndo`.
 Rollback: git revert the commit.
 
+## 2026-11-18 · Opus 5.5 · A new project role starts as the job title
+
+From a pilot teammate's feedback note (18 Nov): giving everyone a project-specific role by hand is slow. The repo owner
+asked to build it. When someone is picked to join a project (a Team Members row in the project form, or "+ Add someone
+to this project" in a task's owner picker), their role box fills with their job title from the Roster. It stays
+editable. A role the person typed is kept if they then pick someone else; only an empty role, or the previous person's
+title, is replaced. A title longer than 60 characters is clipped to the 60 a role may hold. No server or schema change:
+the job title rides on the people lists the pages already send (`Opt.role`, as the Team and project pages already did), and `roleFor` in
+`components/OwnerPicker.tsx` holds the rule. Three tests in `tests/rolefor.test.ts`.
+Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · A handover list for the accounts the app runs on
+
+The repo owner's internship ends soon, and the app runs on the repo owner's personal GitHub, Vercel, Supabase and
+TypeSafe accounts, with nightly backups on the repo owner's Mac. `docs/HANDOVER-ACCOUNTS.md` lists each one, the 11
+production env vars by name, and the steps to move them to Nicobar accounts in order. Two rules lead it: keep
+`NICO_SESSION_SECRET` and `NICO_TOKEN_KEY` as they are, and keep the `nico-desk.vercel.app` address by transferring
+the Vercel project rather than making a new one. Docs only, nothing moved.
+Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Deployed the PM's 17 Nov push and the role auto-fill
+
+The repo owner asked to push and deploy `maahir/mvp`: the Roster access filter and the task owner's reopen (the PM's
+17 Nov push, merged as `dce8745`), and a new project role starting as the job title (`5308390`). No schema change, so no
+`db:upgrade`. Typecheck, 949 tests, evals and build green (9 tests that timed out on a busy machine passed on rerun).
+`maahir/mvp` is still on Next 16.4.3, the version the build warns about; the 16.4.6 fix sits on `fable/cleanup-motion-pass`.
+Rollback: `vercel promote nico-desk-yu0w9ilf3-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
 ## 2026-11-18 · Opus 5.5 · A project role starts as the Roster job title
 
 The PM's call: picking a person for a project (Settings, or + Add someone in a task) fills their Roster job title into
@@ -1953,6 +1991,20 @@ the role box at once, and it stays editable. A plain "Member" shows as the job t
 On the server an empty role takes the job title, else "Member" (`createProject`, `updateProject`, `addProjectPeople`,
 `joinProject`, via `jobTitleOf` in `lib/service.ts`).
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Merged the PM's role auto-fill with the repo owner's
+
+The PM and the repo owner built the same change in parallel (the entries above). The merge keeps the PM's version, which
+also fills an empty role on the server and shows an old "Member" as the job title, and keeps the one client rule in
+`roleFor` (`components/OwnerPicker.tsx`), so both pickers share it and a title is clipped to 60 characters.
+Rollback: git revert the merge commit with `-m 1`.
+
+## 2026-11-18 · Opus 5.5 · Deployed the merged role auto-fill
+
+The repo owner asked to push and deploy the merge of the PM's role auto-fill (`8208029`): an empty project role takes
+the Roster job title on the server too, and an old "Member" shows as the job title. No schema change, so no
+`db:upgrade`. Typecheck, 950 tests and build green.
+Rollback: `vercel promote nico-desk-3n76upevm-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
 
 ## 2026-11-18 · Opus 5.5 · Today's 3 parked off the Personal page
 
@@ -1965,6 +2017,13 @@ Rollback: git revert the commit.
 The PM's call: in someone's first 7 days, the welcome card sits above What's new and the feedback ask. Who sees it is
 unchanged. `components/HomeView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-18 · Opus 5.5 · Deployed the PM's afternoon push
+
+The repo owner asked to push and deploy the merge of the PM's two 18 Nov afternoon commits (`49bfdd7`): Today's 3 parked
+off the Personal page, and the welcome card first on Home. No schema change, so no `db:upgrade`. Typecheck, 950 tests and
+build green.
+Rollback: `vercel promote nico-desk-kjen0wevk-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
 
 ## 2026-11-19 · Opus 5.5 · A task on no project says One-off
 
@@ -1986,6 +2045,105 @@ now carries a ✓ Done or Dropped tag, and "Priya’s task" is left out when Pri
 (`lib/updates.ts`). No schema change. And Home's welcome card now goes by the viewed person's first day, so an admin in
 View as sees it when that person would (`app/me/page.tsx`).
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deployed the PM's 19 Nov push
+
+The repo owner asked to push and deploy the merge of the PM's three 19 Nov commits: One-off labels on tasks with no
+project, Projects as a grid or a list, and one-off Done lines in Updates with the welcome card in View as. No schema
+change, so no `db:upgrade`. Evals OK, 953 tests passed, typecheck silent, build green.
+Rollback: `vercel promote nico-desk-32thc8prr-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
+## 2026-11-18 · Opus 5.5 · Next.js 16.4.3 to 16.4.5, pinned
+
+A build on 18 Nov stopped once with "Your version of Next.js is affected by a known security vulnerability". Two moderate
+advisories cover 16.4.3: GHSA-mfr8-8qww-v76h (CVE-2026-119790, `'use cache'` called through `unstable_cache()` leaks
+across root params) and GHSA-vc7v-qv4w-wrv8 (CVE-2026-119351, nested `'use cache'` leaks across root param values). Both
+are fixed first in 16.4.5. The app uses neither `'use cache'` nor `unstable_cache`, so the real exposure was low. At the
+repo owner's yes, `next` is pinned to exactly 16.4.5, the smallest fixed patch, so a later patch never installs unseen.
+`eslint-config-next` is not a dependency on this branch. `fable/cleanup-motion-pass` (not merged) sets `^16.4.6`, so a
+merge of that branch will conflict in `web/package.json` and the lockfile: keep one version there.
+Typecheck, 950 tests, evals and build green, with no security stop.
+Rollback: git revert the commit, then `npm install` in `web/`.
+
+## 2026-11-18 · Opus 5.5 · Reminders can be sent through Resend when Gmail is not connected
+
+The repo owner's call, with their yes on 18 Nov: the company's Resend team (its domain already verified, so no DNS work)
+is a second way to send a reminder. A lead who has not connected Gmail can press Send, and the email goes through
+Resend from one company sender (`NICO_RESEND_FROM`), named "<lead> via nico-desk", with Reply-To set to the lead's own
+address. A lead with Gmail connected still sends from their own Gmail; the server picks Gmail first. This widens
+"Nothing else sends": a reminder can now leave from a company address, not only from the lead's mailbox. The rule that
+nothing is sent without the sender's yes still holds: only the lead's press of Send sends, only to the addresses they
+typed, and View as refuses it. The From line names the company sender before Send, and "Send from your Gmail instead"
+stays one click away. The name in From keeps only letters, digits, spaces, dots, apostrophes and hyphens; the HTML goes
+through the same `cleanHtml` as Gmail. Resend's 401 or 403 (wrong key or sender) reads "Tell an admin"; 422 reads
+"Check the addresses". Logged as `sent`, so no schema change. Off unless `NICO_RESEND_SEND=1`, `RESEND_API_KEY` and a
+plain `NICO_RESEND_FROM` are set; the key lives only in `web/.env.local` and Vercel env vars. These emails go out under
+the company's domain and count towards its sending reputation. `lib/resendSend.ts`, `app/api/v1/reminders/send/route.ts`,
+tests in `tests/resendSend.test.ts`. Steps in `web/README.md` Hosting.
+Rollback: unset `NICO_RESEND_SEND` (Send goes back to Gmail only), then git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deployed the Next.js 16.4.5 pin and Resend reminders
+
+The repo owner asked to merge and deploy both before the accounts move to Nicobar. The Next pin fixes the two advisories
+that failed builds. Resend stays off in production until `NICO_RESEND_SEND`, `RESEND_API_KEY` and `NICO_RESEND_FROM` are
+set, so this deploy changes nothing a lead sees yet. No schema change. Evals OK, 961 tests passed, typecheck silent,
+build green on the first try.
+Rollback: `vercel promote nico-desk-dg4kv8f8s-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
+## 2026-11-19 · Opus 5.5 · Code cleanup before the move to Nicobar
+
+The repo owner asked for a cleanup before the security pass and the accounts move. Removed: three components no page
+used (`ProjectVisuals`, `MentionsCard`, `GuideNote`) and their CSS; 22 unused imports and variables; four one-off
+database scripts that had done their job (`upgrade-meetings`, `upgrade-project-archive`, `upgrade-task-links`, whose
+statements live in `upgrade()`, and `leads-to-members`, with no lead rows left in production). `tsconfig.json` now has
+`noUnusedLocals` and `noUnusedParameters`, so unused code fails the typecheck. Kept on purpose: `PersonalToday` (the
+PM parked Today's 3) and `CommentThread` (comments are off in the app for V1, but the MCP still uses them). The
+handover doc now keeps the repo owner on every Nicobar account and says what Resend needs. 961 tests passed, build green.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Pin search_path on the three trigger functions
+
+The Supabase security advisor flagged `events_append_only`, `plan_activity_guard` and `tasks_first_due_locked` for a
+role-mutable `search_path`. Their bodies use only `TG_OP`, `OLD`, `NEW` and `current_setting`, so `SET search_path = ''`
+changes nothing they do. Applied live as migration `pin_search_path_on_trigger_functions`, and added to `lib/schema.ts`
+so `upgrade()` (which re-runs `CREATE OR REPLACE` for `plan_activity_guard`) and fresh installs keep it. Verified: all
+three triggers still block their writes, advisor shows no security lints.
+Rollback: `ALTER FUNCTION public.<name>() RESET search_path;` for each, and revert the `lib/schema.ts` lines.
+
+## 2026-11-19 · Opus 5.5 · Security pass: CSP enforced, team fence reads the team once per query
+
+The repo owner asked for a security pass before the move. No serious holes found: sign-in, View as, the MCP OAuth
+(PKCE, redirect allow-list), RLS and the team fence, cookies, uploads and secrets all held; npm audit 0, Supabase
+security lints 0. Two fixes, with the repo owner's yes. 1) The CSP is enforced in production builds (it was
+report-only since 13 Oct); `next dev` keeps report-only because hot reload needs eval. Checked on a production build:
+Home, Team, Projects, a project page with the notes editor, Ledger, Admin, Feedback, Reminders, Guide and its videos,
+with no CSP errors. 2) `team_fence` wraps `current_setting('app.team_id')` in a SELECT, so Postgres reads it once per
+query, not per row (Supabase lint auth_rls_initplan, 13 tables). Same rows match. `upgrade()` re-creates every
+policy, so `npm run db:upgrade` applies it to the hosted database. Accepted as they are: sessions are stateless for
+7 days (taking someone off the roster ends them), rate limits are per instance, an MCP code lives 60 seconds and is
+PKCE-bound.
+Rollback: git revert the commit, then `npm run db:upgrade` to put the old policies back.
+
+## 2026-11-19 · Opus 5.5 · A runbook for whoever looks after the app
+
+The repo owner asked for instructions a teammate such as the PM could follow if something breaks after the move.
+`docs/RUNBOOK.md`: the access they need, how a change goes live, rolling back a bad deploy, the site down, sign-in
+problems, the Claude connector, reminders, the database (never `db:remote` on production), and the two secrets that
+must never change. Docs only.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Supabase project moved to the Nicobar org; Google redirect URIs fixed
+
+The first step of the account move. The repo owner transferred the Supabase project `nico-desk` from their personal
+free org to the Nicobar Pro org (an overdue invoice there blocked it until the org owner paid it). The project ref,
+data and `DATABASE_URL` stay the same: a read-only query after the move returned the same people and tasks. The move
+adds $10/month to that org's bill and allows a free upgrade from Nano to Micro compute, still to be done at a quiet
+time. A dump from before the move is kept outside the repo.
+The Google OAuth client listed only the sign-in callback, so Gmail send and Meet connect failed with a redirect
+mismatch in production (no Google links had ever been saved). The repo owner added
+`/api/auth/google/gmail/callback` and `/api/auth/google/meet/callback`, and added a second Owner in Google Cloud IAM.
+The TypeSafe key is out of Vercel and `.env.local`. `HANDOVER-ACCOUNTS.md` marks steps 1 to 3 done.
+Rollback: transfer the project back from the Nicobar org's project settings (the repo owner must be in both orgs).
 
 ## 2026-11-19 · Opus 5.5 · Pop-up windows on top of the page, and project roles on Home
 

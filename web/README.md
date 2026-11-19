@@ -250,7 +250,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   minutes opens the existing import. Meeting held (project owner or lead, team lead, admin) sets the last meeting to
   today and moves the next date on. The project list shows "Meets Thu, next 15 Oct". API: `GET` and `PUT`
   `/api/v1/projects/:id/meeting`, `POST /api/v1/projects/:id/meeting/held`. For a hosted database run
-  `npx tsx --env-file=.env.remote.local scripts/upgrade-meetings.ts` (or `npm run db:upgrade`) before promoting.
+  `npm run db:upgrade` before promoting.
 
 ## Hosting
 
@@ -296,6 +296,15 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
   4. Set `NICO_GMAIL_SEND=1`. It uses the same `NICO_TOKEN_KEY` and the same `google_links` row as Google Meet, so one
      person has one Google link: disconnecting either one stops both.
   5. Run `npm run db:upgrade` before promoting the build, so a reminder can be logged as `sent`.
+- Send reminders through Resend (`NICO_RESEND_SEND=1`, 18 Nov), for a lead who has not connected Gmail. The mail goes
+  from one company sender under the lead's name ("<name> via nico-desk"), with Reply-To set to the lead. A lead with
+  Gmail connected still sends from their own Gmail. Steps for an admin of the company's Resend team:
+  1. Check that the company domain shows as Verified on Resend's Domains page. Without it, Resend's test sender
+     reaches only the account's own inbox.
+  2. Create an API key with Sending access, limited to that domain.
+  3. Set `RESEND_API_KEY`, `NICO_RESEND_FROM` (a plain address on that domain) and `NICO_RESEND_SEND=1`, in
+     `web/.env.local` for local runs and in Vercel env vars for the hosted app. Never in git.
+  No schema change: a Resend send is logged as `sent`, like a Gmail send.
 - MCP server for Claude (`app/api/mcp/`, `lib/mcp.ts`, `lib/mcpAuth.ts`): add the custom connector
   `https://<host>/api/mcp` in Claude. Claude registers itself, the person approves at `/connect` (with their app
   session, or Google if they have none), and every tool call runs as that person through `scoped()`, with the same
@@ -331,7 +340,7 @@ decision, 9 Oct). Older ahead and off-track values read as In progress.
 | Sheet read (FR-40 to FR-43) | Needs read access to a Sheet. The fixtures' Sheet rows show as read-only mirrors |
 | Slice 2: Granola drafts, Monday digest, Friday overdue email | Gated in SPEC.md section 1 |
 | The OKR page's own tokens and components | `~/Code/Nicobar work` is not on this machine. `app/globals.css` uses the same palette as `docs/team-page`, in one block to swap |
-| Sending reminders from the server | Nothing is sent on anyone's behalf without their yes (CLAUDE.md). Drafts open in your own Gmail and you send them |
+| Sending reminders from the server on a timer | Nothing is sent on anyone's behalf without their yes (CLAUDE.md). A reminder goes out only when the lead presses Send (Gmail or Resend), or opens it in their own Gmail |
 | Wispr Flow import | Wispr Flow has no key-based API for apps. Its Notetaker has a read-only MCP server for AI assistants, which needs an MCP client with per-user sign-in. Paste the summary instead |
 
 ## Layout

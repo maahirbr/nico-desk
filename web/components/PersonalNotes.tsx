@@ -48,14 +48,13 @@ export function PersonalNotes({ page, projectId, meId, teamId, today, noteId, he
   const router = useRouter();
   const [state, setState] = useState<'saved' | 'saving' | 'error' | 'idle'>(page.updatedAt ? 'saved' : 'idle');
   const [savedAt, setSavedAt] = useState(page.updatedAt);
-  const [prevAt, setPrevAt] = useState(page.prevAt);
   const [tasking, setTasking] = useState<{ title: string; due: string } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
   const save = async (doc: Doc) => {
     setState('saving');
-    try { const r = await api('/notes', 'PUT', { doc, ...(noteId ? { id: noteId } : {}) }); setSavedAt(r.updatedAt); setPrevAt(r.prevAt); setState('saved'); onSaved?.(r); }
+    try { const r = await api('/notes', 'PUT', { doc, ...(noteId ? { id: noteId } : {}) }); setSavedAt(r.updatedAt); setState('saved'); onSaved?.(r); }
     catch (e) { setState('error'); notify((e as Error).message); }
   };
   const editor = useEditor({
@@ -86,7 +85,7 @@ export function PersonalNotes({ page, projectId, meId, teamId, today, noteId, he
       try {
         const p: Page | null = await api(noteId ? `/notes?id=${encodeURIComponent(noteId)}` : '/notes', 'GET');
         if (p?.updatedAt && p.updatedAt !== savedRef.current && !timer.current) {
-          editor.commands.setContent(p.doc as JSONContent, { emitUpdate: false }); setSavedAt(p.updatedAt); setPrevAt(p.prevAt); setState('saved');
+          editor.commands.setContent(p.doc as JSONContent, { emitUpdate: false }); setSavedAt(p.updatedAt); setState('saved');
         }
       } catch { /* stays as it is */ }
     };

@@ -17,6 +17,14 @@ export function ProjectPeopleProvider({ value, mayAddTo, children }: { value: Re
 type Opt = { id: string; name: string; role?: string }; // role: their Roster job title (17 Nov)
 const ADD = '__add';
 
+// The role someone joins a project with starts as their job title from the Roster (18 Nov, a pilot teammate's
+// feedback: typing a role for everyone was slow). It stays editable. A role the person typed is kept when they pick
+// someone else; only an empty role, or the last person's title, is replaced. Clipped to the 60 a role may hold.
+export function roleFor(people: Opt[], role: string, fromId: string, toId: string): string {
+  const title = (id: string) => (people.find((p) => p.id === id)?.role ?? '').trim().slice(0, 60);
+  return !role.trim() || role === title(fromId) ? title(toId) : role;
+}
+
 // onChange gets the owner, and a role when that person is joining the project (empty until typed).
 export function OwnerPicker({ projectId, value, onChange, people, disabled = false }: {
   projectId?: string | null; value: string; onChange: (ownerId: string, role?: string) => void; people: Opt[]; disabled?: boolean;
@@ -43,11 +51,7 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
     return (
       <div className="owner-add">
         {/* Picking someone fills their role with their Roster job title (17 Nov), unless one was typed; it can be changed. */}
-        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => {
-          const was = people.find((p) => p.id === pick)?.role ?? '';
-          const next = role.trim() && role !== was ? role : (people.find((p) => p.id === v)?.role ?? '');
-          setPick(v); setRole(next); onChange(v, next);
-        }}>
+        <Select value={pick} aria-label="Person to add to the project" onChange={(v) => { const r = roleFor(people, role, pick, v); setPick(v); setRole(r); onChange(v, r); }}>
           <option value="" disabled>Choose a person</option>
           {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>

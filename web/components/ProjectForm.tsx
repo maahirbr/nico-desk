@@ -6,6 +6,7 @@ import { DateField } from './DateField';
 import { Fold, FoldChev } from './Fold';
 import { focusOnDesktop } from './motion';
 import { Select } from './Select';
+import { roleFor } from './OwnerPicker';
 import { SHOW_SETUP_EVENT, setupKey } from './setupEvents';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
@@ -195,12 +196,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
           <fieldset key={i} className="pform-plain" disabled={access === 'view' || (lock && i < firstN)}>
           <div className="member-row">
             {/* Picking someone fills their role with their Roster job title (17 Nov), unless a role was typed; it can be changed. */}
-            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => {
-              if (j !== i) return x;
-              const was = people.find((p) => p.id === x.personId)?.role ?? '';
-              const typed = x.role.trim() && x.role !== was;
-              return { ...x, personId: v, role: typed ? x.role : (people.find((p) => p.id === v)?.role ?? '') };
-            }))}>
+            <Select value={m.personId} aria-label="Person" onChange={(v) => set('members', f.members.map((x, j) => (j === i ? { ...x, personId: v, role: roleFor(people, x.role, x.personId, v) } : x)))}>
               <option value="">Pick a person</option>
               {people.filter((p) => p.id === m.personId || (!taken(p.id) && !f.members.some((x) => x.personId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>

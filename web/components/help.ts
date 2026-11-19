@@ -119,6 +119,7 @@ export const HELP = {
   remind_flag: 'Why this may not need a reminder. It starts left out of the email. Tick it to put it back in.',
   remind_copy: 'Copies the subject and the text, so you can paste them into any email or chat.',
   remind_send: 'Sends the email now from your own Gmail, with your Cc, Bcc and formatting. The first time, Google asks you to allow it. Only you can press Send.',
+  remind_send_resend: 'Sends the email now from the company address shown, under your name, with your Cc, Bcc and formatting. Replies come to your own address. Only you can press Send.',
   // Comments
   comment_box: 'Write a note for everyone who can see this. Type @ to mention a person. Type # to link a task or a project.',
   comment_mention: 'A mention adds a notice for that person. People who cannot see this item are not told.',

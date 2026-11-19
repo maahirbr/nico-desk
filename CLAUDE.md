@@ -31,7 +31,7 @@ Read before work on `maahir/mvp`: `docs/DESIGN-19-OCT.md` and `docs/PLAN-19-OCT.
   `components/motion.ts` holds motion, `components/KeyboardDismiss.tsx` the mobile keyboard rule,
   `components/keys.ts` the shortcuts, `components/help.ts` the help mode words.
 - Docs: `INTENT.md` (hand-written intent), `SPEC.md` (draft requirements, schema, API), `docs/DATA-MODEL.md`,
-  `docs/HOW-TEAMS-WORK.md`, `docs/USE-CASES-8-OCT.md`, `docs/DECISIONS.md` (the full decisions log),
+  `docs/HOW-TEAMS-WORK.md`, `docs/USE-CASES-8-OCT.md`, `docs/DECISIONS.md` (the full decisions log), `docs/HANDOVER-ACCOUNTS.md` (accounts to move to Nicobar), `docs/RUNBOOK.md` (what to do when something breaks),
   `docs/demo/index.html` (demo run sheet), `docs/team-page/` (team question page), `docs/guide/index.html` (feature guide).
 - `fixtures/`: synthetic people, projects, tasks and events. `events.json` replays to `tasks.json` exactly.
   `denylist.txt` guards against real data. `evals/meetings/`: 20 synthetic transcripts and `check.py`.
@@ -79,7 +79,9 @@ Add new entries at its bottom, never here. The rules below come from that log an
 - View as: every non-GET `/api/v1` call is refused in `route()`. Any write path outside `route()` must call
   `assertNotViewing`.
 - Reminders open as drafts in the lead's own Gmail, or, with `NICO_GMAIL_SEND=1` (11 Nov), go out from the lead's own
-  Gmail when the lead presses Send. Nothing else sends. The cron only writes in-app notices.
+  Gmail when the lead presses Send. With `NICO_RESEND_SEND=1` (18 Nov), a lead without Gmail connected can press Send
+  and it goes through Resend, from the company sender under the lead's name, replies to the lead. Nothing else sends.
+  The cron only writes in-app notices.
 - Undo makes a new change through the normal rules, never a delete.
 - Every table has RLS on. Every schema change also goes into `upgrade()`, and the hosted database needs
   `npm run db:upgrade` before a build that uses it is promoted. Never run `db:remote` on production without
@@ -100,7 +102,7 @@ cd web && rm -rf .next && npm run typecheck && npm test && npm run build
 ```
 
 Expected: `OK: 20 cases`; no grep output (the company name is allowed; real people, emails and
-internal hosts are not); typecheck silent; `945 passed`; build green. Then run the app
+internal hosts are not); typecheck silent; `961 passed`; build green. Then run the app
 (`npm run dev --prefix web`, port 3100) and check `/team`, `/me` and a project page at desktop and
 375px, day and night. After a deploy, open https://nico-desk.vercel.app/team. Done still means
 `docs/BRIEF.md` answers the open questions in `HANDOFF.md` section 5, checked with the sponsor.

@@ -12,6 +12,7 @@ import { AskReminders } from '@/components/AskReminders';
 import { ReminderCards } from '@/components/Reminders';
 import { RemindFind } from '@/components/RemindFind';
 import { gmailSendEnabled, gmailStatus } from '@/lib/gmailSend';
+import { resendFromLine, resendSendEnabled } from '@/lib/resendSend';
 import { Select } from '@/components/Select';
 
 export const dynamic = 'force-dynamic';
@@ -44,14 +45,17 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   if (projectId && !seesProject(sight, projectId)) notFound(); // hidden reads as missing
   const h = await headers();
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
-  const sendOn = gmailSendEnabled() && !me.viewingAs;
+  const gmailOn = gmailSendEnabled() && !me.viewingAs;
+  const resendOn = resendSendEnabled() && !me.viewingAs; // Send without Gmail, through Resend (18 Nov)
+  const sendOn = gmailOn || resendOn;
   const [{ drafts, skipped }, projects, asks, link] = await Promise.all([
     reminderDrafts(d, me.team.id, { mode, days, projectId, sight: remindSight }, appUrl),
     seenProjects(d, me, sight),
     staleAsks(d, me, projectId),
-    sendOn ? gmailStatus(d, me.realPerson.id) : null,
+    gmailOn ? gmailStatus(d, me.realPerson.id) : null,
   ]);
-  const send = { enabled: sendOn, connected: !!link?.connected, from: link?.email ?? me.person.email };
+  const send = { enabled: gmailOn, connected: !!link?.connected, from: link?.email ?? me.person.email,
+    resend: resendOn ? resendFromLine(me.realPerson.fullName ?? me.realPerson.displayName) : null };
   const gmail = GMAIL_SAID[one(sp.gmail) ?? ''];
   // Who each ask waits on, with the address a draft would go to (the same rule as the reminder drafts).
   const { rows: owners } = asks.length ? await d.query<{ id: string; email: string; contact_email: string | null }>(
@@ -67,7 +71,9 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   return (
     <>
       <h1>Reminders</h1>
-      <p className="lede">{sendOn
+      <p className="lede">{send.resend && !send.connected
+        ? 'One draft email per person, sent under your name, with replies to you. Check it, then press Send, or open it in Gmail.'
+        : sendOn
         ? 'One draft email per person, from the address you signed in with. Check it, then press Send, or open it in Gmail.'
         : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing goes out until you press Send.'}</p>
       {gmail && <p className="small" role="status">{gmail}</p>}

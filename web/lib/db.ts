@@ -80,9 +80,9 @@ export async function upgrade(db: Db) {
   await db.exec(`INSERT INTO project_members (project_id, person_id, project_role)
     SELECT DISTINCT project_id, owner_id, 'Member' FROM tasks WHERE project_id IS NOT NULL AND owner_id IS NOT NULL AND status_category = 'open'
     ON CONFLICT (project_id, person_id) DO NOTHING;`);
-  // 12 Oct: links on a task. The same statements are in scripts/upgrade-task-links.ts for the hosted database.
+  // 12 Oct: links on a task.
   await db.exec(TASK_LINKS_UPGRADE);
-  // 12 Oct: archive a project, and tell the previous owner when a task is reassigned. Same statements as scripts/upgrade-project-archive.ts.
+  // 12 Oct: archive a project, and tell the previous owner when a task is reassigned.
   await db.exec(PROJECT_ARCHIVE_UPGRADE);
   // 13 Oct: "seen" for Updates lives on the person's account, not in a browser cookie.
   await db.exec(UPDATE_SEEN_UPGRADE);
@@ -121,7 +121,7 @@ export async function upgrade(db: Db) {
   // 15 Nov: the Leadership role (lib/roles.ts mayOversee). The retired 'lead' stays allowed so old rows still read.
   await db.exec(`ALTER TABLE team_members DROP CONSTRAINT IF EXISTS team_members_app_role_check;
     ALTER TABLE team_members ADD CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin'));`);
-  // 13 Oct: a meeting rhythm on a project. Same statements as scripts/upgrade-meetings.ts for the hosted database.
+  // 13 Oct: a meeting rhythm on a project.
   await db.exec(MEETINGS_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
   await db.exec(GOOGLE_LINKS_UPGRADE);

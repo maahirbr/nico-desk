@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
 import { CopyInvite, EmailInvite } from './CopyLink';

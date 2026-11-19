@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import { rateLimit, readBody, route } from '@/lib/http';
-import { requireGmailSend, sendAsPerson } from '@/lib/gmailSend';
+import { notFound } from '@/lib/errors';
+import { gmailSendEnabled, gmailStatus, sendAsPerson } from '@/lib/gmailSend';
+import { resendSendEnabled, sendViaResend } from '@/lib/resendSend';
 import { assertOnTeam, logReminder, mayRemind } from '@/lib/reminders';
 
-// Sends one reminder from the lead's own Gmail. The lead's press of Send is the yes; nothing else calls this.
-// route() refuses it under View as, like every non-GET call.
+// Sends one reminder: from the lead's own Gmail when they connected it, else through Resend when that is on (18 Nov).
+// The lead's press of Send is the yes; nothing else calls this. route() refuses it under View as, like every non-GET call.
 const Addr = z.string().trim().toLowerCase().pipe(z.email()).pipe(z.string().max(254));
 const Body = z.object({
   personId: z.string().min(1).max(80),
@@ -14,14 +16,20 @@ const Body = z.object({
 }).strict();
 
 export const POST = route(async ({ req, me, db }) => {
-  requireGmailSend();
+  const gmailOn = gmailSendEnabled();
+  const resendOn = resendSendEnabled();
+  if (!gmailOn && !resendOn) throw notFound();
   mayRemind(me.person.appRoles);
   rateLimit(`gmail-send:${me.realPerson.id}`, 20);
   const b = await readBody(req, Body);
   await assertOnTeam(db, me.team.id, b.personId); // before anything goes out
-  const { from } = await sendAsPerson(db, me.realPerson.id, {
-    fromName: me.realPerson.fullName ?? me.realPerson.displayName, to: b.to, cc: b.cc, bcc: b.bcc, subject: b.subject, html: b.html, text: b.text,
-  });
+  const fromName = me.realPerson.fullName ?? me.realPerson.displayName;
+  const mail = { fromName, to: b.to, cc: b.cc, bcc: b.bcc, subject: b.subject, html: b.html, text: b.text };
+  // A connected Gmail wins. Without Resend, sendAsPerson refuses with "Gmail is not connected", as before.
+  const viaGmail = gmailOn && (await gmailStatus(db, me.realPerson.id)).connected;
+  const { from } = viaGmail || !resendOn
+    ? await sendAsPerson(db, me.realPerson.id, mail)
+    : await sendViaResend({ ...mail, replyTo: me.realPerson.email });
   await logReminder(db, me.team.id, me.person.id, { personId: b.personId, channel: 'sent', subject: b.subject, itemCount: b.itemKeys.length, itemKeys: b.itemKeys });
   return { sent: true, from };
 });
