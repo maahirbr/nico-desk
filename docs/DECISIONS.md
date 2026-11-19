@@ -2072,3 +2072,11 @@ plain `NICO_RESEND_FROM` are set; the key lives only in `web/.env.local` and Ver
 the company's domain and count towards its sending reputation. `lib/resendSend.ts`, `app/api/v1/reminders/send/route.ts`,
 tests in `tests/resendSend.test.ts`. Steps in `web/README.md` Hosting.
 Rollback: unset `NICO_RESEND_SEND` (Send goes back to Gmail only), then git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deployed the Next.js 16.4.5 pin and Resend reminders
+
+The repo owner asked to merge and deploy both before the accounts move to Nicobar. The Next pin fixes the two advisories
+that failed builds. Resend stays off in production until `NICO_RESEND_SEND`, `RESEND_API_KEY` and `NICO_RESEND_FROM` are
+set, so this deploy changes nothing a lead sees yet. No schema change. Evals OK, 961 tests passed, typecheck silent,
+build green on the first try.
+Rollback: `vercel promote nico-desk-dg4kv8f8s-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
