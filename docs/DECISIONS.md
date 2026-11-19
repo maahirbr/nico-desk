@@ -2109,3 +2109,17 @@ changes nothing they do. Applied live as migration `pin_search_path_on_trigger_f
 so `upgrade()` (which re-runs `CREATE OR REPLACE` for `plan_activity_guard`) and fresh installs keep it. Verified: all
 three triggers still block their writes, advisor shows no security lints.
 Rollback: `ALTER FUNCTION public.<name>() RESET search_path;` for each, and revert the `lib/schema.ts` lines.
+
+## 2026-11-19 · Opus 5.5 · Security pass: CSP enforced, team fence reads the team once per query
+
+The repo owner asked for a security pass before the move. No serious holes found: sign-in, View as, the MCP OAuth
+(PKCE, redirect allow-list), RLS and the team fence, cookies, uploads and secrets all held; npm audit 0, Supabase
+security lints 0. Two fixes, with the repo owner's yes. 1) The CSP is enforced in production builds (it was
+report-only since 13 Oct); `next dev` keeps report-only because hot reload needs eval. Checked on a production build:
+Home, Team, Projects, a project page with the notes editor, Ledger, Admin, Feedback, Reminders, Guide and its videos,
+with no CSP errors. 2) `team_fence` wraps `current_setting('app.team_id')` in a SELECT, so Postgres reads it once per
+query, not per row (Supabase lint auth_rls_initplan, 13 tables). Same rows match. `upgrade()` re-creates every
+policy, so `npm run db:upgrade` applies it to the hosted database. Accepted as they are: sessions are stateless for
+7 days (taking someone off the roster ends them), rate limits are per instance, an MCP code lives 60 seconds and is
+PKCE-bound.
+Rollback: git revert the commit, then `npm run db:upgrade` to put the old policies back.

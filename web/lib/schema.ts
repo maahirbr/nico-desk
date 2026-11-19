@@ -655,7 +655,8 @@ END $$;`;
 // Feedback is fenced by the writer's team. Sign-in, the reminders cron and the dev picker stay on the owner connection.
 // Idempotent: upgrade() and reseed run it last, after the public API lock.
 // Rollback: DROP POLICY team_fence on each table; REVOKE ALL ON ALL TABLES IN SCHEMA public FROM nico_app; DROP ROLE nico_app.
-const TEAM = `current_setting('app.team_id', true)`;
+// Wrapped in a SELECT so Postgres reads the setting once per query, not once per row (Supabase lint auth_rls_initplan).
+const TEAM = `(SELECT current_setting('app.team_id', true))`;
 const ON_TEAM = `person_id IN (SELECT person_id FROM team_members)`;
 const inProject = (col: string) => `${col} IN (SELECT id FROM projects)`;
 const inTask = (col: string) => `${col} IN (SELECT id FROM tasks)`;
