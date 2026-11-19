@@ -1,5 +1,5 @@
 import type { Tx } from './db';
-import { bad, forbidden } from './errors';
+import { ApiError, bad, forbidden } from './errors';
 import { mayOversee } from './roles';
 import { daysBetween, nextCheckpoint } from './planUtil';
 import { planState, teamProjects } from './plan';
@@ -44,8 +44,10 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   const pnames = Object.fromEntries(people.map((p) => [p.id, p.nickname ?? p.display_name]));
   const since = `${addDays(today, -RECENT_DAYS)}T00:00:00+05:30`; // days are judged in IST
 
+  // An archived project is out of reminders altogether (20 Nov, the PM's call): its tasks, lines and meeting actions.
+  const archived = new Set(projects.filter((p) => p.archivedAt).map((p) => p.id));
   const tasks = (await teamTasks(db, teamId, today)).filter((t) =>
-    t.statusCategory === 'open' && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
+    t.statusCategory === 'open' && !(t.projectId && archived.has(t.projectId)) && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
   const touched = await ownerTouched(db, tasks.map((t) => t.id), since);
   for (const t of tasks) {
     const flag = t.blocked?.onId && t.blocked.onId !== t.ownerId ? `Blocked, waiting on ${pnames[t.blocked.onId]?.split(' ')[0] ?? 'someone else'}`
@@ -57,7 +59,7 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   // Roster names win; a nickname only fills a key that no roster name holds.
   const byName = new Map(people.filter((p) => p.nickname).map((p) => [p.nickname!.toLowerCase(), p.id] as const));
   for (const p of people) byName.set(p.display_name.toLowerCase(), p.id);
-  for (const p of projects.filter((x) => x.kind === 'plan' && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId))) {
+  for (const p of projects.filter((x) => x.kind === 'plan' && !x.archivedAt && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId))) {
     const s = await planState(db, p.id);
     for (const l of s.lines) {
       if (!l.ownerId || l.status === 'Done') continue;
@@ -118,6 +120,17 @@ async function ownerTouched(db: Tx, taskIds: string[], since: string): Promise<S
      SELECT subject_id, author_id FROM comments
       WHERE subject_kind = 'task' AND subject_id = ANY($1) AND deleted_at IS NULL AND created_at >= $2`, [taskIds, since]);
   return new Set(rows.map((r) => `${r.id}|${r.by}`));
+}
+
+// Just before a reminder goes out (20 Nov): every task in it must still be open, on a project that is not archived. A task
+// finished or dropped since the page was opened stops that email, so nobody is nudged about work already done.
+export async function assertStillOpen(db: Tx, itemKeys: string[]): Promise<void> {
+  const ids = itemKeys.filter((k) => k.startsWith('task:')).map((k) => k.slice(5));
+  if (!ids.length) return;
+  const { rows } = await db.query<{ title: string; status_category: string; archived: boolean }>(
+    `SELECT t.title, t.status_category, (p.archived_at IS NOT NULL) AS archived FROM tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE t.id = ANY($1)`, [ids]);
+  const gone = rows.find((r) => r.status_category !== 'open' || r.archived);
+  if (gone) throw new ApiError(409, 'reminder_stale', `“${gone.title}” is ${gone.archived ? 'on an archived project' : gone.status_category === 'done' ? 'done' : 'dropped'} now. Reload Reminders to update this draft.`);
 }
 
 export async function assertOnTeam(db: Tx, teamId: string, personId: string) {

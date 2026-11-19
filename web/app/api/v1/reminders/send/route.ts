@@ -3,7 +3,7 @@ import { rateLimit, readBody, route } from '@/lib/http';
 import { notFound } from '@/lib/errors';
 import { gmailSendEnabled, gmailStatus, sendAsPerson } from '@/lib/gmailSend';
 import { resendSendEnabled, sendViaResend } from '@/lib/resendSend';
-import { assertOnTeam, logReminder, mayRemind } from '@/lib/reminders';
+import { assertOnTeam, assertStillOpen, logReminder, mayRemind } from '@/lib/reminders';
 
 // Sends one reminder: from the lead's own Gmail when they connected it, else through Resend when that is on (18 Nov).
 // The lead's press of Send is the yes; nothing else calls this. route() refuses it under View as, like every non-GET call.
@@ -23,6 +23,7 @@ export const POST = route(async ({ req, me, db }) => {
   rateLimit(`gmail-send:${me.realPerson.id}`, 20);
   const b = await readBody(req, Body);
   await assertOnTeam(db, me.team.id, b.personId); // before anything goes out
+  await assertStillOpen(db, b.itemKeys); // and nothing in it was finished, dropped or archived since the page opened
   const fromName = me.realPerson.fullName ?? me.realPerson.displayName;
   const mail = { fromName, to: b.to, cc: b.cc, bcc: b.bcc, subject: b.subject, html: b.html, text: b.text };
   // A connected Gmail wins. Without Resend, sendAsPerson refuses with "Gmail is not connected", as before.

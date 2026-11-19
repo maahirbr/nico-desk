@@ -2239,3 +2239,12 @@ names and the From address, then sends each person their own card's email as it 
 one at a time, through the same send as a card's own Send. With no project picked, the top line says to pick one.
 Nothing goes out until the lead presses Send. A 5-second Undo was built and parked. `components/Reminders.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Reminders follow live data: archived projects out, and a re-check before each send
+
+The PM's call. Tasks, plan lines and meeting actions of an archived project are never in a reminder, and an archived
+project is not in the Reminders Project list (archiving already drops open tasks; this makes it explicit). Just before
+each email goes out, by a card's Send or by Bulk send, the server checks every task in it is still open and its project
+not archived (`lib/reminders.ts assertStillOpen`). If not, that email is not sent and the card says which task changed
+and to reload; Bulk send sends the rest and names who was skipped. The page itself reads live data on every load.
+Rollback: git revert the commit.
