@@ -2184,3 +2184,11 @@ With admin tools hidden, an admin saw every project still, as `lib/sight.ts` rea
 `sightFor` passes `me.adminHidden`, and `sightOf` then works out the projects as for Leadership: the ones they own, lead,
 are on or may view. Projects, Team, Home and search all follow.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deploy: the PM's 19 Nov batch goes live
+
+Merged `mvp-local-desk-look` (pop-up windows on top, Home project roles, Hide admin tools and its own-projects view,
+the Mail app button gone) into `maahir/mvp`, then `main` (`ba28299`). Read first: Hide admin tools only takes rights
+away, and only for a real admin, so the unsigned `nd_hide_admin` cookie cannot raise anyone. VERIFY green (964 tests,
+build). No schema change. Production is `c23yxglmq`: `/team` loads, the Claude connector answers, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-qhh7p8x2s-maahirbharatram-3547s-projects.vercel.app --yes`.
