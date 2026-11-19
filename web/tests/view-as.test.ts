@@ -110,6 +110,11 @@ describe('Hide admin tools (19 Nov)', () => {
     const lead = (await resolveMe(db, LEAD, undefined, true))!;
     expect(lead.adminHidden).toBeUndefined();
   });
+  it('sees only their own projects, as Leadership does, not the whole team', async () => {
+    const { sightFor } = await import('../lib/visibility');
+    expect((await sightFor(db, (await resolveMe(db, ADMIN))!)).all).toBe(true);
+    expect((await sightFor(db, (await resolveMe(db, ADMIN, undefined, true))!)).all).toBe(false);
+  });
   it('gives way to View as', async () => {
     const people = await s.listPeople(db, TEAM_ID);
     const m = people.find((p) => p.active && !p.appRoles.includes('admin') && p.id !== LEAD)!;

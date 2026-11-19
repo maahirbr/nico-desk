@@ -2167,3 +2167,10 @@ Rollback: git revert the commit.
 The PM's call: the "Mail app" button (a mailto draft) is gone from a reminder card; Send, Open in Gmail and Copy stay.
 Its help text went with it. `components/Reminders.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Hide admin tools also hides the projects you are not on
+
+With admin tools hidden, an admin saw every project still, as `lib/sight.ts` read the admin role from the database. Now
+`sightFor` passes `me.adminHidden`, and `sightOf` then works out the projects as for Leadership: the ones they own, lead,
+are on or may view. Projects, Team, Home and search all follow.
+Rollback: git revert the commit.
