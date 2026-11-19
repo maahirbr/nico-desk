@@ -21,7 +21,7 @@ export default async function Feedback() {
       <FeedbackForm />
       <section>
         <h2>From the team</h2>
-        <FeedbackList meId={me.person.id} hasNews={news.length > 0}
+        <FeedbackList meId={me.person.id} isAdmin={me.person.appRoles.includes('admin')} hasNews={news.length > 0}
           rows={rows.map((r) => ({ id: r.id, personId: r.personId, personName: r.personName, stamp: fmtStamp(r.createdAt), path: r.path, body: r.body, images: r.images, votes: r.votes, mine: r.mine, others: r.others,
             kind: r.kind, workingById: r.workingById, workingByName: r.workingByName,
             status: r.status, closedByName: r.closedByName, closedAt: r.closedAt ? new Date(r.closedAt).toISOString() : null, closedStamp: r.closedAt ? fmtStamp(r.closedAt) : null, closedNote: r.closedNote,

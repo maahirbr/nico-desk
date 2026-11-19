@@ -9,8 +9,8 @@ import { notify } from './toast';
 import { EmptyMark, ICON } from './icons';
 import { useUrlText } from './remember';
 
-// The team's notes, for everyone. A switch at the top shows Open (newest first), Resolved (Done and Not now, most recently
-// closed first) or Working well (praise, 2 Nov); it opens on Open and keeps the choice in the address (?show=). Anyone can
+// The team's notes, for everyone. A switch at the top shows Open (newest first), Done, Not now (parked ideas, split out of
+// Resolved on 18 Nov; both most recently closed first) or Working well (praise, 2 Nov); it opens on Open and keeps the choice in the address (?show=). Anyone can
 // say they are working on an open note, which shows their name and tells no one. Nothing is removed. Screenshots show as small pictures that open full size. "+1" backs a teammate's open note. Anyone replies, marks
 // a note Done, or Not now with a short reason that shows on the note, and anyone reopens it (the PM's call, 30 Oct).
 // Opening this page marks your feedback news seen, so Home stops showing it. Beside +1, the count and who agreed:
@@ -35,9 +35,20 @@ export type FeedbackRow = { id: string; personId: string; personName: string; st
   status: 'open' | 'done' | 'not_now'; closedByName: string | null; closedAt: string | null; closedStamp: string | null; closedNote: string | null;
   replies: { id: string; authorName: string; body: string; stamp: string }[] };
 
-export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; hasNews: boolean; meId: string }) {
+// isAdmin (19 Nov): an admin may delete any note; the writer may delete their own.
+export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: FeedbackRow[]; hasNews: boolean; meId: string; isAdmin?: boolean }) {
   const router = useRouter();
   const readOnly = useReadOnly();
+  // Delete: the first press of ✕ asks (it turns red), the second deletes. Deleted notes leave the list at once.
+  const [asking, setAsking] = useState<string | null>(null);
+  const [gone, setGone] = useState<Set<string>>(new Set());
+  async function remove(id: string) {
+    if (asking !== id) { setAsking(id); return; }
+    setAsking(null); setGone((g) => new Set([...g, id]));
+    const r = await fetch(`/api/v1/feedback/${id}`, { method: 'DELETE' });
+    if (!r.ok) { setGone((g) => { const n = new Set(g); n.delete(id); return n; }); notify('Could not delete it. Try again.'); return; }
+    notify('Deleted'); router.refresh();
+  }
   const [replying, setReplying] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -45,7 +56,7 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   const [reason, setReason] = useState('');
   const [moving, setMoving] = useState<string | null>(null);
   const [show, setShow] = useUrlText('show');
-  const view = show === 'resolved' ? 'resolved' : show === 'praise' ? 'praise' : 'open';
+  const view = show === 'resolved' || show === 'done' ? 'done' : show === 'not-now' ? 'not_now' : show === 'praise' ? 'praise' : 'open';
   // Opened from a Feedback update on Home (/feedback#reply-…): bring that reply or note into view and mark it, as a
   // client-side visit does not set :target. The mark stays until the page is left.
   useEffect(() => {
@@ -95,9 +106,12 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
   }
   if (rows.length === 0) return <div className="empty-state"><EmptyMark d={ICON['/feedback']} /><p>No feedback yet.</p></div>;
   // Open and Resolved hold notes to fix; Working well holds praise, which has nothing to close (2 Nov).
+  rows = rows.filter((r) => !gone.has(r.id));
   const praise = rows.filter((r) => r.kind === 'praise');
   const open = rows.filter((r) => r.kind !== 'praise' && r.status === 'open');
   const closed = rows.filter((r) => r.kind !== 'praise' && r.status !== 'open').sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''));
+  const done = closed.filter((r) => r.status === 'done');
+  const parked = closed.filter((r) => r.status === 'not_now');
   const item = (r: FeedbackRow) => {
     const v = vote[r.id] ?? { votes: r.votes, mine: r.mine, others: r.others };
     const agreed = <Agreed votes={v.votes} names={[...(v.mine ? ['You'] : []), ...v.others]} />;
@@ -107,6 +121,11 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
         <div className="fb-meta small">
           <b>{r.personName}</b><span className="dim">{r.stamp}</span>
           {r.path && <span className="dim">about {PAGES.find(([p]) => p === r.path)?.[1] ?? r.path}</span>}
+          {!readOnly && isOpen && r.kind === 'fix' && (r.personId === meId || isAdmin) && (
+            <button type="button" className={`row-btn del fb-del${asking === r.id ? ' asking' : ''}`} title={asking === r.id ? 'Press again to delete' : 'Delete this note'}
+              aria-label={asking === r.id ? 'Press again to delete this note' : 'Delete this note'} onClick={() => void remove(r.id)} onBlur={() => setAsking((a) => (a === r.id ? null : a))}>
+              {asking === r.id ? 'Delete?' : '✕'}</button>
+          )}
         </div>
         {r.kind === 'fix' && isOpen && r.workingByName && <p className="fb-working small">{r.workingById === meId ? 'You are' : `${r.workingByName} is`} working on it</p>}
         <p className="fb-body">{r.body}</p>
@@ -181,15 +200,18 @@ export function FeedbackList({ rows, hasNews, meId }: { rows: FeedbackRow[]; has
     <>
       <span className="seg fb-switch" role="group" aria-label="Show">
         <button type="button" aria-pressed={view === 'open'} onClick={() => setShow('')}>Open <span className="count-badge">{open.length}</span></button>
-        <button type="button" aria-pressed={view === 'resolved'} onClick={() => setShow('resolved')}>Resolved <span className="count-badge">{closed.length}</span></button>
+        <button type="button" aria-pressed={view === 'done'} onClick={() => setShow('done')}>Resolved <span className="count-badge">{done.length}</span></button>
+        <button type="button" aria-pressed={view === 'not_now'} onClick={() => setShow('not-now')}>Not now <span className="count-badge">{parked.length}</span></button>
         <button type="button" aria-pressed={view === 'praise'} onClick={() => setShow('praise')}>Working well <span className="count-badge">{praise.length}</span></button>
       </span>
-      {view === 'resolved'
-        ? (closed.length > 0 ? <ul className="fb-list">{closed.map(item)}</ul> : <p className="small dim">Nothing resolved yet.</p>)
+      {view === 'done'
+        ? (done.length > 0 ? <ul className="fb-list">{done.map(item)}</ul> : <p className="small dim">Nothing resolved yet.</p>)
+        : view === 'not_now'
+        ? (parked.length > 0 ? <ul className="fb-list">{parked.map(item)}</ul> : <p className="small dim">No parked ideas.</p>)
         : view === 'praise'
           ? (praise.length > 0 ? <ul className="fb-list">{praise.map(item)}</ul> : <p className="small dim">No praise yet. When something works well, say so!</p>)
           : (open.length > 0 ? <ul className="fb-list">{open.map(item)}</ul>
-            : <p className="small dim">Nothing open. Every note is resolved. <button type="button" className="linkbtn" onClick={() => setShow('resolved')}>See resolved</button></p>)}
+            : <p className="small dim">Nothing open. <button type="button" className="linkbtn" onClick={() => setShow('done')}>See resolved</button></p>)}
     </>
   );
 }

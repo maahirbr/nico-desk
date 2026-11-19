@@ -180,6 +180,25 @@ export async function setFeedbackStatus(db: Db, me: Me, id: string, status: Feed
   return { status };
 }
 
+// Delete (19 Nov, the PM's call): the writer or an admin, with the ✕ on the note, after "Delete?". It is gone for good,
+// with its screenshots, +1s, replies and news. Nobody is told. Only an open note to fix: not once it is Resolved or
+// Not now, and never a Working well note (the PM's call).
+export async function deleteFeedback(db: Db, me: Me, id: string): Promise<{ ok: true }> {
+  assertNotViewing(me);
+  const note = await noteOnTeam(db, me, id);
+  if (note.person_id !== me.person.id && !me.person.appRoles.includes('admin')) throw forbidden('Only the person who wrote it, or an admin, can delete a note.');
+  const { rows: [k] } = await db.query<{ kind: FeedbackKind }>(`SELECT kind FROM feedback WHERE id = $1`, [id]);
+  if (note.status !== 'open' || k?.kind === 'praise') throw bad('cannot_delete', 'Only an open note can be deleted, not a resolved one or one that is working well.');
+  await db.transaction(async (tx) => {
+    await tx.query(`DELETE FROM feedback_news WHERE feedback_id = $1`, [id]);
+    await tx.query(`DELETE FROM feedback_replies WHERE feedback_id = $1`, [id]);
+    await tx.query(`DELETE FROM feedback_votes WHERE feedback_id = $1`, [id]);
+    await tx.query(`DELETE FROM feedback_images WHERE feedback_id = $1`, [id]);
+    await tx.query(`DELETE FROM feedback WHERE id = $1`, [id]);
+  });
+  return { ok: true };
+}
+
 // "Working on it" (2 Nov): anyone marks an open note to fix as theirs, or takes it over, or lets it go. The note shows
 // who; nobody is told, so it sends no news.
 export async function setFeedbackWorking(db: Db, me: Me, id: string, on: boolean): Promise<{ ok: true }> {
@@ -216,7 +235,7 @@ export async function feedbackNewsForMe(db: Db, me: Me): Promise<FeedbackNews[]>
       WHERE n.person_id = $1 AND n.seen_at IS NULL AND n.kind <> 'reopened' -- reopens tell nobody (3 Nov), old ones included
       ORDER BY n.created_at DESC, n.id DESC LIMIT 20`, [me.person.id]);
   return rows.map((r) => {
-    const tab = r.f_kind === 'praise' ? '?show=praise' : r.f_status === 'open' ? '' : '?show=resolved';
+    const tab = r.f_kind === 'praise' ? '?show=praise' : r.f_status === 'open' ? '' : r.f_status === 'not_now' ? '?show=not-now' : '?show=done';
     const href = `/feedback${tab}#${r.kind === 'reply' && r.reply_id ? `reply-${r.reply_id}` : r.feedback_id}`;
     return { id: r.id, kind: r.kind, actorName: r.actor_name, note: r.note, text: r.text, createdAt: r.created_at, href };
   });
