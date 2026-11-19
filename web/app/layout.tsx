@@ -109,8 +109,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} remind={mayOversee(me.person.appRoles)} activity={mayReadActivity(me)} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
-              <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
-                viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null} />
+              <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={me.adminHidden ? 'admin' : roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
+                viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null}
+                adminTools={me.adminHidden ? 'hidden' : realAdmin && !me.viewingAs ? 'shown' : null} />
             </aside>
             <main className="main"><div className="topbar"><TopSearch /><FeedbackLink /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>

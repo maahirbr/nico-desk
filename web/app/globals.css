@@ -2189,3 +2189,9 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .nshelf-trash-h { border: 0; background: none; cursor: pointer; display: flex; gap: var(--space-xxs); align-items: baseline; padding: 0; }
 .nshelf-gone { color: var(--late); }
 .roster-roles { min-width: 150px; } /* the access dropdown beside Find a person (17 Nov) */
+/* Hide admin tools (19 Nov): a quiet note under the name instead of a banner. */
+.who-hidden { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); text-transform: none; }
+/* On a phone only the initials show: a small dot on them says the same. */
+.who-tools-hidden { position: relative; }
+.who-tools-hidden::after { content: ''; display: none; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px var(--side-bg, #1f1c18); }
+@media (max-width: 860px) { .who-tools-hidden::after { display: block; } }

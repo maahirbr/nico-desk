@@ -2152,3 +2152,12 @@ pinned Access column, Edit Person was painted under the pinned cells of the rows
 a role only when it says something (Owner, Lead, Contributor), not when it is just the person's job title or Member
 (the PM's call). `app/me/page.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Hide admin tools
+
+The PM's call: an admin can tick "Hide admin tools" in the account menu to see and use NicoDesk with Leadership rights,
+without the admin tools (View as, Roster editing). Under their name it then says "Admin tools hidden", with a small dot on
+the avatar on a phone; no banner. Only an admin gets it: `lib/auth.ts resolveMe` honours the `nd_hide_admin` cookie only
+for an admin, and View as wins over it. It is kept per browser, so no schema change. The few service checks that read the
+role from the database still see the admin.
+Rollback: git revert the commit.
