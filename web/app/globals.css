@@ -2207,3 +2207,13 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 /* Feedback (19 Nov): the writer or an admin deletes a note with ✕; the first press asks. */
 .fb-meta .fb-del { margin-left: auto; }
 .fb-del.asking { color: var(--late); font: 600 12px/1 var(--font-sans); }
+/* Reminders (19 Nov): Bulk send, its bar above the cards, and each card's Select tick. */
+.remind-all { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; margin-bottom: var(--space-md); position: sticky; top: calc(var(--bar-height) + var(--space-xs)); z-index: 3; }
+.remind-inall { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); white-space: nowrap; }
+.remind-all-acts { display: inline-flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.remind-multi-start { display: flex; justify-content: flex-end; margin-bottom: var(--space-sm); }
+.remind-inall.off { color: var(--ink-3); }
+.remind-all-pick { display: inline-flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; min-width: 0; }
+.remind-all-check { display: inline-flex; align-items: center; gap: 6px; font: 500 14px/1.3 var(--font-sans); white-space: nowrap; cursor: pointer; padding-right: var(--space-md); border-right: var(--rule) solid var(--hairline); }
+/* Reminders (19 Nov): reminded today. */
+.remind-today { margin-left: 6px; padding: 1px 7px; border-radius: var(--radius-pill); font: 600 11px/1.5 var(--font-sans); color: var(--st-active-fg, #8a5a00); background: var(--st-active-bg, #f6e7c4); }

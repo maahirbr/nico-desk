@@ -75,7 +75,9 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
         ? 'One draft email per person, sent under your name, with replies to you. Check it, then press Send, or open it in Gmail.'
         : sendOn
         ? 'One draft email per person, from the address you signed in with. Check it, then press Send, or open it in Gmail.'
-        : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing goes out until you press Send.'}</p>
+        : 'One draft email per person. It opens in your Gmail, from the address you signed in with. Nothing goes out until you press Send.'}
+        {/* Bulk send needs a project (19 Nov): said here, in the top line, rather than on a line of its own. */}
+        {!projectId && !me.viewingAs && ' Pick a project to use Bulk send.'}</p>
       {gmail && <p className="small" role="status">{gmail}</p>}
       <form className="bar" action="/reminders" method="get">
         <span className="seg" role="group" aria-label="What to include">
@@ -102,7 +104,7 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
       }))} />}
       {skipped.length > 0 && <p className="small dim">Not reminded, by choice: {skipped.join(', ')}.</p>}
       {drafts.length === 0 ? <div className="card"><p className="empty card-pad">Nothing to chase. Everyone is on time for this view.</p></div>
-        : <ReminderCards drafts={drafts} appUrl={appUrl} send={send}
+        : <ReminderCards drafts={drafts} appUrl={appUrl} send={send} sendAll={!!projectId}
             signOff={me.person.nickname?.trim() || me.person.displayName.split(' ')[0]}
             contacts={people.filter((p) => p.active && p.email).map((p) => ({ name: p.fullName ?? p.displayName, email: p.email }))} />}
     </>

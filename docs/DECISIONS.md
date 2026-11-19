@@ -2228,3 +2228,14 @@ Rollback: git revert the commit.
 
 The PM's call: the access dropdown now fills its space, and the gap to Find a person is the small one (8px).
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Reminders: Bulk send for one project
+
+From a lead's ask, the PM's design. With one project picked, Reminders shows "Bulk send" (off until pressed). Each card
+then gets a Select box, all unticked, and a bar above the cards with a Select all box (a dash when only some are ticked),
+the names ticked, and "Send to N people". Select all leaves out anyone reminded today; they show "reminded today" and can
+be ticked by hand. A card can be ticked only with an address and an item. "Send to N people" asks to confirm, listing the
+names and the From address, then sends each person their own card's email as it stands (To, Cc, Bcc, subject, text),
+one at a time, through the same send as a card's own Send. With no project picked, the top line says to pick one.
+Nothing goes out until the lead presses Send. A 5-second Undo was built and parked. `components/Reminders.tsx`.
+Rollback: git revert the commit.
