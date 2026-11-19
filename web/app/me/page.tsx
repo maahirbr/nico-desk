@@ -36,7 +36,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   // Asks to archive (15 Nov): open ones on projects I own or lead, and the answers to mine.
   const [archiveAsks, archiveNews] = await Promise.all([archiveAsksForMe(d, me.team.id, me.person.id), archiveNewsForMe(d, me.team.id, me.person.id)]);
   // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
-  const news = await newsFor(d, me.person.id);
+  // An admins-only note (19 Nov) shows to admins, with admin tools hidden too; in View as, as that person would see it.
+  const news = await newsFor(d, me.person.id, !!me.adminHidden || me.person.appRoles.includes('admin'));
   // The feedback ask (15 Nov): until they share one note, or the ask ends. An admin sees the count.
   const feedbackAsk = await feedbackAskFor(d, me.person.id, me.team.id, t, me.person.appRoles.includes('admin'));
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));

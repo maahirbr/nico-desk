@@ -2195,3 +2195,6 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .who-tools-hidden { position: relative; }
 .who-tools-hidden::after { content: ''; display: none; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px var(--side-bg, #1f1c18); }
 @media (max-width: 860px) { .who-tools-hidden::after { display: block; } }
+
+/* Activity (19 Nov): Last active shows the exact time on hover. */
+.act-when { border-bottom: 1px dotted var(--line-strong); cursor: default; }

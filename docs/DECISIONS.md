@@ -2187,3 +2187,18 @@ The PM's call: everyone signs in with Google, so the Google picture ticked "Add 
 almost everyone. It now ticks for a nickname, a phone or an uploaded photo, or once they open their profile from the card.
 `app/me/page.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · A What's new note for admins only: Hide admin tools
+
+What's new can now hold several notes, each for everyone or for admins only (`lib/news.ts`, `admins: true`). One shows
+at a time until Got it. The first admins-only note tells admins about Hide admin tools, why and how. Admins see it with
+admin tools hidden too; members and Leadership never do; in View as it shows as the viewed person would see it. In the
+app only, nothing is sent.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Activity: the exact last-active time on hover
+
+The PM's call: on Activity, hovering Last active shows "Today at 10:52 am" or "Wed, 18 Nov at 3:15 pm", India time. A
+visit is kept as a day only, so when that is the latest trace it shows the day and says no time was kept.
+`components/ActivityView.tsx`.
+Rollback: git revert the commit.
