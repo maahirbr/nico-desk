@@ -5,6 +5,7 @@ import { fmtDate } from './time';
 //
 //   owner of the task    -> assigned to you (_created or owner_id), due_on moved, status_category
 //                           done or dropped, title changed
+//   giver of a one-off   -> done (a task on no project that the viewer made for someone else, 19 Nov)
 //   blocked_on_id person -> nothing here: a block on you shows under "Waiting on you" until it is cleared
 //   project lead         -> due_on moved (with its reason), blocked_ask set, dropped, owner_id changed
 //   owner and lead       -> someone else cleared the block, with what they did
@@ -14,7 +15,7 @@ import { fmtDate } from './time';
 export type UpdateEvent = {
   id: string; entity_id: string; field: string; before: unknown; after: unknown; reason: string | null; actor_id: string | null; at: string | Date;
 };
-export type UpdateTask = { id: string; title: string; ownerId: string; projectId: string | null; blocked: { onId: string | null } | null; dueOn?: string; statusCategory?: string };
+export type UpdateTask = { id: string; title: string; ownerId: string; projectId: string | null; createdBy?: string | null; blocked: { onId: string | null } | null; dueOn?: string; statusCategory?: string };
 export type UpdateKind = 'assigned' | 'due_moved' | 'blocked' | 'unblocked' | 'dropped' | 'done' | 'renamed' | 'reassigned' | 'replied';
 // text: the full sentence. who + clause: the same change as a short phrase about "it", for one line per task.
 // fold: a change the grouped view leaves out (a small rename, or a tidy-up right after assigning).
@@ -61,6 +62,7 @@ export function buildUpdates(input: {
 
     const owner = t.ownerId === viewerId;
     const lead = !!t.projectId && [leadOf[t.projectId] ?? []].flat().includes(viewerId);
+    const giver = !t.projectId && !owner && t.createdBy === viewerId; // a one-off the viewer gave (19 Nov)
     const who = first(e.actor_id);
     const title = q(t.title);
     // "your task", the bare title when the owner did it, else "Priya’s".
@@ -94,7 +96,7 @@ export function buildUpdates(input: {
       if (!closedThen) item('unblocked', `${who} cleared the block on ${subject}${why ? `: ${why}` : ''}`, `cleared the block${said(why)}`);
     } else if (e.field === 'status_category' && e.after === 'dropped' && (owner || lead)) {
       item('dropped', `${who} dropped ${subject}: ${why || 'no reason given'}`, `dropped it${why ? said(why) : ', no reason given'}`);
-    } else if (e.field === 'status_category' && e.after === 'done' && owner) {
+    } else if (e.field === 'status_category' && e.after === 'done' && (owner || giver)) {
       item('done', `${who} marked ${subject} done${why ? `: ${why}` : ''}`, 'marked it done');
     } else if (e.field === 'title' && owner) {
       // A small edit (spelling, a few words added or trimmed) or a tidy-up by whoever just assigned it stays out of the grouped view.
@@ -159,7 +161,7 @@ function distance(a: string, b: string): number {
 
 // ---------- grouped view: by project, one line per task ----------
 
-export type UpdateRow = { taskId: string; title: string; ownerName: string | null; summary: string; parts: { who: string; text: string }[]; at: string; closed: 'done' | 'dropped' | null; due: { label: string; tone: 'late' | 'soon' | 'later' } | null };
+export type UpdateRow = { taskId: string; title: string; ownerName: string | null; summary: string; parts: { who: string; text: string }[]; at: string; closed: 'done' | 'dropped' | null; due: { label: string; tone: 'late' | 'soon' | 'later' | 'done' | 'dropped' } | null };
 export type UpdateGroup = { projectId: string | null; name: string; rows: UpdateRow[] };
 
 const addDays = (d: string, n: number) => new Date(new Date(`${d}T00:00:00Z`).getTime() + n * DAY).toISOString().slice(0, 10);
@@ -183,14 +185,18 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
       else parts.push({ who: s.who, text: s.clause });
     }
     const closed = t.statusCategory === 'done' ? 'done' : t.statusCategory === 'dropped' ? 'dropped' : null;
-    let due: UpdateRow['due'] = null;
+    // A closed task says so in its tag (19 Nov): ✓ Done in green, or Dropped.
+    let due: UpdateRow['due'] = closed === 'done' ? { label: '✓ Done', tone: 'done' } : closed === 'dropped' ? { label: 'Dropped', tone: 'dropped' } : null;
     if (!closed && t.dueOn) {
       if (t.dueOn < today) due = { label: 'Late', tone: 'late' };
       else if (t.dueOn === today) due = { label: 'Due today', tone: 'soon' };
       else if (t.dueOn === addDays(today, 1)) due = { label: 'Due tomorrow', tone: 'soon' };
       else due = { label: `Due ${fmtDate(t.dueOn)}`, tone: 'later' };
     }
-    rows.push({ taskId, projectId: t.projectId, title: t.title, ownerName: t.ownerId === viewerId ? null : names[t.ownerId] ?? null,
+    // "Priya’s task" only when someone other than Priya made the change; her own change already names her.
+    const ownerFirst = (names[t.ownerId] ?? '').split(' ')[0];
+    const ownerName = t.ownerId === viewerId || parts.every((p) => p.who === ownerFirst) ? null : names[t.ownerId] ?? null;
+    rows.push({ taskId, projectId: t.projectId, title: t.title, ownerName,
       summary: parts.map((p) => `${p.who} ${p.text}`).join('; '), parts, at: steps[steps.length - 1].at, closed, due });
   }
 
@@ -199,7 +205,7 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
   const groups = new Map<string, UpdateGroup>();
   for (const r of rows) {
     const key = r.projectId ?? '';
-    if (!groups.has(key)) groups.set(key, { projectId: r.projectId, name: r.projectId ? projectNames[r.projectId] ?? 'Project' : 'No project', rows: [] });
+    if (!groups.has(key)) groups.set(key, { projectId: r.projectId, name: r.projectId ? projectNames[r.projectId] ?? 'Project' : 'One-off tasks', rows: [] });
     const { projectId: _p, ...row } = r;
     groups.get(key)!.rows.push(row);
   }

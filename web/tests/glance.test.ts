@@ -141,7 +141,7 @@ describe('load by project', () => {
     const tasks = [mk({ projectId: 'p9' }), mk({ projectId: null, dueOn: '2026-10-01' }), mk({ projectId: null })];
     expect(loadByProject(tasks, ME, [], names, TODAY)).toEqual([
       { id: 'p9', name: 'Not mine', open: 1, late: 0 },
-      { id: null, name: 'No project', open: 2, late: 1 },
+      { id: null, name: 'One-off tasks', open: 2, late: 1 },
     ]);
   });
 
@@ -185,7 +185,7 @@ describe('glanceOf', () => {
     const g = glanceOf(tasks, { ...base, personId: 'bo', showTeam: false });
     expect(g.week).toEqual({ done: 0, open: 1, late: 0, total: 1 });
     expect(g.trend.every((w) => w.rate === null)).toBe(true);
-    expect(g.load).toEqual([{ id: 'p1', name: 'Gift hampers', open: 0, late: 0 }, { id: null, name: 'No project', open: 1, late: 0 }]);
+    expect(g.load).toEqual([{ id: 'p1', name: 'Gift hampers', open: 0, late: 0 }, { id: null, name: 'One-off tasks', open: 1, late: 0 }]);
   });
 });
 

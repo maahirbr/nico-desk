@@ -31,7 +31,7 @@ describe('updates for you, grouped', () => {
       ev({ field: 'status_category', before: 'open', after: 'done', actor_id: 'ana', entity_id: 't3', at: '2026-10-11T03:00:00.000Z' }),
     ];
     const out = g(e, 'bo', ts);
-    expect(out.map((x) => x.name)).toEqual(['Gift hampers', 'No project']);
+    expect(out.map((x) => x.name)).toEqual(['Gift hampers', 'One-off tasks']);
     expect(out[0].rows).toEqual([expect.objectContaining({
       title: 'Draft copy', summary: 'Meera assigned it to you, due 10 Oct, then moved it to 12 Oct (was 10 Oct), “samples late”', due: { label: 'Due today', tone: 'soon' },
     })]);
@@ -105,6 +105,16 @@ describe('updates for you (pure)', () => {
     expect(run(e, 'bo').map((i) => i.kind)).toEqual(['done', 'renamed', 'assigned']);
     expect(run(e, 'ana')).toEqual([]);
     expect(run(e, 'bo').find((i) => i.kind === 'assigned')?.text).toBe('Meera reassigned “Draft copy” to you');
+  });
+
+  it('tells whoever gave a one-off task that it is done, and no one else (19 Nov)', () => {
+    const ts: UpdateTask[] = [{ id: 't9', title: 'Send swatches', ownerId: 'bo', projectId: null, createdBy: 'ana', blocked: null }];
+    const done = [ev({ entity_id: 't9', field: 'status_category', before: 'open', after: 'done', actor_id: 'bo' })];
+    const told = (viewerId: string) => buildUpdates({ events: done, tasks: ts, leadOf, names, viewerId, now: NOW }).map((i) => i.text);
+    expect(told('ana')).toEqual(['Kabir marked “Send swatches” done']);
+    expect(told('lee')).toEqual([]);
+    const onProject = [{ ...ts[0], projectId: 'p1' }];
+    expect(buildUpdates({ events: done, tasks: onProject, leadOf, names, viewerId: 'ana', now: NOW })).toEqual([]);
   });
 
   it('applies the seen cut-off, the 7 day window and newest-first order', () => {

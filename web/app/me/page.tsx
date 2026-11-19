@@ -41,7 +41,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const feedbackAsk = await feedbackAskFor(d, me.person.id, me.team.id, t, me.person.appRoles.includes('admin'));
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
-  const first = await firstSeenDay(d, me.realPerson.id);
+  // Their first day, not the viewer's, so an admin in View as sees the card when that person would (18 Nov).
+  const first = await firstSeenDay(d, me.person.id);
   const isNew = sp.welcome === '1' || !first || first >= addDays(t, -6);
   const { rows: [prof] } = isNew ? await d.query<{ done: boolean }>(
     `SELECT (photo_url IS NOT NULL OR nickname IS NOT NULL OR phone IS NOT NULL OR EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id)) AS done

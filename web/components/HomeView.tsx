@@ -33,7 +33,7 @@ import { UpdatesCard } from './UpdatesCard';
 import { WelcomeCard, markWelcomeStep, type Welcome } from './WelcomeCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
-import { AddTaskForm, Modal, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
+import { AddTaskForm, Modal, oneOffWord, TaskDrawer, TaskRow, api, type Opt, type RowAction, type StatusKey } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { Fold, FoldChev } from './Fold';
@@ -107,7 +107,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         return [...first, ...mine.filter((t) => !seen.has(t.id))];
       })()
     : null;
-  const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : '', t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
+  const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : oneOffWord(t, names, meId), t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const nextWeekEnd = addDays(weekEnd, 7);
   const groups = [
     { key: 'late', label: 'Late', items: mine.filter((t) => t.dueOn < today) },

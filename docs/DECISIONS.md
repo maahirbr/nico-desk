@@ -2015,3 +2015,24 @@ The repo owner asked to push and deploy the merge of the PM's two 18 Nov afterno
 off the Personal page, and the welcome card first on Home. No schema change, so no `db:upgrade`. Typecheck, 950 tests and
 build green.
 Rollback: `vercel promote nico-desk-kjen0wevk-maahirbharatram-3547s-projects.vercel.app --yes` from `web/`.
+
+## 2026-11-19 · Opus 5.5 · A task on no project says One-off
+
+The PM's call: a task on no project reads "One-off", plus "from <first name>" when someone else gave it ("from you" for
+the giver). On Home and Team rows and the task drawer; the Updates group and the load lists say "One-off tasks" instead of
+"No project". `components/task-ui.tsx oneOffWord`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Projects as a grid or a list
+
+The PM's call: a small switch above Projects shows the cards (the default) or a quiet list, one row per project with
+its status, progress, people and date. The choice is kept per person in this browser. `components/ProjectsLayout.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · One-off Done in Updates, and the welcome card in View as
+
+The PM's call: whoever gave a one-off task (no project) sees it marked done in Updates for you. A done or dropped line
+now carries a ✓ Done or Dropped tag, and "Priya’s task" is left out when Priya made the change herself
+(`lib/updates.ts`). No schema change. And Home's welcome card now goes by the viewed person's first day, so an admin in
+View as sees it when that person would (`app/me/page.tsx`).
+Rollback: git revert the commit.
