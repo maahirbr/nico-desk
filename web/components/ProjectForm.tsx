@@ -76,8 +76,9 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
   // Partner: an old plan board, or a task board with a partner named (since 1 Nov, the PM's call). A new partner project is
   // a task board, the same as an internal one, plus the partner's name and people.
   const [partner, setPartner] = useState(f.kind === 'plan' || !!f.partnerName);
-  // More options (viewers, sub-projects) start folded on a new project and open in Settings, where they get edited later.
-  const [more, setMore] = useState(editing);
+  // More options start folded (19 Nov, the PM's call). In Settings they open only when the project already uses one:
+  // a viewer or a sub-project. A partner has its own section, so it does not open them.
+  const [more, setMore] = useState(editing && ((f.viewers?.length ?? 0) > 0 || f.workstreams.length > 0));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // A setup step opens the form at its own part. This runs once on open, so typing later never scrolls the form.
@@ -241,6 +242,15 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
               </div>
             )}
             <div className="f"><span>Sub-Projects</span><ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Design, Sourcing, Marketing, Launch. Press Enter after each" /></div>
+            {/* A task board can take a partner after it is made, or drop one (19 Nov, the PM's call). Adding one opens the same
+                Partner section a new partner project has; nothing changes until Save. An old plan board keeps its partner. */}
+            {editing && !lock && f.kind === 'tasks' && (
+              <div className="f"><span>Partner</span>
+                {partner
+                  ? <button type="button" className="mini-btn pform-partner-btn" onClick={() => setPartner(false)}>Make it internal again</button>
+                  : <button type="button" className="mini-btn pform-partner-btn" onClick={() => { setPartner(true); setTimeout(() => { partnerRef.current?.scrollIntoView({ block: 'center' }); partnerRef.current?.focus(); }, 0); }}>+ Add a partner</button>}
+              </div>
+            )}
           </fieldset>
         </Fold>
       </div>

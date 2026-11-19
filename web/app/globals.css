@@ -2198,3 +2198,6 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 
 /* Activity (19 Nov): Last active shows the exact time on hover. */
 .act-when { border-bottom: 1px dotted var(--line-strong); cursor: default; }
+
+/* Settings, More options (19 Nov): add a partner to an internal task board, or make a partner one internal again. */
+.pform-partner-btn { align-self: flex-start; }

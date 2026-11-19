@@ -2202,3 +2202,14 @@ The PM's call: on Activity, hovering Last active shows "Today at 10:52 am" or "W
 visit is kept as a day only, so when that is the latest trace it shows the day and says no time was kept.
 `components/ActivityView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · A task board can take a partner later, or go back to internal; More options start folded
+
+The PM's call: in project Settings, More options ends with Partner: "+ Add a partner" on an internal task board (the
+Partner section then opens as on a new partner project), or "Make it internal again" on a partner one. Nothing changes
+until Save, and only the owner, lead or an admin can do it. Going internal is refused while an open task is owned only by
+a partner person. The project's update log records the partner added or removed, and a task that had a partner person
+still says "with <name> (partner)" after the project goes internal. Old plan boards keep their partner. More options now
+start folded in Settings too, and open only when the project has a viewer or sub-projects.
+`components/ProjectForm.tsx`, `lib/plan.ts updateProject`, `components/logText.ts`, `components/TaskBoard.tsx`.
+Rollback: git revert the commit.
