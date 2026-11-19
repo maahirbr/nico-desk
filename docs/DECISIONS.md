@@ -1967,6 +1967,15 @@ the job title rides on the people lists the pages already send (`Opt.role`, as t
 `components/OwnerPicker.tsx` holds the rule. Three tests in `tests/rolefor.test.ts`.
 Rollback: git revert the commit.
 
+## 2026-11-18 · Opus 5.5 · A handover list for the accounts the app runs on
+
+The repo owner's internship ends soon, and the app runs on the repo owner's personal GitHub, Vercel, Supabase and
+TypeSafe accounts, with nightly backups on the repo owner's Mac. `docs/HANDOVER-ACCOUNTS.md` lists each one, the 11
+production env vars by name, and the steps to move them to Nicobar accounts in order. Two rules lead it: keep
+`NICO_SESSION_SECRET` and `NICO_TOKEN_KEY` as they are, and keep the `nico-desk.vercel.app` address by transferring
+the Vercel project rather than making a new one. Docs only, nothing moved.
+Rollback: git revert the commit.
+
 ## 2026-11-18 · Opus 5.5 · Deployed the PM's 17 Nov push and the role auto-fill
 
 The repo owner asked to push and deploy `maahir/mvp`: the Roster access filter and the task owner's reopen (the PM's
