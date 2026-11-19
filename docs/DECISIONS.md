@@ -2248,3 +2248,12 @@ each email goes out, by a card's Send or by Bulk send, the server checks every t
 not archived (`lib/reminders.ts assertStillOpen`). If not, that email is not sent and the card says which task changed
 and to reload; Bulk send sends the rest and names who was skipped. The page itself reads live data on every load.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Quick Add grows with the sentence, and reads two sentences as one task
+
+The PM's report. The Quick Add box is a text box that grows a line at a time as the sentence wraps (Enter still reads
+it), so a long sentence stays in view. In the plain rules (`lib/sentence.ts`), a second sentence that only adds to the
+task ("It needs the new prices.", "We discussed this yesterday.", "Make sure ...") goes into its details instead of
+making a second task with no owner; one that names a person or asks something is still a new task. Speech without full
+stops gets one after a date that ends the ask ("by monday it needs ..."), so the date is found and the rest is details.
+Rollback: git revert the commit.

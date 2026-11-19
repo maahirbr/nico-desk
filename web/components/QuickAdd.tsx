@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { parseChat } from '@/lib/chat';
 import type { Named, QuickParse } from '@/lib/quickadd';
 import type { SentenceRead } from '@/lib/sentence';
@@ -26,6 +26,9 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
   apply: (p: QuickParse, details?: string) => string[]; focusAfter: () => void; onChat?: (text: string) => void; onMany?: (tasks: SentenceRead[]) => void;
 }) {
   const [text, setText] = useState('');
+  // The box grows with what is typed or said (20 Nov, the PM's call), so a long sentence stays in view. Enter still reads it.
+  const box = useRef<HTMLTextAreaElement | null>(null);
+  useLayoutEffect(() => { const el = box.current; if (!el) return; el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }, [text]);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const { canSpeak, listening, toggle } = useSpeech({ names: [...people, ...(projects ?? [])].map((p) => p.name), heard: setText, problem: setDone, stopped: (all) => void fill(all) });
@@ -62,13 +65,13 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       <div className="f">
         <label htmlFor="say-line" className="say-label"><span>Quick Add</span></label>
         <div className="say-row">
-          <input id="say-line" ref={focusOnDesktop} enterKeyHint="go" autoComplete="off" maxLength={500} value={text} disabled={busy}
+          <textarea id="say-line" rows={1} ref={(el) => { if (el && !box.current) focusOnDesktop(el); box.current = el; }} enterKeyHint="go" autoComplete="off" maxLength={500} value={text} disabled={busy}
             placeholder={listening ? 'Listening…' : 'e.g. Ask Sam to send me the design files by Monday'}
             onChange={(e) => { setText(e.target.value); setDone(null); }}
             onPaste={(e) => {
               const pasted = e.clipboardData.getData('text');
               if (onChat && looksLikeChat(pasted)) { e.preventDefault(); setText(''); onChat(pasted); }
-              // The box is one line, so a pasted list would lose its breaks: read it as pasted instead.
+              // A pasted list (several lines) is read as pasted, breaks and all.
               else if (/\n\s*\S/.test(pasted.trim())) { e.preventDefault(); void fill(pasted); }
             }}
             onKeyDown={(e) => { if (isRealEnter(e)) { e.preventDefault(); void fill(); } }}

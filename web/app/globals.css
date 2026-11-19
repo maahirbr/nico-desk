@@ -1777,7 +1777,9 @@ a.rlink { color: inherit; text-decoration: none; }
 
 /* Quick Add (components/QuickAdd.tsx): the line, the mic and Fill in on one row. The mic's on state is colour only. */
 .say-row { display: flex; gap: var(--space-xs); align-items: stretch; }
-.say-row input { flex: 1 1 auto; min-width: 0; }
+.say-row :is(input, textarea) { flex: 1 1 auto; min-width: 0; }
+/* Quick Add grows with the sentence (20 Nov): one line to start, more as it wraps. */
+.say-row textarea { resize: none; line-height: 1.4; padding-top: 11px; padding-bottom: 11px; min-height: 0; max-height: 40vh; overflow-y: auto; }
 .say-row .btn { flex: none; }
 .say-mic { display: inline-flex; align-items: center; justify-content: center; padding-left: var(--space-sm); padding-right: var(--space-sm); }
 .say-mic.on { color: var(--late); border-color: var(--late); }
@@ -1789,7 +1791,7 @@ label.f > span.say-box { font: inherit; color: inherit; } /* the box sits where 
 :root[data-skin] .say-box > .drawer-desc ~ .say-mic { top: calc(var(--space-xs) * -1); right: calc(var(--space-xxs) - var(--space-xs)); }
 .say-box > .say-mic:not(.on) { border-color: transparent; color: var(--ink-3); }
 .say-note { display: block; margin-top: var(--space-xxs); font: var(--type-small); color: var(--ink-3); }
-@media (max-width: 480px) { .say-row { flex-wrap: wrap; } .say-row input { flex-basis: 100%; } }
+@media (max-width: 480px) { .say-row { flex-wrap: wrap; } .say-row :is(input, textarea) { flex-basis: 100%; } }
 /* Between Quick Add and the form: a soft rule with a quiet label, not a new section. */
 .form-split { display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs); color: var(--ink-2); font: var(--type-meta); }
 .form-split::after { content: ""; flex: 1; border-top: var(--rule) solid var(--hairline); }

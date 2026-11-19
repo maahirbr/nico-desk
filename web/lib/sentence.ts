@@ -143,6 +143,13 @@ const JOINER = /,?\s+(?:and\s+also|and\s+then|and|also|then|plus|one\s+more(?:\s
 const STARTS_TASK = /^(?:ask|tell|get|remind|have|request|nudge|can|cn|could|would|please|pls|i\s+need|i\s+have|we\s+need|i\s+want|i'll|i\s+will)\b/i;
 const PRONOUN = /^(?:he|she|they)\s+(?:(?:should|will|must|can|needs?\s+to|has\s+to|have\s+to|is\s+to)\s+)?(?:also\s+)?(?=\S)/i;
 const MAX_DETAILS = 600;
+// A sentence after a task that only adds to it (20 Nov, the PM's report: two spoken sentences made two tasks): "It needs
+// the new prices.", "Make sure it has the logo.", "We discussed this yesterday." It goes in the task's details.
+const ADDS_TO = /^(?:it|its|it's|this|that|these|those|the|there|we|our|they|their|he\s+said|she\s+said|note|fyi|pls\s+note|please\s+note|make\s+sure|ensure|remember|keep\s+in\s+mind|for\s+context|because|since|as|so|just)\b/i;
+// Speech often comes without full stops: "send the deck by monday it needs the new prices". A date that ends the ask
+// and is followed by more words gets a full stop after it, so what follows reads as its own sentence.
+const DATE_THEN_MORE = /\b((?:by|on|before|till|until)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|tonight|eod|next\s+(?:week|monday|tuesday|wednesday|thursday|friday)|(?:the\s+)?end\s+of\s+(?:the\s+)?(?:day|week|month)|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]{3,9}|[a-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?))\s+(?=\S)/gi;
+const stopsAfterDates = (t: string) => (/[.?!]\s/.test(t) ? t : t.replace(DATE_THEN_MORE, '$1. '));
 
 type Piece = { text: string; details: string[]; heading: string; due: string; same: boolean };
 
@@ -155,9 +162,9 @@ function pieces<P extends Named>(input: string, people: P[]): Piece[] {
   const out: Piece[] = [];
   for (const b of readBlocks(input, named)) {
     const mine: Piece[] = [];
-    for (const sentence of b.text.split(/(?<=[.?!])\s+/)) {
+    for (const sentence of stopsAfterDates(b.text).split(/(?<=[.?!])\s+/)) {
       const rest = clean(sentence).replace(LEADING_JOINER, '');
-      if (mine.length && isContext(rest, named)) { mine.at(-1)!.details.push(rest); continue; }
+      if (mine.length && (isContext(rest, named) || (ADDS_TO.test(rest) && !startsTask(rest) && !PRONOUN.test(rest)))) { mine.at(-1)!.details.push(rest); continue; }
       const parts: string[] = [];
       let from = 0;
       let m: RegExpExecArray | null;
