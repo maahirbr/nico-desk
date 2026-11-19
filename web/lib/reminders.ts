@@ -45,9 +45,10 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   const since = `${addDays(today, -RECENT_DAYS)}T00:00:00+05:30`; // days are judged in IST
 
   // An archived project is out of reminders altogether (20 Nov, the PM's call): its tasks, lines and meeting actions.
+  // One-off tasks (no project) are not reminded either (20 Nov, the PM's call): the giver asks for an update instead.
   const archived = new Set(projects.filter((p) => p.archivedAt).map((p) => p.id));
   const tasks = (await teamTasks(db, teamId, today)).filter((t) =>
-    t.statusCategory === 'open' && !(t.projectId && archived.has(t.projectId)) && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
+    t.statusCategory === 'open' && !!t.projectId && !archived.has(t.projectId) && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
   const touched = await ownerTouched(db, tasks.map((t) => t.id), since);
   for (const t of tasks) {
     const flag = t.blocked?.onId && t.blocked.onId !== t.ownerId ? `Blocked, waiting on ${pnames[t.blocked.onId]?.split(' ')[0] ?? 'someone else'}`

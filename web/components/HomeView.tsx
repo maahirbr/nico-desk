@@ -7,7 +7,7 @@ import type { ArchiveAsk, ArchiveNews } from '@/lib/plan';
 import { NewsCard } from './NewsCard';
 import type { News as NewsCardData } from '@/lib/news';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { useJev } from './jevFlag';
 import { Select } from './Select';
 import { sortEnded, type EndedSort, type Task } from '@/lib/derive';
@@ -57,9 +57,9 @@ export function clearLine(personId: string, day: string): string {
   return CLEAR_LINES[h % CLEAR_LINES.length];
 }
 
-export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null, news = null, feedbackAsk = null, archiveAsks = [], archiveNews = [] }: {
+export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine, newIds, assignedNotice, noticeIds, movedAway, oneOffOpen = 0, oneOffLate = 0, feedbackReplies = [], asks = [], handovers = [], waiting, done, dropped, names, projectNames, people, projects, workstreamsByProject, myProjects, welcome = null, news = null, feedbackAsk = null, archiveAsks = [], archiveNews = [] }: {
   greeting: string; today: string; weekEnd: string; meId: string; isLead: boolean; updates: { items: UpdateItem[]; groups: UpdateGroup[]; now: string }; mine: Task[]; newIds: string[];
-  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; handovers?: HandoverItem[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
+  assignedNotice: Record<string, string>; noticeIds: string[]; movedAway: MovedAway[]; oneOffOpen?: number; oneOffLate?: number; feedbackReplies?: HomeReply[]; asks?: HomeAsk[]; handovers?: HandoverItem[]; waiting: Task[]; done: Task[]; dropped: Task[]; names: Record<string, string>;
   projectNames: Record<string, string>; people: Opt[]; projects: Opt[]; workstreamsByProject: Record<string, string[]>;
   myProjects: { id: string; name: string; role: string }[];
   news?: NewsCardData | null; // the What's new note (lib/news.ts)
@@ -211,8 +211,12 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section className="group">
           <h2><Help term="your_projects">Your projects</Help> <span className="n">{myProjects.length}</span></h2>
           <div className="my-projects">
-            {myProjects.map((p) => (
-              <Link key={p.id} href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b>{p.role && <span className="dim">{p.role}</span>}</Link>
+            {myProjects.map((p, i) => (
+              <Fragment key={p.id}>
+                <Link href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b>{p.role && <span className="dim">{p.role}</span>}</Link>
+                {/* One-off tasks I gave (20 Nov): right after Personal, which comes first. */}
+                {i === 0 && p.name.startsWith('Personal') && oneOffOpen > 0 && <Link href="/one-off" className="my-project"><b>One-off tasks</b><span className="dim">{oneOffOpen} open</span>{oneOffLate > 0 && <span className="late-text small">{oneOffLate} late</span>}</Link>}
+              </Fragment>
             ))}
           </div>
         </section>

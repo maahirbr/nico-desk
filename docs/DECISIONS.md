@@ -2257,3 +2257,13 @@ task ("It needs the new prices.", "We discussed this yesterday.", "Make sure ...
 making a second task with no owner; one that names a person or asks something is still a new task. Speech without full
 stops gets one after a date that ends the ask ("by monday it needs ..."), so the date is found and the rest is details.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · One-off tasks: the tasks you gave someone, outside any project
+
+The PM's call. A chip after Personal in Home's Your projects, "One-off tasks · N open" (and "· N late" when any are),
+opens /one-off: the open tasks you made for someone else with no project, with a sort (due date, newest given, person,
+status), and, folded, those closed in the last 30 days (then they leave the list; the tasks stay). The status pill asks
+for an update, as on a project. Only the person sees it, and an admin in View as. One-off tasks are left out of Reminders,
+the Ledger and on-time records (person page, Home trend); the ledger fixture totals moved by those tasks. The owner still
+sees the task on their Home, and Team and Activity are unchanged. `lib/service.ts oneOffsGiven`, `components/OneOffView.tsx`.
+Rollback: git revert the commit.

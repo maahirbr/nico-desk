@@ -2219,3 +2219,6 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .remind-all-check { display: inline-flex; align-items: center; gap: 6px; font: 500 14px/1.3 var(--font-sans); white-space: nowrap; cursor: pointer; padding-right: var(--space-md); border-right: var(--rule) solid var(--hairline); }
 /* Reminders (19 Nov): reminded today. */
 .remind-today { margin-left: 6px; padding: 1px 7px; border-radius: var(--radius-pill); font: 600 11px/1.5 var(--font-sans); color: var(--st-active-fg, #8a5a00); background: var(--st-active-bg, #f6e7c4); }
+
+/* One-off tasks (20 Nov): the sort beside the heading. */
+.oneoff-sort { flex: 0 0 180px; }

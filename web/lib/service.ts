@@ -1,5 +1,5 @@
 import type { Db, Tx } from './db';
-import { derive, type EventRow, type Health, type Task, type TaskRow } from './derive';
+import { derive, latestEndedFirst, type EventRow, type Health, type Task, type TaskRow } from './derive';
 import { ApiError, bad, forbidden, notFound } from './errors';
 import { onTimeTrend, weekSplit, type TrendWeek, type WeekSplit } from './glance';
 import { originNow } from './origin';
@@ -778,8 +778,9 @@ export async function ledger(db: Db, teamId: string, from: string, to: string, p
 
 // The same rows from tasks already loaded (a page passes the tasks its viewer may see, lib/visibility.ts).
 export function ledgerOf(all: Task[], from: string, to: string, personId?: string): LedgerRow[] {
+  // One-off tasks (no project) are not in the ledger or anyone's on-time record (20 Nov, the PM's call).
   const tasks = all.filter(
-    (t) => t.statusCategory !== 'dropped' && (!personId || t.ownerId === personId),
+    (t) => t.statusCategory !== 'dropped' && !!t.projectId && (!personId || t.ownerId === personId),
   );
   const rows = new Map<string, LedgerRow>();
   for (const t of tasks) {
@@ -1229,7 +1230,7 @@ export async function ledgerTasks(db: Db, teamId: string, from: string, to: stri
 
 export function ledgerTasksOf(all: Task[], from: string, to: string, personId?: string): Task[] {
   return all.filter((t) => {
-    if (t.statusCategory === 'dropped' || (personId && t.ownerId !== personId)) return false;
+    if (t.statusCategory === 'dropped' || !t.projectId || (personId && t.ownerId !== personId)) return false; // no one-off tasks (20 Nov)
     const week = mondayOf(t.firstDueOn);
     return week >= from && week <= to;
   });
@@ -1296,6 +1297,18 @@ export async function updatesView(
     asks: asks.map((a) => ({ taskId: a.task_id, askedAt: new Date(a.asked_at).toISOString() })),
   }).filter((i) => !seenByTask[i.taskId] || i.at > seenByTask[i.taskId]);
   return { items, groups: groupUpdates(items, tasks, projectNames, names, meId, todayIst()) };
+}
+
+// ---------- one-off tasks I gave (20 Nov) ----------
+
+// Tasks this person made for someone else outside any project: open ones by due date, and those closed in the last 30
+// days, latest first. The chip beside Personal on Home counts the open ones.
+export async function oneOffsGiven(db: Db, teamId: string, meId: string, today = todayIst()): Promise<{ open: Task[]; closed: Task[] }> {
+  const mine = (await teamTasks(db, teamId, today)).filter((t) => !t.projectId && t.createdBy === meId && t.ownerId && t.ownerId !== meId);
+  const since = addDays(today, -29);
+  const open = mine.filter((t) => t.statusCategory === 'open').sort((a, b) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title));
+  const closed = mine.filter((t) => t.statusCategory !== 'open' && !!t.endedAt && istDate(t.endedAt) >= since).sort(latestEndedFirst);
+  return { open, closed };
 }
 
 // ---------- a person's page ----------
