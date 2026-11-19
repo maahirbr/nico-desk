@@ -174,6 +174,20 @@ describe('sending', () => {
     expect((await sendPost(req('/api/v1/reminders/send', 'POST', mail({ cc: ['not an address\r\nBcc: x@y.z'] })), none)).status).toBe(400);
     expect(calls.length).toBe(0);
   });
+
+  it('says plainly when the Gmail API is off in Google Cloud, and logs only Google\'s reason code', async () => {
+    await connect();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    fakeGoogle({ send: () => json({ error: { code: 403, message: 'Gmail API has not been used in project 1 before or it is disabled.', status: 'PERMISSION_DENIED',
+      errors: [{ reason: 'accessNotConfigured' }], details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'SERVICE_DISABLED' }] } }, 403) });
+    const res = await sendPost(req('/api/v1/reminders/send', 'POST', mail()), none);
+    expect(res.status).toBe(503);
+    expect((await res.json()).error.code).toBe('gmail_api_off');
+    expect(warn).toHaveBeenCalledWith('[gmail] send failed', 403, 'SERVICE_DISABLED');
+    fakeGoogle({ send: () => json({ error: { code: 403, status: 'PERMISSION_DENIED', errors: [{ reason: 'insufficientPermissions' }] } }, 403) });
+    expect((await (await sendPost(req('/api/v1/reminders/send', 'POST', mail()), none)).json()).error.code).toBe('gmail_forbidden');
+    warn.mockRestore();
+  });
 });
 
 describe('the message', () => {

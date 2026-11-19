@@ -2192,3 +2192,13 @@ the Mail app button gone) into `maahir/mvp`, then `main` (`ba28299`). Read first
 away, and only for a real admin, so the unsigned `nd_hide_admin` cookie cannot raise anyone. VERIFY green (964 tests,
 build). No schema change. Production is `c23yxglmq`: `/team` loads, the Claude connector answers, no errors in the logs.
 Rollback: from `web/`, `vercel promote https://nico-desk-qhh7p8x2s-maahirbharatram-3547s-projects.vercel.app --yes`.
+
+## 2026-11-19 · Opus 5.5 · Gmail send: say plainly when the Gmail API is off, and log Google's reason
+
+A lead connected Gmail in production and pressed Send: the token refresh worked, but no reminder was recorded, so
+Google refused the send call itself. The likely cause is the Gmail API switched off in the Google Cloud project. The
+app said "Connect Gmail again", which cannot fix that. Now a 403 with Google's reason `SERVICE_DISABLED` or
+`accessNotConfigured` answers 503 `gmail_api_off`: "Sending through Gmail is switched off in Google Cloud. Ask an
+admin to enable the Gmail API." Every failed send logs `[gmail] send failed <status> <reason code>`, and a failed
+token refresh logs its status. The log holds Google's reason code only, never the message, the email or a token.
+Rollback: git revert the commit.
