@@ -2100,3 +2100,12 @@ statements live in `upgrade()`, and `leads-to-members`, with no lead rows left i
 PM parked Today's 3) and `CommentThread` (comments are off in the app for V1, but the MCP still uses them). The
 handover doc now keeps the repo owner on every Nicobar account and says what Resend needs. 961 tests passed, build green.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Pin search_path on the three trigger functions
+
+The Supabase security advisor flagged `events_append_only`, `plan_activity_guard` and `tasks_first_due_locked` for a
+role-mutable `search_path`. Their bodies use only `TG_OP`, `OLD`, `NEW` and `current_setting`, so `SET search_path = ''`
+changes nothing they do. Applied live as migration `pin_search_path_on_trigger_functions`, and added to `lib/schema.ts`
+so `upgrade()` (which re-runs `CREATE OR REPLACE` for `plan_activity_guard`) and fresh installs keep it. Verified: all
+three triggers still block their writes, advisor shows no security lints.
+Rollback: `ALTER FUNCTION public.<name>() RESET search_path;` for each, and revert the `lib/schema.ts` lines.
