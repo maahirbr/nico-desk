@@ -2223,3 +2223,8 @@ Not now, and never a Working well note. The delete is permanent: the note goes w
 +1s, replies and news, and nobody is told. `lib/feedback.ts deleteFeedback`, DELETE /api/v1/feedback/:id. This replaces
 "nothing is ever removed" for feedback notes only.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Roster: a small gap between the access filter and Find a person
+
+The PM's call: the access dropdown now fills its space, and the gap to Find a person is the small one (8px).
+Rollback: git revert the commit.

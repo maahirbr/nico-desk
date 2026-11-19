@@ -2188,7 +2188,9 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .nshelf-trash { margin-top: var(--space-md); padding-top: var(--space-xs); border-top: var(--rule) solid var(--hairline); }
 .nshelf-trash-h { border: 0; background: none; cursor: pointer; display: flex; gap: var(--space-xxs); align-items: baseline; padding: 0; }
 .nshelf-gone { color: var(--late); }
-.roster-roles { min-width: 150px; } /* the access dropdown beside Find a person (17 Nov) */
+.roster-roles { min-width: 150px; display: inline-flex; } /* the access dropdown beside Find a person (17 Nov) */
+.roster-roles > * { flex: 1; width: 100%; } /* it fills its space, so the gap to Find a person is only the small one (19 Nov) */
+.roster-find:has(.roster-roles) { gap: var(--space-xs); }
 /* Hide admin tools (19 Nov): a quiet note under the name instead of a banner. */
 .who-hidden { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); text-transform: none; }
 /* On a phone only the initials show: a small dot on them says the same. */
