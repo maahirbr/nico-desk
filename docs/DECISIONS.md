@@ -2180,3 +2180,10 @@ Rollback: git revert the commit.
 The PM's call: under Projects, the Guide now says the owner is accountable for the project, the lead runs it day to day,
 and sometimes they are the same person. `components/GuideView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · The welcome card's profile step no longer ticks from the Google picture
+
+The PM's call: everyone signs in with Google, so the Google picture ticked "Add a photo, nickname or phone number" for
+almost everyone. It now ticks for a nickname, a phone or an uploaded photo, or once they open their profile from the card.
+`app/me/page.tsx`.
+Rollback: git revert the commit.
