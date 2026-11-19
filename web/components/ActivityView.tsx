@@ -32,6 +32,17 @@ function ago(at: string | null, today: string): string {
   return n <= 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 30 ? `${n} days ago` : fmtDate(d);
 }
 
+// The exact moment, on hover (19 Nov, the PM's call): "Today at 3:42 pm", or "Wed, 18 Nov at 11:05 am", in India time.
+const CLOCK = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+// A visit is kept as a day only (visit_days), which reads as midnight India time: then the day shows, with no time.
+function exactly(at: string, today: string): string {
+  const d = istDate(at);
+  const dayOnly = new Date(at).getTime() === Date.parse(`${d}T00:00:00+05:30`);
+  const time = CLOCK.format(new Date(at)).replace(/\s?(am|pm)$/i, (m) => ` ${m.trim().toLowerCase()}`);
+  const day = d === today ? 'Today' : `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(`${d}T00:00:00Z`).getUTCDay()]}, ${fmtDate(d)}`;
+  return dayOnly ? `${day} (opened the app; no time kept)` : `${day} at ${time}`;
+}
+
 export function ActivityView({ rows, today, readOnly, me }: { rows: AdoptionRow[]; today: string; readOnly: boolean; me: string }) {
   const [raw, setStatus] = useUrlText('status');
   const status = (ORDER as string[]).includes(raw) ? (raw as AdoptionStatus) : null;
@@ -59,7 +70,7 @@ export function ActivityView({ rows, today, readOnly, me }: { rows: AdoptionRow[
               <tr key={r.id}>
                 <td><Person name={r.name} id={r.id} /></td>
                 <td data-label="Status"><span className={`st st-status tone-${STATUS[r.status].tone}`} title={STATUS[r.status].help}>{STATUS[r.status].label}</span></td>
-                <td data-label="Last active">{ago(r.lastActive, today)}</td>
+                <td data-label="Last active">{r.lastActive ? <WhenTip delay={300} tap side="right" text={exactly(r.lastActive, today)}><span className="act-when">{ago(r.lastActive, today)}</span></WhenTip> : '—'}</td>
                 <td data-label="Last 14 days">
                   <span className="act-dots" aria-label={`Opened on ${r.days.length} of the last 14 days`}>
                     {fortnight.map((d) => <span key={d} className={`act-dot${on.has(d) ? ' on' : ''}${isWeekend(d) ? ' wkend' : ''}`} title={`${fmtDate(d)}${on.has(d) ? ': opened' : ''}`} />)}

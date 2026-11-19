@@ -15,6 +15,11 @@ describe("What's new", () => {
     await markNewsSeen(db, 'per_cy', NEWS!.id); // twice is fine
     expect(await newsFor(db, 'per_cy')).toBeNull();
     expect(await newsFor(db, 'per_ada')).toEqual(NEWS); // someone else still sees it
+    // An admins-only note: admins see it first, then the main one; members never see it (19 Nov).
+    const admin = await newsFor(db, 'per_fay', true);
+    expect(admin?.admins).toBe(true);
+    await markNewsSeen(db, 'per_fay', admin!.id);
+    expect(await newsFor(db, 'per_fay', true)).toEqual(NEWS);
     await expect(markNewsSeen(db, 'per_cy', 'old-note')).rejects.toBeInstanceOf(ApiError);
   });
 });

@@ -124,6 +124,9 @@ export function actionText(events: LogLine[], names: Names, projects: Names): st
   if (title) { used.add('title'); out.push(`Renamed to “${title.after}”`); }
   const owner = by.get('owner_id');
   if (owner) { used.add('owner_id'); out.push(`${owner.entity_type === 'project' ? 'Project owner changed to' : 'Reassigned to'} ${show('owner_id', owner.after, names, projects)}`); }
+  // A partner added to a project, or removed when it went internal (19 Nov), so the log keeps who the partner was.
+  const pn = by.get('partner_name');
+  if (pn) { used.add('partner_name'); out.push(set(pn.after) ? `Partner ${pn.before ? `changed to ${pn.after}` : `${pn.after} added`}` : `Partner ${pn.before} removed. The project is internal now`); }
   const lead = by.get('lead_id');
   if (lead) { used.add('lead_id'); out.push(`Project lead changed to ${show('lead_id', lead.after, names, projects)}`); }
   const proj = by.get('project_id');

@@ -36,7 +36,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   // Asks to archive (15 Nov): open ones on projects I own or lead, and the answers to mine.
   const [archiveAsks, archiveNews] = await Promise.all([archiveAsksForMe(d, me.team.id, me.person.id), archiveNewsForMe(d, me.team.id, me.person.id)]);
   // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
-  const news = await newsFor(d, me.person.id);
+  // An admins-only note (19 Nov) shows to admins, with admin tools hidden too; in View as, as that person would see it.
+  const news = await newsFor(d, me.person.id, !!me.adminHidden || me.person.appRoles.includes('admin'));
   // The feedback ask (15 Nov): until they share one note, or the ask ends. An admin sees the count.
   const feedbackAsk = await feedbackAskFor(d, me.person.id, me.team.id, t, me.person.appRoles.includes('admin'));
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
@@ -44,8 +45,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   // Their first day, not the viewer's, so an admin in View as sees the card when that person would (18 Nov).
   const first = await firstSeenDay(d, me.person.id);
   const isNew = sp.welcome === '1' || !first || first >= addDays(t, -6);
+  // The profile step ticks for a nickname, a phone or an uploaded photo, or once they open their profile (in the card).
+  // Not for the Google picture every sign-in brings (19 Nov, the PM's call).
   const { rows: [prof] } = isNew ? await d.query<{ done: boolean }>(
-    `SELECT (photo_url IS NOT NULL OR nickname IS NOT NULL OR phone IS NOT NULL OR EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id)) AS done
+    `SELECT (nickname IS NOT NULL OR phone IS NOT NULL OR EXISTS (SELECT 1 FROM person_photos f WHERE f.person_id = p.id)) AS done
        FROM people p WHERE id = $1`, [me.person.id]) : { rows: [] as { done: boolean }[] };
   const open = [...mine.assigned, ...mine.tasks];
   const welcome = isNew ? { // in View as too: it is what they see (15 Nov); its ticks live in this browser only

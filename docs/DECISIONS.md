@@ -2201,4 +2201,52 @@ app said "Connect Gmail again", which cannot fix that. Now a 403 with Google's r
 `accessNotConfigured` answers 503 `gmail_api_off`: "Sending through Gmail is switched off in Google Cloud. Ask an
 admin to enable the Gmail API." Every failed send logs `[gmail] send failed <status> <reason code>`, and a failed
 token refresh logs its status. The log holds Google's reason code only, never the message, the email or a token.
+
+## 2026-11-19 · Opus 5.5 · The Guide says what an owner and a lead are
+
+The PM's call: under Projects, the Guide now says the owner is accountable for the project, the lead runs it day to day,
+and sometimes they are the same person. `components/GuideView.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · The welcome card's profile step no longer ticks from the Google picture
+
+The PM's call: everyone signs in with Google, so the Google picture ticked "Add a photo, nickname or phone number" for
+almost everyone. It now ticks for a nickname, a phone or an uploaded photo, or once they open their profile from the card.
+`app/me/page.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · A What's new note for admins only: Hide admin tools
+
+What's new can now hold several notes, each for everyone or for admins only (`lib/news.ts`, `admins: true`). One shows
+at a time until Got it. The first admins-only note tells admins about Hide admin tools, why and how. Admins see it with
+admin tools hidden too; members and Leadership never do; in View as it shows as the viewed person would see it. In the
+app only, nothing is sent.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Activity: the exact last-active time on hover
+
+The PM's call: on Activity, hovering Last active shows "Today at 10:52 am" or "Wed, 18 Nov at 3:15 pm", India time. A
+visit is kept as a day only, so when that is the latest trace it shows the day and says no time was kept.
+`components/ActivityView.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · A task board can take a partner later, or go back to internal; More options start folded
+
+The PM's call: in project Settings, More options ends with Partner: "+ Add a partner" on an internal task board (the
+Partner section then opens as on a new partner project), or "Make it internal again" on a partner one. Nothing changes
+until Save, and only the owner, lead or an admin can do it. Going internal is refused while an open task is owned only by
+a partner person. The project's update log records the partner added or removed, and a task that had a partner person
+still says "with <name> (partner)" after the project goes internal. Old plan boards keep their partner. More options now
+start folded in Settings too, and open only when the project has a viewer or sub-projects.
+`components/ProjectForm.tsx`, `lib/plan.ts updateProject`, `components/logText.ts`, `components/TaskBoard.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Feedback: four tabs, and the writer or an admin deletes a note
+
+The PM's call: Feedback shows Open, Resolved (notes marked Done), Not now (parked ideas, with their reason) and Working
+well. A Home link to a closed note opens its own tab; an old ?show=resolved link opens Resolved. A note's writer, or an
+admin, deletes it with ✕ (the first press asks "Delete?"), but only while it is Open: not once it is Resolved or
+Not now, and never a Working well note. The delete is permanent: the note goes with its screenshots,
++1s, replies and news, and nobody is told. `lib/feedback.ts deleteFeedback`, DELETE /api/v1/feedback/:id. This replaces
+"nothing is ever removed" for feedback notes only.
 Rollback: git revert the commit.

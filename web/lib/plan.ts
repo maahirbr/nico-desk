@@ -915,6 +915,12 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
     // A partner stays a partner: the old plan boards always have one, a partner task board keeps its own.
     const partnerName = p.kind === 'plan' ? input.partnerName?.trim() || p.partnerName
       : input.partnerName !== undefined ? input.partnerName.trim() || null : p.partnerName;
+    // Back to internal (19 Nov): a task only a partner person owns needs a Nicobar owner first, or it would have none.
+    if (p.partnerName && !partnerName) {
+      const { rows: [n] } = await tx.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM tasks WHERE project_id = $1 AND status_category = 'open' AND owner_id IS NULL`, [id]);
+      if (n.n > 0) throw bad('invalid_body', `${n.n === 1 ? 'One open task is' : `${n.n} open tasks are`} owned only by the partner. Give ${n.n === 1 ? 'it' : 'them'} a Nicobar owner first.`, 'partnerName');
+    }
     await tx.query(
       `UPDATE projects SET name=$2, owner_id=$3, eyebrow=$4, phase=$5, intro=$6, launch_on=$7, pills=$8::jsonb, pillars=$9::jsonb,
          partner_name=$10, partner_people=$11::jsonb, workstreams=$12::jsonb, target_label=$13, lead_id=$14 WHERE id=$1`,
@@ -933,7 +939,9 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
     for (const m of c.members) await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3)`, [id, m.personId, m.role.trim()]);
     await setViewers(tx, p.teamId, id, meId, keep, input.viewers);
     // A change of owner or lead is a project event, so the project's update log shows who holds the project and since when.
-    const changes: [string, string, string][] = [['owner_id', p.ownerId, input.ownerId], ['lead_id', p.leadId, c.leadId ?? input.ownerId]];
+    // So is a partner added or removed (19 Nov): the log keeps the partner's name after the project goes internal.
+    const changes: [string, string | null, string | null][] = [['owner_id', p.ownerId, input.ownerId], ['lead_id', p.leadId, c.leadId ?? input.ownerId],
+      ...(p.kind === 'tasks' ? [['partner_name', p.partnerName, partnerName] as [string, string | null, string | null]] : [])];
     for (const [field, before, after] of changes) {
       if (before === after) continue;
       await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,$3,$4::jsonb,$5::jsonb,$6,'app',now())`,

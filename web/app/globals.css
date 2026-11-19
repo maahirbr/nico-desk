@@ -2195,3 +2195,13 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .who-tools-hidden { position: relative; }
 .who-tools-hidden::after { content: ''; display: none; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px var(--side-bg, #1f1c18); }
 @media (max-width: 860px) { .who-tools-hidden::after { display: block; } }
+
+/* Activity (19 Nov): Last active shows the exact time on hover. */
+.act-when { border-bottom: 1px dotted var(--line-strong); cursor: default; }
+
+/* Settings, More options (19 Nov): add a partner to an internal task board, or make a partner one internal again. */
+.pform-partner-btn { align-self: flex-start; }
+
+/* Feedback (19 Nov): the writer or an admin deletes a note with ✕; the first press asks. */
+.fb-meta .fb-del { margin-left: auto; }
+.fb-del.asking { color: var(--late); font: 600 12px/1 var(--font-sans); }

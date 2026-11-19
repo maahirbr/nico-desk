@@ -240,7 +240,9 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             })()}
             {t.links.length > 0 && <div className="sub"><TaskLinkChips links={t.links} onMore={() => { setOpenId(t.id); setStartStatus(undefined); }} /></div>}
           </td>
-          <td data-label={partnerName ? 'Nicobar Owner' : 'Owner'}>{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /> : <span className="dim">—</span>}</td>
+          <td data-label={partnerName ? 'Nicobar Owner' : 'Owner'}>{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /> : <span className="dim">—</span>}
+            {/* A project that had a partner and went internal (19 Nov): its tasks still say which partner person shared them. */}
+            {!partnerName && t.partnerOwner && <div className="sub dim">with {t.partnerOwner} (partner)</div>}</td>
           {partnerName && <td data-label={`${partnerName} Owner`}>{t.partnerOwner ? <span className="person-cell"><Avatar name={t.partnerOwner} />{t.partnerOwner}</span> : <span className="dim">—</span>}</td>}
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
             <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
