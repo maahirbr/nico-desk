@@ -13,9 +13,9 @@ owner or admin seat in the Nicobar org on the other side.
 | 1 | GitHub repo `nico-desk` | Repo owner's personal GitHub, public, 4 collaborators | The code. Pushes to `main` build production. |
 | 2 | Vercel project `nico-desk` | Repo owner's personal Hobby team | Serves https://nico-desk.vercel.app, holds the env vars, runs the daily reminders cron (`web/vercel.json`). |
 | 3 | Vercel projects `nico-desk-v2`, `nicobar-okr-poc` | Same Hobby team | Side builds. Move them or delete them. |
-| 4 | Supabase project `nico-desk` | Repo owner's personal org, free plan, Mumbai | The production database with the real pilot. |
-| 5 | Google Cloud project | Nicobar Workspace org (the consent screen is Internal) | The OAuth client for Google sign-in, Gmail send and Meet notes. |
-| 6 | TypeSafe API key (Jev) | Repo owner's TypeSafe account, paid by the repo owner | Set in Vercel. `NICO_JEV` is not set in production, so Jev is off there today. |
+| 4 | Supabase project `nico-desk` | Moved on 19 Nov 2026 to the Nicobar Pro org (repo owner is Administrator), Mumbai | The production database with the real pilot. |
+| 5 | Google Cloud project | Nicobar Workspace org (the consent screen is Internal). A second Owner added on 19 Nov 2026 | The OAuth client for Google sign-in, Gmail send and Meet notes. |
+| 6 | TypeSafe API key (Jev) | Repo owner's TypeSafe account, paid by the repo owner | Removed from Vercel and `.env.local` on 19 Nov 2026. Jev was never on in production. The key is still to be revoked in TypeSafe. |
 | 7 | Nightly backup | launchd job `com.nicodesk.backup` on the repo owner's Mac | Runs `web/scripts/backup.sh` to `~/Backups/nico-desk/`, 14 days kept. Stops when the Mac goes. |
 | 8 | Git-ignored files | The repo owner's laptop only | `web/pilot/roster.local.json`, `web/pilot/projects.local.json`, `web/.env.remote.local`, `web/.data/`. |
 
@@ -37,10 +37,10 @@ project transfer keeps the project and its `.vercel.app` address, so use a trans
 
 ## Steps, in order
 
-1. **Google Cloud.** Open IAM on the project that holds the OAuth client. Make sure a Nicobar admin has the Owner
+1. **Google Cloud.** (Done 19 Nov 2026.) Open IAM on the project that holds the OAuth client. Make sure a Nicobar admin has the Owner
    role. If the repo owner is the only Owner, add one before anything else.
-2. **Back up.** Run `web/scripts/backup.sh` once by hand and keep the dump until the move is checked.
-3. **Supabase.** In the Nicobar Supabase org, invite the repo owner as a member. Then in the project's General
+2. **Back up.** (Done 19 Nov 2026.) Run `web/scripts/backup.sh` once by hand and keep the dump until the move is checked.
+3. **Supabase.** (Done 19 Nov 2026.) In the Nicobar Supabase org, invite the repo owner as a member. Then in the project's General
    settings, transfer `nico-desk` to that org. The repo owner must own the source org (true today). The project,
    its data and `DATABASE_URL` stay the same. If the Nicobar org is on the free plan, it must have room for one more
    free project. Supabase Pro adds daily backups, which would replace step 7.

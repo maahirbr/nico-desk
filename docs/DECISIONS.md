@@ -2131,3 +2131,16 @@ The repo owner asked for instructions a teammate such as the PM could follow if 
 problems, the Claude connector, reminders, the database (never `db:remote` on production), and the two secrets that
 must never change. Docs only.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Supabase project moved to the Nicobar org; Google redirect URIs fixed
+
+The first step of the account move. The repo owner transferred the Supabase project `nico-desk` from their personal
+free org to the Nicobar Pro org (an overdue invoice there blocked it until the org owner paid it). The project ref,
+data and `DATABASE_URL` stay the same: a read-only query after the move returned the same people and tasks. The move
+adds $10/month to that org's bill and allows a free upgrade from Nano to Micro compute, still to be done at a quiet
+time. A dump from before the move is kept outside the repo.
+The Google OAuth client listed only the sign-in callback, so Gmail send and Meet connect failed with a redirect
+mismatch in production (no Google links had ever been saved). The repo owner added
+`/api/auth/google/gmail/callback` and `/api/auth/google/meet/callback`, and added a second Owner in Google Cloud IAM.
+The TypeSafe key is out of Vercel and `.env.local`. `HANDOVER-ACCOUNTS.md` marks steps 1 to 3 done.
+Rollback: transfer the project back from the Nicobar org's project settings (the repo owner must be in both orgs).
