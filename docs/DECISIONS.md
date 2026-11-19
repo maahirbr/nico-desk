@@ -2144,3 +2144,13 @@ mismatch in production (no Google links had ever been saved). The repo owner add
 `/api/auth/google/gmail/callback` and `/api/auth/google/meet/callback`, and added a second Owner in Google Cloud IAM.
 The TypeSafe key is out of Vercel and `.env.local`. `HANDOVER-ACCOUNTS.md` marks steps 1 to 3 done.
 Rollback: transfer the project back from the Nicobar org's project settings (the repo owner must be in both orgs).
+
+## 2026-11-19 · Opus 5.5 · Deploy: the security pass, cleanup and handover docs go live
+
+`main` moved from `b207c0a` to `d95f1be` (six commits: the enforced CSP, the fence that reads the team once per
+query, pinned trigger search paths, the cleanup, and the handover docs). VERIFY was green first (961 tests, build).
+`npm run db:upgrade` ran on the hosted database before the push and rebuilt the `team_fence` policies. Production
+is `qhh7p8x2s`: `/team` loads with the CSP enforced, the Claude connector returns tasks through the fence, and the
+logs show no errors.
+Rollback: from `web/`, `vercel promote https://nico-desk-kcclib6v5-maahirbharatram-3547s-projects.vercel.app --yes`.
+The old fence policies need no rollback: the new ones give the same rows.
