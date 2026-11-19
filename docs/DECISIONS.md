@@ -1972,3 +1972,9 @@ The PM's call: a task on no project reads "One-off", plus "from <first name>" wh
 the giver). On Home and Team rows and the task drawer; the Updates group and the load lists say "One-off tasks" instead of
 "No project". `components/task-ui.tsx oneOffWord`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Projects as a grid or a list
+
+The PM's call: a small switch above Projects shows the cards (the default) or a quiet list, one row per project with
+its status, progress, people and date. The choice is kept per person in this browser. `components/ProjectsLayout.tsx`.
+Rollback: git revert the commit.

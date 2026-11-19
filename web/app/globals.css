@@ -1000,6 +1000,44 @@ table.board td.title { width: 48%; }
 .pcards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md); }
 @media (max-width: 1100px) { .pcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pcards { grid-template-columns: minmax(0, 1fr); } }
+/* List view (19 Nov): one quiet block with a row per project: name, status, progress, people and date. The intro, kind
+   and meeting line fold away. Placed by hand (with :root so it outranks each skin's card grid in tokens.css). */
+.pview-bar { display: flex; justify-content: flex-end; margin: calc(var(--space-md) * -1) 0 var(--space-xs); }
+.pview-switch { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.pview-switch button { display: inline-grid; place-items: center; width: 26px; height: 22px; padding: 0; border: 0; border-radius: var(--radius-pill);
+  background: transparent; color: var(--ink-3); cursor: pointer; transition: background var(--dur-state) var(--ease), color var(--dur-state) var(--ease); }
+.pview-switch button:hover { color: var(--ink); }
+.pview-switch button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+:root .pview[data-pview="list"] .pcards { grid-template-columns: minmax(0, 1fr); gap: 0; background: var(--surface); border: var(--rule) solid var(--hairline);
+  border-radius: var(--radius-card); overflow: hidden; }
+:root .pview[data-pview="list"] .pcard { display: grid; grid-template-columns: minmax(0, 1.7fr) 92px minmax(0, 1.4fr) minmax(0, 1fr) 72px;
+  grid-template-rows: auto; align-items: center; column-gap: var(--space-md); min-height: 0; padding: 10px var(--space-md);
+  border: 0; border-radius: 0; box-shadow: none; transform: none; background: transparent; }
+:root .pview[data-pview="list"] .pcard + .pcard { border-top: var(--rule) solid var(--hairline); }
+:root .pview[data-pview="list"] .pcard:hover { background: var(--sunk); transform: none; box-shadow: none; }
+:root .pview[data-pview="list"] :is(.pcard-top, .kind-tag, .pcard-foot) { display: contents; }
+:root .pview[data-pview="list"] :is(.kind-word, .kind-eyebrow, .pcard-goal, .pcard-meets) { display: none; }
+:root .pview[data-pview="list"] .pcard-name { grid-row: 1; grid-column: 1; margin: 0; font: 600 14px/1.35 var(--font-sans); letter-spacing: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root .pview[data-pview="list"] .pcard-top .st { grid-row: 1; grid-column: 2; justify-self: start; font-size: 12px; }
+:root .pview[data-pview="list"] .pcard-progress { grid-row: 1; grid-column: 3; margin: 0; gap: 4px; }
+:root .pview[data-pview="list"] .pcard-progress .pbar { height: 4px; }
+:root .pview[data-pview="list"] .pcard-progress .small { font-size: 12px; }
+:root .pview[data-pview="list"] .avs { grid-row: 1; grid-column: 4; }
+:root .pview[data-pview="list"] .avs .av { width: 22px; height: 22px; font-size: 9px; }
+:root .pview[data-pview="list"] .pcard-date, :root .pview[data-pview="list"] .pcard-foot > .dim { grid-row: 1; grid-column: 5; justify-self: end; white-space: nowrap; font-size: 12px; }
+:root .pview[data-pview="list"] .pcard-date b { font-weight: 600; }
+:root .pview[data-pview="list"] .pcard-date span { font-size: 11px; }
+:root .pview[data-pview="list"] .pcard-personal { border-style: solid; }
+:root .pview[data-pview="list"] .pcard-personal .pcard-progress { grid-column: 3 / -1; }
+@media (max-width: 640px) {
+  .pview-bar { margin-top: 0; }
+  :root .pview[data-pview="list"] .pcard { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 10px var(--space-sm); }
+  :root .pview[data-pview="list"] .pcard-progress { grid-row: 2; grid-column: 1; }
+  :root .pview[data-pview="list"] .pcard-progress .pbar, :root .pview[data-pview="list"] .avs { display: none; }
+  :root .pview[data-pview="list"] .pcard-date, :root .pview[data-pview="list"] .pcard-foot > .dim { grid-row: 2; grid-column: 2; }
+  :root .pview[data-pview="list"] .pcard-personal .pcard-progress { grid-column: 1 / -1; }
+}
 .pcard { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--card-pad); background: var(--surface); border: var(--rule) solid var(--hairline);
   border-radius: var(--radius-card); text-decoration: none; box-shadow: var(--card-shadow); transition: background var(--dur-state) var(--ease), transform var(--dur-state) var(--ease); }
 .pcard:hover { background: var(--sunk); }

@@ -11,6 +11,7 @@ import type { HelpTerm } from '@/components/help';
 import { Help } from '@/components/HelpMode';
 import { NewProjectButton } from '@/components/ProjectForm';
 import { Stagger } from '@/components/motion-ui';
+import { ProjectsLayout } from '@/components/ProjectsLayout';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,10 +78,9 @@ export default async function Projects() {
   };
   return (
     <div className="calm">
-      <header className="page-head">
-        <div><h1>Projects</h1><p className="summary">{live.filter((p) => !p.personalFor).length} project{live.filter((p) => !p.personalFor).length === 1 ? '' : 's'} · soonest date first</p></div>{/* The archived count is on its own fold below (the PM's call, 15 Nov). */}
-        {!readOnly && <NewProjectButton people={activeOpts} meId={me.person.id} />}
-      </header>
+      {/* The archived count is on its own fold below (the PM's call, 15 Nov). List or grid (19 Nov). */}
+      <ProjectsLayout title={<div><h1>Projects</h1><p className="summary">{live.filter((p) => !p.personalFor).length} project{live.filter((p) => !p.personalFor).length === 1 ? '' : 's'} · soonest date first</p></div>}
+        action={!readOnly ? <NewProjectButton people={activeOpts} meId={me.person.id} /> : undefined}>
       {live.length === 0 ? (
         <div className="empty-state"><p>No projects yet.{!readOnly && ' Start one with + New project.'}</p></div>
       ) : (
@@ -94,6 +94,7 @@ export default async function Projects() {
           <div className="pcards">{archived.map(card)}</div>
         </details>
       )}
+      </ProjectsLayout>
     </div>
   );
 }
