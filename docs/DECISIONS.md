@@ -2174,3 +2174,9 @@ With admin tools hidden, an admin saw every project still, as `lib/sight.ts` rea
 `sightFor` passes `me.adminHidden`, and `sightOf` then works out the projects as for Leadership: the ones they own, lead,
 are on or may view. Projects, Team, Home and search all follow.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · The Guide says what an owner and a lead are
+
+The PM's call: under Projects, the Guide now says the owner is accountable for the project, the lead runs it day to day,
+and sometimes they are the same person. `components/GuideView.tsx`.
+Rollback: git revert the commit.

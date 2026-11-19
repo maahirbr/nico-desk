@@ -149,6 +149,7 @@ export function GuideView() {
         <Shot src="project.webp" alt="A project page: its people, the counts, and its task list." w={1100} h={705} />
         <ul className="guide-list">
           <li><b>The tiles</b> filter the list. Press Late to see only late tasks.</li>
+          <li><b>Owner and lead.</b> The owner is accountable for the project. The lead runs it day to day. Sometimes they are the same person.</li>
           <li><b>Settings</b> is open to everyone on it. Members can add people. The owner and lead change the rest.</li>
           <li><b>Archive</b> needs a reason. Not the owner or lead? You can ask them to archive it.</li>
         </ul>
