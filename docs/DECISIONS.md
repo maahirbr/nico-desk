@@ -2123,3 +2123,11 @@ policy, so `npm run db:upgrade` applies it to the hosted database. Accepted as t
 7 days (taking someone off the roster ends them), rate limits are per instance, an MCP code lives 60 seconds and is
 PKCE-bound.
 Rollback: git revert the commit, then `npm run db:upgrade` to put the old policies back.
+
+## 2026-11-19 · Opus 5.5 · A runbook for whoever looks after the app
+
+The repo owner asked for instructions a teammate such as the PM could follow if something breaks after the move.
+`docs/RUNBOOK.md`: the access they need, how a change goes live, rolling back a bad deploy, the site down, sign-in
+problems, the Claude connector, reminders, the database (never `db:remote` on production), and the two secrets that
+must never change. Docs only.
+Rollback: git revert the commit.
