@@ -1588,6 +1588,8 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 .upd-due.due-late { color: var(--late); background: color-mix(in srgb, var(--late) 12%, transparent); }
 .upd-due.due-soon { color: var(--st-active-fg, var(--ink-2)); background: var(--st-active-bg, var(--sunk)); }
 .upd-due.due-later { color: var(--ink-3); background: var(--sunk); }
+.upd-due.due-done { color: var(--st-done-fg, var(--status-done-fg, #22663f)); background: var(--st-done-bg, var(--status-done-bg, #dcf1e3)); }
+.upd-due.due-dropped { color: var(--ink-3); background: var(--sunk); }
 @media (max-width: 520px) { .callout-row.upd-row { flex-wrap: wrap; } .upd-due { margin-left: calc(1em + var(--space-sm)); } }
 
 /* ---------- workstream 3: links on tasks, people pages, cross-links ---------- */

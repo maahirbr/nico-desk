@@ -107,6 +107,16 @@ describe('updates for you (pure)', () => {
     expect(run(e, 'bo').find((i) => i.kind === 'assigned')?.text).toBe('Meera reassigned “Draft copy” to you');
   });
 
+  it('tells whoever gave a one-off task that it is done, and no one else (19 Nov)', () => {
+    const ts: UpdateTask[] = [{ id: 't9', title: 'Send swatches', ownerId: 'bo', projectId: null, createdBy: 'ana', blocked: null }];
+    const done = [ev({ entity_id: 't9', field: 'status_category', before: 'open', after: 'done', actor_id: 'bo' })];
+    const told = (viewerId: string) => buildUpdates({ events: done, tasks: ts, leadOf, names, viewerId, now: NOW }).map((i) => i.text);
+    expect(told('ana')).toEqual(['Kabir marked “Send swatches” done']);
+    expect(told('lee')).toEqual([]);
+    const onProject = [{ ...ts[0], projectId: 'p1' }];
+    expect(buildUpdates({ events: done, tasks: onProject, leadOf, names, viewerId: 'ana', now: NOW })).toEqual([]);
+  });
+
   it('applies the seen cut-off, the 7 day window and newest-first order', () => {
     const e = [
       ev({ field: 'due_on', before: 'a', after: 'b', reason: 'r', actor_id: 'lee', at: '2026-10-09T08:00:00.000Z' }),

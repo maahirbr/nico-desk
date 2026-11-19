@@ -1978,3 +1978,11 @@ Rollback: git revert the commit.
 The PM's call: a small switch above Projects shows the cards (the default) or a quiet list, one row per project with
 its status, progress, people and date. The choice is kept per person in this browser. `components/ProjectsLayout.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · One-off Done in Updates, and the welcome card in View as
+
+The PM's call: whoever gave a one-off task (no project) sees it marked done in Updates for you. A done or dropped line
+now carries a ✓ Done or Dropped tag, and "Priya’s task" is left out when Priya made the change herself
+(`lib/updates.ts`). No schema change. And Home's welcome card now goes by the viewed person's first day, so an admin in
+View as sees it when that person would (`app/me/page.tsx`).
+Rollback: git revert the commit.
