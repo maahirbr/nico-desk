@@ -2250,3 +2250,12 @@ Not now, and never a Working well note. The delete is permanent: the note goes w
 +1s, replies and news, and nobody is told. `lib/feedback.ts deleteFeedback`, DELETE /api/v1/feedback/:id. This replaces
 "nothing is ever removed" for feedback notes only.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deploy: the Gmail error fix and the PM's second 19 Nov batch go live
+
+`main` moved from `ba28299` to `189271e`: the plain Gmail-API-off message with its log line, and the PM's five commits
+(Feedback tabs and delete, partner on and off in Settings, the admins-only What's new note, the Welcome card fix, the
+Guide on owner and lead). VERIFY green (969 tests, build). No schema change. The repo owner enabled the Gmail, Meet,
+Drive and Docs APIs in Google Cloud. Production is `57gy7z55k`: `/team` loads, the Claude connector answers, no
+errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-c23yxglmq-maahirbharatram-3547s-projects.vercel.app --yes`.
