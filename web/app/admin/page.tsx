@@ -1,4 +1,4 @@
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { Person } from '@/components/chips';
 import { fmtDate, istDate } from '@/lib/time';
@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 // The roster, for everyone on the team (the PM's call, 14 Oct). Only an admin sees the buttons that change it and the
 // form to add someone; the service refuses anyone else as well (requireAdmin).
 export default async function Admin() {
-  const me = await requireMe();
+  const me = await requireStaff();
   const { d, people, isAdmin, readOnly, names } = await lookups(me);
   // Why someone was removed, when and by whom: admins only (3 Nov).
   const { rows: removed } = isAdmin ? await d.query<{ id: string; removed_reason: string | null; removed_at: string | Date | null; removed_by: string | null }>(
@@ -33,13 +33,13 @@ export default async function Admin() {
           {people.map((p) => (
             <tr key={p.id} className={p.active ? '' : 'closed'}
               data-find={[p.displayName, p.fullName, p.nickname, p.role, p.department, p.email].filter(Boolean).join(' ').toLowerCase()}
-              data-role={isAdmin ? (!p.active ? 'removed' : p.appRoles.includes('admin') ? 'admin' : p.appRoles.includes('leadership') ? 'leadership' : 'member') : undefined}>
+              data-role={isAdmin ? (!p.active ? 'removed' : p.appRoles.includes('admin') ? 'admin' : p.appRoles.includes('leadership') ? 'leadership' : p.appRoles.includes('partner') ? 'partner' : 'member') : undefined}>
               <td><Person name={p.displayName} id={p.id} />{p.nickname && <span className="dim"> ({p.fullName})</span>}{!p.active && <span className="dim"> (inactive)</span>}</td>
               <td data-label="Job title"><span className="clip clip-title" title={p.role}>{p.role}</span></td>
               <td data-label="Department"><span className="clip clip-dept" title={p.department}>{p.department}</span></td>
               <td data-label="Email" className="roster-email"><span className="clip clip-email" title={p.email}>{p.email}</span></td>
               {/* The access word, then Edit and Email invite on the same line (the PM's call, 11 Nov). */}
-              {isAdmin && <td data-label="Access"><span className="roster-access"><span className="roster-role">{!p.active ? 'Removed' : p.appRoles.includes('admin') ? 'Admin' : p.appRoles.includes('leadership') ? 'Leadership' : 'Member'}</span>
+              {isAdmin && <td data-label="Access"><span className="roster-access"><span className="roster-role">{!p.active ? 'Removed' : p.appRoles.includes('admin') ? 'Admin' : p.appRoles.includes('leadership') ? 'Leadership' : p.appRoles.includes('partner') ? 'Partner' : 'Member'}</span>
                 {!readOnly && <PersonControls self={p.id === me.person.id} me={me.person.displayName} invite={notYet.has(p.id)} others={people.filter((o) => o.active && o.id !== p.id).map((o) => ({ id: o.id, name: o.fullName ?? o.displayName }))} person={{ id: p.id, name: p.fullName ?? p.displayName, role: p.role, department: p.department, email: p.email, active: p.active, roles: p.appRoles }} />}</span>
                 {!p.active && why.get(p.id) && (() => { const r = why.get(p.id)!; return (
                   <div className="small dim">{[r.removed_reason, r.removed_at ? fmtDate(istDate(new Date(r.removed_at).toISOString())) : '', r.removed_by ? `by ${(names[r.removed_by] ?? '').split(' ')[0]}` : ''].filter(Boolean).join(' · ')}</div>

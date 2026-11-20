@@ -70,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const ownerId = localOwnerId(rosterFile());
   // "View as" is for admins only, judged on the real session person, never on the person being viewed.
   const realAdmin = !!me && me.realPerson.appRoles.includes('admin');
+  const partner = !!me && me.person.appRoles.includes('partner'); // 20 Nov: no Team, More, search or Feedback for a partner
   const roleWord = (roles: string[]) => roles.filter((r) => r !== 'member').join(' · ') || 'member';
   const d = me ? scoped(await db(), me.team.id) : null;
   const viewPeople = realAdmin && me && d
@@ -107,13 +108,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="mark-sub mark-wordmark" role="img" aria-label="Nicobar" />
                 </span>
               </Link>
-              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} remind={mayOversee(me.person.appRoles)} activity={mayReadActivity(me)} />
+              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} remind={mayOversee(me.person.appRoles)} activity={mayReadActivity(me)} partner={partner} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
               <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={me.adminHidden ? 'admin' : roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null}
                 adminTools={me.adminHidden ? 'hidden' : realAdmin && !me.viewingAs ? 'shown' : null} />
             </aside>
-            <main className="main"><div className="topbar"><TopSearch /><FeedbackLink /><HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
+            <main className="main"><div className="topbar">{!partner && <TopSearch />}{!partner && <FeedbackLink />}<HelpToggle /></div><div className="page"><ProjectPeopleProvider value={projectPeople} mayAddTo={mayAddTo}>{children}</ProjectPeopleProvider></div></main>
           </div>
           </ViewerProvider>
           </PhotoProvider>

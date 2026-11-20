@@ -6,8 +6,8 @@ import { Select } from './Select';
 // Find someone on the Roster (14 Nov): filters the table's rows as you type, by name, nickname, job title, department
 // or email (each row's data-find). Escape clears it. An admin can also show one access at a time (17 Nov, the PM's
 // call; a dropdown since 17 Nov): All, Admin, Leadership or Member (each row's data-role). Only hides rows on this page; nothing is fetched.
-type Role = '' | 'admin' | 'leadership' | 'member';
-const ROLES: { key: Role; word: string }[] = [{ key: '', word: 'All' }, { key: 'admin', word: 'Admin' }, { key: 'leadership', word: 'Leadership' }, { key: 'member', word: 'Member' }];
+type Role = '' | 'admin' | 'leadership' | 'member' | 'partner';
+const ROLES: { key: Role; word: string }[] = [{ key: '', word: 'All' }, { key: 'admin', word: 'Admin' }, { key: 'leadership', word: 'Leadership' }, { key: 'member', word: 'Member' }, { key: 'partner', word: 'Partner' }];
 
 export function RosterFind({ total, roles = false }: { total: number; roles?: boolean }) {
   const [q, setQ] = useState('');

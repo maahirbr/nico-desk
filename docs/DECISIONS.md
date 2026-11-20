@@ -2307,3 +2307,17 @@ Reported on live by the PM. Since `f35a03a` the Quick Add box took its ref as an
 every redraw of the form (each letter typed in Task) moved the cursor back into Quick Add after one letter. It now
 focuses once when the form opens (`components/QuickAdd.tsx`).
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Partner access: outside partners on the Roster, seeing only their projects
+
+The PM's call, with their answers on what partners see. A fourth Roster access, Partner (stored as member + partner, never
+with Leadership or Admin), with their company in the Department field (shown as Company). A partner signs in with their
+own company's address once on the Roster (`lib/auth.ts checkSignIn`); no env var needed for them. They see only the
+projects they are on, every task on those, and the names of those projects' people; they get no Personal. They update
+their tasks, comment and @mention on their projects, and add tasks only on a project and only for themselves or their own
+company's partners (`lib/service.ts partnerMayGive`). They cannot start a project, change Settings, add people or move a
+task between projects (`projectAccess` is view for them). Team, Roster, people's pages, Ledger, Reminders, Activity,
+Feedback, One-off tasks, search and Connections read as missing (`requireStaff`), the same API areas are refused in
+`route()`, the Claude connector refuses them, and the menu shows only Home, Projects and New task. Schema: the
+team_members role check allows 'partner' (in `upgrade()`), so the hosted database needs `npm run db:upgrade` first.
+Rollback: git revert the commit (a partner row would then need removing by hand).

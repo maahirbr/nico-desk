@@ -1,4 +1,4 @@
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
 import { listProjects } from '@/lib/service';
 import { ledgerFor } from '@/lib/visibility';
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // Leads and admins see everyone, whatever the project; a member sees themselves and the people they work with,
 // with the tasks they may not open counted only (lib/visibility.ts ledgerFor).
 export default async function Ledger({ searchParams }: { searchParams: SP }) {
-  const me = await requireMe();
+  const me = await requireStaff();
   const sp = await searchParams;
   const weeks = Math.min(Math.max(Number(one(sp.weeks) ?? 4) || 4, 1), 26);
   const t = one(sp.to);

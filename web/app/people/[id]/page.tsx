@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { lookups } from '@/lib/page';
 import { personView } from '@/lib/service';
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 // A teammate's page. It shows only what any teammate can already read: team tasks, their logs and project
 // membership. The on-time record shows only to a lead, an admin or the person themselves (the ledger's rule).
 export default async function PersonRoute({ params }: { params: Promise<{ id: string }> }) {
-  const me = await requireMe();
+  const me = await requireStaff();
   const { id } = await params;
   const { d, sight, names, projectNames, activeOpts, isLead } = await lookups(me);
   let v;

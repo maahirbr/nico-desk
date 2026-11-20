@@ -120,7 +120,7 @@ export async function upgrade(db: Db) {
   await db.exec(PERSONAL_NOTES_UPGRADE);
   // 15 Nov: the Leadership role (lib/roles.ts mayOversee). The retired 'lead' stays allowed so old rows still read.
   await db.exec(`ALTER TABLE team_members DROP CONSTRAINT IF EXISTS team_members_app_role_check;
-    ALTER TABLE team_members ADD CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin'));`);
+    ALTER TABLE team_members ADD CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin','partner'));`); // 20 Nov: partner
   // 13 Oct: a meeting rhythm on a project.
   await db.exec(MEETINGS_UPGRADE);
   // 20 Nov: a proposed task from meeting minutes keeps its description apart from its heading.

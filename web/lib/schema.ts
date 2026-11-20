@@ -75,7 +75,7 @@ ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;
 CREATE TABLE team_members (
   team_id    text NOT NULL REFERENCES teams(id),
   person_id  text NOT NULL REFERENCES people(id),
-  app_role   text NOT NULL CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin')), -- 15 Nov: leadership; lead retired
+  app_role   text NOT NULL CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin','partner')), -- 15 Nov: leadership; lead retired. 20 Nov: partner
   PRIMARY KEY (team_id, person_id, app_role)
 );
 ${EMAIL_LOCK}

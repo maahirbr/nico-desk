@@ -731,6 +731,7 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
   // its lead, a team lead or an admin (updateProject).
   const roles = await rolesOf(db, teamId, meId);
   if (roles.size === 0) throw forbidden('You are not on this team.');
+  if (roles.has('partner')) throw forbidden('A partner cannot start a project.'); // 20 Nov
   const c = clean(await withJobTitles(db, input));
   const id = newId('prj');
   await db.transaction(async (tx) => {
@@ -862,8 +863,9 @@ export async function deleteProject(db: Db, meId: string, id: string, confirmNam
 // people: one of its people, who may add people and nothing else. view: everyone else who can open it (viewers).
 export type ProjectAccess = 'full' | 'people' | 'view';
 export async function projectAccess(db: Tx, p: Pick<Project, 'id' | 'teamId' | 'ownerId' | 'leadId'>, meId: string): Promise<ProjectAccess> {
-  if (p.ownerId === meId || p.leadId === meId) return 'full';
   const roles = await rolesOf(db, p.teamId, meId);
+  if (roles.has('partner')) return 'view'; // a partner works in the project but never changes its Settings or people (20 Nov)
+  if (p.ownerId === meId || p.leadId === meId) return 'full';
   if (roles.has('admin')) return 'full';
   const { rows: [m] } = await db.query(`SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`, [p.id, meId]);
   if (isLeadOrAdmin(roles) && !(await isViewOnly(db, p.teamId, p.id, meId))) return 'full';

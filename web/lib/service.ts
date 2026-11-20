@@ -25,7 +25,7 @@ export type Person = {
   restricted: boolean; // sees only their own projects and the ones they may view (lib/sight.ts)
   repliesFeedback: boolean; // may reply to feedback notes (set on the Roster)
 };
-export type AppRole = 'member' | 'lead' | 'leadership' | 'admin'; // 'lead' is retired (15 Nov), see lib/roles.ts
+export type AppRole = 'member' | 'lead' | 'leadership' | 'admin' | 'partner'; // 'lead' is retired (15 Nov); 'partner' (20 Nov), see lib/roles.ts
 
 let seq = 0;
 export function newId(prefix: string): string {
@@ -353,6 +353,16 @@ async function joinProject(tx: Tx, projectId: string, personId: string, role: st
   await tx.query(`INSERT INTO project_members VALUES ($1,$2,$3) ON CONFLICT (project_id, person_id) DO NOTHING`, [projectId, personId, r]);
 }
 
+// A partner (20 Nov) gives a task only to themselves or someone from their own company (also a partner), and only on a
+// project, never moving one between projects.
+async function partnerMayGive(tx: Tx, teamId: string, meId: string, ownerId: string | null | undefined): Promise<void> {
+  if (!ownerId || ownerId === meId) return;
+  const { rows: [r] } = await tx.query<{ same: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM people o JOIN people me ON me.id = $2 JOIN team_members t ON t.person_id = o.id AND t.team_id = $3 AND t.app_role = 'partner'
+       WHERE o.id = $1 AND lower(trim(o.department)) = lower(trim(me.department))) AS same`, [ownerId, meId, teamId]);
+  if (!r?.same) throw forbidden('A partner can give a task only to themselves or someone from their own company.');
+}
+
 export async function createTask(db: Db, meId: string, input: CreateInput): Promise<Task> {
   const today = todayIst();
   if (input.dueOn < today) throw bad('date_in_past', 'The due date must be today or later.', 'dueOn');
@@ -361,6 +371,10 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
   await db.transaction(async (tx) => {
     const roles = await rolesIn(tx, input.teamId, meId);
     if (roles.size === 0) throw forbidden('You are not on this team.');
+    if (roles.has('partner')) {
+      if (!input.projectId) throw bad('invalid_body', 'Pick one of your projects for this task.', 'projectId');
+      await partnerMayGive(tx, input.teamId, meId, input.ownerId);
+    }
     // A task needs an owner: a Nicobar person, or on a partner project a partner person, or both (1 Nov).
     const partnerOwner = input.partnerOwner?.trim() || null;
     if (!input.ownerId && !partnerOwner) throw bad('invalid_body', 'Pick at least one owner.', 'ownerId');
@@ -433,6 +447,10 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
         }
         if (!pp?.personal_for && c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it to a team project.', 'projectId');
       } else if (c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it out of Personal.', 'projectId');
+      if (c.roles.has('partner')) {
+        if (input.projectId !== undefined && input.projectId !== c.row.project_id) throw forbidden('A partner cannot move a task to another project.');
+        if (input.ownerId !== undefined && (input.ownerId || null) !== c.row.owner_id) await partnerMayGive(tx, c.row.team_id, meId, input.ownerId);
+      }
       if (input.ownerId !== undefined && (input.ownerId || null) !== c.row.owner_id) {
         if (input.ownerId) await activeMember(tx, c.row.team_id, input.ownerId, 'ownerId');
         if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', todayIst());
@@ -862,6 +880,11 @@ export async function runReminders(db: Db, today = todayIst()): Promise<number> 
 
 // ---------- roster admin (FR-55) ----------
 
+// A partner is a partner only: never Leadership or Admin as well (20 Nov).
+function partnerAlone(roles: AppRole[]) {
+  if (roles.includes('partner') && (roles.includes('admin') || roles.includes('leadership') || roles.includes('lead'))) throw bad('invalid_body', 'A partner cannot also be Leadership or an Admin.', 'appRoles');
+}
+
 async function requireAdmin(db: Tx, teamId: string, meId: string) {
   if (!(await rolesIn(db, teamId, meId)).has('admin')) throw forbidden('Only the team admin can change the roster.');
 }
@@ -871,6 +894,7 @@ export async function addPerson(
   input: { displayName: string; role: string; department: string; email: string; appRoles: AppRole[] },
 ): Promise<Person> {
   const id = newId('per');
+  partnerAlone(input.appRoles);
   await db.transaction(async (tx) => {
     await requireAdmin(tx, teamId, meId);
     if (await findPersonByEmail(tx, input.email)) throw bad('invalid_body', 'That email is already on the roster.', 'email');
@@ -914,6 +938,7 @@ export async function patchPerson(
   db: Db, meId: string, teamId: string, personId: string,
   input: { displayName?: string; email?: string; active?: boolean; appRoles?: AppRole[]; role?: string; department?: string; restricted?: boolean; repliesFeedback?: boolean },
 ): Promise<Person> {
+  if (input.appRoles) partnerAlone(input.appRoles);
   await db.transaction(async (tx) => {
     await requireAdmin(tx, teamId, meId);
     const p = await getPerson(tx, teamId, personId);
