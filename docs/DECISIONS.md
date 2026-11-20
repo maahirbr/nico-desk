@@ -2287,3 +2287,10 @@ from their columns, a row marked done, completed or dropped left out, the owner'
 brackets in the task ("(next 18 days)", "(27th October)") used and taken out of the title. Before, every cell became its
 own proposal. Also fixed: "27 Oct 2026" was read as 20 Oct (the year's first digits taken for the day). No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Reminders: no "Waiting on a reply" section
+
+The PM's call. The section listing asks for an update with no answer after 2 days, each with a Draft reminder, is gone
+from Reminders: it doubled the nudge, and an ask already stays on the person's Home until they answer. `staleAsks` in
+`lib/asks.ts` stays, unused by the page. `components/AskReminders.tsx` removed.
+Rollback: git revert the commit.

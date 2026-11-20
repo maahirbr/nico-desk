@@ -7,8 +7,6 @@ import { lookups, one, type SP } from '@/lib/page';
 import { seenProjects } from '@/lib/visibility';
 import { seesProject } from '@/lib/sight';
 import { reminderDrafts } from '@/lib/reminders';
-import { staleAsks, ASK_STALE_DAYS } from '@/lib/asks';
-import { AskReminders } from '@/components/AskReminders';
 import { ReminderCards } from '@/components/Reminders';
 import { RemindFind } from '@/components/RemindFind';
 import { gmailSendEnabled, gmailStatus } from '@/lib/gmailSend';
@@ -33,7 +31,7 @@ const GMAIL_SAID: Record<string, string> = {
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireMe();
-  const { d, sight, names, people } = await lookups(me);
+  const { d, sight, people } = await lookups(me);
   if (!mayOversee(me.person.appRoles)) return (<><h1>Reminders</h1><p className="lede">Only leadership or an admin drafts reminders.</p></>);
   // Leadership reminds anyone (15 Nov, the PM's call): the drafts cover every team task, even on projects they cannot
   // open. They still open only their own projects; Personal tasks stay out (sight.hidden).
@@ -48,20 +46,16 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   const gmailOn = gmailSendEnabled() && !me.viewingAs;
   const resendOn = resendSendEnabled() && !me.viewingAs; // Send without Gmail, through Resend (18 Nov)
   const sendOn = gmailOn || resendOn;
-  const [{ drafts, skipped }, projects, asks, link] = await Promise.all([
+  const [{ drafts, skipped }, projects, link] = await Promise.all([
     reminderDrafts(d, me.team.id, { mode, days, projectId, sight: remindSight }, appUrl),
     seenProjects(d, me, sight),
-    staleAsks(d, me, projectId),
     gmailOn ? gmailStatus(d, me.realPerson.id) : null,
   ]);
   const send = { enabled: gmailOn, connected: !!link?.connected, from: link?.email ?? me.person.email,
     resend: resendOn ? resendFromLine(me.realPerson.fullName ?? me.realPerson.displayName) : null };
   const gmail = GMAIL_SAID[one(sp.gmail) ?? ''];
-  // Who each ask waits on, with the address a draft would go to (the same rule as the reminder drafts).
-  const { rows: owners } = asks.length ? await d.query<{ id: string; email: string; contact_email: string | null }>(
-    `SELECT id, email, contact_email FROM people WHERE id = ANY($1)`, [[...new Set(asks.map((a) => a.ownerId))]]) : { rows: [] };
-  const mail = new Map(owners.map((o) => [o.id, o.contact_email ?? (o.email.endsWith('@example.test') ? null : o.email)]));
-  const first = (id: string) => (names[id] ?? 'Someone').split(' ')[0];
+  // "Waiting on a reply" (asks with no answer after 2 days) left Reminders on 20 Nov, the PM's call: the ask stays on the
+  // task, and the person sees it on their Home until they answer.
   const q = (o: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     const m = { mode, days: String(days), project: projectId, ...o };
@@ -99,9 +93,6 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
         <button className="btn ghost">Apply</button>
         {drafts.length > 1 && <RemindFind />}
       </form>
-      {asks.length > 0 && <AskReminders appUrl={appUrl} days={ASK_STALE_DAYS} items={asks.map((a) => ({
-        id: a.id, taskId: a.taskId, title: a.title, ownerId: a.ownerId, ownerName: first(a.ownerId), askerName: first(a.askerId), question: a.question, days: a.days, to: mail.get(a.ownerId) ?? null,
-      }))} />}
       {skipped.length > 0 && <p className="small dim">Not reminded, by choice: {skipped.join(', ')}.</p>}
       {drafts.length === 0 ? <div className="card"><p className="empty card-pad">Nothing to chase. Everyone is on time for this view.</p></div>
         : <ReminderCards drafts={drafts} appUrl={appUrl} send={send} sendAll={!!projectId}
