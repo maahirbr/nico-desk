@@ -114,13 +114,85 @@ const MONTHS: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5,
 
 export type ParsedStep = { owner: string; with: string[]; task: string; details?: string; due: string; line: number | null; confidence: 'sure' | 'unsure'; alt: number[]; why: string };
 
+// A table pasted from a doc or a sheet (20 Nov, the PM's ask): a header row naming the task, owner, date and status
+// columns, then a row per action. Copied from a doc, each cell lands on its own line (an empty cell as blank lines) and a
+// row starts with its number; copied from a sheet, cells are split by tabs. Each row becomes one step line the reader
+// already knows, "(Owner) Task (date)". A row marked done, completed or dropped is left out. Not a table: null.
+const H_TASK = /^(?:action\s*(?:steps?|items?|points?)?|tasks?|what|to-?dos?|next\s+steps?|item|description|deliverables?)$/i;
+const H_OWNER = /^(?:owners?|who|responsible|assigned\s+to|assignee|poc|spoc|accountable|by\s+whom)$/i;
+const H_DATE = /^(?:(?:committed|due|target|end)\s*dates?|dates?|deadline|by\s+when|eta|timeline|when)$/i;
+const H_STATUS = /^(?:status|state|progress)$/i;
+const H_NUM = /^(?:#|no\.?|s\.?\s*no\.?|sr\.?\s*no\.?|sl\.?\s*no\.?)$/i;
+const CLOSED = /^(?:done|completed?|closed|dropped|cancell?ed|finished)\b/i;
+const STATUS_WORD = /^(?:not\s+started|in\s+progress|ongoing|pending|blocked|on\s+hold|done|completed?|closed|dropped|wip|yet\s+to\s+start|to\s+do)$/i;
+const LOOKS_DATE = /(?:\d{1,2}(?:st|nd|rd|th)?\s+[a-z]{3,9}|[a-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|today|tomorrow|this\s+week|next\s+week|eod|eow)/i;
+const LOOKS_NAME = /^[A-Z][\p{L}'.-]*(?:\s+[A-Z][\p{L}'.-]*){0,2}$/u;
+export function tableSteps(text: string): string | null {
+  const lines = text.split('\n').map((l) => l.replace(/\s+$/, ''));
+  const rows: { task: string; owner: string; date: string; status: string }[] = [];
+  const hasTabs = lines.filter((l) => l.includes('\t')).length >= 2;
+  if (hasTabs) {
+    const hi = lines.findIndex((l) => l.includes('\t') && l.split('\t').some((c) => H_OWNER.test(c.trim())) && l.split('\t').some((c) => H_TASK.test(c.trim())));
+    if (hi < 0) return null;
+    const head = lines[hi].split('\t').map((c) => c.trim());
+    const col = (re: RegExp) => head.findIndex((c) => re.test(c));
+    const [t, o, d, st] = [col(H_TASK), col(H_OWNER), col(H_DATE), col(H_STATUS)];
+    for (const l of lines.slice(hi + 1)) {
+      if (!l.includes('\t')) continue;
+      const c = l.split('\t').map((x) => x.trim());
+      if (c[t]) rows.push({ task: c[t], owner: o >= 0 ? c[o] ?? '' : '', date: d >= 0 ? c[d] ?? '' : '', status: st >= 0 ? c[st] ?? '' : '' });
+    }
+  } else {
+    // One cell per line: find the header lines in a row, then the rows, each opening with its number.
+    const trimmed = lines.map((l) => l.trim());
+    let start = -1;
+    for (let i = 0; i < trimmed.length; i++) {
+      const isHead = (c: string) => H_TASK.test(c) || H_OWNER.test(c) || H_DATE.test(c) || H_STATUS.test(c) || H_NUM.test(c);
+      const run: string[] = [];
+      for (let j = i; j < trimmed.length && trimmed[j] && isHead(trimmed[j]) && run.length < 8; j++) run.push(trimmed[j]);
+      if (run.length >= 2 && run.some((c) => H_TASK.test(c)) && run.some((c) => H_OWNER.test(c))) {
+        start = i + run.length; break;
+      }
+    }
+    if (start < 0) return null;
+    const cells = trimmed.slice(start);
+    let n = 1;
+    let i = cells.findIndex((c) => c === '1');
+    if (i < 0) return null;
+    while (i >= 0 && i < cells.length) {
+      let next = cells.findIndex((c, k) => k > i && c === String(n + 1));
+      // A number inside a row (a count, a date) is not the next row unless a task follows it.
+      while (next > 0 && !(cells[next + 1] ?? '').trim()) next = cells.findIndex((c, k) => k > next && c === String(n + 1));
+      const cellsOf = cells.slice(i + 1, next < 0 ? cells.length : next).filter(Boolean);
+      const [task = '', ...rest] = cellsOf;
+      const row = { task, owner: '', date: '', status: '' };
+      for (const c of rest) {
+        if (!row.status && STATUS_WORD.test(c)) row.status = c;
+        else if (!row.date && LOOKS_DATE.test(c)) row.date = c;
+        else if (!row.owner && LOOKS_NAME.test(c)) row.owner = c;
+      }
+      if (task) rows.push(row);
+      if (next < 0) break;
+      i = next; n++;
+    }
+  }
+  const open = rows.filter((r) => r.task && !CLOSED.test(r.status));
+  if (!open.length) return null;
+  return open.map((r) => {
+    const first = r.owner.split(' ')[0];
+    // "Garima to present ..." under owner Garima: the name stays out of the task.
+    const task = first ? r.task.replace(new RegExp(`^${first.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?:to|will|should)\\s+`, 'i'), '') : r.task;
+    return `${r.owner ? `(${r.owner}) ` : ''}${task}${r.date ? ` (${r.date})` : ''}`;
+  }).join('\n');
+}
+
 // A due date said relative to the meeting (20 Nov, the PM's ask): "in 18 days", "18 days later", "within 2 weeks",
 // "by Friday", "next Monday", "next week", "end of the week", "end of the month". Counted from the meeting date.
 const NUM: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
   thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, a: 1, an: 1 };
 const WEEKDAY = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const plusDays = (d: string, n: number) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
-export const RELATIVE_DUE = /\b(?:(?:in|within|after)\s+(\d{1,3}|[a-z]+)\s+(days?|weeks?|months?)(?:\s+(?:from\s+(?:now|today|the\s+meeting)|time))?|(\d{1,3}|[a-z]+)\s+(days?|weeks?|months?)\s+(?:later|from\s+(?:now|today|the\s+meeting)|after\s+the\s+meeting)|(?:(?:by|on|for|before|till|until)\s+)?(next\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)|next\s+week|(?:by\s+)?(?:the\s+)?end\s+of\s+(?:the\s+|this\s+)?(week|month))\b/i;
+export const RELATIVE_DUE = /\b(?:(?:in|within|after|next)\s+(?:the\s+next\s+)?(\d{1,3}|[a-z]+)\s+(days?|weeks?|months?)(?:\s+(?:from\s+(?:now|today|the\s+meeting)|time))?|(\d{1,3}|[a-z]+)\s+(days?|weeks?|months?)\s+(?:later|from\s+(?:now|today|the\s+meeting)|after\s+the\s+meeting)|(?:(?:by|on|for|before|till|until)\s+)?(next\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)|next\s+week|(?:by\s+)?(?:the\s+)?end\s+of\s+(?:the\s+|this\s+)?(week|month))\b/i;
 export function relativeDue(text: string, meetingDate: string): string {
   const m = RELATIVE_DUE.exec(text);
   if (!m) return '';
@@ -151,14 +223,16 @@ export function relativeDue(text: string, meetingDate: string): string {
 // statements fold into the step above, wrapped lines join, and greetings and labels are skipped. "He should also ..."
 // keeps the owner of the step before. Lines are suggested by shared words and always marked unsure, so a person picks.
 export function plainParse(steps: string, meetingDate: string, lines: { num: number; what: string; doneDef: string }[] = []): ParsedStep[] {
-  const dateIn = (l: string) => {
-    const dm = l.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:,?\s*(\d{4}))?/i)
-      ?? l.match(/\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:,?\s*(\d{4}))?/i);
+  // words: false reads only a written date, not one said in words ("in 18 days", "by Friday").
+  const dateIn = (l: string, words = true) => {
+    const dm = l.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:,?\s*(\d{4}))?/i)
+      ?? l.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?!\d)(?:st|nd|rd|th)?(?:,?\s*(\d{4}))?/i);
     if (dm) {
       const [mon, day] = /\d/.test(dm[1]) ? [dm[2], dm[1]] : [dm[1], dm[2]];
       const y = dm[3] || meetingDate.slice(0, 4);
       return `${y}-${String(MONTHS[mon.toLowerCase().slice(0, 3)]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
+    if (!words) return '';
     if (/\btoday\b/i.test(l)) return meetingDate;
     const rel = relativeDue(l, meetingDate);
     if (rel) return rel;
@@ -180,12 +254,16 @@ export function plainParse(steps: string, meetingDate: string, lines: { num: num
         l = l.replace(PRONOUN, '').replace(/^(?:should|will|must|can|needs?\s+to|has\s+to|have\s+to|is\s+to)\s+/i, '').replace(/^also\s+/i, '');
       }
       prev = owner;
-      const due = dateIn(l) || (b.due ? dateIn(b.due) : '');
+      const written = dateIn(l, false);
+      const due = written || dateIn(l) || (b.due ? dateIn(b.due) : '');
       const stripped = l
         .replace(/\s*\((?:by\s+)?[^)]*\d[^)]*\)\s*$/i, '')
+        // A date in brackets inside the line, "(27th October)" or "(next 18 days)", is the date, not the task (20 Nov).
+        .replace(/\s*\((?:by\s+|due\s+)?(?:[^)]*\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b[^)]*|[^)]*\b\d+\s+(?:days?|weeks?|months?)\b[^)]*)\)/gi, '')
         .replace(/\s+(?:by|on|before)\s+(?:\d{1,2}\s+[a-z]{3,9}|[a-z]{3,9}\.?\s+\d{1,2})(?:,?\s*\d{4})?\.?\s*$/i, '')
         .replace(/\s+(?:by\s+)?(?:today|tomorrow)\.?\s*$/i, '')
-        .replace(new RegExp(`[,\\s]*${RELATIVE_DUE.source}[.,]?`, 'i'), ' ')
+        // Words that gave the date leave the task, unless a written date gave it ("Run Tuesday session (27 Oct)").
+        .replace(written ? /$^/ : new RegExp(`[,\\s]*${RELATIVE_DUE.source}[.,]?`, 'i'), ' ')
         .replace(/\s+/g, ' ')
         .trim() || l;
       const head = stripped.charAt(0).toUpperCase() + stripped.slice(1);

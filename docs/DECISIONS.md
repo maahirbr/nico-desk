@@ -2278,3 +2278,12 @@ task's description on accept and can be edited in review. A due date said in wor
 "tomorrow" were read. Schema: `plan_proposals.details` (in `upgrade()`), so the hosted database needs `npm run
 db:upgrade` before this is promoted.
 Rollback: git revert the commit (the column can stay).
+
+## 2026-11-20 · Opus 5.5 · Pasted minutes: tables read row by row, and dates with a year read right
+
+The PM's ask. A pasted table of action steps (from a doc, a cell per line, or from a sheet, tab-separated) is found by its
+header row (task, owner, date, status, #) and read one row per task (`lib/planUtil.ts tableSteps`): the owner and date
+from their columns, a row marked done, completed or dropped left out, the owner's name kept out of the task, and a date in
+brackets in the task ("(next 18 days)", "(27th October)") used and taken out of the title. Before, every cell became its
+own proposal. Also fixed: "27 Oct 2026" was read as 20 Oct (the year's first digits taken for the day). No schema change.
+Rollback: git revert the commit.

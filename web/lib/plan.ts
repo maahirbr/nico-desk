@@ -7,7 +7,7 @@ import { lineSplit, taskSplit, type StatusSplit } from './progress';
 import { modelOn } from './model';
 import { today as todayIst } from './time';
 import {
-  lineLate, needsWhy, nextStepsOf, plainParse, stampRel,
+  lineLate, needsWhy, nextStepsOf, tableSteps, plainParse, stampRel,
   type Checkpoint, type ParsedStep, type PlanAction, type PlanAsk, type PlanLine, type Proposal,
 } from './planUtil';
 
@@ -540,7 +540,8 @@ async function accept(tx: Tx, projectId: string, meId: string, proposalId: strin
 // sent is masked first (lib/redact.ts): people, projects, partner names, emails, phones, links and amounts become labels.
 // With it off, or if the call fails, the plain parser splits them line by line.
 async function readMinutes(db: Tx, projectId: string, o: { title: string; date: string; text: string }): Promise<{ steps: ParsedStep[]; usedModel: boolean }> {
-  const steps = nextStepsOf(o.text);
+  // A pasted table (20 Nov) is read row by row first; anything else as before.
+  const steps = tableSteps(o.text) ?? nextStepsOf(o.text);
   const s = await planState(db, projectId);
   const lines = s.lines.map((l) => ({ num: l.num, what: l.what, doneDef: l.doneDef }));
   if (!steps) return { steps: [], usedModel: false };
