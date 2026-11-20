@@ -2343,3 +2343,10 @@ push (text, default ''; nothing deleted). VERIFY green (981 tests, build). Produ
 the Claude connector answers, no errors in the logs.
 Rollback: from `web/`, `vercel promote https://nico-desk-fgq0f27kz-maahirbharatram-3547s-projects.vercel.app --yes`.
 The `details` column can stay: the older build does not read it.
+
+## 2026-11-20 · Opus 5.5 · Reminders: no "Waiting on a reply" section
+
+The PM's call. The section listing asks for an update with no answer after 2 days, each with a Draft reminder, is gone
+from Reminders: it doubled the nudge, and an ask already stays on the person's Home until they answer. `staleAsks` in
+`lib/asks.ts` stays, unused by the page. `components/AskReminders.tsx` removed.
+Rollback: git revert the commit.
