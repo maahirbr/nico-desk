@@ -2294,3 +2294,9 @@ The PM's call. The section listing asks for an update with no answer after 2 day
 from Reminders: it doubled the nudge, and an ask already stays on the person's Home until they answer. `staleAsks` in
 `lib/asks.ts` stays, unused by the page. `components/AskReminders.tsx` removed.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Projects: open first in each project's counts
+
+The PM's call: a project's counts read "5 open · 4 done · 1 overdue" (open, then done, then overdue in red) instead of
+starting with done. List and grid views both. `app/projects/page.tsx`.
+Rollback: git revert the commit.

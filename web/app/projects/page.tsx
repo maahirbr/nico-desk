@@ -59,7 +59,7 @@ export default async function Projects() {
         {meets && <p className="pcard-meets">{meets}</p>}
         <div className="pcard-progress">
           <span className="pbar" aria-hidden><span style={{ width: `${total ? Math.round((100 * c.done) / total) : 0}%` }} /></span>
-          <span className="small"><b>{c.done}</b> done · <b>{c.open}</b> open{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>
+          <span className="small"><b>{c.open}</b> open · <b>{c.done}</b> done{c.overdue > 0 && <span className="late-text"> · {c.overdue} overdue</span>}</span>
         </div>
         <div className="pcard-foot">
           <span className="avs" title={team.map((id) => names[id]).join(', ')}>
