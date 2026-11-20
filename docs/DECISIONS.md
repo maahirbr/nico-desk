@@ -2300,3 +2300,10 @@ Rollback: git revert the commit.
 The PM's call: a project's counts read "5 open · 4 done · 1 overdue" (open, then done, then overdue in red) instead of
 starting with done. List and grid views both. `app/projects/page.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Fix: typing in the new task form no longer jumps to Quick Add
+
+Reported on live by the PM. Since `f35a03a` the Quick Add box took its ref as an inline function that focused it, so
+every redraw of the form (each letter typed in Task) moved the cursor back into Quick Add after one letter. It now
+focuses once when the form opens (`components/QuickAdd.tsx`).
+Rollback: git revert the commit.
