@@ -2350,3 +2350,10 @@ The PM's call. The section listing asks for an update with no answer after 2 day
 from Reminders: it doubled the nudge, and an ask already stays on the person's Home until they answer. `staleAsks` in
 `lib/asks.ts` stays, unused by the page. `components/AskReminders.tsx` removed.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Deploy: Reminders without "Waiting on a reply"
+
+`main` moved from `447ae61` to `65dd017`: the PM's commit removing the "Waiting on a reply" section from Reminders.
+No schema change. VERIFY green (981 tests, build). Production is `immuj45w1`: `/team` answers, `/reminders` sends a
+signed-out visitor to sign-in, the Claude connector asks for a token, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-pz5tira9p-maahirbharatram-3547s-projects.vercel.app --yes`.
