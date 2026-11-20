@@ -2333,3 +2333,13 @@ from their columns, a row marked done, completed or dropped left out, the owner'
 brackets in the task ("(next 18 days)", "(27th October)") used and taken out of the title. Before, every cell became its
 own proposal. Also fixed: "27 Oct 2026" was read as 20 Oct (the year's first digits taken for the day). No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Deploy: minutes with a heading and details, dates in words, and pasted tables
+
+`main` moved from `051a287` to `447ae61`: the PM's two minutes commits (a short task heading with the lines under it as
+its description, due dates said in words counted from the meeting date, a pasted table read row by row, and dates with
+a year read right). Schema: `plan_proposals.details`, added by `npm run db:upgrade` on the hosted database before the
+push (text, default ''; nothing deleted). VERIFY green (981 tests, build). Production is `pz5tira9p`: `/team` loads,
+the Claude connector answers, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-fgq0f27kz-maahirbharatram-3547s-projects.vercel.app --yes`.
+The `details` column can stay: the older build does not read it.
