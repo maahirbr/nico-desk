@@ -13,7 +13,7 @@ const TODAY = '2026-10-09';
 const ME = 'ana';
 let n = 0;
 const mk = (o: Partial<Task>): Task => ({
-  id: `t${++n}`, ownerId: ME, projectId: null, firstDueOn: TODAY, dueOn: TODAY, statusCategory: 'open', outcome: null, closedAt: null, ...o,
+  id: `t${++n}`, ownerId: ME, projectId: 'p1', firstDueOn: TODAY, dueOn: TODAY, statusCategory: 'open', outcome: null, closedAt: null, ...o,
 } as Task);
 const closed = (firstDueOn: string, outcome: 'ahead' | 'on_time' | 'late', o: Partial<Task> = {}) =>
   mk({ firstDueOn, dueOn: firstDueOn, statusCategory: 'done', outcome, closedAt: `${firstDueOn}T06:00:00.000Z`, ...o });
@@ -173,7 +173,7 @@ describe('team load', () => {
 });
 
 describe('glanceOf', () => {
-  const tasks = [mk({ projectId: 'p1' }), mk({ ownerId: 'bo' }), closed('2026-10-06', 'on_time')];
+  const tasks = [mk({ projectId: 'p1' }), mk({ ownerId: 'bo', projectId: null }), closed('2026-10-06', 'on_time')];
   const base = { personId: ME, today: TODAY, projects: [{ id: 'p1', name: 'Gift hampers' }], projectNames: {}, people: [{ id: 'ana', name: 'Ana' }, { id: 'bo', name: 'Bo' }] };
 
   it('gives the team table only to a lead or an admin', () => {

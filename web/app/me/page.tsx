@@ -5,7 +5,7 @@ import { newsFor } from '@/lib/news';
 import { requireMe } from '@/lib/auth';
 import { latestEndedFirst } from '@/lib/derive';
 import { homeUpdates, lookups } from '@/lib/page';
-import { handoversForMe, listNotices, myTasks } from '@/lib/service';
+import { handoversForMe, listNotices, myTasks, oneOffsGiven } from '@/lib/service';
 import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, istDate, mondayOf, today } from '@/lib/time';
 import { myProjects } from '@/lib/plan';
@@ -70,6 +70,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   // A role that is just your Roster job title (the default since 18 Nov), or plain Member, is left out.
   const myTitle = (me.person.role ?? '').trim().toLowerCase();
   const shownProjects = onProjects.map((p) => ({ ...p, role: !p.role || p.role === 'Member' || p.role.trim().toLowerCase() === myTitle ? '' : p.role }));
+  // One-off tasks I gave (20 Nov): a chip beside Personal with how many are still open; none, no chip.
+  // Only the person, and an admin viewing as them, see it (20 Nov).
+  const oneOffList = (await oneOffsGiven(d, me.team.id, me.person.id, t)).open;
+  const oneOffOpen = oneOffList.length;
+  const oneOffLate = oneOffList.filter((x) => x.overdue).length;
   return (
     <HomeView
       greeting={`${greeting()}, ${me.person.displayName.split(' ')[0]}`}
@@ -96,6 +101,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
       projects={projects.filter((p) => p.kind === 'tasks' && !p.archivedAt && !viewOnly.has(p.id)).map((p) => ({ id: p.id, name: p.name }))}
       workstreamsByProject={Object.fromEntries(projects.map((p) => [p.id, p.workstreams]))}
       myProjects={shownProjects}
+      oneOffOpen={oneOffOpen}
+      oneOffLate={oneOffLate}
       welcome={welcome}
       news={news}
       feedbackAsk={feedbackAsk}

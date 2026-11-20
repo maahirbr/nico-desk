@@ -2259,3 +2259,47 @@ Guide on owner and lead). VERIFY green (969 tests, build). No schema change. The
 Drive and Docs APIs in Google Cloud. Production is `57gy7z55k`: `/team` loads, the Claude connector answers, no
 errors in the logs.
 Rollback: from `web/`, `vercel promote https://nico-desk-c23yxglmq-maahirbharatram-3547s-projects.vercel.app --yes`.
+
+## 2026-11-19 · Opus 5.5 · Roster: a small gap between the access filter and Find a person
+
+The PM's call: the access dropdown now fills its space, and the gap to Find a person is the small one (8px).
+Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Reminders: Bulk send for one project
+
+From a lead's ask, the PM's design. With one project picked, Reminders shows "Bulk send" (off until pressed). Each card
+then gets a Select box, all unticked, and a bar above the cards with a Select all box (a dash when only some are ticked),
+the names ticked, and "Send to N people". Select all leaves out anyone reminded today; they show "reminded today" and can
+be ticked by hand. A card can be ticked only with an address and an item. "Send to N people" asks to confirm, listing the
+names and the From address, then sends each person their own card's email as it stands (To, Cc, Bcc, subject, text),
+one at a time, through the same send as a card's own Send. With no project picked, the top line says to pick one.
+Nothing goes out until the lead presses Send. A 5-second Undo was built and parked. `components/Reminders.tsx`.
+Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Reminders follow live data: archived projects out, and a re-check before each send
+
+The PM's call. Tasks, plan lines and meeting actions of an archived project are never in a reminder, and an archived
+project is not in the Reminders Project list (archiving already drops open tasks; this makes it explicit). Just before
+each email goes out, by a card's Send or by Bulk send, the server checks every task in it is still open and its project
+not archived (`lib/reminders.ts assertStillOpen`). If not, that email is not sent and the card says which task changed
+and to reload; Bulk send sends the rest and names who was skipped. The page itself reads live data on every load.
+Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Quick Add grows with the sentence, and reads two sentences as one task
+
+The PM's report. The Quick Add box is a text box that grows a line at a time as the sentence wraps (Enter still reads
+it), so a long sentence stays in view. In the plain rules (`lib/sentence.ts`), a second sentence that only adds to the
+task ("It needs the new prices.", "We discussed this yesterday.", "Make sure ...") goes into its details instead of
+making a second task with no owner; one that names a person or asks something is still a new task. Speech without full
+stops gets one after a date that ends the ask ("by monday it needs ..."), so the date is found and the rest is details.
+Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · One-off tasks: the tasks you gave someone, outside any project
+
+The PM's call. A chip after Personal in Home's Your projects, "One-off tasks · N open" (and "· N late" when any are),
+opens /one-off: the open tasks you made for someone else with no project, with a sort (due date, newest given, person,
+status), and, folded, those closed in the last 30 days (then they leave the list; the tasks stay). The status pill asks
+for an update, as on a project. Only the person sees it, and an admin in View as. One-off tasks are left out of Reminders,
+the Ledger and on-time records (person page, Home trend); the ledger fixture totals moved by those tasks. The owner still
+sees the task on their Home, and Team and Activity are unchanged. `lib/service.ts oneOffsGiven`, `components/OneOffView.tsx`.
+Rollback: git revert the commit.

@@ -48,7 +48,7 @@ export function onTimeTrend(tasks: Task[], personId: string, today: string, week
   for (let i = weeks - 1; i >= 0; i--) out.push({ weekStart: addDays(last, -7 * i), closed: 0, kept: 0, rate: null });
   const byWeek = new Map(out.map((w) => [w.weekStart, w]));
   for (const t of tasks) {
-    if (t.ownerId !== personId || t.statusCategory === 'dropped' || !t.outcome) continue;
+    if (t.ownerId !== personId || t.statusCategory === 'dropped' || !t.outcome || !t.projectId) continue; // one-off tasks are not in the record (20 Nov)
     const w = byWeek.get(mondayOf(t.firstDueOn));
     if (!w) continue;
     w.closed++;

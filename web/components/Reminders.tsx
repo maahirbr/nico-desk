@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { ReminderDraft } from '@/lib/reminders';
 import { bodyFor, bodyHtmlFor, subjectFor } from '@/lib/reminderText';
 import { fmtDate } from '@/lib/time';
@@ -8,7 +8,7 @@ import { Avatar, PersonLink } from './chips';
 import { Help } from './HelpMode';
 import { useReadOnly } from './readonly';
 import { RichText } from './RichText';
-import { CheckTick } from './task-ui';
+import { CheckTick, Modal } from './task-ui';
 import { isRealEnter } from './ime';
 
 // Each draft opens in the lead's own Gmail (or mail app) with the text filled in, or, when the lead has connected
@@ -97,6 +97,16 @@ async function connectGmail(setSaid: (s: string) => void) {
   if (j?.url) window.location.assign(j.url); else setSaid('Could not reach Google. Try again in a moment.');
 }
 
+// Bulk send (19 Nov, from a lead's ask; the PM's design): only on one project's reminders, and off until the
+// lead turns it on. Then each card gets a tick, unticked; the lead ticks people one by one, and the bar above names them
+// with "Send to 3 people". A card can be ticked when it has an address and an item. Each card tells the bar whether it
+// is picked, and how to send itself.
+// today: reminded already today, so Select all leaves them out (19 Nov); they can still be ticked by hand.
+type Reg = { name: string; ready: boolean; can: boolean; today: boolean; send: () => Promise<boolean> };
+const sameDay = (iso: string | null) => !!iso && new Date(iso).toDateString() === new Date().toDateString();
+// all: a count the bar raises for "Select all" (every card that can be sent) or lowers for "Clear"; each card follows it.
+const SendAll = createContext<{ set: (id: string, r: Reg | null) => void; on: boolean; all: number } | null>(null);
+
 function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl: string; send: SendState; signOff: string; contacts: Contact[] }) {
   const [on, setOn] = useState(() => new Set(d.items.filter((i) => !i.flag).map((i) => i.key)));
   // The first text, with the sender's sign-off (15 Nov): "Best," and their nickname or first name.
@@ -115,6 +125,7 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
   const [said, setSaid] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const remindedToday = sameDay(d.lastAt);
   const readOnly = useReadOnly(); // an admin viewing as the lead sees the drafts but cannot open or log them
   const mark = (channel: string) => { record(d.personId, channel, subject, [...on]); setLast(new Date().toISOString()); };
   const tick = (key: string, yes: boolean) => {
@@ -130,8 +141,8 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
   const canSend = send.connected || viaResend;
   const extra = (k: string, v: string) => (list(v).length ? `&${k}=${encodeURIComponent(list(v).join(','))}` : '');
   const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}${extra('cc', cc)}${extra('bcc', bcc)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  const sendNow = async () => {
-    if (!can || busy) return;
+  const sendNow = async (): Promise<boolean> => {
+    if (!can || busy) return false;
     setBusy(true); setSaid('Sending…');
     const res = await fetch('/api/v1/reminders/send', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -139,15 +150,31 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
     }).catch(() => null);
     const j = res ? ((await res.json().catch(() => null)) as { from?: string; error?: { code?: string; message?: string } } | null) : null;
     setBusy(false);
-    if (res?.ok) { setSent(true); setLast(new Date().toISOString()); setSaid(`Sent from ${j?.from ?? send.from}.`); return; }
+    if (res?.ok) { setSent(true); setLast(new Date().toISOString()); setSaid(`Sent from ${j?.from ?? send.from}.`); return true; }
     setSaid(j?.error?.message ?? 'Could not send. Check your connection and try again.');
+    return false;
   };
+  const all = useContext(SendAll);
+  const [inAll, setInAll] = useState(false);
+  useEffect(() => { if (!all?.on) setInAll(false); }, [all?.on]); // turning it off clears the picks
+  useEffect(() => { if (all && all.all !== 0) setInAll(all.all > 0 && !remindedToday); }, [all?.all]); // eslint-disable-line react-hooks/exhaustive-deps -- Select all skips anyone reminded today
+  const ready = !!all?.on && !readOnly && can && inAll && !sent;
+  const sendRef = useRef(sendNow);
+  sendRef.current = sendNow;
+  const pickable = !readOnly && can && !sent;
+  useEffect(() => { all?.set(d.personId, { name: d.name, ready, can: pickable, today: remindedToday, send: () => sendRef.current() }); }, [ready, pickable]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => all?.set(d.personId, null), []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <section className="card remind-card" id={`remind-${d.personId}`} data-find={d.name.toLowerCase()}>
       <div className="remind-head">
         <span className="person-cell"><Avatar id={d.personId} name={d.name} lg /><span><PersonLink id={d.personId}><b>{d.name}</b></PersonLink>
           {/* Only when they were last reminded (15 Nov): the count is plain from the list below. */}
           {last && <span className="small dim"> · {ago(last)}</span>}</span></span>
+        {all?.on && !readOnly && !sent && (
+          <label className={`small remind-inall${can ? '' : ' off'}`} title={can ? undefined : !to ? 'No email address for them yet' : 'Tick at least one item first'}>
+            <input type="checkbox" checked={inAll && can} disabled={!can} onChange={(e) => setInAll(e.target.checked)} /> {can ? 'Select' : !to ? 'No email' : 'Nothing ticked'}
+            {can && remindedToday && <span className="remind-today">reminded today</span>}</label>
+        )}
       </div>
       <ul className="remind-items" aria-label={`Items in the reminder to ${d.name}`}>
         {d.items.map((i) => (
@@ -190,6 +217,75 @@ function Card({ d, appUrl, send, signOff, contacts }: { d: ReminderDraft; appUrl
 }
 
 // The cards. Finding a person is in the filter bar above (components/RemindFind.tsx, 15 Nov), which hides cards by data-find.
-export function ReminderCards({ drafts, appUrl, send, signOff = '', contacts = [] }: { drafts: ReminderDraft[]; appUrl: string; send: SendState; signOff?: string; contacts?: Contact[] }) {
-  return <div className="remind-list">{drafts.map((d) => <Card key={d.personId} d={d} appUrl={appUrl} send={send} signOff={signOff} contacts={contacts} />)}</div>;
+export function ReminderCards({ drafts, appUrl, send, signOff = '', contacts = [], sendAll: allOn = false }: { drafts: ReminderDraft[]; appUrl: string; send: SendState; signOff?: string; contacts?: Contact[]; sendAll?: boolean }) {
+  const regs = useRef(new Map<string, Reg>());
+  const [, bump] = useState(0);
+  const [multi, setMulti] = useState(false); // off until the lead turns it on
+  const set = useRef((id: string, r: Reg | null) => { if (r) regs.current.set(id, r); else regs.current.delete(id); bump((n) => n + 1); }).current;
+  const [allTick, setAllTick] = useState(0); // positive: Select all was pressed; negative: Clear
+  const ctx = { set, on: multi, all: allTick };
+  const [asking, setAsking] = useState(false);
+  const [going, setGoing] = useState<{ done: number; total: number; failed: string[] } | null>(null);
+  const readOnly = useReadOnly();
+  const ready = [...regs.current.entries()].filter(([, r]) => r.ready);
+  const sendable = [...regs.current.values()].filter((r) => r.can && !r.today).length; // what Select all ticks
+  const readyUsual = ready.filter(([, r]) => !r.today).length;
+  const queued = useRef<[string, Reg][]>([]);
+  const canSend = send.connected || !!send.resend;
+  const names = ready.map(([, r]) => r.name.split(' ')[0]);
+  // One at a time, so each goes out as if its own Send were pressed; the result shows under each card too.
+  // Confirm starts the countdown; at 0 the list taken at that moment goes out. Undo stops it, nothing sent.
+  function confirmSend() { queued.current = ready; setAsking(false); void sendAll(); }
+  async function sendAll() {
+    const list = queued.current;
+    setGoing({ done: 0, total: list.length, failed: [] });
+    const failed: string[] = [];
+    for (let i = 0; i < list.length; i++) {
+      const ok = await list[i][1].send().catch(() => false);
+      if (!ok) failed.push(list[i][1].name);
+      setGoing({ done: i + 1, total: list.length, failed: [...failed] });
+    }
+  }
+  return (
+    <SendAll.Provider value={allOn ? ctx : null}>
+      {allOn && !readOnly && !multi && drafts.length > 1 && (
+        <div className="remind-multi-start"><button type="button" className="btn ghost" onClick={() => setMulti(true)}>Bulk send</button></div>
+      )}
+      {allOn && !readOnly && multi && (
+        <div className="card card-pad remind-all" role="status">
+          {going && going.done < going.total ? <span>Sending {going.done + 1} of {going.total}…</span>
+            : going ? <span>{going.total - going.failed.length} sent{going.failed.length ? `. Not sent: ${going.failed.join(', ')}. See their card.` : '.'}</span>
+            : <span className="remind-all-pick">
+                {/* Select all (19 Nov): the same checkbox as each card's Select; a dash when only some are ticked. */}
+                <label className="remind-all-check">
+                  <input type="checkbox" disabled={sendable === 0} checked={sendable > 0 && readyUsual === sendable}
+                    ref={(el) => { if (el) el.indeterminate = ready.length > 0 && readyUsual < sendable; }}
+                    onChange={() => setAllTick((n) => (readyUsual === sendable ? -(Math.abs(n) + 1) : Math.abs(n) + 1))} /> Select all
+                </label>
+                {ready.length === 0 ? <span className="dim">or tick <b>Select</b> on each person.</span>
+                  : <span><b>{names.slice(0, 5).join(', ')}{names.length > 5 ? ` + ${names.length - 5} more` : ''}</b></span>}
+              </span>}
+          <span className="remind-all-acts">
+            {!going && <button type="button" className="btn ghost" onClick={() => { setMulti(false); setAllTick(0); }}>Cancel</button>}
+            {!going && (canSend
+              ? <button type="button" className="btn" disabled={ready.length === 0} onClick={() => setAsking(true)}>Send to {ready.length} {ready.length === 1 ? 'person' : 'people'}</button>
+              : <><button type="button" className="btn" disabled>Send to {ready.length} {ready.length === 1 ? 'person' : 'people'}</button><span className="small dim">Sending is off on this local copy.</span></>)}
+            {going && going.done === going.total && <button type="button" className="btn ghost" onClick={() => { setGoing(null); setMulti(false); }}>Done</button>}
+          </span>
+        </div>
+      )}
+      {asking && (
+        <Modal title={`Send ${ready.length} reminders?`} onClose={() => setAsking(false)}>
+          <p>{ready.length} {ready.length === 1 ? 'email goes' : 'emails go'} out now, one to each person, {send.connected ? `from ${send.from}` : `from ${send.resend}`}:</p>
+          <p className="small"><b>{ready.map(([, r]) => r.name).join(', ')}</b></p>
+          <p className="small dim">Each gets the draft on their own card, as it is now.</p>
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn ghost" onClick={() => setAsking(false)}>Cancel</button>
+            <button type="button" className="btn" onClick={confirmSend}>Send {ready.length}</button>
+          </div>
+        </Modal>
+      )}
+      <div className="remind-list">{drafts.map((d) => <Card key={d.personId} d={d} appUrl={appUrl} send={send} signOff={signOff} contacts={contacts} />)}</div>
+    </SendAll.Provider>
+  );
 }

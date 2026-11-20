@@ -40,9 +40,9 @@ describe('ledger (FR-33, SPEC.md C1)', () => {
   it('matches the fixture totals, judged against the first date', async () => {
     const rows = await s.ledger(db, TEAM_ID, '2026-01-05', '2026-12-28', undefined, AS_OF);
     const sum = (k: keyof s.LedgerRow) => rows.reduce((n, r) => n + (r[k] as number), 0);
-    expect(sum('closedAhead') + sum('closedOnTime')).toBe(27);
-    expect(sum('closedLate')).toBe(10);
-    expect(sum('openPastDue')).toBe(4);
+    expect(sum('closedAhead') + sum('closedOnTime')).toBe(24); // 27 before 20 Nov: 3 one-off tasks no longer count
+    expect(sum('closedLate')).toBe(9); // 10 before 20 Nov: 1 one-off task no longer counts
+    expect(sum('openPastDue')).toBe(3); // 4 before 20 Nov: 1 one-off task no longer counts
   });
 
   it('judges tsk_008 late and tsk_017 on time', async () => {
