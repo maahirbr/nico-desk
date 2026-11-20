@@ -2303,3 +2303,13 @@ for an update, as on a project. Only the person sees it, and an admin in View as
 the Ledger and on-time records (person page, Home trend); the ledger fixture totals moved by those tasks. The owner still
 sees the task on their Home, and Team and Activity are unchanged. `lib/service.ts oneOffsGiven`, `components/OneOffView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Deploy: the PM's 20 Nov batch goes live
+
+`main` moved from `189271e` to `051a287`: one-off tasks (a page of tasks you gave outside a project, kept out of
+reminders, the Ledger and the on-time record), Quick Add reading a follow-up sentence as details, reminders leaving out
+archived projects and re-checking each task is still open before sending, Bulk send on one project's reminders, and a
+Roster spacing fix. Read first: Bulk send is off until the lead turns it on, the lead ticks each person and confirms,
+and each email goes through the same Send route and its rate limit (20 a minute per lead). VERIFY green (976 tests,
+build). No schema change. Production is `fgq0f27kz`: `/team` loads, the Claude connector answers, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-57gy7z55k-maahirbharatram-3547s-projects.vercel.app --yes`.
