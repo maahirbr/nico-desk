@@ -123,6 +123,8 @@ export async function upgrade(db: Db) {
     ALTER TABLE team_members ADD CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin'));`);
   // 13 Oct: a meeting rhythm on a project.
   await db.exec(MEETINGS_UPGRADE);
+  // 20 Nov: a proposed task from meeting minutes keeps its description apart from its heading.
+  await db.exec(`ALTER TABLE plan_proposals ADD COLUMN IF NOT EXISTS details text NOT NULL DEFAULT '';`);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
   await db.exec(GOOGLE_LINKS_UPGRADE);
   // 13 Oct: team chat, with a message_id on notices for a mention in chat.

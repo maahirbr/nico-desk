@@ -2222,3 +2222,5 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 
 /* One-off tasks (20 Nov): the sort beside the heading. */
 .oneoff-sort { flex: 0 0 180px; }
+/* Minutes (20 Nov): a proposed task's description, under its heading. */
+.pc-details { color: var(--ink-2); margin-top: 2px; white-space: pre-line; }

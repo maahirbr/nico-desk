@@ -558,6 +558,7 @@ CREATE TABLE plan_proposals (
   confidence  text NOT NULL CHECK (confidence IN ('sure','unsure')),
   alt         jsonb NOT NULL DEFAULT '[]',
   why         text NOT NULL DEFAULT '',
+  details     text NOT NULL DEFAULT '',  -- 20 Nov: the description under the task heading
   status      text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','rejected')),
   created_by  text REFERENCES people(id),
   created_at  timestamptz NOT NULL,

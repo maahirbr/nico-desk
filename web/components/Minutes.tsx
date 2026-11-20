@@ -270,7 +270,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
   const [lineId, setLineId] = useState(p.lineId ?? '');
   const [ownerId, setOwnerId] = useState(p.ownerId ?? '');
   const [ws, setWs] = useState(p.workstream ?? '');
-  const [f, setF] = useState({ task: p.task, ownerName: p.ownerName, ownerWith: p.ownerWith, dueOn: p.dueOn ?? '' });
+  const [f, setF] = useState({ task: p.task, details: p.details ?? '', ownerName: p.ownerName, ownerWith: p.ownerWith, dueOn: p.dueOn ?? '' });
   const gap = proposalGap(ownerId, editing ? f.dueOn : p.dueOn);
   const unsure = mode === 'plan' ? p.confidence !== 'sure' || !p.lineId : !!gap;
   return (
@@ -301,6 +301,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
       {editing ? (
         <div className="stack" style={{ gap: 8 }}>
           <textarea rows={2} value={f.task} onChange={(e) => setF({ ...f, task: e.target.value })} aria-label="Task" />
+          {mode === 'tasks' && <textarea rows={2} value={f.details} placeholder="Description (optional)" maxLength={600} onChange={(e) => setF({ ...f, details: e.target.value })} aria-label="Description" />}
           <div className="row">
             <input value={f.ownerName} placeholder="Owner" aria-label="Owner" onChange={(e) => setF({ ...f, ownerName: e.target.value })} />
             <input value={f.ownerWith} placeholder="Supported by" aria-label="Supported by" onChange={(e) => setF({ ...f, ownerWith: e.target.value })} />
@@ -310,6 +311,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
       ) : (
         <div>
           <div className="pc-task">{p.task}</div>
+          {p.details && <div className="pc-details small">{p.details}</div>}
           <div className="small dim">
             <b className="pc-owner">{mode === 'tasks' && ownerId ? <PersonLink id={ownerId}>{people.find((x) => x.id === ownerId)?.name ?? p.ownerName}</PersonLink> : p.ownerName || 'No owner named'}</b>{p.ownerWith && ` · with ${p.ownerWith}`}
             <span className={p.dueOn && p.dueOn < today ? 'late' : ''}>{p.dueOn ? ` · due ${fmtDate(p.dueOn)}` : ' · no date'}</span>
@@ -321,7 +323,7 @@ function ProposalCard({ mode, p, lines, people, workstreams, busy, today, editin
         <button className="btn small-btn" disabled={busy || (mode === 'tasks' && unsure)} title={mode === 'tasks' && unsure ? 'Pick an owner, and a date under Edit' : undefined} onClick={() => op({
           op: 'acceptProposal', proposalId: p.id, lineId: lineId || null,
           ...(mode === 'tasks' ? { ownerId: ownerId || null, workstream: ws || null } : {}),
-          ...(editing ? { task: f.task, ownerName: f.ownerName, ownerWith: f.ownerWith, dueOn: f.dueOn || null } : {}),
+          ...(editing ? { task: f.task, ownerName: f.ownerName, ownerWith: f.ownerWith, dueOn: f.dueOn || null, ...(mode === 'tasks' ? { details: f.details } : {}) } : {}),
         })}>{mode === 'tasks' ? 'Accept as task' : 'Accept'}</button>
         <button className="mini-btn" disabled={busy} onClick={onEdit}>{editing ? 'Done editing' : 'Edit'}</button>
         <button className="mini-btn danger" disabled={busy} onClick={() => op({ op: 'rejectProposal', proposalId: p.id })}>Reject</button>

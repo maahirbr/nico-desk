@@ -26,7 +26,7 @@ const Op = z.discriminatedUnion('op', [
   z.object({ op: z.literal('importMinutes'), title: txt(120), date: zDate, text: z.string().min(1).max(60_000),
     source: z.object({ provider: z.enum(['granola', 'fireflies', 'fathom', 'google_meet', 'google_doc']), id: id, link: z.string().url().max(500).nullable().optional() }).optional() }),
   z.object({
-    op: z.literal('acceptProposal'), proposalId: id, lineId: id.nullable(), task: txt(400).optional(), ownerName: txt(80).optional(),
+    op: z.literal('acceptProposal'), proposalId: id, lineId: id.nullable(), task: txt(400).optional(), details: z.string().max(600).optional(), ownerName: txt(80).optional(),
     ownerWith: txt(200).optional(), dueOn: date.optional(), ownerId: id.nullable().optional(), workstream: txt(60).nullable().optional(),
   }),
   z.object({ op: z.literal('rejectProposal'), proposalId: id }),

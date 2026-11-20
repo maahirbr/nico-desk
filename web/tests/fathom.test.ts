@@ -85,7 +85,7 @@ describe('Fathom connection', () => {
     const m = meeting();
     const t = fathomNextSteps(m.action_items, m.default_summary.markdown_formatted);
     expect(t).toBe('### Next Steps\n(Kabir Sethi) Send the column list\nBook the courier for Friday');
-    expect(plainParse(nextStepsOf(t), '2026-10-09').map((x) => [x.owner, x.task])).toEqual([['Kabir Sethi', 'Send the column list'], ['', 'Book the courier for Friday']]);
+    expect(plainParse(nextStepsOf(t), '2026-10-09').map((x) => [x.owner, x.task])).toEqual([['Kabir Sethi', 'Send the column list'], ['', 'Book the courier']]); // "for Friday" is its date since 20 Nov
     expect(fathomNextSteps([], '## Summary\nWe agreed the plan.')).toBe('## Summary\nWe agreed the plan.');
     expect(fathomNextSteps(null, undefined)).toBe('');
   });

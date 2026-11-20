@@ -30,6 +30,7 @@ export type Proposal = {
   id: string; batch: string; position: number; meeting: { title: string; date: string; link?: string };
   ownerName: string; ownerWith: string; task: string; dueOn: string | null; lineId: string | null;
   ownerId: string | null; workstream: string | null;
+  details: string; // the description under the task heading (20 Nov)
   confidence: 'sure' | 'unsure'; alt: string[]; why: string;
 };
 
@@ -111,7 +112,39 @@ export function nextStepsOf(text: string): string {
 
 const MONTHS: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 
-export type ParsedStep = { owner: string; with: string[]; task: string; due: string; line: number | null; confidence: 'sure' | 'unsure'; alt: number[]; why: string };
+export type ParsedStep = { owner: string; with: string[]; task: string; details?: string; due: string; line: number | null; confidence: 'sure' | 'unsure'; alt: number[]; why: string };
+
+// A due date said relative to the meeting (20 Nov, the PM's ask): "in 18 days", "18 days later", "within 2 weeks",
+// "by Friday", "next Monday", "next week", "end of the week", "end of the month". Counted from the meeting date.
+const NUM: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+  thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, a: 1, an: 1 };
+const WEEKDAY = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const plusDays = (d: string, n: number) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+export const RELATIVE_DUE = /\b(?:(?:in|within|after)\s+(\d{1,3}|[a-z]+)\s+(days?|weeks?|months?)(?:\s+(?:from\s+(?:now|today|the\s+meeting)|time))?|(\d{1,3}|[a-z]+)\s+(days?|weeks?|months?)\s+(?:later|from\s+(?:now|today|the\s+meeting)|after\s+the\s+meeting)|(?:(?:by|on|for|before|till|until)\s+)?(next\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)|next\s+week|(?:by\s+)?(?:the\s+)?end\s+of\s+(?:the\s+|this\s+)?(week|month))\b/i;
+export function relativeDue(text: string, meetingDate: string): string {
+  const m = RELATIVE_DUE.exec(text);
+  if (!m) return '';
+  const num = (w: string) => (/^\d+$/.test(w) ? Number(w) : NUM[w.toLowerCase()] ?? NaN);
+  const span = (n: number, unit: string) => {
+    const u = unit.toLowerCase();
+    if (u.startsWith('day')) return plusDays(meetingDate, n);
+    if (u.startsWith('week')) return plusDays(meetingDate, 7 * n);
+    const x = new Date(`${meetingDate}T00:00:00Z`); x.setUTCMonth(x.getUTCMonth() + n); return x.toISOString().slice(0, 10);
+  };
+  if (m[1] && m[2]) { const n = num(m[1]); return Number.isNaN(n) ? '' : span(n, m[2]); }
+  if (m[3] && m[4]) { const n = num(m[3]); return Number.isNaN(n) ? '' : span(n, m[4]); }
+  const dow = new Date(`${meetingDate}T00:00:00Z`).getUTCDay();
+  if (m[6]) {
+    const want = WEEKDAY.indexOf(m[6].toLowerCase());
+    let ahead = (want - dow + 7) % 7 || 7; // the next one after the meeting day
+    if (m[5] && ahead < 7 && dow !== 0 && want > dow) ahead += 7; // "next Friday" said on a Monday: the Friday after this one
+    return plusDays(meetingDate, ahead);
+  }
+  if (/next\s+week/i.test(m[0])) return plusDays(meetingDate, ((8 - dow) % 7 || 7)); // the coming Monday
+  if (m[7]?.toLowerCase() === 'week') return plusDays(meetingDate, ((5 - dow + 7) % 7)); // this Friday
+  if (m[7]?.toLowerCase() === 'month') { const x = new Date(`${meetingDate}T00:00:00Z`); return new Date(Date.UTC(x.getUTCFullYear(), x.getUTCMonth() + 1, 0)).toISOString().slice(0, 10); }
+  return '';
+}
 
 // Works without a model: "(Name) task (Oct 7, 2026)", "Name: task" or "Name to task" give owner, task and date.
 // Pasted lines are read as blocks (lib/blocks.ts): a name heading owns the steps under it, sub-bullets and plain
@@ -127,6 +160,8 @@ export function plainParse(steps: string, meetingDate: string, lines: { num: num
       return `${y}-${String(MONTHS[mon.toLowerCase().slice(0, 3)]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
     if (/\btoday\b/i.test(l)) return meetingDate;
+    const rel = relativeDue(l, meetingDate);
+    if (rel) return rel;
     if (/\btomorrow\b/i.test(l)) {
       const d = new Date(`${meetingDate}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10);
     }
@@ -150,15 +185,19 @@ export function plainParse(steps: string, meetingDate: string, lines: { num: num
         .replace(/\s*\((?:by\s+)?[^)]*\d[^)]*\)\s*$/i, '')
         .replace(/\s+(?:by|on|before)\s+(?:\d{1,2}\s+[a-z]{3,9}|[a-z]{3,9}\.?\s+\d{1,2})(?:,?\s*\d{4})?\.?\s*$/i, '')
         .replace(/\s+(?:by\s+)?(?:today|tomorrow)\.?\s*$/i, '')
+        .replace(new RegExp(`[,\\s]*${RELATIVE_DUE.source}[.,]?`, 'i'), ' ')
+        .replace(/\s+/g, ' ')
         .trim() || l;
       const head = stripped.charAt(0).toUpperCase() + stripped.slice(1);
-      const task = b.details.length ? `${head}: ${b.details.map((d) => d.replace(/[.;]+$/, '')).join('; ')}` : head;
+      // The heading is the task; lines under it are its description (20 Nov), no longer glued onto the title.
+      const task = head;
+      const details = b.details.map((d) => d.trim()).filter(Boolean).map((d) => d.charAt(0).toUpperCase() + d.slice(1)).join('\n');
       const words = new Set(task.toLowerCase().match(/[a-z]{4,}/g) ?? []);
       const scored = lines
         .map((ln) => ({ num: ln.num, score: (`${ln.what} ${ln.doneDef}`.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter((w) => words.has(w)).length }))
         .filter((x) => x.score > 0)
         .sort((a, b) => b.score - a.score);
-      return { owner, with: [], task, due, line: scored[0]?.num ?? null, confidence: 'unsure' as const, alt: scored.slice(1, 3).map((x) => x.num), why: '' };
+      return { owner, with: [], task, details, due, line: scored[0]?.num ?? null, confidence: 'unsure' as const, alt: scored.slice(1, 3).map((x) => x.num), why: '' };
     });
 }
 

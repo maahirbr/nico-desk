@@ -2313,3 +2313,14 @@ Roster spacing fix. Read first: Bulk send is off until the lead turns it on, the
 and each email goes through the same Send route and its rate limit (20 a minute per lead). VERIFY green (976 tests,
 build). No schema change. Production is `fgq0f27kz`: `/team` loads, the Claude connector answers, no errors in the logs.
 Rollback: from `web/`, `vercel promote https://nico-desk-57gy7z55k-maahirbharatram-3547s-projects.vercel.app --yes`.
+
+## 2026-11-20 · Opus 5.5 · Pasted minutes: a short heading, a separate description, and due dates said in words
+
+The PM's ask. Reading minutes (`lib/planUtil.ts plainParse`, and the model's prompt in `lib/plan.ts`) now gives each
+step a short task heading and keeps the lines under it as its description (`plan_proposals.details`), which becomes the
+task's description on accept and can be edited in review. A due date said in words is counted from the meeting date:
+"in 18 days", "18 days later", "within 2 weeks", "by/for Friday", "next week", "end of the week/month"
+(`relativeDue`), and those words leave the heading. Before, sub-bullets were glued onto the title and only "today" and
+"tomorrow" were read. Schema: `plan_proposals.details` (in `upgrade()`), so the hosted database needs `npm run
+db:upgrade` before this is promoted.
+Rollback: git revert the commit (the column can stay).
