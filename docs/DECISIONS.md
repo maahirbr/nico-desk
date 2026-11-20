@@ -2321,3 +2321,17 @@ Feedback, One-off tasks, search and Connections read as missing (`requireStaff`)
 `route()`, the Claude connector refuses them, and the menu shows only Home, Projects and New task. Schema: the
 team_members role check allows 'partner' (in `upgrade()`), so the hosted database needs `npm run db:upgrade` first.
 Rollback: git revert the commit (a partner row would then need removing by hand).
+
+## 2026-11-20 · Opus 5.5 · Personal priority: P1, P2, P3 on my own Personal tasks
+The PM's call, from a teammate's feedback. On a Personal task its owner may set P1, P2 or P3 (stored as `tasks.priority`
+high, normal, low), optional and empty by default, in the add form and the task panel; pressing the chosen one clears it
+(`lib/service.ts setPriority`, allowed for a lead as before, or for the owner on their own Personal). Colours: P1 red, P2
+light orange, P3 light yellow. Personal sorts P1, P2, P3, then the owner's own order, then due; a drag handle reorders
+within one priority (`orderPersonal`, `POST /api/v1/projects/:id/order`, new column `tasks.personal_order`). The tag also
+shows on Home, for the person's own Personal tasks only. Schema: `personal_order` is added in `upgrade()`, so the hosted
+database needs `npm run db:upgrade` first.
+Rollback: git revert the commit (the column can stay).
+
+## 2026-11-20 · Opus 5.5 · Feedback replies: the outcome in bold
+On the feedback replies card, replied, done, not now and reopened read in bold, so the answer is seen at a glance.
+Rollback: git revert the commit.

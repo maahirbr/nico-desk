@@ -25,10 +25,11 @@ export function FeedbackRepliesCard({ items }: { items: HomeReply[] }) {
   };
   const what = (i: HomeReply) => {
     const note = <Link className="rlink" href={i.href}>&ldquo;{i.note}&rdquo;</Link>;
-    if (i.kind === 'reply') return <>replied to {note}: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
-    if (i.kind === 'done') return <>marked {note} done</>;
-    if (i.kind === 'not_now') return <>marked {note} not now: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
-    return <>reopened {note}</>;
+    // The outcome in bold (20 Nov, the PM's call): Done, Not now, Replied, Reopened.
+    if (i.kind === 'reply') return <><b>replied</b> to {note}: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
+    if (i.kind === 'done') return <>marked {note} <b>done</b></>;
+    if (i.kind === 'not_now') return <>marked {note} <b>not now</b>: <Link className="rlink" href={i.href}>{i.snippet}</Link></>;
+    return <><b>reopened</b> {note}</>;
   };
   return (
     <section className="callout" aria-label="Feedback updates">

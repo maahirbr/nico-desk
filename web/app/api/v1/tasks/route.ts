@@ -14,6 +14,7 @@ const Body = z.object({
   description: z.string().max(600).nullable().optional(),
   note: z.string().max(140).nullable().optional(),
   ownerRole: z.string().max(60).optional(),
+  priority: z.enum(['high', 'normal', 'low']).nullable().optional(), // P1/P2/P3 on a Personal task (20 Nov)
 }).strict();
 
 export const POST = route(async ({ req, me, db }) => {

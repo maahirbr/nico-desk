@@ -206,8 +206,9 @@ export async function api(path: string, method: string, body?: unknown) {
 // onEdit: a ✎ at the row's end, as on a project's table, that opens the task to change it (Personal, 13 Nov).
 // onDelete: a ✕ beside it; the first press asks (it turns red), the second removes the task.
 // names (15 Nov): when given, hovering the status shows "Updated 18 Oct · Sam", as on a project's table (Home, Team).
-export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete, names }: {
-  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void; names?: Record<string, string>;
+// showPrio (20 Nov): the P1/P2/P3 tag before the name, on Personal.
+export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canReassign = false, canAsk = false, onOpen, onStatus, onReopen, onEdit, onDelete, names, showPrio = false }: {
+  t: Task; today: string; sub?: string; owner?: string; canTick: boolean; showPrio?: boolean; canBlock?: boolean; canReassign?: boolean; canAsk?: boolean; onOpen: () => void; onStatus?: (a: RowAction) => void; onReopen?: () => void; onEdit?: () => void; onDelete?: () => void; names?: Record<string, string>;
 }) {
   const { meId: viewerId } = useViewer();
   const when = names ? statusWhen(t, names, viewerId) : null;
@@ -229,7 +230,7 @@ export function TaskRow({ t, today, sub, owner, canTick, canBlock = false, canRe
   const stateFrom = usePreviousWhileChanging(key, 140);
   const main = (
     <TaskLink id={t.id} className="trow-main" onOpen={onOpen}>
-      <span className="trow-title">{t.title}<FreshDot id={t.id} /></span>
+      <span className="trow-title">{showPrio && <PrioTag t={t} />}{t.title}<FreshDot id={t.id} /></span>
       {desc && <span className="trow-desc">{desc}</span>}
       {(sub || err) && <span className={`trow-sub${err ? ' err' : ''}`}>{err ?? sub}</span>}
     </TaskLink>
@@ -590,6 +591,12 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
             {/* When the status last changed, and by whom (the same words as the hover on rows, 15 Nov). */}
             {statusWhen(t, names, meId) && <p className="small dim drawer-when">{statusWhen(t, names, meId)}</p>}
+            {/* Priority on my own Personal task (20 Nov): P1, P2 or P3, optional; press the chosen one again to clear it. */}
+            {t.projectId && isPersonalName(projectNames[t.projectId]) && t.ownerId === meId && open && !readOnly && (
+              <div className="drawer-prio"><span className="small dim">Priority</span>
+                <PrioPick value={t.priority?.value ?? ''} disabled={busy} onChange={(v) => void run((ver) => api(`/tasks/${t.id}/priority`, 'POST', { version: ver, value: v || null }), v ? `Priority set to ${PRIO_WORD[v]}` : 'Priority cleared')} />
+              </div>
+            )}
 
             {askedOfMe.length > 0 && !readOnly && (
               <div className="drawer-form ask-reply" aria-label="Update asked">
@@ -778,7 +785,31 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   );
 }
 
-type TaskDraft = { key: string; title: string; description: string; ownerId: string; ownerRole: string | undefined; dueOn: string; note: string; workstream: string; projectId: string };
+type TaskDraft = { key: string; title: string; description: string; ownerId: string; ownerRole: string | undefined; dueOn: string; note: string; workstream: string; projectId: string; priority?: PrioValue | '' };
+
+// Priority in Personal (20 Nov, from a teammate's ask): P1, P2 or P3 on your own Personal tasks, optional, none by default.
+// P1: do now (today); P2: once the P1s are done; P3: good to have. Stored as high, normal and low.
+export type PrioValue = 'high' | 'normal' | 'low';
+export const PRIO_WORD: Record<PrioValue, string> = { high: 'P1', normal: 'P2', low: 'P3' };
+export const prioRank = (t: Pick<Task, 'priority'>) => (t.priority ? { high: 0, normal: 1, low: 2 }[t.priority.value] : 3);
+const PRIO_HELP: Record<PrioValue, string> = { high: 'P1: do it now, today', normal: 'P2: once the P1s are done', low: 'P3: good to have' };
+export const isPersonalName = (name: string | undefined) => name === 'Personal 🔒' || name === 'Personal';
+export function PrioTag({ t }: { t: Pick<Task, 'priority'> }) {
+  if (!t.priority) return null;
+  const v = t.priority.value;
+  return <span className={`prio prio-${PRIO_WORD[v].toLowerCase()}`} title={PRIO_HELP[v]}>{PRIO_WORD[v]}</span>;
+}
+// The pick: P1 · P2 · P3; pressing the one already chosen clears it.
+export function PrioPick({ value, onChange, disabled = false }: { value: PrioValue | '' | null; onChange: (v: PrioValue | '') => void; disabled?: boolean }) {
+  return (
+    <span className="prio-pick" role="group" aria-label="Priority (optional)">
+      {(['high', 'normal', 'low'] as const).map((v) => (
+        <button key={v} type="button" disabled={disabled} title={PRIO_HELP[v]} className={`prio-opt prio-opt-${PRIO_WORD[v].toLowerCase()}`} aria-pressed={value === v}
+          onClick={() => onChange(value === v ? '' : v)}>{PRIO_WORD[v]}</button>
+      ))}
+    </span>
+  );
+}
 
 // One task's own fields in the New Task form: the first task and each one added under it look the same.
 function TaskFields({ d, set, people, today, projects, workstreams, titleRef, onTitleBlur, afterDates }: {
@@ -814,6 +845,10 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
             </label>
           )}
         </div>
+      )}
+      {/* Priority shows once the task is going into Personal (20 Nov): optional, none to start. */}
+      {projects && isPersonalName(projects.find((p) => p.id === d.projectId)?.name) && (
+        <div className="f"><span>Priority <span className="dim small">(optional)</span></span><PrioPick value={d.priority ?? ''} onChange={(v) => set({ ...d, priority: v })} /></div>
       )}
       {/* No Note field (15 Nov): Details already holds anything the owner should know. */}
     </>
@@ -892,7 +927,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       let added = 0;
       try {
         for (const d of all) {
-          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn, projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null });
+          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn, projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null, ...(d.priority ? { priority: d.priority } : {}) });
           if (made?.id) arrivals.add(made.id);
           added++;
         }

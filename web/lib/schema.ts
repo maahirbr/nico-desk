@@ -137,6 +137,7 @@ CREATE TABLE tasks (
   priority         text CHECK (priority IN ('high','normal','low')),
   priority_set_by  text REFERENCES people(id),
   priority_set_at  timestamptz,
+  personal_order   integer,  -- 20 Nov: the order a person set for their own Personal tasks, within a priority
   blocked_on_id    text REFERENCES people(id),
   blocked_ask      text CHECK (char_length(blocked_ask) BETWEEN 1 AND 280),
   blocked_at       timestamptz,

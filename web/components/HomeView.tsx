@@ -32,7 +32,7 @@ import { UpdatesCard } from './UpdatesCard';
 import { WelcomeCard, markWelcomeStep, type Welcome } from './WelcomeCard';
 import { useReadOnly } from './readonly';
 import { WaitingCard } from './WaitingCard';
-import { AddTaskForm, Modal, oneOffWord, TaskDrawer, TaskRow, api, type Opt, type RowAction } from './task-ui';
+import { AddTaskForm, Modal, isPersonalName, oneOffWord, TaskDrawer, TaskRow, api, type Opt, type RowAction } from './task-ui';
 import { Stagger } from './motion-ui';
 import { DitherArt } from './DitherArt';
 import { Fold, FoldChev } from './Fold';
@@ -106,6 +106,8 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         return [...first, ...mine.filter((t) => !seen.has(t.id))];
       })()
     : null;
+  // P1/P2/P3 shows on Home too (20 Nov), for my own Personal tasks only: priority is only shown on Personal.
+  const pp = (t: Task) => !!t.projectId && isPersonalName(projectNames[t.projectId]);
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : oneOffWord(t, names, meId), t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const nextWeekEnd = addDays(weekEnd, 7);
   const groups = [
@@ -194,7 +196,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
 
       {suggested && (
         <Stagger id="home-suggested" className="tlist">
-          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+          {suggested.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={[ranked?.why[t.id], sub(t)].filter(Boolean).join(' · ')} showPrio={pp(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
         </Stagger>
       )}
 
@@ -202,7 +204,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <section key={g.key} className="group">
           <h2 className={g.key === 'late' ? 'late-text' : ''}><Help term={HEAD[g.key]}>{g.label}</Help> <span className="n">{g.items.length}</span></h2>
           <Stagger id="home" className="tlist">
-            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
+            {g.items.map((t) => <TaskRow key={t.id} t={t} today={today} names={names} sub={sub(t)} showPrio={pp(t)} canTick canBlock={t.ownerId === meId || isLead} canReassign onOpen={() => open(t.id)} onStatus={(s) => open(t.id, s)} />)}
           </Stagger>
         </section>
       ))}

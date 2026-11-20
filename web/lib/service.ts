@@ -247,7 +247,7 @@ export async function taskLog(db: Tx, taskId: string, before?: string, limit = 5
 // ---------- writing tasks ----------
 
 // isHead (15 Nov): the owner or lead of the task's project, who may drop and reopen any task in it (the PM's call).
-type Ctx = { row: TaskRow; roles: Set<AppRole>; meId: string; isOwner: boolean; isLead: boolean; isHead: boolean };
+type Ctx = { row: TaskRow; roles: Set<AppRole>; meId: string; isOwner: boolean; isLead: boolean; isHead: boolean; personal: boolean }; // personal: in this person's own Personal (20 Nov)
 type Change = { set: Partial<TaskRow>; reasons?: Partial<Record<keyof TaskRow, string>>; extra?: { field: string; after: unknown }[] };
 
 async function insertEvent(
@@ -300,7 +300,8 @@ async function mutate(
       `SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2) UNION SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`,
       [row.project_id, meId])).rows.length > 0 : false;
     const isHead = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2)`, [row.project_id, meId])).rows.length > 0 : false;
-    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles), isHead };
+    const personal = row.project_id ? (await tx.query(`SELECT 1 FROM projects WHERE id = $1 AND personal_for = $2`, [row.project_id, meId])).rows.length > 0 : false;
+    const ctx: Ctx = { row, roles, meId, isOwner: row.owner_id === meId || onProject, isLead: isLeadOrAdmin(roles), isHead, personal };
     if (!allow(ctx)) throw forbidden();
     const change = build(ctx);
     const at = new Date().toISOString();
@@ -325,7 +326,7 @@ async function mutate(
 }
 
 // ownerRole: set when the owner is being added to the project as the task is assigned ("+ Add someone to this project").
-export type CreateInput = { teamId: string; title: string; description?: string | null; ownerId?: string | null; dueOn: string; projectId?: string | null; workstream?: string | null; note?: string | null; ownerRole?: string; partnerOwner?: string | null };
+export type CreateInput = { priority?: 'high' | 'normal' | 'low' | null; teamId: string; title: string; description?: string | null; ownerId?: string | null; dueOn: string; projectId?: string | null; workstream?: string | null; note?: string | null; ownerRole?: string; partnerOwner?: string | null };
 
 // A task's owner is always one of the project's people. Someone new joins with the role given, or as Member
 // when a task reaches them another way (minutes, imports). Joining twice changes nothing.
@@ -405,6 +406,11 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
       [id, input.teamId, row.title, row.owner_id, row.project_id, row.workstream, row.first_due_on, row.due_on, row.note, row.health,
         row.status, row.status_category, row.origin, meId, at, row.description, row.partner_owner],
     );
+    // P1, P2 or P3 when it is added to its person's own Personal (20 Nov).
+    if (input.priority && input.projectId) {
+      const { rows: [pp] } = await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [input.projectId]);
+      if (pp?.personal_for === meId) await tx.query(`UPDATE tasks SET priority = $2, priority_set_by = $3, priority_set_at = $4 WHERE id = $1`, [id, input.priority, meId, at]);
+    }
     await insertEvent(tx, { entityId: id, field: '_created', before: null, after: row, actorId: meId, at });
     if (input.ownerId && input.ownerId !== meId) await notice(tx, input.ownerId, id, 'assigned', today);
   });
@@ -630,10 +636,26 @@ export async function unblockTask(db: Db, meId: string, id: string, input: { ver
 }
 
 // FR-27, FR-28
-export async function setPriority(db: Db, meId: string, id: string, input: { version: number; value: 'high' | 'normal' | 'low' }): Promise<Task> {
-  return mutate(db, meId, id, input.version, (c) => c.isLead, () => ({
-    set: { priority: input.value, priority_set_by: meId, priority_set_at: new Date().toISOString() },
+// A lead sets a team task's priority. In Personal (20 Nov, from a teammate's ask), its person sets P1, P2 or P3 on their
+// own tasks, or clears it (null): optional, and nobody else sees it.
+export async function setPriority(db: Db, meId: string, id: string, input: { version: number; value: 'high' | 'normal' | 'low' | null }): Promise<Task> {
+  return mutate(db, meId, id, input.version, (c) => c.isLead || (c.isOwner && !!c.row.project_id && c.personal), () => ({
+    set: input.value
+      ? { priority: input.value, priority_set_by: meId, priority_set_at: new Date().toISOString() }
+      : { priority: null, priority_set_by: null, priority_set_at: null },
   }));
+}
+
+// The order a person gives their own open Personal tasks (20 Nov): the ids in order, all in their Personal project.
+export async function orderPersonal(db: Db, meId: string, projectId: string, ids: string[]): Promise<{ ok: true }> {
+  await db.transaction(async (tx) => {
+    const { rows: [p] } = await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [projectId]);
+    if (!p || p.personal_for !== meId) throw forbidden('Only your own Personal tasks can be put in order.');
+    for (const [i, id] of ids.slice(0, 500).entries()) {
+      await tx.query(`UPDATE tasks SET personal_order = $3 WHERE id = $1 AND project_id = $2`, [id, projectId, i]);
+    }
+  });
+  return { ok: true };
 }
 
 // FR-21: a free update changes no field, so it takes no version.

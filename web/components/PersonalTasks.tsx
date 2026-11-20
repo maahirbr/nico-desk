@@ -7,7 +7,7 @@ import { NO_DATE } from '@/lib/time';
 import { DateField } from './DateField';
 import { Fold, FoldChev } from './Fold';
 import { useReadOnly } from './readonly';
-import { flagOf, statusKey, TaskRow } from './task-ui';
+import { flagOf, PrioPick, prioRank, statusKey, TaskRow, type PrioValue } from './task-ui';
 import { Help } from './HelpMode';
 import { usePersonalOpen } from './PersonalDrawer';
 import { notify } from './toast';
@@ -34,7 +34,12 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
   const [reopening, setReopening] = useState<Set<string>>(new Set()); // unticked, on its way back to open
   const [details, setDetails] = useState(''); // a second, quiet line under the name (13 Nov)
   const [tile, setTile] = useState<string | null>(null);
-  const open = tasks.filter((t) => t.statusCategory === 'open').sort((a, b) => a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title));
+  const [prio, setPrio] = useState<PrioValue | ''>(''); // optional, none to start (20 Nov)
+  const [drag, setDrag] = useState<string | null>(null);
+  // P1, then P2, then P3, then the rest (20 Nov); within each, the order I set by dragging, then by date.
+  const byMine = (a: Task, b: Task) => prioRank(a) - prioRank(b)
+    || (a.personalOrder ?? 1e9) - (b.personalOrder ?? 1e9) || a.dueOn.localeCompare(b.dueOn) || a.title.localeCompare(b.title);
+  const open = tasks.filter((t) => t.statusCategory === 'open').sort(byMine);
   const done = tasks.filter((t) => t.statusCategory === 'done').sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''));
   const tiles = [
     { key: 'open', label: 'Open', help: 'tile_open' as const, match: (t: Task) => t.statusCategory === 'open' },
@@ -51,10 +56,10 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
     setBusy(true);
     try {
       const r = await fetch('/api/v1/tasks', { method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ teamId, title: title.trim(), ownerId: meId, dueOn: due || NO_DATE, projectId, ...(details.trim() ? { description: details.trim() } : {}) }) });
+        body: JSON.stringify({ teamId, title: title.trim(), ownerId: meId, dueOn: due || NO_DATE, projectId, ...(details.trim() ? { description: details.trim() } : {}), ...(prio ? { priority: prio } : {}) }) });
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error?.message ?? 'Could not add the task.');
-      setTitle(''); setDetails(''); setDue(''); router.refresh();
+      setTitle(''); setDetails(''); setDue(''); setPrio(''); router.refresh();
     } catch (e) { notify((e as Error).message); } finally { setBusy(false); }
   };
   // Delete takes the task off the page. Underneath it is dropped, with the app's usual record, so nothing is lost.
@@ -69,9 +74,26 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
     if (r.ok) { notify('Opened again'); router.refresh(); }
     else { setReopening((x) => { const n = new Set(x); n.delete(t.id); return n; }); notify((await r.json().catch(() => null))?.error?.message ?? 'Could not reopen it.'); }
   };
+  // Drag a task by its handle to change my order, within the same priority (20 Nov). The new order is saved for me only.
+  const dropOn = async (target: Task) => {
+    const from = open.find((x) => x.id === drag);
+    setDrag(null);
+    if (!from || from.id === target.id || prioRank(from) !== prioRank(target)) return;
+    const ids = open.map((x) => x.id).filter((x) => x !== from.id);
+    ids.splice(ids.indexOf(target.id), 0, from.id);
+    const r = await fetch(`/api/v1/projects/${projectId}/order`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) });
+    if (r.ok) router.refresh(); else notify('Could not save the order.');
+  };
+  const canDrag = !readOnly && !picked;
   // Clicking a task opens it, to change its name, details, date or note, as on any project.
-  const row = (t: Task) => <TaskRow key={t.id} t={t} today={today} names={{ [meId]: meName }} canTick={!readOnly} canBlock={!readOnly}
-    onOpen={() => openTask(t.id)} onStatus={(s) => openTask(t.id, s)} onEdit={() => openTask(t.id)} onDelete={() => void remove(t)} />;
+  const row = (t: Task) => (
+    <div key={t.id} className={`ptask-drag${drag === t.id ? ' dragging' : ''}`} draggable={canDrag} onDragStart={() => setDrag(t.id)} onDragEnd={() => setDrag(null)}
+      onDragOver={(e) => { if (drag && drag !== t.id) e.preventDefault(); }} onDrop={() => void dropOn(t)}>
+      {canDrag && <span className="drag-handle" title="Drag to change the order" aria-hidden>⋮⋮</span>}
+      <TaskRow t={t} today={today} names={{ [meId]: meName }} canTick={!readOnly} canBlock={!readOnly} showPrio
+        onOpen={() => openTask(t.id)} onStatus={(s) => openTask(t.id, s)} onEdit={() => openTask(t.id)} onDelete={() => void remove(t)} />
+    </div>
+  );
   return (
     <section className="ptasks" aria-labelledby="ptasks-h">
       <div className="stats tiles">
@@ -98,6 +120,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
             <input className="ptask-details" maxLength={600} value={details} placeholder="Details" aria-label="Details" onChange={(e) => setDetails(e.target.value)} />
           </div>
           <DateField noQuick min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date (optional)" />
+          <PrioPick value={prio} onChange={setPrio} />
           <button className="btn" disabled={busy || title.trim().length < 3}>Add</button>
         </form>
       )}
