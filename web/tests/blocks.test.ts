@@ -140,9 +140,10 @@ describe('Quick Add with pasted notes', () => {
 describe('the minutes reader with notes that are not one step per line', () => {
   it('folds sub-bullets and statements into the step above', () => {
     const text = '### Next steps\n- (Kabir Sethi) Prepare the vendor review (Oct 14, 2026)\n  - pull last month\'s numbers\n  - list the open invoices\n- (Ananya Rao) Book the studio';
-    expect(plainParse(nextStepsOf(text), AS_OF).map((s) => [s.owner, s.task, s.due])).toEqual([
-      ['Kabir Sethi', "Prepare the vendor review: pull last month's numbers; list the open invoices", '2026-10-14'],
-      ['Ananya Rao', 'Book the studio', ''],
+    // Since 20 Nov the heading is the task and the lines under it are its description.
+    expect(plainParse(nextStepsOf(text), AS_OF).map((s) => [s.owner, s.task, s.due, s.details])).toEqual([
+      ['Kabir Sethi', 'Prepare the vendor review', '2026-10-14', "Pull last month's numbers\nList the open invoices"],
+      ['Ananya Rao', 'Book the studio', '', ''],
     ]);
   });
 

@@ -2267,3 +2267,14 @@ for an update, as on a project. Only the person sees it, and an admin in View as
 the Ledger and on-time records (person page, Home trend); the ledger fixture totals moved by those tasks. The owner still
 sees the task on their Home, and Team and Activity are unchanged. `lib/service.ts oneOffsGiven`, `components/OneOffView.tsx`.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Pasted minutes: a short heading, a separate description, and due dates said in words
+
+The PM's ask. Reading minutes (`lib/planUtil.ts plainParse`, and the model's prompt in `lib/plan.ts`) now gives each
+step a short task heading and keeps the lines under it as its description (`plan_proposals.details`), which becomes the
+task's description on accept and can be edited in review. A due date said in words is counted from the meeting date:
+"in 18 days", "18 days later", "within 2 weeks", "by/for Friday", "next week", "end of the week/month"
+(`relativeDue`), and those words leave the heading. Before, sub-bullets were glued onto the title and only "today" and
+"tomorrow" were read. Schema: `plan_proposals.details` (in `upgrade()`), so the hosted database needs `npm run
+db:upgrade` before this is promoted.
+Rollback: git revert the commit (the column can stay).

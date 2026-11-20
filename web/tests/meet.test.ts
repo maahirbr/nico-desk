@@ -377,7 +377,7 @@ describe('listing and reading', () => {
     const steps = plainParse(nextStepsOf(note.text), '2026-10-08');
     expect(steps.map((x) => [x.owner, x.task, x.due])).toEqual([
       ['Kabir Sethi', 'Send the studio the column list', '2026-10-12'],
-      ['Priya Rao', 'Book the courier for Friday', ''],
+      ['Priya Rao', 'Book the courier', '2026-10-09'], // "for Friday" after a Thursday meeting (20 Nov)
     ]);
     const drive = g.calls.find((c) => c.url.startsWith('https://www.googleapis.com/drive/v3/files/doc-notes-1/export'))!;
     expect(new URL(drive.url).searchParams.get('mimeType')).toBe('text/plain');
@@ -514,7 +514,7 @@ describe('reading a Google Doc', () => {
   it('gives the steps with owners, dates and details through the existing reader', () => {
     const steps = plainParse(nextStepsOf(docToText(DOC)), '2026-10-08');
     expect(steps.map((x) => [x.owner, x.task, x.due])).toEqual([
-      ['Kabir Sethi', "Send the margin sheet: pull last month's numbers", '2026-10-12'],
+      ['Kabir Sethi', 'Send the margin sheet', '2026-10-12'], // its sub-bullet is now the description (20 Nov)
       ['Priya Rao', 'Book the courier', ''],
       ['Ananya Rao', 'Book the studio', '2026-10-14'],
     ]);

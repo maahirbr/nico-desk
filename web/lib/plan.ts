@@ -125,6 +125,7 @@ export async function planState(db: Tx, projectId: string): Promise<PlanState> {
 const toProposal = (p: LineRow): Proposal => ({
   id: p.id, batch: p.batch, position: p.position, meeting: p.meeting, ownerName: p.owner_name, ownerWith: p.owner_with, task: p.task,
   dueOn: p.due_on, lineId: p.line_id, ownerId: p.owner_id, workstream: p.workstream, confidence: p.confidence, alt: p.alt ?? [], why: p.why,
+  details: (p as LineRow & { details?: string }).details ?? '',
 });
 
 // Pending proposals from meeting minutes, for any project.
@@ -211,7 +212,7 @@ export type PlanOp =
   | { op: 'tickAction'; actionId: string; done: boolean }
   | { op: 'removeAction'; actionId: string }
   | { op: 'importMinutes'; title: string; date: string; text: string; source?: { provider: string; id: string; link?: string | null } }
-  | { op: 'acceptProposal'; proposalId: string; lineId: string | null; task?: string; ownerName?: string; ownerWith?: string; dueOn?: string | null; ownerId?: string | null; workstream?: string | null }
+  | { op: 'acceptProposal'; proposalId: string; lineId: string | null; task?: string; details?: string; ownerName?: string; ownerWith?: string; dueOn?: string | null; ownerId?: string | null; workstream?: string | null }
   | { op: 'rejectProposal'; proposalId: string }
   | { op: 'acceptSure'; batch: string }
   | { op: 'dismissBatch'; batch: string };
@@ -447,10 +448,10 @@ async function importAsTaskProposals(tx: Tx, project: Project, meId: string, o: 
     const ws = project.workstreams.find((w) => (w.toLowerCase().match(/[a-z]{3,}/g) ?? []).some((x) => words.has(x))) ?? null;
     const due = /^\d{4}-\d{2}-\d{2}$/.test(s.due) ? s.due : null;
     await tx.query(
-      `INSERT INTO plan_proposals (id, project_id, batch, position, meeting, owner_name, owner_with, task, due_on, owner_id, workstream, confidence, why, created_by, created_at)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,'',$13,now())`,
+      `INSERT INTO plan_proposals (id, project_id, batch, position, meeting, owner_name, owner_with, task, due_on, owner_id, workstream, confidence, why, created_by, created_at, details)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,'',$13,now(),$14)`,
       [newId('pp'), project.id, batch, i, JSON.stringify(meeting), who?.display_name ?? s.owner, s.with.join(', '), s.task.trim(), due,
-        who?.id ?? null, ws, who && due ? 'sure' : 'unsure', meId],
+        who?.id ?? null, ws, who && due ? 'sure' : 'unsure', meId, (s.details ?? '').trim().slice(0, 600)],
     );
   }
   return { note: `${steps.length} proposed tasks to review. Each needs an owner on the roster and a date before it can be accepted.` };
@@ -477,6 +478,8 @@ async function acceptAsTasks(db: Db, meId: string, project: Project, o: PlanOp):
     const title = (e.task ?? p.task).trim();
     await createTask(db, meId, {
       teamId: project.teamId, title: title.length > 200 ? `${title.slice(0, 199)}…` : title, ownerId, dueOn, projectId: project.id,
+      // The lines under the heading become the task's description (20 Nov).
+      description: ((e.details !== undefined ? e.details : (p as LineRow & { details?: string }).details) ?? '').trim().slice(0, 600) || null,
       workstream: e.workstream !== undefined ? e.workstream : p.workstream,
       note: `From ${p.meeting?.title ?? 'meeting minutes'}, ${fmt(p.meeting?.date ?? todayIst())}`.slice(0, 140),
     });
@@ -571,7 +574,7 @@ async function readMinutes(db: Tx, projectId: string, o: { title: string; date: 
           return {
             usedModel: true,
             steps: arr.map((x: any) => ({
-              owner: um(x.owner), with: Array.isArray(x.with) ? x.with.map(um) : [], task: um(x.task),
+              owner: um(x.owner), with: Array.isArray(x.with) ? x.with.map(um) : [], task: um(x.task), details: um(x.details ?? ''),
               due: String(x.due ?? ''), line: typeof x.line === 'number' ? x.line : null, confidence: (x.confidence === 'sure' ? 'sure' : 'unsure') as ParsedStep['confidence'],
               alt: Array.isArray(x.alt) ? x.alt.filter((n: unknown) => typeof n === 'number') : [], why: um(x.why),
             })).filter((x: ParsedStep) => x.task.trim()),
@@ -594,8 +597,9 @@ function prompt(steps: string, m: { title: string; date: string }, lines: { num:
     '- One object per next step, in order. Do not invent steps or merge them.',
     `- owner: the person named for the step. ${p.partnerPeople.length ? `Write ${p.partnerName ?? 'partner'} people by first name: ${p.partnerPeople.join(', ')}.` : ''} Otherwise keep the name as written, or "".`,
     '- with: other people named as working with the owner (array), else [].',
-    '- task: the step as a short, clear action, keeping every concrete detail. No owner name at the start, no date.',
-    "- due: YYYY-MM-DD. 'today' is the meeting date, 'tomorrow' the next day. Vague timing gives \"\".",
+    '- task: the step as a short, clear heading that starts with a verb, under 12 words. No owner name at the start, no date.',
+    '- details: every other concrete detail of that step (lines or sub-bullets under it, what, how, for whom), as one or two short sentences, else "".',
+    `- due: YYYY-MM-DD. Count from the meeting date (${m.date}, a ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(`${m.date}T00:00:00Z`).getUTCDay()]}). 'today' is the meeting date, 'tomorrow' the next day, "in 18 days" or "18 days later" is the meeting date plus 18 days, "in 2 weeks" plus 14, "by Friday" the next Friday after the meeting, "next week" the coming Monday, "end of the month" its last day. With no timing at all give "".`,
     '- line: the plan line number this step clearly belongs to, or null.',
     '- confidence: "sure" only when the step is plainly part of that line; else "unsure".',
     '- alt: other line numbers it might belong to (array).',
