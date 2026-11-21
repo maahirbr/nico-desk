@@ -2241,3 +2241,7 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .ptask-drag:hover .drag-handle { opacity: 1; }
 .ptask-drag.dragging { opacity: .5; }
 @media (max-width: 640px) { .ptask-drag .drag-handle { display: none; } }
+/* Project status in the list view (20 Nov): only the exceptions (At risk, Off track); the grid keeps every pill. The
+   wrapper is display: contents so the pill still lands in the list's status column. */
+.pcard-pill { display: contents; }
+:root .pview[data-pview="list"] .pcard-pill-ok { display: none; }

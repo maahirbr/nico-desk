@@ -49,7 +49,8 @@ export default async function Projects() {
       <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
         <div className="pcard-top">
           <h2 className="pcard-name">{p.name}</h2>
-          {p.archivedAt ? <Help term="project_archived" host><span className="st st-status tone-idle">Archived</span></Help> : <Help term={st.help} host><span className={`st st-status tone-${st.tone}`}>{st.word}</span></Help>}
+          {/* List view (20 Nov, the PM's call): On track says nothing there, so only At risk and Off track show; grid keeps every pill. */}
+          {p.archivedAt ? <Help term="project_archived" host><span className="st st-status tone-idle">Archived</span></Help> : <span className={p.status === 'on_track' ? 'pcard-pill pcard-pill-ok' : 'pcard-pill'}><Help term={st.help} host><span className={`st st-status tone-${st.tone}`}>{st.word}</span></Help></span>}
         </div>
         <div className="kind-tag">
           <Help term={isPartnerProject(p) ? 'project_partner' : 'project_internal'} host><span className="kind-word">{isPartnerProject(p) ? `Partner · ${p.partnerName ?? 'partner'}` : 'Internal'}</span></Help>

@@ -2335,3 +2335,8 @@ Rollback: git revert the commit (the column can stay).
 ## 2026-11-20 · Opus 5.5 · Feedback replies: the outcome in bold
 On the feedback replies card, replied, done, not now and reopened read in bold, so the answer is seen at a glance.
 Rollback: git revert the commit.
+
+## 2026-11-21 · Opus 5.5 · Projects list: On track no longer shows
+The PM's call: in the list view every row read On track, which said nothing and crowded the rows. Now only At risk and
+Off track show there, in the same status column; the grid keeps every pill (`app/projects/page.tsx`, `.pcard-pill-ok`).
+Rollback: git revert the commit.
