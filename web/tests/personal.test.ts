@@ -301,4 +301,18 @@ describe('several named notes (15 Nov)', () => {
     for (const n of (await listNotes(db, me)).filter((x) => !x.deletedAt)) await deleteNote(db, me, n.id);
     expect((await listNotes(db, me)).filter((n) => !n.deletedAt).map((n) => n.name)).toEqual(['Notes']);
   });
+
+  // 21 Nov: upgrade() ran the 11 Nov "cards to one page" step on every run, and that step drops personal_notes.
+  it('keeps every note through upgrade(), twice over', async () => {
+    const { upgrade } = await import('../lib/db');
+    const { createNote, getNote, listNotes, saveNote } = await import('../lib/notes');
+    const me = await meAs(ME);
+    const first = (await listNotes(db, me))[0];
+    await saveNote(db, me, first.id, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Written before the upgrade' }] }] });
+    const second = await createNote(db, me, 'Second');
+    await upgrade(db);
+    await upgrade(db);
+    expect((await listNotes(db, me)).map((n) => n.id).sort()).toEqual([first.id, second.id].sort());
+    expect(JSON.stringify((await getNote(db, me, first.id))!.doc)).toContain('Written before the upgrade');
+  });
 });

@@ -2357,3 +2357,20 @@ Rollback: git revert the commit.
 No schema change. VERIFY green (981 tests, build). Production is `immuj45w1`: `/team` answers, `/reminders` sends a
 signed-out visitor to sign-in, the Claude connector asks for a token, no errors in the logs.
 Rollback: from `web/`, `vercel promote https://nico-desk-pz5tira9p-maahirbharatram-3547s-projects.vercel.app --yes`.
+
+## 2026-11-21 · Fable 5.2 · Fix: `db:upgrade` dropped every Personal note; one note restored on live
+
+A pilot member reported two Personal notes gone. Cause: `upgrade()` ran `notesToPages` on every run. That step was
+written on 11 Nov to fold an old local-only cards table into the single page, and it ends with `DROP TABLE
+personal_notes`. On 15 Nov the several-notes feature reused that table name, so each `npm run db:upgrade` on the hosted
+database (19 and 20 Nov) dropped everyone's notes and the next line made the table again, empty. Autosave was not at fault.
+Fix: `notesToPages` returns unless the table has the old `body` column. New test in `tests/personal.test.ts`, "keeps
+every note through upgrade(), twice over", fails without it. Typecheck silent, 982 tests passed.
+Live, with the PM's okay and the repo owner's yes: the member's note of 18 Nov was put back from `nico-2026-11-19.dump`
+as one inserted row, no note text read. Not recoverable from the nightly backups: anything written between a 02:30
+backup and an upgrade the same day (the member's 20 Nov morning writing). Two other people each have one note in the
+19 Nov backup that is not on live. Those wait for their own yes.
+Lesson: a step in `upgrade()` that drops or deletes must check the shape of what it drops, and gets a test that runs
+`upgrade()` over real rows.
+Rollback: git revert the commit (do not run `db:upgrade` while reverted). To undo the restore:
+`DELETE FROM personal_notes WHERE id = 'pnt_mwlyk6xq01c5qj'`.
