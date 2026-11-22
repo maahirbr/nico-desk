@@ -6,6 +6,7 @@ import { seenCookieName } from './updates';
 import type { Me } from './auth';
 import { seesProject } from './sight';
 import { sightFor } from './visibility';
+import { projectPeopleMap } from './plan';
 
 // What people see (14 Nov): the lock says it is private. Matching (Quick Add, paste, Claude) uses the plain "Personal".
 export const PERSONAL_NAME = 'Personal 🔒';
@@ -14,10 +15,20 @@ export const PERSONAL_NAME = 'Personal 🔒';
 export async function lookups(me: Me) {
   const d = scoped(await db(), me.team.id);
   // Everyone has a Personal project from their first visit (11 Nov). Not made while an admin views as someone.
-  if (!me.viewingAs) await ensurePersonalProject(d, me.team.id, me.person.id);
-  const [people, all, sight] = await Promise.all([listPeople(d, me.team.id), listProjects(d, me.team.id), sightFor(d, me)]);
+  if (!me.viewingAs && !me.person.appRoles.includes('partner')) await ensurePersonalProject(d, me.team.id, me.person.id); // no Personal for a partner (20 Nov)
+  const [everyone, all, sight] = await Promise.all([listPeople(d, me.team.id), listProjects(d, me.team.id), sightFor(d, me)]);
   // Project names and pickers carry only the projects this viewer may see (lib/sight.ts).
   const projects = all.filter((p) => seesProject(sight, p.id));
+  // A partner (20 Nov) knows only the people on their own projects, and gives tasks only to their own company's people.
+  const partner = me.person.appRoles.includes('partner');
+  let people = everyone;
+  if (partner) {
+    const map = await projectPeopleMap(d, me.team.id);
+    const near = new Set([me.person.id, ...projects.flatMap((p) => map[p.id] ?? [])]);
+    people = everyone.filter((p) => near.has(p.id));
+  }
+  const company = me.person.department.trim().toLowerCase();
+  const mayGive = (p: (typeof people)[number]) => !partner || p.id === me.person.id || (p.appRoles.includes('partner') && p.department.trim().toLowerCase() === company);
   return {
     d,
     sight,
@@ -27,7 +38,7 @@ export async function lookups(me: Me) {
     names: Object.fromEntries(people.map((p) => [p.id, p.active ? p.displayName : `${p.displayName} (inactive)`])) as Record<string, string>,
     // A Personal project is stored under a unique name; it shows as "Personal".
     projectNames: Object.fromEntries(projects.map((p) => [p.id, p.personalFor ? PERSONAL_NAME : p.name])) as Record<string, string>,
-    activeOpts: people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName, role: p.role })),
+    activeOpts: people.filter((p) => p.active && mayGive(p)).map((p) => ({ id: p.id, name: p.displayName, role: p.role })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),
     // View as (15 Nov, option B): controls show as the viewed person sees them; components/ViewAsGuard.tsx stops the

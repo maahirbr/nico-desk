@@ -2,7 +2,7 @@ import { mayOversee } from '@/lib/roles';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
 import { seenProjects } from '@/lib/visibility';
 import { seesProject } from '@/lib/sight';
@@ -30,7 +30,7 @@ const GMAIL_SAID: Record<string, string> = {
 };
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
-  const me = await requireMe();
+  const me = await requireStaff();
   const { d, sight, people } = await lookups(me);
   if (!mayOversee(me.person.appRoles)) return (<><h1>Reminders</h1><p className="lede">Only leadership or an admin drafts reminders.</p></>);
   // Leadership reminds anyone (15 Nov, the PM's call): the drafts cover every team task, even on projects they cannot

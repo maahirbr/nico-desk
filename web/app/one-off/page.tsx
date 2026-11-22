@@ -1,4 +1,4 @@
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { lookups } from '@/lib/page';
 import { oneOffsGiven } from '@/lib/service';
 import { today } from '@/lib/time';
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // where it stands. Opened from the chip beside Personal on Home. Only yours, and an admin's in View as (20 Nov). Closed
 // tasks show for 30 days, then leave the list (the tasks themselves stay).
 export default async function OneOff() {
-  const me = await requireMe();
+  const me = await requireStaff();
   const { d, names, activeOpts, isLead, projectNames } = await lookups(me);
   const t = today();
   const { open, closed } = await oneOffsGiven(d, me.team.id, me.person.id, t);

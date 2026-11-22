@@ -9,6 +9,14 @@ export function mayOversee(roles: Iterable<string>): boolean {
   return false;
 }
 
+// Partner (20 Nov, the PM's call): someone from an outside company, stored as member + partner. They sign in with their
+// own address, see only the projects they are on (no Personal, Team, Roster, Ledger, Reminders, Activity, Feedback or
+// one-off tasks), and give tasks only to themselves or their own company's people. Their company is their department.
+export function isPartner(roles: Iterable<string>): boolean {
+  for (const r of roles) if (r === 'partner') return true;
+  return false;
+}
+
 export function isLeadOrAdmin(roles: Iterable<string>): boolean {
   for (const r of roles) if (r === 'lead' || r === 'admin') return true;
   return false;

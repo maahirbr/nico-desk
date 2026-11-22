@@ -37,9 +37,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ w
   const [archiveAsks, archiveNews] = await Promise.all([archiveAsksForMe(d, me.team.id, me.person.id), archiveNewsForMe(d, me.team.id, me.person.id)]);
   // Under View as, the note shows as that person sees it (until they press Got it), with no Got it (14 Nov).
   // An admins-only note (19 Nov) shows to admins, with admin tools hidden too; in View as, as that person would see it.
-  const news = await newsFor(d, me.person.id, !!me.adminHidden || me.person.appRoles.includes('admin'));
+  const partner = me.person.appRoles.includes('partner'); // 20 Nov: no What's new, feedback ask or one-off chip for a partner
+  const news = partner ? null : await newsFor(d, me.person.id, !!me.adminHidden || me.person.appRoles.includes('admin'));
   // The feedback ask (15 Nov): until they share one note, or the ask ends. An admin sees the count.
-  const feedbackAsk = await feedbackAskFor(d, me.person.id, me.team.id, t, me.person.appRoles.includes('admin'));
+  const feedbackAsk = partner ? null : await feedbackAskFor(d, me.person.id, me.team.id, t, me.person.appRoles.includes('admin'));
   const projectOf = new Map(all.map((x) => [x.id, x.projectId]));
   // A proper first day (2 Nov): the welcome card shows in someone's first 7 days. ?welcome=1 shows it any time, to preview.
   // Their first day, not the viewer's, so an admin in View as sees the card when that person would (18 Nov).

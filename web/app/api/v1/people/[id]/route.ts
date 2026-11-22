@@ -7,7 +7,7 @@ const Body = z.object({
   displayName: personFields.shape.displayName.optional(),
   email: personFields.shape.email.optional(),
   active: z.boolean().optional(),
-  appRoles: z.array(z.enum(['member', 'leadership', 'admin']) /* 15 Nov: lead is retired, leadership is new */).optional(),
+  appRoles: z.array(z.enum(['member', 'leadership', 'admin', 'partner']) /* 15 Nov: lead is retired, leadership is new. 20 Nov: partner */).optional(),
   role: personFields.shape.role.optional(),
   department: personFields.shape.department.optional(),
   restricted: z.boolean().optional(),

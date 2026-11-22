@@ -4,7 +4,7 @@ import { personFields } from '@/lib/personFields';
 import { addPerson } from '@/lib/service';
 
 const Body = personFields.extend({
-  appRoles: z.array(z.enum(['member', 'leadership', 'admin']) /* 15 Nov: lead is retired, leadership is new */).default([]),
+  appRoles: z.array(z.enum(['member', 'leadership', 'admin', 'partner']) /* 15 Nov: lead is retired, leadership is new. 20 Nov: partner */).default([]),
 }).strict();
 
 export const POST = route<{ id: string }>(async ({ req, params, me, db }) => {

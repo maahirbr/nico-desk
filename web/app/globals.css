@@ -2224,3 +2224,24 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .oneoff-sort { flex: 0 0 180px; }
 /* Minutes (20 Nov): a proposed task's description, under its heading. */
 .pc-details { color: var(--ink-2); margin-top: 2px; white-space: pre-line; }
+/* Priority in Personal (20 Nov): a small P1/P2/P3 tag before the name, the pick, and a drag handle to set my order. */
+.prio { display: inline-block; font: 700 10.5px/1 var(--font-sans); letter-spacing: .02em; padding: 3px 6px; border-radius: 5px; margin-right: 7px; vertical-align: 2px; }
+.prio-p1 { color: #fff; background: var(--late); }
+.prio-p2 { color: var(--ink); background: rgba(247, 148, 52, .3); } /* light orange (20 Nov, the PM's call) */
+.prio-p3 { color: var(--ink); background: rgba(250, 214, 40, .35); } /* light yellow */
+.prio-pick { display: inline-flex; align-items: center; gap: 4px; }
+.prio-opt { font: 600 12px/1 var(--font-sans); min-width: 34px; height: 28px; padding: 0 8px; border-radius: var(--radius-pill); border: var(--rule) solid var(--line-strong); background: var(--canvas); color: var(--ink-2); cursor: pointer; }
+.prio-opt:disabled { opacity: .5; cursor: default; }
+.prio-opt-p1[aria-pressed="true"] { background: var(--late); border-color: var(--late); color: #fff; }
+.prio-opt-p2[aria-pressed="true"] { background: rgba(247, 148, 52, .3); border-color: transparent; color: var(--ink); }
+.prio-opt-p3[aria-pressed="true"] { background: rgba(250, 214, 40, .35); border-color: transparent; color: var(--ink); }
+.drawer-prio { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-xs) 0; }
+.ptask-drag { position: relative; }
+.ptask-drag .drag-handle { position: absolute; left: -18px; top: 50%; transform: translateY(-50%); color: var(--ink-3); cursor: grab; font-size: 12px; letter-spacing: -2px; opacity: 0; transition: opacity var(--dur-state) var(--ease); }
+.ptask-drag:hover .drag-handle { opacity: 1; }
+.ptask-drag.dragging { opacity: .5; }
+@media (max-width: 640px) { .ptask-drag .drag-handle { display: none; } }
+/* Project status in the list view (20 Nov): only the exceptions (At risk, Off track); the grid keeps every pill. The
+   wrapper is display: contents so the pill still lands in the list's status column. */
+.pcard-pill { display: contents; }
+:root .pview[data-pview="list"] .pcard-pill-ok { display: none; }

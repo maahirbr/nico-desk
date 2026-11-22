@@ -75,7 +75,7 @@ ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;
 CREATE TABLE team_members (
   team_id    text NOT NULL REFERENCES teams(id),
   person_id  text NOT NULL REFERENCES people(id),
-  app_role   text NOT NULL CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin')), -- 15 Nov: leadership; lead retired
+  app_role   text NOT NULL CONSTRAINT team_members_app_role_check CHECK (app_role IN ('member','lead','leadership','admin','partner')), -- 15 Nov: leadership; lead retired. 20 Nov: partner
   PRIMARY KEY (team_id, person_id, app_role)
 );
 ${EMAIL_LOCK}
@@ -137,6 +137,7 @@ CREATE TABLE tasks (
   priority         text CHECK (priority IN ('high','normal','low')),
   priority_set_by  text REFERENCES people(id),
   priority_set_at  timestamptz,
+  personal_order   integer,  -- 20 Nov: the order a person set for their own Personal tasks, within a priority
   blocked_on_id    text REFERENCES people(id),
   blocked_ask      text CHECK (char_length(blocked_ask) BETWEEN 1 AND 280),
   blocked_at       timestamptz,

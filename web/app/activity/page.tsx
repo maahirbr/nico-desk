@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { mayReadActivity, teamAdoption } from '@/lib/activity';
 import { db, scoped } from '@/lib/db';
 import { today } from '@/lib/time';
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 // Who is using NicoDesk, for the admins running the pilot (lib/activity.ts mayReadActivity). Anyone else gets a 404.
 export default async function Activity() {
-  const me = await requireMe();
+  const me = await requireStaff();
   if (!mayReadActivity(me)) notFound();
   const rows = await teamAdoption(scoped(await db(), me.team.id), me.team.id);
   const signedIn = rows.filter((r) => r.status !== 'never').length;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { parseChat } from '@/lib/chat';
 import type { Named, QuickParse } from '@/lib/quickadd';
 import type { SentenceRead } from '@/lib/sentence';
@@ -29,6 +29,9 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
   // The box grows with what is typed or said (20 Nov, the PM's call), so a long sentence stays in view. Enter still reads it.
   const box = useRef<HTMLTextAreaElement | null>(null);
   useLayoutEffect(() => { const el = box.current; if (!el) return; el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }, [text]);
+  // Focus once, when the form opens (20 Nov fix): a ref written inline ran on every redraw and pulled the cursor back here
+  // while someone typed in the fields below.
+  useEffect(() => { focusOnDesktop(box.current); }, []);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const { canSpeak, listening, toggle } = useSpeech({ names: [...people, ...(projects ?? [])].map((p) => p.name), heard: setText, problem: setDone, stopped: (all) => void fill(all) });
@@ -65,7 +68,7 @@ export function QuickAddField({ people, projects, hasTitle, apply, focusAfter, o
       <div className="f">
         <label htmlFor="say-line" className="say-label"><span>Quick Add</span></label>
         <div className="say-row">
-          <textarea id="say-line" rows={1} ref={(el) => { if (el && !box.current) focusOnDesktop(el); box.current = el; }} enterKeyHint="go" autoComplete="off" maxLength={500} value={text} disabled={busy}
+          <textarea id="say-line" rows={1} ref={box} enterKeyHint="go" autoComplete="off" maxLength={500} value={text} disabled={busy}
             placeholder={listening ? 'Listening…' : 'e.g. Ask Sam to send me the design files by Monday'}
             onChange={(e) => { setText(e.target.value); setDone(null); }}
             onPaste={(e) => {

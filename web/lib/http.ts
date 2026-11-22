@@ -62,11 +62,15 @@ export function assertNotViewing(me: Me): void {
 
 type Args<P> = { req: Request; params: P; me: Me; db: Db };
 
+const PARTNER_OFF = /^\/api\/v1\/(?:people|teams|reminders|feedback|connections|search|handovers|jobs|paste)(?:\/|$)/;
+
 export function route<P = Record<string, never>>(fn: (a: Args<P>) => Promise<unknown>) {
   return async (req: Request, ctx: { params: Promise<P> }): Promise<Response> => {
     try {
       const me = await currentMe();
       if (!me) throw new ApiError(401, 'not_signed_in', 'Sign in first.');
+      // A partner (20 Nov) reaches only tasks, projects, comments, their own account and the session; the rest reads as missing.
+      if (me.person.appRoles.includes('partner') && PARTNER_OFF.test(new URL(req.url).pathname)) throw new ApiError(404, 'not_found', 'Not found.');
       if (req.method !== 'GET') {
         sameOrigin(req);
         assertNotViewing(me);

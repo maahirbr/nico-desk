@@ -25,6 +25,7 @@ export type TaskRow = {
   status: string;
   status_category: 'open' | 'done' | 'dropped';
   priority: 'high' | 'normal' | 'low' | null;
+  personal_order?: number | null;
   priority_set_by: string | null;
   priority_set_at: string | null;
   blocked_on_id: string | null;
@@ -78,6 +79,7 @@ export type Task = {
   renegotiations: Renegotiation[];
   statusSet?: { at: string; by: string | null } | null; // when the status was last set and by whom (lib/service.ts loadTasks)
   priority: { value: 'high' | 'normal' | 'low'; setBy: string; setAt: string } | null;
+  personalOrder: number | null; // 20 Nov: the order its person set in Personal
   blocked: { onId: string | null; ask: string; at: string } | null; // ask is the block reason; a person is optional
   origin: 'app' | 'sheet' | 'granola';
   readOnly: boolean;
@@ -167,6 +169,7 @@ export function derive(row: TaskRow, events: EventRow[], today: string): Task {
     priority: row.priority
       ? { value: row.priority, setBy: row.priority_set_by!, setAt: row.priority_set_at! }
       : null,
+    personalOrder: row.personal_order ?? null,
     blocked: row.blocked_ask ? { onId: row.blocked_on_id, ask: row.blocked_ask, at: row.blocked_at! } : null,
     origin: row.origin,
     readOnly: row.origin === 'sheet',

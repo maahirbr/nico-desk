@@ -1,4 +1,4 @@
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { feedbackNewsForMe, listFeedback } from '@/lib/feedback';
 import { db, scoped } from '@/lib/db';
 import { fmtStamp } from '@/lib/time';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 // Everyone reads every note and every reply, and anyone replies or marks a note Done or Not now. A switch shows Open or
 // Resolved notes; nothing is removed. Nothing here is emailed to anyone.
 export default async function Feedback() {
-  const me = await requireMe();
+  const me = await requireStaff();
   const d = scoped(await db(), me.team.id);
   const [rows, news] = await Promise.all([listFeedback(d, me), feedbackNewsForMe(d, me)]);
   return (

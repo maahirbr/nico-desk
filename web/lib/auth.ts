@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { dataDir, db } from './db';
 import { derivedSecret } from './secret';
 import { claimPlaceholder, findPersonByEmail, getPerson, teamsOf, type Person } from './service';
@@ -151,8 +151,13 @@ export function openDemo(): boolean {
 export async function checkSignIn(
   email: string, claim?: { name: string | null; hd: string | null },
 ): Promise<{ ok: true; personId: string } | { ok: false; code: 'not_domain' | 'not_allowed'; why: string }> {
-  if (!emailAllowed(email)) return { ok: false, code: 'not_domain', why: 'That email is not on the company domain.' };
   const d = await db();
+  // A partner (20 Nov) signs in with their own company's address once an admin has put them on the Roster as Partner.
+  if (!emailAllowed(email)) {
+    const p = await findPersonByEmail(d, email);
+    const partner = p ? (await d.query(`SELECT 1 FROM team_members WHERE person_id = $1 AND app_role = 'partner' LIMIT 1`, [p.id])).rows.length > 0 : false;
+    if (!p || !partner) return { ok: false, code: 'not_domain', why: 'That email is not on the company domain.' };
+  }
   const company = email.trim().toLowerCase().split('@')[1] === allowedDomain() && claim?.hd === allowedDomain();
   const p = (await findPersonByEmail(d, email)) ?? (company && claim?.name ? await claimPlaceholder(d, email, claim.name) : null);
   if (!p) return { ok: false, code: 'not_allowed', why: 'That email is not on the roster.' };
@@ -168,7 +173,7 @@ export async function resolveMe(d: Database, sessionId: string | null, viewToken
   if (!sessionId) return null;
   const [team] = await teamsOf(d, sessionId);
   if (!team) return null;
-  const ok = (p: Person | null): p is Person => !!p?.active && emailAllowed(p.email);
+  const ok = (p: Person | null): p is Person => !!p?.active && (emailAllowed(p.email) || p.appRoles.includes('partner'));
   const real = await getPerson(d, team.id, sessionId);
   if (!ok(real)) return null;
   if (real.appRoles.includes('admin')) {
@@ -213,5 +218,13 @@ async function demoPerson(d: Awaited<ReturnType<typeof db>>): Promise<string | n
 export async function requireMe(): Promise<Me> {
   const me = await currentMe();
   if (!me) redirect('/signin');
+  return me;
+}
+
+// Pages a partner never sees (20 Nov): Team, Roster, people's pages, Ledger, Reminders, Activity, Feedback, One-off tasks,
+// search and the like. They read as missing, as a hidden project does.
+export async function requireStaff(): Promise<Me> {
+  const me = await requireMe();
+  if (me.person.appRoles.includes('partner')) notFound();
   return me;
 }

@@ -1,4 +1,4 @@
-import { requireMe } from '@/lib/auth';
+import { requireStaff } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
 import { seenProjects, seenTasks } from '@/lib/visibility';
 import { addDays, isDate, istDate, mondayOf, today } from '@/lib/time';
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 // The team's week. By person: what is next for each person (overdue, this week, coming up).
 // By status (the default, shown first): the week's open work, by status.
 export default async function Team({ searchParams }: { searchParams: SP }) {
-  const me = await requireMe();
+  const me = await requireStaff();
   const sp = await searchParams;
   const w = one(sp.week);
   const t = today();

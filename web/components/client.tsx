@@ -60,12 +60,13 @@ const Err = ({ e }: { e: string | null }) => (e ? <p className="err" role="alert
 // ---------- frame ----------
 
 // remind (15 Nov): Leadership or an admin, who draft reminders (lib/roles.ts mayOversee).
-export function Nav({ isAdmin, isLead = false, remind = false, activity = false }: { isAdmin: boolean; isLead?: boolean; remind?: boolean; activity?: boolean }) {
+// partner (20 Nov): Home and Projects only, and New task; no Team and nothing under More.
+export function Nav({ isAdmin, isLead = false, remind = false, activity = false, partner = false }: { isAdmin: boolean; isLead?: boolean; remind?: boolean; activity?: boolean; partner?: boolean }) {
   const path = usePathname();
   const readOnly = useReadOnly();
   // Roster sits under More, at the call of the PM who owns the baseline (12 Oct).
-  const main = [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
-  const more = [['/ledger', 'Ledger'], ...(remind || isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster'], ...(activity ? [['/activity', 'Activity']] : [])];
+  const main = partner ? [['/me', 'Home'], ['/projects', 'Projects']] : [['/me', 'Home'], ['/team', 'Team'], ['/projects', 'Projects']];
+  const more = partner ? [] : [['/ledger', 'Ledger'], ...(remind || isLead || isAdmin ? [['/reminders', 'Reminders']] : []), ['/admin', 'Roster'], ...(activity ? [['/activity', 'Activity']] : [])];
   const here = (href: string) => path === href || path.startsWith(`${href}/`) || (href === '/team' && (path === '/week' || path === '/status'));
   const [moreOpen, setMoreOpen] = useState(more.some(([h]) => here(h)));
   const link = ([href, label]: string[]) => (
@@ -74,10 +75,12 @@ export function Nav({ isAdmin, isLead = false, remind = false, activity = false 
   return (
     <nav className="nav" aria-label="Views">
       {main.map(link)}
+      {more.length > 0 && <>
       <button className="nav-more" aria-expanded={moreOpen} onClick={() => setMoreOpen(!moreOpen)}>
         <Icon d={ICON.more} />More<span className="chev-r"><FoldChev /></span>
       </button>
       <div className={`nav-sub${moreOpen ? ' open' : ''}`}>{more.map(link)}</div>
+      </>}
       {!readOnly && <Link className="nav-new" href="/tasks/new" aria-current={path === '/tasks/new' ? 'page' : undefined}>+ New task</Link>}
     </nav>
   );
@@ -399,9 +402,11 @@ export function MarkRead({ id }: { id: string }) {
 // Access is one choice (the PM's call, 15 Nov): Member, Leadership or Admin. Leadership is oversight and follow-up
 // (lib/roles.ts mayOversee); an admin has all of it, so Admin is stored alone. Lead is retired. Someone cannot take away
 // their own admin (lock). The form keeps its old `lead` field to mean Leadership.
-type Access = 'member' | 'leadership' | 'admin';
-const ACCESS: { key: Access; word: string }[] = [{ key: 'member', word: 'Member' }, { key: 'leadership', word: 'Leadership' }, { key: 'admin', word: 'Admin' }];
-const accessOf = (f: { lead: boolean; admin: boolean }): Access => (f.admin ? 'admin' : f.lead ? 'leadership' : 'member');
+// Partner (20 Nov): someone from an outside company; their Department is their company (lib/roles.ts isPartner).
+type Access = 'member' | 'leadership' | 'admin' | 'partner';
+const ACCESS: { key: Access; word: string }[] = [{ key: 'member', word: 'Member' }, { key: 'leadership', word: 'Leadership' }, { key: 'admin', word: 'Admin' }, { key: 'partner', word: 'Partner' }];
+const accessOf = (f: { lead: boolean; admin: boolean; partner?: boolean }): Access => (f.admin ? 'admin' : f.lead ? 'leadership' : f.partner ? 'partner' : 'member');
+const rolesFor = (a: Access) => (a === 'member' ? [] : [a]);
 function AccessPick({ value, onChange, lock = false }: { value: Access; onChange: (a: Access) => void; lock?: boolean }) {
   return (
     <fieldset className="f edit-access"><legend>Access</legend>
@@ -415,23 +420,23 @@ function AccessPick({ value, onChange, lock = false }: { value: Access; onChange
 
 export function AddPersonForm({ teamId }: { teamId: string }) {
   const { busy, error, run } = useSubmit();
-  const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false };
+  const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false, partner: false };
   const [f, setF] = useState(blank);
   const [added, setAdded] = useState<string | null>(null); // the email just added, for the Copy invite line
   return (
     <form className="card form-card stack" onSubmit={async (e) => {
       e.preventDefault();
-      const appRoles = [...(f.lead ? ['leadership'] : []), ...(f.admin ? ['admin'] : [])];
+      const appRoles = rolesFor(accessOf(f));
       if (await run(`/teams/${teamId}/people`, 'POST', { displayName: f.displayName, role: f.role, department: f.department, email: f.email, appRoles })) { setAdded(f.email); setF(blank); }
     }}>
       <div className="row">
         <label className="f"><span>Name</span><input required value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} /></label>
         <label className="f"><span>Job title</span><input required value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} /></label>
-        <label className="f"><span>Department</span><input required value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></label>
+        <label className="f"><span>{f.partner ? 'Company' : 'Department'}</span><input required value={f.department} placeholder={f.partner ? 'e.g. TheCRUX' : undefined} onChange={(e) => setF({ ...f, department: e.target.value })} /></label>
         <label className="f"><span>Email</span><input type="email" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
       </div>
       <div className="row">
-        <AccessPick value={accessOf(f)} onChange={(a) => setF({ ...f, lead: a === 'leadership', admin: a === 'admin' })} />
+        <AccessPick value={accessOf(f)} onChange={(a) => setF({ ...f, lead: a === 'leadership', admin: a === 'admin', partner: a === 'partner' })} />
         <button className="btn" disabled={busy}>Add to roster</button>
       </div>
       <Err e={error} />
@@ -490,7 +495,7 @@ export function PersonControls({ person: p, self, others = [], me = '', invite =
 
 function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson; self: boolean; others: Opt[]; onClose: () => void }) {
   const { busy, error, run } = useSubmit();
-  const [f, setF] = useState({ name: p.name, role: p.role, department: p.department, email: p.email, active: p.active, lead: p.roles.includes('leadership'), admin: p.roles.includes('admin') });
+  const [f, setF] = useState({ name: p.name, role: p.role, department: p.department, email: p.email, active: p.active, lead: p.roles.includes('leadership'), admin: p.roles.includes('admin'), partner: p.roles.includes('partner') });
   const first = p.name.split(' ')[0];
   const emailChanged = f.email.trim().toLowerCase() !== p.email.toLowerCase();
   async function save(e: React.FormEvent) {
@@ -501,7 +506,7 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
     if (f.department.trim() !== p.department) body.department = f.department.trim();
     if (emailChanged) body.email = f.email.trim();
     if (f.active !== p.active) body.active = f.active;
-    if (accessOf(f) !== accessOf({ lead: p.roles.includes('leadership'), admin: p.roles.includes('admin') })) body.appRoles = [...(f.lead ? ['leadership'] : []), ...(f.admin ? ['admin'] : [])];
+    if (accessOf(f) !== accessOf({ lead: p.roles.includes('leadership'), admin: p.roles.includes('admin'), partner: p.roles.includes('partner') })) body.appRoles = rolesFor(accessOf(f));
     if (Object.keys(body).length === 0) { onClose(); return; }
     if (await run(`/people/${p.id}`, 'PATCH', body)) { notify(`Saved ${f.name.trim()}`); onClose(); }
   }
@@ -511,13 +516,14 @@ function EditPerson({ person: p, self, others, onClose }: { person: RosterPerson
         <label className="f"><span>Name</span><input required minLength={2} maxLength={80} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
         <div className="row">
           <label className="f"><span>Job Title</span><input required minLength={2} maxLength={80} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} /></label>
-          <label className="f"><span>Department</span><input required minLength={2} maxLength={80} value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></label>
+          <label className="f"><span>{f.partner ? 'Company' : 'Department'}</span><input required minLength={2} maxLength={80} value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></label>
         </div>
         <label className="f"><span>Email</span>
           <input type="email" required value={f.email} disabled={self} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </label>
         <p className="hint" style={{ margin: 0 }}>{self ? 'Ask another admin to change your own email.' : emailChanged ? 'They sign in with this address from now on. The old one keeps working as a second address.' : 'The address they sign in with.'}</p>
-        <AccessPick value={accessOf(f)} lock={self && p.roles.includes('admin')} onChange={(a) => setF({ ...f, lead: a === 'leadership', admin: a === 'admin' })} />
+        <AccessPick value={accessOf(f)} lock={self && p.roles.includes('admin')} onChange={(a) => setF({ ...f, lead: a === 'leadership', admin: a === 'admin', partner: a === 'partner' })} />
+        {f.partner && <p className="hint" style={{ margin: 0 }}>A partner signs in with this email and sees only the projects they are added to.</p>}
         <Err e={error} />
         <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>
           <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     rateLimit(`mcp:${access.personId}`, 120);
     const d = await db();
     const me = await resolveMe(d, access.personId);
-    if (!me) return unauthorized();
+    if (!me || me.person.appRoles.includes('partner')) return unauthorized(); // Claude is for Nicobar staff, not partners (20 Nov)
     let msg: unknown;
     try { msg = await req.json(); } catch { return json(400, { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error.' } }); }
     const out = await handle(msg, req.headers.get('mcp-protocol-version'), async () => ({ db: scoped(d, me.team.id), me, origin }));
