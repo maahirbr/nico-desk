@@ -2423,3 +2423,17 @@ Lesson: a step in `upgrade()` that drops or deletes must check the shape of what
 `upgrade()` over real rows.
 Rollback: git revert the commit (do not run `db:upgrade` while reverted). To undo the restore:
 `DELETE FROM personal_notes WHERE id = 'pnt_mwlyk6xq01c5qj'`.
+
+## 2026-11-22 · Fable 5.2 · Deploy: the PM's 20 and 21 Nov batch, and the notes-safe upgrade
+
+`main` moved from `65dd017` to `48ccba3`: the upgrade fix (`f912622`) and the PM's five commits (open-first counts, the
+Quick Add focus fix, Partner access, Personal priority, feedback outcomes in bold, On track hidden in the list).
+Before it: a dump to `~/Backups/nico-desk/pre-upgrade-2026-11-22/`, then `npm run db:upgrade` on the hosted database
+(the partner role check and `tasks.personal_order`). Personal notes counted before and after the upgrade: 6 and 6, the
+same bytes. VERIFY green (evals, typecheck, 990 tests, build). Production is `i0mace0hd`: `/team` answers, `/reminders`
+sends a signed-out visitor to sign-in, the Claude connector asks for a token. Pages not checked in a browser.
+Open, from the automated review of Partner access, with no partner on the hosted roster yet: `tasks/read-sentence`
+matches a partner's sentence against the whole roster, and blocking on a person and asks do not run `partnerMayGive`.
+Both to close before the first partner is added.
+Rollback: from `web/`, `vercel promote https://nico-desk-immuj45w1-maahirbharatram-3547s-projects.vercel.app --yes`
+(the new column and the wider role check can stay).
