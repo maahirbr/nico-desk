@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
 import { CopyInvite, EmailInvite } from './CopyLink';
@@ -423,8 +423,17 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false, partner: false };
   const [f, setF] = useState(blank);
   const [added, setAdded] = useState<string | null>(null); // the email just added, for the Copy invite line
+  // Add to Roster from a partner team (23 Nov): /admin?add=Name&company=Firm fills in the name, the company and Partner.
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const name = q.get('add')?.trim();
+    if (!name) return;
+    setF((x) => ({ ...x, displayName: name.slice(0, 80), department: (q.get('company') ?? '').trim().slice(0, 80), partner: true, lead: false, admin: false }));
+    formRef.current?.scrollIntoView({ block: 'center' });
+  }, []);
   return (
-    <form className="card form-card stack" onSubmit={async (e) => {
+    <form ref={formRef} className="card form-card stack" onSubmit={async (e) => {
       e.preventDefault();
       const appRoles = rolesFor(accessOf(f));
       if (await run(`/teams/${teamId}/people`, 'POST', { displayName: f.displayName, role: f.role, department: f.department, email: f.email, appRoles })) { setAdded(f.email); setF(blank); }

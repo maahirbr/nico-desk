@@ -2,7 +2,7 @@ import type { Db, Tx } from './db';
 import { bad, forbidden, notFound } from './errors';
 import { isLeadOrAdmin } from './roles';
 import { isViewOnly, VIEW_ONLY } from './sight';
-import { createTask, dropOpenTasks, jobTitleOf, newId, teamTasks } from './service';
+import { createTask, dropOpenTasks, jobTitleOf, linkPartnerTeam, newId, teamTasks } from './service';
 import { lineSplit, taskSplit, type StatusSplit } from './progress';
 import { modelOn } from './model';
 import { today as todayIst } from './time';
@@ -754,6 +754,7 @@ export async function createProject(db: Db, meId: string, teamId: string, input:
     await setViewers(tx, teamId, id, meId, [input.ownerId, ...(c.leadId ? [c.leadId] : []), ...c.members.map((m) => m.personId)], input.viewers);
     await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, after, actor_id, origin, at) VALUES ($1,'project',$2,'_created',$3::jsonb,$4,'app',now())`,
       [newId('evt'), id, JSON.stringify({ name: c.name, kind: input.kind, owner_id: input.ownerId, lead_id: c.leadId, launch_on: input.launchOn || null }), meId]);
+    await linkPartnerTeam(tx, id, meId); // partner names on the Roster join the project (23 Nov)
   });
   return getProject(db, id);
 }
@@ -954,6 +955,7 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
       await tx.query(`INSERT INTO events (id, entity_type, entity_id, field, before, after, actor_id, origin, at) VALUES ($1,'project',$2,$3,$4::jsonb,$5::jsonb,$6,'app',now())`,
         [newId('evt'), id, field, JSON.stringify(before), JSON.stringify(after), meId]);
     }
+    await linkPartnerTeam(tx, id, meId); // partner names on the Roster join the project (23 Nov)
   });
   return getProject(db, id);
 }

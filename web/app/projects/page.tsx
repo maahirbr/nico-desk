@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Projects() {
   const me = await requireMe();
-  const { d, sight, names, activeOpts, readOnly } = await lookups(me);
+  const { d, sight, names, activeOpts, rosterOpts, isAdmin, readOnly } = await lookups(me);
   const [projects, counts] = await Promise.all([seenProjects(d, me, sight), projectCounts(d, me.team.id)]);
   const t = today();
   const bySoonest = (a: (typeof projects)[number], b: (typeof projects)[number]) => (a.launchOn ?? '9999').localeCompare(b.launchOn ?? '9999');
@@ -83,7 +83,7 @@ export default async function Projects() {
     <div className="calm">
       {/* The archived count is on its own fold below (the PM's call, 15 Nov). List or grid (19 Nov). */}
       <ProjectsLayout title={<h1>Projects</h1>} summary={`${live.filter((p) => !p.personalFor).length} project${live.filter((p) => !p.personalFor).length === 1 ? '' : 's'}`}
-        action={!readOnly ? <NewProjectButton people={activeOpts} meId={me.person.id} /> : undefined}>
+        action={!readOnly ? <NewProjectButton people={activeOpts} roster={rosterOpts} isAdmin={isAdmin} meId={me.person.id} /> : undefined}>
       {live.length === 0 ? (
         <div className="empty-state"><p>No projects yet.{!readOnly && ' Start one with + New project.'}</p></div>
       ) : (

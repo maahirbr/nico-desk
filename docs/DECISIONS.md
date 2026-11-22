@@ -2512,3 +2512,18 @@ Rollback: git revert the commit.
 The PM's call. Most projects have no date, so the list repeated "No date" down every row. In the list view a project with
 no date now shows nothing there; a date shows when one is set. The grid card keeps "No date".
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Partner team linked to the Roster; one owner per task
+The PM's call, after a partner typed on OKR AI's partner team was not linked to the same person on the Roster. A partner
+team name that matches exactly one active Roster person (their Roster name or nickname, any case) is that person
+(`lib/service.ts linkPartnerTeam`): they join the project, so they see it as soon as they sign in, and every task owned only
+by that name becomes theirs, logged as "Linked to the Roster". It runs when a project is saved, when a task is given to a
+partner name, and when someone is added to the Roster, so a name typed before they were added links then. Two people with
+the same name link no one. The partner team in Settings suggests Roster people as you type (that company's partners first,
+then other partners, then everyone); a linked name shows a tick, and a name not on the Roster says so, with an Add to
+Roster link for admins that opens the Roster form filled in (name, company, Partner).
+One owner per task (the PM's call): the board has one Owner column and the forms one Owner picker, listing the project's
+people and the partner's people as "Name (Partner)"; a partner owner shows "(Partner)" under their name. A task that already
+has both a Nicobar owner and a partner name shows the Nicobar owner; the partner name stays stored. ✎ and ✕ sit tighter.
+No schema change.
+Rollback: git revert the commit (links already made stay: the people stay on their projects and own their tasks).

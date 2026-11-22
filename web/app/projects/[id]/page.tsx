@@ -29,7 +29,7 @@ export const dynamic = 'force-dynamic';
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const me = await requireMe();
   const { id } = await params;
-  const { d, names, people, projectNames, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
+  const { d, names, people, projectNames, activeOpts, rosterOpts, isLead, isAdmin, readOnly } = await lookups(me);
   let p: Project;
   try {
     p = await projectFor(d, me, id); // hidden or on another team reads as missing
@@ -78,7 +78,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
-      <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id} isAdmin={!readOnly && isAdmin}
+      <ProjectHeader roster={rosterOpts} project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id} isAdmin={!readOnly && isAdmin}
         access={readOnly ? 'view' : await projectAccess(d, p, me.person.id)} today={now} archiveAsk={await openArchiveAsk(d, p.id)} />
       {viewOnly && !p.archivedAt && <p className="small dim view-only-note">You can view this project. To add to it, ask its owner or lead to add you.</p>}
       {/* An archived project is read-only: the board hides its write controls, as it does in View as, and for view-only people. */}
@@ -88,6 +88,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
       ) : (
         <TaskBoard
+          // The partner team's people on the Roster (23 Nov): their tasks say (the partner) under their name.
+          partnerIds={p.partnerName ? people.filter((x) => p.partnerPeople.some((n) => [x.fullName, x.displayName, x.nickname].some((k) => k && k.trim().toLowerCase() === n.trim().toLowerCase()))).map((x) => x.id) : []}
           projectId={p.id}
           tasks={tasks}
           people={active}

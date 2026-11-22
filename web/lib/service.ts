@@ -222,6 +222,50 @@ export async function ensurePersonalProject(db: Tx, teamId: string, personId: st
   return again[0]?.id ?? id;
 }
 
+// The partner team, linked to the Roster (23 Nov, the PM's call). A partner name that matches exactly one active person on
+// the team (their Roster name or nickname, in any case) is that person: they join the project, so they see it as soon
+// as they sign in, and every task owned only by that name becomes theirs. One owner per task (the PM's call): a task that
+// also has a Nicobar owner keeps that owner, with the partner name beside it. Two people with the same name link no one.
+export type PartnerLink = { name: string; personId: string };
+export async function rosterMatch(tx: Tx, teamId: string): Promise<(name: string) => string | null> {
+  const { rows } = await tx.query<{ id: string; display_name: string; nickname: string | null }>(
+    `SELECT DISTINCT p.id, p.display_name, p.nickname FROM people p JOIN team_members m ON m.person_id = p.id
+     WHERE m.team_id = $1 AND p.active`, [teamId]);
+  const names = rows.map((r) => ({ id: r.id, keys: [r.display_name, r.nickname].filter((x): x is string => !!x?.trim()).map((x) => x.trim().toLowerCase()) }));
+  return (name: string) => {
+    const k = name.trim().toLowerCase();
+    const hits = names.filter((n) => n.keys.includes(k));
+    return hits.length === 1 ? hits[0].id : null;
+  };
+}
+
+export async function linkPartnerTeam(tx: Tx, projectId: string, meId: string | null): Promise<PartnerLink[]> {
+  const { rows: [p] } = await tx.query<{ team_id: string; partner_name: string | null; partner_people: string[] | null; owner_id: string; lead_id: string | null; archived_at: string | null }>(
+    `SELECT team_id, partner_name, partner_people, owner_id, lead_id, archived_at FROM projects WHERE id = $1`, [projectId]);
+  if (!p?.partner_name || p.archived_at || !(p.partner_people ?? []).length) return [];
+  const match = await rosterMatch(tx, p.team_id);
+  const at = new Date().toISOString();
+  const linked: PartnerLink[] = [];
+  for (const name of p.partner_people ?? []) {
+    const personId = match(name);
+    if (!personId) continue;
+    linked.push({ name, personId });
+    if (personId !== p.owner_id && personId !== p.lead_id) {
+      await tx.query(`INSERT INTO project_members (project_id, person_id, project_role)
+        SELECT $1, $2, COALESCE(NULLIF(trim(role), ''), 'Partner') FROM people WHERE id = $2 ON CONFLICT (project_id, person_id) DO NOTHING`, [projectId, personId]);
+      await tx.query(`DELETE FROM project_viewers WHERE project_id = $1 AND person_id = $2`, [projectId, personId]);
+    }
+    const { rows: own } = await tx.query<{ id: string; partner_owner: string }>(
+      `UPDATE tasks SET owner_id = $3, partner_owner = NULL, version = version + 1
+       WHERE project_id = $1 AND owner_id IS NULL AND lower(trim(partner_owner)) = lower(trim($2)) RETURNING id, $2::text AS partner_owner`, [projectId, name, personId]);
+    for (const t of own) {
+      await insertEvent(tx, { entityId: t.id, field: 'owner_id', before: null, after: personId, reason: 'Linked to the Roster', actorId: meId, at });
+      await insertEvent(tx, { entityId: t.id, field: 'partner_owner', before: t.partner_owner, after: null, reason: 'Linked to the Roster', actorId: meId, at });
+    }
+  }
+  return linked;
+}
+
 // A partner owner must be one of the partner project's people.
 async function checkPartnerOwner(tx: Tx, projectId: string | null, name: string) {
   const { rows } = projectId ? await tx.query<{ partner_name: string | null; partner_people: string[] | null }>(
@@ -377,10 +421,16 @@ export async function createTask(db: Db, meId: string, input: CreateInput): Prom
       await partnerMayGive(tx, input.teamId, meId, input.ownerId);
     }
     // A task needs an owner: a Nicobar person, or on a partner project a partner person, or both (1 Nov).
-    const partnerOwner = input.partnerOwner?.trim() || null;
+    let partnerOwner = input.partnerOwner?.trim() || null;
     if (!input.ownerId && !partnerOwner) throw bad('invalid_body', 'Pick at least one owner.', 'ownerId');
     if (input.ownerId) await activeMember(tx, input.teamId, input.ownerId, 'ownerId');
     if (partnerOwner) await checkPartnerOwner(tx, input.projectId ?? null, partnerOwner);
+    // Given only to a partner name that is on the Roster (23 Nov): it goes to that person, the one owner.
+    if (partnerOwner && !input.ownerId && input.projectId) {
+      const given = partnerOwner.toLowerCase();
+      const person = (await linkPartnerTeam(tx, input.projectId, meId)).find((l) => l.name.trim().toLowerCase() === given);
+      if (person) { input = { ...input, ownerId: person.personId }; partnerOwner = null; }
+    }
     if (input.projectId) {
       const { rows } = await tx.query<{ archived_at: string | null; personal_for: string | null }>(`SELECT archived_at, personal_for FROM projects WHERE id = $1 AND team_id = $2 FOR SHARE`, [input.projectId, input.teamId]);
       if (!rows.length) throw bad('invalid_body', 'No such project on this team.', 'projectId');
@@ -475,6 +525,8 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
       const projectId = input.projectId !== undefined ? input.projectId : c.row.project_id;
       const ownerId = input.ownerId !== undefined ? input.ownerId || null : c.row.owner_id;
       if (projectId && ownerId && (projectId !== c.row.project_id || ownerId !== c.row.owner_id)) await joinProject(tx, projectId, ownerId, input.ownerRole, meId, c.isLead);
+      // Left with only a partner name that is on the Roster (23 Nov): the task goes to that person.
+      if (projectId && !ownerId && partner) await linkPartnerTeam(tx, projectId, meId);
     },
   );
 }
@@ -933,6 +985,11 @@ export async function addPerson(
     for (const r of new Set<AppRole>(['member', ...input.appRoles])) {
       await tx.query(`INSERT INTO team_members VALUES ($1,$2,$3)`, [teamId, id, r]);
     }
+    // Someone typed on a partner team before they were on the Roster is linked now (23 Nov): they join that project, so
+    // they see it as soon as they sign in, and the tasks given to their name are theirs.
+    const { rows: partnerProjects } = await tx.query<{ id: string }>(
+      `SELECT id FROM projects WHERE team_id = $1 AND partner_name IS NOT NULL AND archived_at IS NULL AND jsonb_array_length(partner_people) > 0`, [teamId]);
+    for (const pr of partnerProjects) await linkPartnerTeam(tx, pr.id, meId);
   });
   return (await getPerson(db, teamId, id))!;
 }

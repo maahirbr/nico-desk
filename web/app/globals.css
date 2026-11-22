@@ -2258,3 +2258,20 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .roster-count { margin: var(--space-xxs) 0 0; }
 /* Projects list (23 Nov, the PM's call): a project with no date shows nothing there; the grid card keeps No date. */
 :root .pview[data-pview="list"] .pcard-nodate { display: none; }
+/* Partner team picker (23 Nov): Roster names show as you type; a linked name has a tick, one not on the Roster is dashed. */
+.ptm-box { position: relative; }
+.ptm-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface); border: var(--rule) solid var(--line-strong);
+  border-radius: var(--radius-control); box-shadow: var(--card-shadow); padding: 4px; display: flex; flex-direction: column; }
+.ptm-opt { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); text-align: left; padding: 7px 10px; border: 0; background: none;
+  border-radius: 6px; cursor: pointer; font: inherit; color: var(--ink); }
+.ptm-opt:hover, .ptm-opt:focus-visible { background: var(--sunk); }
+.ptm-opt b { font-weight: 500; }
+.chip-linked { background: var(--primary-soft); }
+.chip-tick { color: var(--primary); font-size: 11px; margin-right: 2px; }
+.chip-loose { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.ptm-hint { margin-top: var(--space-xs); }
+/* Task board (23 Nov): ✎ and ✕ sit tight at the right edge, so the task name has the room. */
+table.board td.act-cell { width: 58px; padding-left: 0; padding-right: var(--space-xs); }
+table.board .row-actions { gap: 0; }
+.owner-partner { margin-top: 2px; padding-left: calc(var(--mark-size) + var(--space-xs)); } /* under the name, past the avatar */
+.ptm-hint a { color: var(--primary); font-weight: 500; }

@@ -11,6 +11,7 @@ import { SHOW_SETUP_EVENT, setupKey } from './setupEvents';
 import { api, Modal as ModalShell, type Opt } from './task-ui';
 import { notify } from './toast';
 import { composing, isRealEnter } from './ime';
+import { PartnerTeamInput, type RosterOpt } from './PartnerTeam';
 
 // Starting a project, or changing one later. What a project needs before it starts: a name,
 // an owner (who may also lead it), and a date; a one-line description helps. Only the people added
@@ -52,7 +53,8 @@ function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChang
 
 // access (15 Nov): full changes anything; people (one of the project's people) may only add people; view only reads.
 // The parts someone may not change sit in disabled fieldsets, so they read the same but cannot be touched.
-export function ProjectForm({ people, meId, initial, projectId, onDone, focus, access = 'full' }: {
+export function ProjectForm({ people, meId, initial, projectId, onDone, focus, access = 'full', roster = [], isAdmin = false }: {
+  roster?: RosterOpt[]; isAdmin?: boolean; // the Roster, for the partner team (23 Nov)
   people: Opt[]; meId: string; initial?: ProjectValues; projectId?: string; onDone: () => void; access?: 'full' | 'people' | 'view';
   focus?: 'members' | 'partner'; // set when a setup step opened Settings: that part is brought into view
 }) {
@@ -214,7 +216,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
         <fieldset className="pform-group" disabled={lock}>
           <legend>Partner</legend>
           <label className="f"><span>Partner Name <span className="req" aria-hidden="true">*</span></span><input ref={partnerRef} maxLength={80} enterKeyHint="next" autoComplete="off" value={f.partnerName} placeholder="e.g. TheCRUX" onChange={(e) => set('partnerName', e.target.value)} /></label>
-          <div className="f"><span>Partner Team</span><ChipsInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} placeholder="Names. Press Enter after each" /></div>
+          <div className="f"><span>Partner Team</span><PartnerTeamInput value={f.partnerPeople} onChange={(v) => set('partnerPeople', v)} roster={roster} company={f.partnerName} isAdmin={isAdmin} /></div>
         </fieldset>
       )}
 
@@ -268,14 +270,14 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
   );
 }
 
-export function NewProjectButton({ people, meId }: { people: Opt[]; meId: string }) {
+export function NewProjectButton({ people, meId, roster = [], isAdmin = false }: { people: Opt[]; meId: string; roster?: RosterOpt[]; isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button className="btn" onClick={() => setOpen(true)}>+ New project</button>
       {open && (
         <ModalShell title="Start a Project" onClose={() => setOpen(false)} wide>
-          <ProjectForm people={people} meId={meId} onDone={() => setOpen(false)} />
+          <ProjectForm people={people} meId={meId} roster={roster} isAdmin={isAdmin} onDone={() => setOpen(false)} />
         </ModalShell>
       )}
     </>
