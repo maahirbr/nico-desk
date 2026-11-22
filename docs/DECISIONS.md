@@ -2491,3 +2491,13 @@ The PM's call, from the phone check. The header showed "AI · AI", then "AI", th
 team were the same word. Now one line holds job title, department, team and access, each word once (Admin, Leadership
 written with a capital), and a project shows its role in brackets only when that differs from the project's name.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Words: overdue for counts, who may, Not signed in yet, Add task
+The PM's call, from a wording pass. One word per idea:
+- Counts say overdue everywhere ("3 open · 3 overdue", the Overdue tiles and Home heading, the status bar). Late stays only
+  as one task's own flag (the LATE tag, "2 days late") and the ledger's Closed late.
+- Who-may messages name the real rule: "the project owner/lead, leadership or an admin" (health check, meeting rhythm),
+  "the task’s owner, the project owner/lead or an admin" (reopen), "the task’s owner, leadership or an admin" (resume from
+  blocked, a pasted chat's change). The Lead role was retired on 15 Nov, so "a lead" read wrong.
+- Activity: Not signed in yet. Empty states: Add task, as the forms say.
+Rollback: git revert the commit.

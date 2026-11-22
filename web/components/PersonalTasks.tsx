@@ -45,7 +45,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
     { key: 'open', label: 'Open', help: 'tile_open' as const, match: (t: Task) => t.statusCategory === 'open' },
     { key: 'doing', label: 'In progress', help: 'status_doing' as const, match: (t: Task) => t.statusCategory === 'open' && statusKey(t) === 'doing' },
     { key: 'at_risk', label: 'At risk', help: 'at_risk' as const, match: (t: Task) => t.statusCategory === 'open' && flagOf(t, today)?.key === 'at_risk', warn: true },
-    { key: 'overdue', label: 'Late', help: 'late' as const, match: (t: Task) => t.overdue, warn: true },
+    { key: 'overdue', label: 'Overdue', help: 'late' as const, match: (t: Task) => t.overdue, warn: true },
     { key: 'done', label: 'Done', help: 'status_done' as const, match: (t: Task) => t.statusCategory === 'done' },
   ].map((x) => ({ ...x, n: tasks.filter(x.match).length }));
   const picked = tile ? tiles.find((x) => x.key === tile)! : null;

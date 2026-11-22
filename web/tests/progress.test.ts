@@ -63,7 +63,7 @@ describe('plan line status split', () => {
 describe('status bar words', () => {
   const sp = { done: 5, doing: 2, todo: 0, blocked: 1, late: 1, total: 9 };
   it('writes the counts in bar order and omits zeros', () => {
-    expect(splitText(sp)).toBe('5 done · 2 in progress · 1 blocked · 1 late');
+    expect(splitText(sp)).toBe('5 done · 2 in progress · 1 blocked · 1 overdue');
     expect(splitParts(sp).map((p) => p.key)).toEqual(['done', 'doing', 'blocked', 'late']);
   });
   it('says there is nothing yet for an empty split', () => {
@@ -71,7 +71,7 @@ describe('status bar words', () => {
     expect(splitSummary(emptySplit(), 'plan lines')).toBe('No plan lines yet.');
   });
   it('writes a sentence for screen readers, singular and plural', () => {
-    expect(splitSummary(sp)).toBe('9 tasks: 5 done, 2 in progress, 1 blocked, 1 late.');
+    expect(splitSummary(sp)).toBe('9 tasks: 5 done, 2 in progress, 1 blocked, 1 overdue.');
     expect(splitSummary({ ...emptySplit(), todo: 1, total: 1 })).toBe('1 task: 1 not started.');
     expect(splitSummary({ ...emptySplit(), done: 3, total: 3 }, 'plan lines')).toBe('3 plan lines: 3 done.');
   });

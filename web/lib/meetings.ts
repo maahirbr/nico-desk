@@ -40,7 +40,7 @@ async function meetingContext(tx: Tx, meId: string, id: string): Promise<Project
   const p = await getProject(tx, id);
   const roles = await rolesOf(tx, p.teamId, meId);
   if (roles.size === 0) throw forbidden('You are not on this project’s team.');
-  if (!mayRunMeeting(p, meId, roles)) throw forbidden('Only the project owner, its lead or a team lead can set the meeting rhythm or mark a meeting held.');
+  if (!mayRunMeeting(p, meId, roles)) throw forbidden('Only the project owner/lead, leadership or an admin can set the meeting rhythm or mark a meeting held.');
   if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
   return p;
 }

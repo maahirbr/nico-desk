@@ -12,7 +12,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 export type SplitKey = 'done' | 'doing' | 'todo' | 'blocked' | 'late';
 // Left to right on the bar, and the order of the counts written under it.
 export const SPLIT_ORDER: readonly SplitKey[] = ['done', 'doing', 'todo', 'blocked', 'late'];
-const WORD: Record<SplitKey, string> = { done: 'done', doing: 'in progress', todo: 'not started', blocked: 'blocked', late: 'late' };
+const WORD: Record<SplitKey, string> = { done: 'done', doing: 'in progress', todo: 'not started', blocked: 'blocked', late: 'overdue' };
 
 export type StatusSplit = Record<SplitKey, number> & { total: number };
 

@@ -47,7 +47,7 @@ export function WelcomeCard({ w, meId, onOpenTask }: { w: Welcome; meId: string;
       {allDone ? <p className="small dim welcome-lede">That’s the basics. This card won’t show again.</p> : (<>
         <ul className="welcome-facts">
           <li>{w.projects.length ? <>You’re on {w.projects.length === 1 ? 'one project' : `${w.projects.length} projects`}: {list(w.projects)}.</> : 'You’re not on a project yet.'}</li>
-          <li>{w.waiting ? <>{w.waiting === 1 ? 'One task is' : `${w.waiting} tasks are`} waiting for you{[w.late ? `${w.late} late` : '', w.dueToday ? `${w.dueToday} due today` : ''].filter(Boolean).map((x) => `, ${x}`).join('')}.</> : 'No tasks yet. When someone gives you one, it shows up right here.'}</li>
+          <li>{w.waiting ? <>{w.waiting === 1 ? 'One task is' : `${w.waiting} tasks are`} waiting for you{[w.late ? `${w.late} overdue` : '', w.dueToday ? `${w.dueToday} due today` : ''].filter(Boolean).map((x) => `, ${x}`).join('')}.</> : 'No tasks yet. When someone gives you one, it shows up right here.'}</li>
         </ul>
         <p className="small dim welcome-lede">Three quick things to get started:</p>
         <ol className="welcome-steps">

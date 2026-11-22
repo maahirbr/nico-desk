@@ -196,7 +196,7 @@ describe('checking the model answer', () => {
   it('marks a proposal the person may not apply, with the reason', async () => {
     const ref = await refOf('Final crop of campaign images', BO); // owned by someone else
     const p = await run([{ kind: 'note', task: ref, note: 'Crop sizes agreed', reading: 'r', source: 2 }], BO);
-    expect(p[0]).toMatchObject({ kind: 'note', mayApply: false, whyNot: 'Only the owner or a lead can change this task.' });
+    expect(p[0]).toMatchObject({ kind: 'note', mayApply: false, whyNot: 'Only the task’s owner, leadership or an admin can change this task.' });
   });
 
   it('drops items with no reading, a bad source, a bad kind, or that repeat an injection', async () => {

@@ -631,7 +631,7 @@ export async function unblockTask(db: Db, meId: string, id: string, input: { ver
     (c) => c.isOwner || c.isLead || c.row.blocked_on_id === meId,
     (c) => {
       if (!c.row.blocked_ask) throw bad('invalid_body', 'The task is not blocked.');
-      if (input.resume && !c.isOwner && !c.isLead) throw forbidden('Only the owner or a lead can set this task in progress.');
+      if (input.resume && !c.isOwner && !c.isLead) throw forbidden('Only the task’s owner, leadership or an admin can set this task in progress.');
       // The owner or a lead can clear a block without a word. The person it waits on says what they did,
       // since that is what the owner hears ("The teammate cleared the block: sent the numbers").
       const note = input.note?.trim().slice(0, 280);

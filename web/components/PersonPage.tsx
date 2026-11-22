@@ -60,7 +60,7 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, name, f
         </div>
         <div className="head-side">
         <p className="summary">
-          {open.length ? <>{open.length} open{late > 0 && <> · <span className="late-text">{late} late</span></>}</> : 'Nothing open'}
+          {open.length ? <>{open.length} open{late > 0 && <> · <span className="late-text">{late} overdue</span></>}</> : 'Nothing open'}
           {waitingOnThem.length > 0 && <> · {waitingOnThem.length} waiting on {first}</>}
         </p>
           <CopyLink path={`/people/${personId}`} what="person" />

@@ -166,7 +166,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     { key: 'open', label: 'Open', help: 'tile_open' as const, n: open.length, match: (t: Task) => t.statusCategory === 'open' },
     { key: 'doing', label: 'In progress', help: 'status_doing' as const, n: open.filter((t) => statusKey(t) === 'doing').length, match: (t: Task) => t.statusCategory === 'open' && statusKey(t) === 'doing' },
     { key: 'at_risk', label: 'At risk', help: 'at_risk' as const, n: open.filter((t) => flagOf(t, today)?.key === 'at_risk').length, match: (t: Task) => flagOf(t, today)?.key === 'at_risk', warn: true },
-    { key: 'overdue', label: 'Late', help: 'late' as const, n: tasks.filter((t) => t.overdue).length, match: (t: Task) => t.overdue, warn: true },
+    { key: 'overdue', label: 'Overdue', help: 'late' as const, n: tasks.filter((t) => t.overdue).length, match: (t: Task) => t.overdue, warn: true },
     { key: 'done', label: 'Done', help: 'status_done' as const, n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
   ];
   const inWs = (t: Task, k: string) => k === 'All' || (k === '__none' ? !t.workstream : t.workstream === k);
@@ -370,7 +370,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           ) : (<>
             {table(openRows, filtered
               ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>
-              : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
+              : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add task</button>}</div>)}
             {closedRows.length > 0 && (
               <>
                 <div className="list-head" style={{ marginTop: 22 }}>
@@ -439,7 +439,7 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
     status: 'Back to “Not started”. Why did work stop?',
     blocked: 'Why is it blocked?',
     remove: 'Reason to drop the task',
-    reopen: 'Why reopen it? Only a lead can reopen.',
+    reopen: 'Why reopen it? Only the task’s owner, the project owner/lead or an admin can reopen.',
   }[p.kind];
   const ok = text.trim().length > 0;
   return (

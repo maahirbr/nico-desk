@@ -38,7 +38,7 @@ export function OneOffView({ open, closed, names, people, meId, isLead, today, p
       <header className="page-head">
         <div>
           <h1>One-off tasks</h1>
-          <p className="summary">Tasks you gave someone, outside any project · {open.length} open{late > 0 && <> · <span className="late-text">{late} late</span></>}</p>
+          <p className="summary">Tasks you gave someone, outside any project · {open.length} open{late > 0 && <> · <span className="late-text">{late} overdue</span></>}</p>
         </div>
         {open.length > 1 && (
           <label className="f oneoff-sort"><span>Sort by</span>

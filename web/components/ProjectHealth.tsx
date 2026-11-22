@@ -35,7 +35,7 @@ export function ProjectHealth({ projectId, late, blocked }: { projectId: string;
     finally { setBusy(false); }
   }
 
-  const dates = `Dates say: ${late} late, ${blocked} blocked.`;
+  const dates = `Dates say: ${late} overdue, ${blocked} blocked.`;
   return (
     <div className="health-hint">
       <Help term="jev_health"><span>{dates}</span></Help>
