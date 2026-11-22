@@ -569,6 +569,10 @@ export function db(): Promise<Db> {
 async function notesToPages(db: Db) {
   const { rows: [t] } = await db.query<{ n: string | null }>(`SELECT to_regclass('public.personal_notes')::text AS n`);
   if (!t?.n) return;
+  // 21 Nov: since 15 Nov the name personal_notes is the real notes table. Only the old cards table has a body column;
+  // without this check every upgrade dropped everyone's notes.
+  const { rows: [old] } = await db.query(`SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'personal_notes' AND column_name = 'body'`);
+  if (!old) return;
   const { rows } = await db.query<{ person_id: string; team_id: string; body: string }>(
     `SELECT person_id, team_id, body FROM personal_notes WHERE deleted_at IS NULL ORDER BY person_id, pinned DESC, updated_at DESC`).catch(() => ({ rows: [] as { person_id: string; team_id: string; body: string }[] }));
   const by = new Map<string, { team: string; bodies: string[] }>();

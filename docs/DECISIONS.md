@@ -2145,6 +2145,16 @@ mismatch in production (no Google links had ever been saved). The repo owner add
 The TypeSafe key is out of Vercel and `.env.local`. `HANDOVER-ACCOUNTS.md` marks steps 1 to 3 done.
 Rollback: transfer the project back from the Nicobar org's project settings (the repo owner must be in both orgs).
 
+## 2026-11-19 · Opus 5.5 · Deploy: the security pass, cleanup and handover docs go live
+
+`main` moved from `b207c0a` to `d95f1be` (six commits: the enforced CSP, the fence that reads the team once per
+query, pinned trigger search paths, the cleanup, and the handover docs). VERIFY was green first (961 tests, build).
+`npm run db:upgrade` ran on the hosted database before the push and rebuilt the `team_fence` policies. Production
+is `qhh7p8x2s`: `/team` loads with the CSP enforced, the Claude connector returns tasks through the fence, and the
+logs show no errors.
+Rollback: from `web/`, `vercel promote https://nico-desk-kcclib6v5-maahirbharatram-3547s-projects.vercel.app --yes`.
+The old fence policies need no rollback: the new ones give the same rows.
+
 ## 2026-11-19 · Opus 5.5 · Pop-up windows on top of the page, and project roles on Home
 
 Every pop-up window (`Modal` in `components/task-ui.tsx`) is now drawn at the end of the page. Opened from the Roster's
@@ -2174,6 +2184,23 @@ With admin tools hidden, an admin saw every project still, as `lib/sight.ts` rea
 `sightFor` passes `me.adminHidden`, and `sightOf` then works out the projects as for Leadership: the ones they own, lead,
 are on or may view. Projects, Team, Home and search all follow.
 Rollback: git revert the commit.
+
+## 2026-11-19 · Opus 5.5 · Deploy: the PM's 19 Nov batch goes live
+
+Merged `mvp-local-desk-look` (pop-up windows on top, Home project roles, Hide admin tools and its own-projects view,
+the Mail app button gone) into `maahir/mvp`, then `main` (`ba28299`). Read first: Hide admin tools only takes rights
+away, and only for a real admin, so the unsigned `nd_hide_admin` cookie cannot raise anyone. VERIFY green (964 tests,
+build). No schema change. Production is `c23yxglmq`: `/team` loads, the Claude connector answers, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-qhh7p8x2s-maahirbharatram-3547s-projects.vercel.app --yes`.
+
+## 2026-11-19 · Opus 5.5 · Gmail send: say plainly when the Gmail API is off, and log Google's reason
+
+A lead connected Gmail in production and pressed Send: the token refresh worked, but no reminder was recorded, so
+Google refused the send call itself. The likely cause is the Gmail API switched off in the Google Cloud project. The
+app said "Connect Gmail again", which cannot fix that. Now a 403 with Google's reason `SERVICE_DISABLED` or
+`accessNotConfigured` answers 503 `gmail_api_off`: "Sending through Gmail is switched off in Google Cloud. Ask an
+admin to enable the Gmail API." Every failed send logs `[gmail] send failed <status> <reason code>`, and a failed
+token refresh logs its status. The log holds Google's reason code only, never the message, the email or a token.
 
 ## 2026-11-19 · Opus 5.5 · The Guide says what an owner and a lead are
 
@@ -2224,6 +2251,15 @@ Not now, and never a Working well note. The delete is permanent: the note goes w
 "nothing is ever removed" for feedback notes only.
 Rollback: git revert the commit.
 
+## 2026-11-19 · Opus 5.5 · Deploy: the Gmail error fix and the PM's second 19 Nov batch go live
+
+`main` moved from `ba28299` to `189271e`: the plain Gmail-API-off message with its log line, and the PM's five commits
+(Feedback tabs and delete, partner on and off in Settings, the admins-only What's new note, the Welcome card fix, the
+Guide on owner and lead). VERIFY green (969 tests, build). No schema change. The repo owner enabled the Gmail, Meet,
+Drive and Docs APIs in Google Cloud. Production is `57gy7z55k`: `/team` loads, the Claude connector answers, no
+errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-c23yxglmq-maahirbharatram-3547s-projects.vercel.app --yes`.
+
 ## 2026-11-19 · Opus 5.5 · Roster: a small gap between the access filter and Find a person
 
 The PM's call: the access dropdown now fills its space, and the gap to Find a person is the small one (8px).
@@ -2268,6 +2304,16 @@ the Ledger and on-time records (person page, Home trend); the ledger fixture tot
 sees the task on their Home, and Team and Activity are unchanged. `lib/service.ts oneOffsGiven`, `components/OneOffView.tsx`.
 Rollback: git revert the commit.
 
+## 2026-11-20 · Opus 5.5 · Deploy: the PM's 20 Nov batch goes live
+
+`main` moved from `189271e` to `051a287`: one-off tasks (a page of tasks you gave outside a project, kept out of
+reminders, the Ledger and the on-time record), Quick Add reading a follow-up sentence as details, reminders leaving out
+archived projects and re-checking each task is still open before sending, Bulk send on one project's reminders, and a
+Roster spacing fix. Read first: Bulk send is off until the lead turns it on, the lead ticks each person and confirms,
+and each email goes through the same Send route and its rate limit (20 a minute per lead). VERIFY green (976 tests,
+build). No schema change. Production is `fgq0f27kz`: `/team` loads, the Claude connector answers, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-57gy7z55k-maahirbharatram-3547s-projects.vercel.app --yes`.
+
 ## 2026-11-20 · Opus 5.5 · Pasted minutes: a short heading, a separate description, and due dates said in words
 
 The PM's ask. Reading minutes (`lib/planUtil.ts plainParse`, and the model's prompt in `lib/plan.ts`) now gives each
@@ -2287,6 +2333,16 @@ from their columns, a row marked done, completed or dropped left out, the owner'
 brackets in the task ("(next 18 days)", "(27th October)") used and taken out of the title. Before, every cell became its
 own proposal. Also fixed: "27 Oct 2026" was read as 20 Oct (the year's first digits taken for the day). No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-20 · Opus 5.5 · Deploy: minutes with a heading and details, dates in words, and pasted tables
+
+`main` moved from `051a287` to `447ae61`: the PM's two minutes commits (a short task heading with the lines under it as
+its description, due dates said in words counted from the meeting date, a pasted table read row by row, and dates with
+a year read right). Schema: `plan_proposals.details`, added by `npm run db:upgrade` on the hosted database before the
+push (text, default ''; nothing deleted). VERIFY green (981 tests, build). Production is `pz5tira9p`: `/team` loads,
+the Claude connector answers, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-fgq0f27kz-maahirbharatram-3547s-projects.vercel.app --yes`.
+The `details` column can stay: the older build does not read it.
 
 ## 2026-11-20 · Opus 5.5 · Reminders: no "Waiting on a reply" section
 
@@ -2341,8 +2397,85 @@ The PM's call: in the list view every row read On track, which said nothing and 
 Off track show there, in the same status column; the grid keeps every pill (`app/projects/page.tsx`, `.pcard-pill-ok`).
 Rollback: git revert the commit.
 
+## 2026-11-20 · Opus 5.5 · Deploy: Reminders without "Waiting on a reply"
+
+`main` moved from `447ae61` to `65dd017`: the PM's commit removing the "Waiting on a reply" section from Reminders.
+No schema change. VERIFY green (981 tests, build). Production is `immuj45w1`: `/team` answers, `/reminders` sends a
+signed-out visitor to sign-in, the Claude connector asks for a token, no errors in the logs.
+Rollback: from `web/`, `vercel promote https://nico-desk-pz5tira9p-maahirbharatram-3547s-projects.vercel.app --yes`.
+
+## 2026-11-21 · Fable 5.2 · Fix: `db:upgrade` dropped every Personal note; one note restored on live
+
+A pilot member reported two Personal notes gone. Cause: `upgrade()` ran `notesToPages` on every run. That step was
+written on 11 Nov to fold an old local-only cards table into the single page, and it ends with `DROP TABLE
+personal_notes`. On 15 Nov the several-notes feature reused that table name, so each `npm run db:upgrade` on the hosted
+database (19 and 20 Nov) dropped everyone's notes and the next line made the table again, empty. Autosave was not at fault.
+Fix: `notesToPages` returns unless the table has the old `body` column. New test in `tests/personal.test.ts`, "keeps
+every note through upgrade(), twice over", fails without it. Typecheck silent, 982 tests passed.
+Live, with the PM's okay and the repo owner's yes: the member's note of 18 Nov was put back from `nico-2026-11-19.dump`
+as one inserted row, no note text read. Not recoverable from the nightly backups: anything written between a 02:30
+backup and an upgrade the same day (the member's 20 Nov morning writing). Two other people each have one note in the
+19 Nov backup that is not on live. Those wait for their own yes.
+22 Nov, on the repo owner's word: the founder's note was put back the same way (one row, `pnt_mwkdsoho01u91u`). The
+other person's note needs no restore: it equals their old single page, which `ensureNotes` copies on their next open.
+The hosted database is on Supabase's Free plan, which keeps no project backups, so the 20 Nov morning writing is lost.
+Lesson: a step in `upgrade()` that drops or deletes must check the shape of what it drops, and gets a test that runs
+`upgrade()` over real rows.
+Rollback: git revert the commit (do not run `db:upgrade` while reverted). To undo the restore:
+`DELETE FROM personal_notes WHERE id = 'pnt_mwlyk6xq01c5qj'`.
+
+## 2026-11-22 · Fable 5.2 · Deploy: the PM's 20 and 21 Nov batch, and the notes-safe upgrade
+
+`main` moved from `65dd017` to `48ccba3`: the upgrade fix (`f912622`) and the PM's five commits (open-first counts, the
+Quick Add focus fix, Partner access, Personal priority, feedback outcomes in bold, On track hidden in the list).
+Before it: a dump to `~/Backups/nico-desk/pre-upgrade-2026-11-22/`, then `npm run db:upgrade` on the hosted database
+(the partner role check and `tasks.personal_order`). Personal notes counted before and after the upgrade: 6 and 6, the
+same bytes. VERIFY green (evals, typecheck, 990 tests, build). Production is `i0mace0hd`: `/team` answers, `/reminders`
+sends a signed-out visitor to sign-in, the Claude connector asks for a token. Pages not checked in a browser.
+Open, from the automated review of Partner access, with no partner on the hosted roster yet: `tasks/read-sentence`
+matches a partner's sentence against the whole roster, and blocking on a person and asks do not run `partnerMayGive`.
+Both to close before the first partner is added.
+Rollback: from `web/`, `vercel promote https://nico-desk-immuj45w1-maahirbharatram-3547s-projects.vercel.app --yes`
+(the new column and the wider role check can stay).
+
+## 2026-11-22 · Fable 5.2 · Partner access: two paths that skipped the partner rule
+
+From the automated review of the Partner access push, checked in the code and shown by two failing tests first.
+`lib/sentenceRead.ts`: a partner's typed sentence was matched against the whole roster, so it told them which staff
+names exist. It is now matched only against the people they may give a task to (themselves and their own company's
+partners), the same rule as the owner picker. `lib/service.ts blockTask`: a partner could block a task on any active
+person. They now name only someone on the task's own project. Asks and `tasks/suggest-project` were checked and need no
+change: an ask goes to the owner of a task the partner already sees, and the suggester reads `seenProjects`.
+Two tests in `tests/partner-access.test.ts`. Typecheck silent, 992 tests passed, build green. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-22 · Fable 5.2 · Partner access: the masker gave a partner a staff member's full name
+
+From the same review, shown by a failing test first. `lib/sentenceRead.ts`: the masker hides names and addresses before
+the model reads a sentence, then puts each one back as the roster's full name. So a partner who typed a staff member's
+first name or address got that person's full name back in the task title. For a partner the masker now puts back the
+roster name only for the people they may name. Anyone else is still masked, and comes back exactly as the partner
+typed them. Staff see no change.
+One test in `tests/partner-access.test.ts`. Typecheck silent, 993 tests passed. Build not rerun for this commit. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-22 · Fable 5.2 · Partner access: the masker's spelling no longer shows a partner who is on the roster
+
+From the review of the commit before this one, shown by a failing test first. The masker matches a name in any case
+and put it back in the roster's spelling. So a partner who typed a staff member's first name in lower case got it back
+with a capital only when that person exists. `lib/redact.ts`: a person entry can carry `asTyped`, and each match of it
+goes back exactly as it was typed. `lib/sentenceRead.ts` sets it on everyone a partner may not name. Staff see no
+change. The test in `tests/partner-access.test.ts` now also types a name in lower case and an address in upper case.
+VERIFY green: evals, typecheck, 993 tests, build. No schema change. Pushed to `main` with the two commits before it.
+Rollback: `vercel promote https://nico-desk-i0mace0hd-maahirbharatram-3547s-projects.vercel.app --yes`, or git revert the three commits.
+
 ## 2026-11-22 · Opus 5.5 · Projects: sort by soonest date or by name
 The PM's call. The count line under Projects reads "7 projects · soonest date first ▾", and the words are a small drop-down
 that also offers "by name, A to Z". Personal stays first. The choice is kept per person in this browser with the list or grid
 choice (`components/ProjectsLayout.tsx`); A to Z only sets each card's CSS order (`--by-name`), so the page sends one list.
+Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Roster: the number of people under the title
+The PM's call. "24 people" in small grey type under the Roster title: the active people on the roster, for admins and
+leadership (`app/admin/page.tsx`). Who has signed in stays on Activity.
 Rollback: git revert the commit.

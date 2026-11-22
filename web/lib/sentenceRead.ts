@@ -53,7 +53,12 @@ export async function readSentence(db: Tx, me: Me, text: string, deps: { ask?: A
   // Spaces inside a line collapse; the indent at its start stays, since it says which lines are sub-points.
   const typed = text.replace(/\r/g, '').replace(/(\S)[ \t]+/g, '$1 ').replace(/^\s*\n|\s+$/g, '').slice(0, MAX_SENTENCE);
   const [people, seen] = await Promise.all([listPeople(db, me.team.id), seenProjects(db, me)]);
-  const active = people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName }));
+  // A partner's sentence (22 Nov) is read against the people they may give a task to: themselves and their own company's
+  // partners. Read against the whole roster, it told them which staff names exist.
+  const partner = me.person.appRoles.includes('partner');
+  const company = me.person.department.trim().toLowerCase();
+  const mayName = (p: (typeof people)[number]) => !partner || p.id === me.person.id || (p.appRoles.includes('partner') && p.department.trim().toLowerCase() === company);
+  const active = people.filter((p) => p.active && mayName(p)).map((p) => ({ id: p.id, name: p.displayName }));
   // A name spelled the way speech heard it takes the roster's spelling first, so both readers below can match it.
   const said = respell(typed, active.map((p) => p.name));
   const projects = seen.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }));
@@ -61,8 +66,12 @@ export async function readSentence(db: Tx, me: Me, text: string, deps: { ask?: A
 
   if (!deps.ask && !modelOn()) return rules();
   try {
-    const dict = await maskDictFor(db, me.team.id);
-    if (process.env.DATABASE_URL && dict.people.length === 0) return rules(); // the masking list did not load: send nothing
+    const all = await maskDictFor(db, me.team.id);
+    if (process.env.DATABASE_URL && all.people.length === 0) return rules(); // the masking list did not load: send nothing
+    // The masker puts a first name or an address back as the roster's full name. For a partner (22 Nov) that holds only for
+    // the people they may name. Anyone else is still masked, and comes back exactly as the partner typed them.
+    const known = new Set(active.map((p) => p.name));
+    const dict = !partner ? all : { ...all, people: all.people.map((p) => (known.has(p.names[0]) ? p : { ...p, asTyped: true })) };
     const masker = makeMasker(dict);
     const mask = <T,>(v: T) => masker.mask(v);
     const writer = mask(me.person.displayName);

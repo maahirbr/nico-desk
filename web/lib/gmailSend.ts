@@ -143,6 +143,7 @@ export async function sendAsPerson(db: Db, personId: string, m: Omit<Outgoing, '
   const tok = await post(TOKEN_URL, { client_id: clientId(), client_secret: clientSecret(), refresh_token: refresh, grant_type: 'refresh_token' });
   const j = (await tok.json().catch(() => null)) as { access_token?: unknown } | null;
   if (!tok.ok || typeof j?.access_token !== 'string') {
+    console.warn('[gmail] token refresh failed', tok.status);
     if (tok.status === 400 || tok.status === 401) throw reauth();
     throw new ApiError(502, 'source_error', `Google returned an error (${tok.status}).`);
   }
@@ -157,10 +158,25 @@ export async function sendAsPerson(db: Db, personId: string, m: Omit<Outgoing, '
   } catch {
     throw new ApiError(502, 'source_unreachable', 'Google did not answer. The email may not have gone. Check your Gmail Sent folder before you try again.');
   }
+  if (res.ok) return { from: l.email };
+  // Google's own reason, logged so a failed send can be explained later. It holds no email content and no token.
+  const why = await googleReason(res);
+  console.warn('[gmail] send failed', res.status, why);
   if (res.status === 401) throw reauth();
+  // The Gmail API is switched off in the Google Cloud project: a new sign-in cannot fix that, only an admin can (19 Nov).
+  if (res.status === 403 && (why === 'SERVICE_DISABLED' || why === 'accessNotConfigured')) {
+    throw new ApiError(503, 'gmail_api_off', 'Sending through Gmail is switched off in Google Cloud. Ask an admin to enable the Gmail API.');
+  }
   if (res.status === 403) throw new ApiError(400, 'gmail_forbidden', 'Google did not allow sending from this account. Connect Gmail again.');
   if (res.status === 400) throw new ApiError(400, 'gmail_rejected', 'Gmail would not send this. Check the addresses.');
   if (res.status === 429) throw new ApiError(429, 'rate_limited', 'Gmail is busy. Wait a minute and try again.');
-  if (!res.ok) throw new ApiError(502, 'source_error', `Google returned an error (${res.status}).`);
-  return { from: l.email };
+  throw new ApiError(502, 'source_error', `Google returned an error (${res.status}).`);
+}
+
+// The reason code in a Google API error body, for example SERVICE_DISABLED. Never the message, which can quote input.
+async function googleReason(res: Response): Promise<string> {
+  const j = (await res.json().catch(() => null)) as { error?: { status?: unknown; errors?: { reason?: unknown }[]; details?: { reason?: unknown }[] } } | null;
+  const e = j?.error;
+  const r = e?.details?.find((d) => typeof d.reason === 'string')?.reason ?? e?.errors?.find((d) => typeof d.reason === 'string')?.reason ?? e?.status;
+  return typeof r === 'string' ? r.slice(0, 60) : 'unknown';
 }

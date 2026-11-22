@@ -66,6 +66,43 @@ describe('what a partner sees and does', () => {
     expect(await code(s.createTask(db, asha, { ...base, ownerId: ownerId }))).toBe('403');
     expect(await code(s.createTask(db, asha, { ...base, projectId: undefined, ownerId: asha }))).toBe('400');
   });
+  // 22 Nov: two paths that skipped the partner rule.
+  it('has a typed sentence read against their own company only, not the whole roster', async () => {
+    const { readSentence } = await import('../lib/sentenceRead');
+    const { rows: [staff] } = await db.query<{ id: string; display_name: string }>(
+      `SELECT id, display_name FROM people WHERE active AND id <> $1 AND id NOT IN (SELECT person_id FROM project_members WHERE project_id = $2)
+         AND id NOT IN (SELECT person_id FROM team_members WHERE app_role = 'partner') ORDER BY id LIMIT 1`, [ownerId, projectId]);
+    const say = (name: string) => `Ask ${name} to send the files by Monday`;
+    const admin = (await resolveMe(db, ADMIN))!, me = (await resolveMe(db, asha))!;
+    expect((await readSentence(db, admin, say(staff.display_name))).tasks[0].ownerId).toBe(staff.id); // the control: staff do match
+    expect((await readSentence(db, me, say(staff.display_name))).tasks[0].ownerId).toBe(null);
+    expect((await readSentence(db, me, say('Mona Other'))).tasks[0].ownerId).toBe(null);
+    expect((await readSentence(db, me, say('Ravi Crux'))).tasks[0].ownerId).toBe(ravi);
+  });
+  it('gets back only what they typed when the model reads a staff name or address', async () => {
+    const { readSentence } = await import('../lib/sentenceRead');
+    const { rows: [staff] } = await db.query<{ display_name: string; email: string }>(
+      `SELECT display_name, email FROM people WHERE active AND display_name LIKE '% %' AND id NOT IN (SELECT person_id FROM team_members WHERE app_role = 'partner') ORDER BY id LIMIT 1`);
+    const first = staff.display_name.split(' ')[0];
+    // A stand-in model that hands the masked sentence straight back as the title.
+    const ask = async ({ user }: { user: string }) => JSON.stringify([{ title: /<said>\n([\s\S]*)\n<\/said>/.exec(user)![1] }]);
+    const title = async (who: string, text: string) => (await readSentence(db, (await resolveMe(db, who))!, text, { ask })).tasks[0].title;
+    expect(await title(ADMIN, `Send the files to ${first} today`)).toContain(staff.display_name); // the control: staff get the roster's spelling
+    expect(await title(asha, `Send the files to ${first} today`)).not.toContain(staff.display_name);
+    expect(await title(asha, `Send the files to ${staff.email} today`)).not.toContain(staff.display_name);
+    expect(await title(asha, 'Send the files to Ravi today')).toContain('Ravi Crux');
+    // The spelling must not tell a partner the name is on the roster: it comes back in the case they typed.
+    expect(await title(asha, `Send the files to ${first.toLowerCase()} today`)).toContain(`to ${first.toLowerCase()} today`);
+    expect(await title(asha, `Send the files to ${staff.email.toUpperCase()} today`)).toContain(staff.email.toUpperCase());
+  });
+  it('blocks a task only on someone from the same project', async () => {
+    const { rows: [staff] } = await db.query<{ id: string }>(
+      `SELECT id FROM people WHERE active AND id <> $1 AND id NOT IN (SELECT person_id FROM project_members WHERE project_id = $2)
+         AND id NOT IN (SELECT person_id FROM team_members WHERE app_role = 'partner') ORDER BY id LIMIT 1`, [ownerId, projectId]);
+    const t = await s.createTask(db, asha, { teamId: TEAM_ID, title: 'Wait for the brief', dueOn: '2026-10-20', projectId, ownerId: asha });
+    expect(await code(s.blockTask(db, asha, t.id, { version: t.version, onId: staff.id, ask: 'Need the brief' }))).toBe('403');
+    expect(await code(s.blockTask(db, asha, t.id, { version: t.version, onId: ownerId, ask: 'Need the brief' }))).toBe('ok');
+  });
   it('cannot start a project, change Settings or add people', async () => {
     const p = await getProject(db, projectId);
     expect(await projectAccess(db, p, asha)).toBe('view');
