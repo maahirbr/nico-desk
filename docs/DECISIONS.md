@@ -2485,3 +2485,9 @@ The PM's call, now that more than the first users are on. The Feedback page read
 We read every note." The Home card asks "{Name}, how’s NicoDesk working for you? 🙏" and "Share one thing to improve or one
 thing that works. It shapes what we build next." The Not now box suggests "e.g. Not right now, maybe later".
 Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Person page: each word once
+The PM's call, from the phone check. The header showed "AI · AI", then "AI", then "AI (AI)" when job title, department and
+team were the same word. Now one line holds job title, department, team and access, each word once (Admin, Leadership
+written with a capital), and a project shows its role in brackets only when that differs from the project's name.
+Rollback: git revert the commit.
