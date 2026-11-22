@@ -2254,3 +2254,5 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .inline-sort select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
 .pview[data-psort="name"] .pcard { order: var(--by-name, 0); }
 .pview[data-psort="name"] .pcard-personal { order: -1; }
+/* Roster (22 Nov): the people count under the title. */
+.roster-count { margin: var(--space-xxs) 0 0; }

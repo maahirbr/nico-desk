@@ -25,7 +25,8 @@ export default async function Admin() {
   return (
     <>
       {/* The find box sits at the right of the title (the PM's call, 15 Nov). */}
-      <div className="page-head"><h1>Roster</h1><RosterFind total={people.length} roles={isAdmin} /></div>
+      {/* The count (22 Nov, the PM's call): active people, as a small grey line under the title, for admins and leadership. */}
+      <div className="page-head"><div><h1>Roster</h1>{(isAdmin || inviter) && <p className="count-badge roster-count">{people.filter((p) => p.active).length} people</p>}</div><RosterFind total={people.length} roles={isAdmin} /></div>
       <div className="card table-card"><table className="stacked roster">
         {/* Access (member, lead, admin, removed) is for admins only (the PM's call, 3 Nov). */}
         <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Email</th>{isAdmin && <th>Access</th>}{inviter && <th>Invite</th>}</tr></thead>
