@@ -2416,6 +2416,9 @@ Live, with the PM's okay and the repo owner's yes: the member's note of 18 Nov w
 as one inserted row, no note text read. Not recoverable from the nightly backups: anything written between a 02:30
 backup and an upgrade the same day (the member's 20 Nov morning writing). Two other people each have one note in the
 19 Nov backup that is not on live. Those wait for their own yes.
+22 Nov, on the repo owner's word: the founder's note was put back the same way (one row, `pnt_mwkdsoho01u91u`). The
+other person's note needs no restore: it equals their old single page, which `ensureNotes` copies on their next open.
+The hosted database is on Supabase's Free plan, which keeps no project backups, so the 20 Nov morning writing is lost.
 Lesson: a step in `upgrade()` that drops or deletes must check the shape of what it drops, and gets a test that runs
 `upgrade()` over real rows.
 Rollback: git revert the commit (do not run `db:upgrade` while reverted). To undo the restore:
