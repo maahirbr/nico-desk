@@ -79,6 +79,19 @@ describe('what a partner sees and does', () => {
     expect((await readSentence(db, me, say('Mona Other'))).tasks[0].ownerId).toBe(null);
     expect((await readSentence(db, me, say('Ravi Crux'))).tasks[0].ownerId).toBe(ravi);
   });
+  it('gets back only what they typed when the model reads a staff name or address', async () => {
+    const { readSentence } = await import('../lib/sentenceRead');
+    const { rows: [staff] } = await db.query<{ display_name: string; email: string }>(
+      `SELECT display_name, email FROM people WHERE active AND display_name LIKE '% %' AND id NOT IN (SELECT person_id FROM team_members WHERE app_role = 'partner') ORDER BY id LIMIT 1`);
+    const first = staff.display_name.split(' ')[0];
+    // A stand-in model that hands the masked sentence straight back as the title.
+    const ask = async ({ user }: { user: string }) => JSON.stringify([{ title: /<said>\n([\s\S]*)\n<\/said>/.exec(user)![1] }]);
+    const title = async (who: string, text: string) => (await readSentence(db, (await resolveMe(db, who))!, text, { ask })).tasks[0].title;
+    expect(await title(ADMIN, `Send the files to ${first} today`)).toContain(staff.display_name); // the control: staff get the roster's spelling
+    expect(await title(asha, `Send the files to ${first} today`)).not.toContain(staff.display_name);
+    expect(await title(asha, `Send the files to ${staff.email} today`)).not.toContain(staff.display_name);
+    expect(await title(asha, 'Send the files to Ravi today')).toContain('Ravi Crux');
+  });
   it('blocks a task only on someone from the same project', async () => {
     const { rows: [staff] } = await db.query<{ id: string }>(
       `SELECT id FROM people WHERE active AND id <> $1 AND id NOT IN (SELECT person_id FROM project_members WHERE project_id = $2)

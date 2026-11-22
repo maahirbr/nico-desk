@@ -2448,3 +2448,13 @@ person. They now name only someone on the task's own project. Asks and `tasks/su
 change: an ask goes to the owner of a task the partner already sees, and the suggester reads `seenProjects`.
 Two tests in `tests/partner-access.test.ts`. Typecheck silent, 992 tests passed, build green. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-22 · Fable 5.2 · Partner access: the masker gave a partner a staff member's full name
+
+From the same review, shown by a failing test first. `lib/sentenceRead.ts`: the masker hides names and addresses before
+the model reads a sentence, then puts each one back as the roster's full name. So a partner who typed a staff member's
+first name or address got that person's full name back in the task title. For a partner the masker now puts back the
+roster name only for the people they may name. Anyone else is still masked, and comes back exactly as the partner
+typed them. Staff see no change.
+One test in `tests/partner-access.test.ts`. Typecheck silent, 993 tests passed. Build not rerun for this commit. No schema change.
+Rollback: git revert the commit.

@@ -66,8 +66,13 @@ export async function readSentence(db: Tx, me: Me, text: string, deps: { ask?: A
 
   if (!deps.ask && !modelOn()) return rules();
   try {
-    const dict = await maskDictFor(db, me.team.id);
-    if (process.env.DATABASE_URL && dict.people.length === 0) return rules(); // the masking list did not load: send nothing
+    const all = await maskDictFor(db, me.team.id);
+    if (process.env.DATABASE_URL && all.people.length === 0) return rules(); // the masking list did not load: send nothing
+    // The masker puts a first name or an address back as the roster's full name. For a partner (22 Nov) that holds only for
+    // the people they may name. Anyone else is still masked, and comes back exactly as the partner typed them.
+    const known = new Set(active.map((p) => p.name));
+    const dict = !partner ? all : { ...all, people: all.people.flatMap((p) => (known.has(p.names[0])
+      ? [p] : [...p.names.map((n) => ({ names: [n], emails: [] as string[] })), ...p.emails.map((e) => ({ names: [] as string[], emails: [e] }))])) };
     const masker = makeMasker(dict);
     const mask = <T,>(v: T) => masker.mask(v);
     const writer = mask(me.person.displayName);
