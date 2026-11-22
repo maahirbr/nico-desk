@@ -53,7 +53,12 @@ export async function readSentence(db: Tx, me: Me, text: string, deps: { ask?: A
   // Spaces inside a line collapse; the indent at its start stays, since it says which lines are sub-points.
   const typed = text.replace(/\r/g, '').replace(/(\S)[ \t]+/g, '$1 ').replace(/^\s*\n|\s+$/g, '').slice(0, MAX_SENTENCE);
   const [people, seen] = await Promise.all([listPeople(db, me.team.id), seenProjects(db, me)]);
-  const active = people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName }));
+  // A partner's sentence (22 Nov) is read against the people they may give a task to: themselves and their own company's
+  // partners. Read against the whole roster, it told them which staff names exist.
+  const partner = me.person.appRoles.includes('partner');
+  const company = me.person.department.trim().toLowerCase();
+  const mayName = (p: (typeof people)[number]) => !partner || p.id === me.person.id || (p.appRoles.includes('partner') && p.department.trim().toLowerCase() === company);
+  const active = people.filter((p) => p.active && mayName(p)).map((p) => ({ id: p.id, name: p.displayName }));
   // A name spelled the way speech heard it takes the roster's spelling first, so both readers below can match it.
   const said = respell(typed, active.map((p) => p.name));
   const projects = seen.filter((p) => p.kind === 'tasks' && !p.archivedAt).map((p) => ({ id: p.id, name: p.name }));

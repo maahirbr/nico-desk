@@ -2437,3 +2437,14 @@ matches a partner's sentence against the whole roster, and blocking on a person 
 Both to close before the first partner is added.
 Rollback: from `web/`, `vercel promote https://nico-desk-immuj45w1-maahirbharatram-3547s-projects.vercel.app --yes`
 (the new column and the wider role check can stay).
+
+## 2026-11-22 · Fable 5.2 · Partner access: two paths that skipped the partner rule
+
+From the automated review of the Partner access push, checked in the code and shown by two failing tests first.
+`lib/sentenceRead.ts`: a partner's typed sentence was matched against the whole roster, so it told them which staff
+names exist. It is now matched only against the people they may give a task to (themselves and their own company's
+partners), the same rule as the owner picker. `lib/service.ts blockTask`: a partner could block a task on any active
+person. They now name only someone on the task's own project. Asks and `tasks/suggest-project` were checked and need no
+change: an ask goes to the owner of a task the partner already sees, and the suggester reads `seenProjects`.
+Two tests in `tests/partner-access.test.ts`. Typecheck silent, 992 tests passed, build green. No schema change.
+Rollback: git revert the commit.

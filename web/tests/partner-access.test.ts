@@ -66,6 +66,27 @@ describe('what a partner sees and does', () => {
     expect(await code(s.createTask(db, asha, { ...base, ownerId: ownerId }))).toBe('403');
     expect(await code(s.createTask(db, asha, { ...base, projectId: undefined, ownerId: asha }))).toBe('400');
   });
+  // 22 Nov: two paths that skipped the partner rule.
+  it('has a typed sentence read against their own company only, not the whole roster', async () => {
+    const { readSentence } = await import('../lib/sentenceRead');
+    const { rows: [staff] } = await db.query<{ id: string; display_name: string }>(
+      `SELECT id, display_name FROM people WHERE active AND id <> $1 AND id NOT IN (SELECT person_id FROM project_members WHERE project_id = $2)
+         AND id NOT IN (SELECT person_id FROM team_members WHERE app_role = 'partner') ORDER BY id LIMIT 1`, [ownerId, projectId]);
+    const say = (name: string) => `Ask ${name} to send the files by Monday`;
+    const admin = (await resolveMe(db, ADMIN))!, me = (await resolveMe(db, asha))!;
+    expect((await readSentence(db, admin, say(staff.display_name))).tasks[0].ownerId).toBe(staff.id); // the control: staff do match
+    expect((await readSentence(db, me, say(staff.display_name))).tasks[0].ownerId).toBe(null);
+    expect((await readSentence(db, me, say('Mona Other'))).tasks[0].ownerId).toBe(null);
+    expect((await readSentence(db, me, say('Ravi Crux'))).tasks[0].ownerId).toBe(ravi);
+  });
+  it('blocks a task only on someone from the same project', async () => {
+    const { rows: [staff] } = await db.query<{ id: string }>(
+      `SELECT id FROM people WHERE active AND id <> $1 AND id NOT IN (SELECT person_id FROM project_members WHERE project_id = $2)
+         AND id NOT IN (SELECT person_id FROM team_members WHERE app_role = 'partner') ORDER BY id LIMIT 1`, [ownerId, projectId]);
+    const t = await s.createTask(db, asha, { teamId: TEAM_ID, title: 'Wait for the brief', dueOn: '2026-10-20', projectId, ownerId: asha });
+    expect(await code(s.blockTask(db, asha, t.id, { version: t.version, onId: staff.id, ask: 'Need the brief' }))).toBe('403');
+    expect(await code(s.blockTask(db, asha, t.id, { version: t.version, onId: ownerId, ask: 'Need the brief' }))).toBe('ok');
+  });
   it('cannot start a project, change Settings or add people', async () => {
     const p = await getProject(db, projectId);
     expect(await projectAccess(db, p, asha)).toBe('view');

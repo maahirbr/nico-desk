@@ -611,6 +611,13 @@ export async function blockTask(db: Db, meId: string, id: string, input: { versi
     async (tx, c) => {
       if (!onId) return;
       await activeMember(tx, c.row.team_id, onId, 'onId');
+      // A partner (22 Nov) names only someone on the task's own project: they know no one else.
+      if ((await rolesIn(tx, c.row.team_id, meId)).has('partner')) {
+        const { rows } = await tx.query(
+          `SELECT 1 FROM projects WHERE id = $1 AND (owner_id = $2 OR lead_id = $2) UNION SELECT 1 FROM project_members WHERE project_id = $1 AND person_id = $2`,
+          [c.row.project_id, onId]);
+        if (!rows.length) throw forbidden('A partner can block a task only on someone from the same project.');
+      }
       await notice(tx, onId, id, 'blocked_on_you', todayIst());
     },
   );
