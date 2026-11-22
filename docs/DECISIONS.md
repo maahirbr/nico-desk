@@ -2458,3 +2458,13 @@ roster name only for the people they may name. Anyone else is still masked, and 
 typed them. Staff see no change.
 One test in `tests/partner-access.test.ts`. Typecheck silent, 993 tests passed. Build not rerun for this commit. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-22 · Fable 5.2 · Partner access: the masker's spelling no longer shows a partner who is on the roster
+
+From the review of the commit before this one, shown by a failing test first. The masker matches a name in any case
+and put it back in the roster's spelling. So a partner who typed a staff member's first name in lower case got it back
+with a capital only when that person exists. `lib/redact.ts`: a person entry can carry `asTyped`, and each match of it
+goes back exactly as it was typed. `lib/sentenceRead.ts` sets it on everyone a partner may not name. Staff see no
+change. The test in `tests/partner-access.test.ts` now also types a name in lower case and an address in upper case.
+VERIFY green: evals, typecheck, 993 tests, build. No schema change. Pushed to `main` with the two commits before it.
+Rollback: `vercel promote https://nico-desk-i0mace0hd-maahirbharatram-3547s-projects.vercel.app --yes`, or git revert the three commits.

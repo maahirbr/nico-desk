@@ -22,7 +22,9 @@ import { teamTasks } from './service';
 // The map from placeholder back to the real text lives inside one Masker, for one request. It is never logged or stored.
 
 export type MaskDict = {
-  people: { names: string[]; emails: string[] }[]; // one entry per person: every name form and every address
+  // One entry per person: every name form and every address. asTyped (22 Nov): this reader may not learn the person is on
+  // the roster, so each match goes back exactly as it was typed, never as the roster's spelling.
+  people: { names: string[]; emails: string[]; asTyped?: boolean }[];
   projects: string[]; // project names and workstream names
   terms?: string[]; // extra names to hide
 };
@@ -72,20 +74,20 @@ export function makeMasker(dict: MaskDict): Masker {
   const SENT = new RegExp(`${OPEN}([\\uE100-\\uE109]+)${CLOSE}`, 'g');
 
   // Named things: longest first, so "Autumn landing page" wins over "Autumn".
-  type Rule = { re: RegExp; kind: Kind; canonical: string; alias: string };
+  type Rule = { re: RegExp; kind: Kind; canonical: string; alias: string; asTyped?: boolean };
   const rules: Rule[] = [];
   const seenRule = new Set<string>();
-  const addRule = (alias: string, kind: Kind, canonical: string) => {
+  const addRule = (alias: string, kind: Kind, canonical: string, asTyped?: boolean) => {
     const a = alias.trim();
     if (a.length < 2) return;
     const k = `${kind}:${a.toLowerCase()}`;
     if (seenRule.has(k)) return;
     seenRule.add(k);
-    rules.push({ re: wordRe(a), kind, canonical, alias: a });
+    rules.push({ re: wordRe(a), kind, canonical, alias: a, asTyped });
   };
   for (const p of dict.people) {
     const canon = p.names[0] ?? p.emails[0];
-    if (canon) for (const a of [...p.names, ...p.emails]) addRule(a, 'Person', canon);
+    if (canon) for (const a of [...p.names, ...p.emails]) addRule(a, 'Person', canon, p.asTyped);
   }
   dict.projects.forEach((n) => addRule(n, 'Project', n));
   (dict.terms ?? []).forEach((n) => addRule(n, 'Term', n));
@@ -97,11 +99,11 @@ export function makeMasker(dict: MaskDict): Masker {
     // 1. keep ISO dates untouched while the number rules run
     sub(RE_DATE, (m) => m);
     // 2. emails (roster addresses first, so they take the person's label), then links
-    for (const r of rules) if (r.alias.includes('@')) sub(r.re, () => label('Person', r.canonical));
+    for (const r of rules) if (r.alias.includes('@')) sub(r.re, (m) => label('Person', r.asTyped ? m : r.canonical));
     sub(RE_EMAIL, (m) => label('Email', m));
     sub(RE_URL, (m) => label('Link', m));
     // 3. names, longest first
-    for (const r of rules) if (!r.alias.includes('@')) sub(r.re, () => label(r.kind, r.canonical));
+    for (const r of rules) if (!r.alias.includes('@')) sub(r.re, (m) => label(r.kind, r.asTyped ? m : r.canonical));
     // 4. phones (nine digits or more), money, then plain long numbers
     sub(RE_PHONE, (m) => { const n = m.replace(/\D/g, '').length; return n >= 9 || (m.startsWith('+') && n >= 8) ? label('Phone', m) : null; });
     sub(RE_MONEY, (m) => label('Amount', m));

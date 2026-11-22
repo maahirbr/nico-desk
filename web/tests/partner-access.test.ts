@@ -91,6 +91,9 @@ describe('what a partner sees and does', () => {
     expect(await title(asha, `Send the files to ${first} today`)).not.toContain(staff.display_name);
     expect(await title(asha, `Send the files to ${staff.email} today`)).not.toContain(staff.display_name);
     expect(await title(asha, 'Send the files to Ravi today')).toContain('Ravi Crux');
+    // The spelling must not tell a partner the name is on the roster: it comes back in the case they typed.
+    expect(await title(asha, `Send the files to ${first.toLowerCase()} today`)).toContain(`to ${first.toLowerCase()} today`);
+    expect(await title(asha, `Send the files to ${staff.email.toUpperCase()} today`)).toContain(staff.email.toUpperCase());
   });
   it('blocks a task only on someone from the same project', async () => {
     const { rows: [staff] } = await db.query<{ id: string }>(
