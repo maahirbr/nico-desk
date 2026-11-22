@@ -2501,3 +2501,9 @@ The PM's call, from a wording pass. One word per idea:
   blocked, a pasted chat's change). The Lead role was retired on 15 Nov, so "a lead" read wrong.
 - Activity: Not signed in yet. Empty states: Add task, as the forms say.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · New task: a Personal task needs no date
+The PM's call. On New task, picking Personal makes Due Date not required (no *, and no "optional" word either), the same as
+adding on Personal itself; left empty it saves with no date (NO_DATE, which the server already took for Personal). Other
+projects still need a date. Priority shows without "(optional)" too.
+Rollback: git revert the commit.

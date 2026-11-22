@@ -119,7 +119,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
             <input autoFocus value={title} maxLength={200} placeholder="Task name" aria-label="New task" onChange={(e) => setTitle(e.target.value)} />
             <input className="ptask-details" maxLength={600} value={details} placeholder="Details" aria-label="Details" onChange={(e) => setDetails(e.target.value)} />
           </div>
-          <DateField noQuick min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date (optional)" />
+          <DateField noQuick min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
           <PrioPick value={prio} onChange={setPrio} />
           <button className="btn" disabled={busy || title.trim().length < 3}>Add</button>
         </form>

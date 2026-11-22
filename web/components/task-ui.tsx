@@ -802,7 +802,7 @@ export function PrioTag({ t }: { t: Pick<Task, 'priority'> }) {
 // The pick: P1 · P2 · P3; pressing the one already chosen clears it.
 export function PrioPick({ value, onChange, disabled = false }: { value: PrioValue | '' | null; onChange: (v: PrioValue | '') => void; disabled?: boolean }) {
   return (
-    <span className="prio-pick" role="group" aria-label="Priority (optional)">
+    <span className="prio-pick" role="group" aria-label="Priority">
       {(['high', 'normal', 'low'] as const).map((v) => (
         <button key={v} type="button" disabled={disabled} title={PRIO_HELP[v]} className={`prio-opt prio-opt-${PRIO_WORD[v].toLowerCase()}`} aria-pressed={value === v}
           onClick={() => onChange(value === v ? '' : v)}>{PRIO_WORD[v]}</button>
@@ -825,7 +825,10 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
         <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
           <OwnerPicker key={d.projectId} projectId={d.projectId || null} value={d.ownerId} people={people} onChange={(ownerId, ownerRole) => set({ ...d, ownerId, ownerRole })} />
         </label>
-        <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>
+        {/* A Personal task needs no date (23 Nov, the PM's call), the same as adding it on Personal itself: no *, no "optional". */}
+        {projects && isPersonalName(projects.find((p) => p.id === d.projectId)?.name)
+          ? <label className="f"><span>Due Date</span><DateField min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>
+          : <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>}
       </div>
       {afterDates}
       {(projects || workstreams.length > 0) && (
@@ -848,7 +851,7 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
       )}
       {/* Priority shows once the task is going into Personal (20 Nov): optional, none to start. */}
       {projects && isPersonalName(projects.find((p) => p.id === d.projectId)?.name) && (
-        <div className="f"><span>Priority <span className="dim small">(optional)</span></span><PrioPick value={d.priority ?? ''} onChange={(v) => set({ ...d, priority: v })} /></div>
+        <div className="f"><span>Priority</span><PrioPick value={d.priority ?? ''} onChange={(v) => set({ ...d, priority: v })} /></div>
       )}
       {/* No Note field (15 Nov): Details already holds anything the owner should know. */}
     </>
@@ -927,7 +930,7 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       let added = 0;
       try {
         for (const d of all) {
-          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn, projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null, ...(d.priority ? { priority: d.priority } : {}) });
+          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn || (isPersonalName(projects?.find((p) => p.id === d.projectId)?.name) ? NO_DATE : d.dueOn), projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null, ...(d.priority ? { priority: d.priority } : {}) });
           if (made?.id) arrivals.add(made.id);
           added++;
         }
