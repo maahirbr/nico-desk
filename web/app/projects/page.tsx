@@ -24,6 +24,8 @@ export default async function Projects() {
   // My Personal project first (11 Nov), then the rest by soonest date.
   const live = [...projects.filter((p) => p.personalFor), ...projects.filter((p) => !p.archivedAt && !p.personalFor).sort(bySoonest)];
   const archived = projects.filter((p) => p.archivedAt && !p.personalFor).sort(bySoonest); // closed projects: out of the main list, still readable
+  // A to Z places for the sort switch (22 Nov); Personal stays first.
+  const byName = new Map([...projects].filter((p) => !p.personalFor).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })).map((p, i) => [p.id, i]));
   const members = Object.fromEntries(await Promise.all(projects.map(async (p) => [p.id, await projectMembers(d, p.id)] as const)));
   const STATUS: Record<string, { word: string; tone: string; help: HelpTerm }> = {
     on_track: { word: 'On track', tone: 'ok', help: 'project_on_track' }, at_risk: { word: 'At risk', tone: 'risk', help: 'project_at_risk' }, off_track: { word: 'Off track', tone: 'late', help: 'project_off_track' },
@@ -46,7 +48,7 @@ export default async function Projects() {
     const st = STATUS[p.status];
     const meets = p.archivedAt ? null : meetsWords(p, t); // "Meets Thu, next 16 Oct"
     return (
-      <Link key={p.id} href={`/projects/${p.id}`} className="pcard">
+      <Link key={p.id} href={`/projects/${p.id}`} className="pcard" style={{ '--by-name': byName.get(p.id) ?? 0 } as React.CSSProperties}>
         <div className="pcard-top">
           <h2 className="pcard-name">{p.name}</h2>
           {/* List view (20 Nov, the PM's call): On track says nothing there, so only At risk and Off track show; grid keeps every pill. */}
@@ -80,7 +82,7 @@ export default async function Projects() {
   return (
     <div className="calm">
       {/* The archived count is on its own fold below (the PM's call, 15 Nov). List or grid (19 Nov). */}
-      <ProjectsLayout title={<div><h1>Projects</h1><p className="summary">{live.filter((p) => !p.personalFor).length} project{live.filter((p) => !p.personalFor).length === 1 ? '' : 's'} · soonest date first</p></div>}
+      <ProjectsLayout title={<h1>Projects</h1>} summary={`${live.filter((p) => !p.personalFor).length} project${live.filter((p) => !p.personalFor).length === 1 ? '' : 's'}`}
         action={!readOnly ? <NewProjectButton people={activeOpts} meId={me.person.id} /> : undefined}>
       {live.length === 0 ? (
         <div className="empty-state"><p>No projects yet.{!readOnly && ' Start one with + New project.'}</p></div>

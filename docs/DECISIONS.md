@@ -2340,3 +2340,9 @@ Rollback: git revert the commit.
 The PM's call: in the list view every row read On track, which said nothing and crowded the rows. Now only At risk and
 Off track show there, in the same status column; the grid keeps every pill (`app/projects/page.tsx`, `.pcard-pill-ok`).
 Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Projects: sort by soonest date or by name
+The PM's call. The count line under Projects reads "7 projects · soonest date first ▾", and the words are a small drop-down
+that also offers "by name, A to Z". Personal stays first. The choice is kept per person in this browser with the list or grid
+choice (`components/ProjectsLayout.tsx`); A to Z only sets each card's CSS order (`--by-name`), so the page sends one list.
+Rollback: git revert the commit.

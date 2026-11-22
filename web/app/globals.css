@@ -2245,3 +2245,12 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
    wrapper is display: contents so the pill still lands in the list's status column. */
 .pcard-pill { display: contents; }
 :root .pview[data-pview="list"] .pcard-pill-ok { display: none; }
+/* Projects sort (22 Nov): a small drop-down inside the count line, "soonest date first ▾". A to Z only reorders the cards. */
+.inline-sort select { field-sizing: content; appearance: none; -webkit-appearance: none; font: inherit; color: inherit; background: transparent; border: 0; padding: 0 16px 0 0;
+  cursor: pointer; text-decoration: underline dotted; text-decoration-color: var(--line-strong); text-underline-offset: 4px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 5px top 55%, right 1px top 55%; background-size: 4px 4px; background-repeat: no-repeat; }
+.inline-sort select:hover { color: var(--ink); }
+.inline-sort select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+.pview[data-psort="name"] .pcard { order: var(--by-name, 0); }
+.pview[data-psort="name"] .pcard-personal { order: -1; }
