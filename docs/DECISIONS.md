@@ -2507,3 +2507,8 @@ The PM's call. On New task, picking Personal makes Due Date not required (no *, 
 adding on Personal itself; left empty it saves with no date (NO_DATE, which the server already took for Personal). Other
 projects still need a date. Priority shows without "(optional)" too.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Projects list: no "No date"
+The PM's call. Most projects have no date, so the list repeated "No date" down every row. In the list view a project with
+no date now shows nothing there; a date shows when one is set. The grid card keeps "No date".
+Rollback: git revert the commit.

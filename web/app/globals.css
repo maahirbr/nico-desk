@@ -2256,3 +2256,5 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
 .pview[data-psort="name"] .pcard-personal { order: -1; }
 /* Roster (22 Nov): the people count under the title. */
 .roster-count { margin: var(--space-xxs) 0 0; }
+/* Projects list (23 Nov, the PM's call): a project with no date shows nothing there; the grid card keeps No date. */
+:root .pview[data-pview="list"] .pcard-nodate { display: none; }

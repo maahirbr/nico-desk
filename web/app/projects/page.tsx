@@ -74,7 +74,7 @@ export default async function Projects() {
               <b>{fmtDate(p.launchOn)}</b>
               <span className={cd?.past ? 'late-text' : 'dim'}>{cd?.past ? 'passed' : `${cd?.months ? `${cd.months} mo ` : ''}${cd?.days} d to go`}</span>
             </span>
-          ) : <span className="dim small">No date</span>}
+          ) : <span className="dim small pcard-nodate">No date</span>}
         </div>
       </Link>
     );
