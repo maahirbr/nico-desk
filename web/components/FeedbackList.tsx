@@ -171,7 +171,7 @@ export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: F
         ) : notNow === r.id ? (
           <form className="fb-reply-form stack" onSubmit={(e) => { e.preventDefault(); void move(r.id, 'not_now', reason.trim()); }}>
             <label className="f"><span>Why not now?</span>
-              <input value={reason} maxLength={280} autoFocus placeholder="e.g. Not for the pilot, maybe later"
+              <input value={reason} maxLength={280} autoFocus placeholder="e.g. Not right now, maybe later"
                 onChange={(e) => setReason(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { setNotNow(null); setReason(''); } }} />
             </label>
             <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>

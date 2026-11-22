@@ -2479,3 +2479,9 @@ Rollback: git revert the commit.
 The PM's call. "24 people" in small grey type under the Roster title: the active people on the roster, for admins and
 leadership (`app/admin/page.tsx`). Who has signed in stays on Activity.
 Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Feedback: words for a wider team, not the first users
+The PM's call, now that more than the first users are on. The Feedback page reads "Tell us what’s working and what isn’t.
+We read every note." The Home card asks "{Name}, how’s NicoDesk working for you? 🙏" and "Share one thing to improve or one
+thing that works. It shapes what we build next." The Not now box suggests "e.g. Not right now, maybe later".
+Rollback: git revert the commit.
