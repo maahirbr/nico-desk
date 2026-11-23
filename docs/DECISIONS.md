@@ -2576,3 +2576,8 @@ the browser and checked as a note's are (`lib/feedback.ts addReplyImage`, writer
 reply in the note's thread only, never on Home. Schema: new table feedback_reply_images, with RLS and a team_fence, added in
 `upgrade()`, so the hosted database needs `npm run db:upgrade` first.
 Rollback: git revert the commit (the table can stay).
+
+## 2026-11-24 · Opus 5.5 · What's new: the Personal note ends on 1 Dec
+The PM's call. A What's new note can carry an end date (`until`, the first day it no longer shows, Got it or not;
+`lib/news.ts`). The Personal note shows through 30 Nov and is gone for everyone from 1 Dec.
+Rollback: git revert the commit.
