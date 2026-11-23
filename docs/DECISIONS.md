@@ -2593,3 +2593,10 @@ Schema: new table project_links, with RLS and a team_fence, added in `upgrade()`
 `npm run db:upgrade` first.
 Rollback: git revert the commit (the table can stay).
 The link boxes (a task's links and Key documents) say "Paste a link: Doc, Sheet, Slides"; Figma left the hint.
+
+## 2026-11-24 · Opus 5.5 · What's new: Personal through Friday 27 Nov, then Key documents 30 Nov to 4 Dec
+The PM's call. One note at a time, so they never stack: the Personal note shows through Friday 27 Nov (replacing its
+1 Dec end), nothing over the weekend, then a Key documents note from Monday 30 Nov to Friday 4 Dec: "Key documents: keep a
+project's brief, pre-read and MOMs in one place. Press + Key documents on any project to save the links." A note can now
+carry a start date (`from`) as well as an end (`until`), `lib/news.ts`.
+Rollback: git revert the commit.
