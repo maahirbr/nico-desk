@@ -2292,3 +2292,7 @@ table.board .row-actions { gap: 0; }
 .ws-item.dragging { opacity: .4; }
 .ws-item.drop-here { box-shadow: inset 0 2px 0 var(--primary); }
 @media (max-width: 640px) { .ws-grip { display: none; } }
+/* A picker that may hold a long project name (23 Nov): it stops at 260px and ends in …; the list shows each name in full. */
+.sel-btn.sel-cap { max-width: 260px; }
+.sel-btn.sel-cap .sel-sizer { max-width: 100%; }
+.sel-pop .sel-opt { white-space: normal; }

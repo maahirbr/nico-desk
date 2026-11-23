@@ -2555,3 +2555,8 @@ reorderWorkstreams`: same names, new order). In Settings, a Sub-Project chip can
 project. One order for both, and for the Sub-Project pickers. Tasks keep their sub-project; a plan board's pillars now keep
 their key by name, so reordering them leaves lines where they were. No drag on a phone. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Team: a long project name stays on one line
+The PM's call. On Team, the project picker stops at 260px and ends a long name in "…", so Find a person stays on the same
+line; hovering it shows the full name, and the list shows each name in full (`.sel-cap`).
+Rollback: git revert the commit.

@@ -87,7 +87,8 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           <Help term="team_by_status" host><Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link></Help>
           <Help term="team_by_person" host><Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link></Help>
         </span>
-        <Select value={project} aria-label="Project" onChange={setProject}>
+        {/* Capped (23 Nov): a long project name no longer pushes Find a person onto its own line; it ends in … */}
+        <Select value={project} aria-label="Project" onChange={setProject} className="sel-cap" title={projects.find((p) => p.id === project)?.name}>
           <option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>
         <input className="find-person" type="search" value={q} placeholder="Find a person" aria-label="Find a person by name or role"
