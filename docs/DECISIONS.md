@@ -2608,3 +2608,10 @@ it to … (was …)" (`lib/updates.ts`).
 Rollback: git revert the commit.
 The feedback card on Home ends at the end of Sunday 29 Nov (IST), not Monday 30 Nov, so Monday shows only the Key
 documents note (`lib/feedbackAsk.ts`, the PM's call).
+
+## 2026-11-24 · Opus 5.5 · Task links: "Paste a link" and "Link name"
+The PM's call: the task panel's link boxes read just "Paste a link" and "Link name", for a cleaner look. Key documents
+keeps its own hints.
+Rollback: git revert the commit.
+And the message on moving someone else's task into Personal ends at "…can go in your Personal project." (it said "and it stays
+yours there" too).

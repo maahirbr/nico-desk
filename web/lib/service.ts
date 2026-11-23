@@ -499,7 +499,7 @@ export async function editTask(db: Db, meId: string, id: string, input: EditInpu
         const { rows: [pp] } = await tx.query<{ personal_for: string | null }>(`SELECT personal_for FROM projects WHERE id = $1`, [into]);
         const owner = input.ownerId !== undefined ? input.ownerId || null : c.row.owner_id;
         if (pp?.personal_for && (pp.personal_for !== meId || owner !== meId || c.row.created_by !== meId)) {
-          throw bad('invalid_body', 'Only a task you made and own can go in your Personal project, and it stays yours there.', 'projectId');
+          throw bad('invalid_body', 'Only a task you made and own can go in your Personal project.', 'projectId');
         }
         if (!pp?.personal_for && c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it to a team project.', 'projectId');
       } else if (c.row.due_on === NO_DATE) throw bad('invalid_body', 'Give this task a date before moving it out of Personal.', 'projectId');

@@ -768,7 +768,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 {canEdit && t.links.length < LINKS_PER_TASK && (
                   <form className="link-add" noValidate onSubmit={(e) => { e.preventDefault(); addLink(); }}>
                     <input type="url" inputMode="url" enterKeyHint="done" autoComplete="off" maxLength={2000} value={linkForm.url} aria-label="Link address"
-                      placeholder="Paste a link: Doc, Sheet, Slides" onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
+                      placeholder="Paste a link" onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
                     <input maxLength={80} enterKeyHint="done" autoComplete="off" value={linkForm.label} aria-label="Link name" placeholder="Link name"
                       onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} />
                     <button className="btn" disabled={busy || !linkForm.url.trim()}>Add link</button>
