@@ -77,7 +77,8 @@ export function buildUpdates(input: {
       const newOwner = after ? str(after.owner_id) : str(e.after);
       if (newOwner === viewerId) {
         item('assigned', after ? `${who} assigned you ${title}${after.due_on ? `, due ${fmtDate(str(after.due_on))}` : ''}` : `${who} reassigned ${title} to you`,
-          after ? `assigned it to you${after.due_on ? `, due ${fmtDate(str(after.due_on))}` : ''}` : 'reassigned it to you');
+          // No date here (24 Nov, the PM's call): the row's own "Due …" shows it; a later move still reads "moved it to …".
+          after ? 'assigned it to you' : 'reassigned it to you');
       } else if (lead && !after) {
         item('reassigned', `${who} reassigned ${title} from ${first(str(e.before))} to ${first(newOwner)}`, `reassigned it from ${first(str(e.before))} to ${first(newOwner)}`);
       }
@@ -175,7 +176,7 @@ export function groupUpdates(items: UpdateItem[], tasks: UpdateTask[], projectNa
   for (const [taskId, list] of byTask) {
     const t = task.get(taskId);
     if (!t) continue;
-    // Oldest first within the line: "Meera assigned it to you, due 19 Oct, then moved it to 22 Oct (was 19 Oct)".
+    // Oldest first within the line: "Meera assigned it to you, then moved it to 22 Oct (was 19 Oct)".
     const steps = [...list].sort((a, b) => (a.at < b.at ? -1 : 1));
     // One part per run of the same person, so the page can set each name in bold.
     const parts: { who: string; text: string }[] = [];

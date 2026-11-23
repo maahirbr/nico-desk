@@ -2600,3 +2600,11 @@ The PM's call. One note at a time, so they never stack: the Personal note shows 
 project's brief, pre-read and MOMs in one place. Press + Key documents on any project to save the links." A note can now
 carry a start date (`from`) as well as an end (`until`), `lib/news.ts`.
 Rollback: git revert the commit.
+
+## 2026-11-24 · Opus 5.5 · Home updates: "assigned it to you" without the date
+The PM's call, from what a teammate saw: "<name> assigned it to you, due 4 Dec" sat beside "Due 4 Dec", the same date
+twice. The line now says "assigned it to you"; the row's own Due shows the date, and a later move still reads "then moved
+it to … (was …)" (`lib/updates.ts`).
+Rollback: git revert the commit.
+The feedback card on Home ends at the end of Sunday 29 Nov (IST), not Monday 30 Nov, so Monday shows only the Key
+documents note (`lib/feedbackAsk.ts`, the PM's call).

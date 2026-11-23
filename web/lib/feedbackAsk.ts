@@ -7,7 +7,7 @@ import type { Db } from './db';
 // To ask again later, change the dates (and the words).
 export const FEEDBACK_ASK = {
   since: '2026-11-15', // IST date the ask began
-  until: '2026-11-30', // the last day it shows (the PM's call: to the end of November)
+  until: '2026-11-29', // the last day it shows, to 11:59 pm IST (the PM's call, 24 Nov: end of Sunday 29 Nov)
 };
 
 export type FeedbackAsk = { open: boolean; shared: number | null; of: number | null; notYet: string[] };
