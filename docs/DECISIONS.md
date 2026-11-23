@@ -2565,3 +2565,7 @@ Rollback: git revert the commit.
 The PM's call. The task panel already does everything the full task page does, so its footer link to that page is gone.
 The page stays for the links that still go there (a #task in a comment, Ledger names, a project's update log).
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · New project: the partner option says "A task board with external partners."
+The PM's wording, in place of "The same task board, shared with an outside partner, like a brand collab or a consultant."
+Rollback: git revert the commit.

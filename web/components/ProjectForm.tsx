@@ -168,7 +168,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
               <b>Internal</b><span>A task board the Nico Tribe runs.</span>
             </button>
             <button type="button" role="radio" aria-checked={partner} onClick={() => setPartner(true)}>
-              <b>Partner / Collaboration</b><span>The same task board, shared with an outside partner, like a brand collab or a consultant.</span>
+              <b>Partner / Collaboration</b><span>A task board with external partners.</span>
             </button>
           </div>
         )}
