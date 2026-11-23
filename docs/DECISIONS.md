@@ -2547,3 +2547,11 @@ not on that project joins it with their Roster job title, and the sub-project cl
 you made and own, the rule editTask already keeps. The task's owner, the person who made it, Leadership and admins may
 move it; a partner never does. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Sub-projects: drag to change their order
+The PM's call. On a task board's page, whoever can change Settings (the project's owner, its lead or an admin) drags a
+sub-project in the side list to a new place; it saves at once (`POST /api/v1/projects/:id/workstreams`, `lib/plan.ts
+reorderWorkstreams`: same names, new order). In Settings, a Sub-Project chip can be dragged onto another and saves with the
+project. One order for both, and for the Sub-Project pickers. Tasks keep their sub-project; a plan board's pillars now keep
+their key by name, so reordering them leaves lines where they were. No drag on a phone. No schema change.
+Rollback: git revert the commit.

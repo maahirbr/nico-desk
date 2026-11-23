@@ -32,8 +32,20 @@ const OTHER = 'Other…';
 // The description's length limit. It matches the server's rule in lib/projectBody.ts.
 const GOAL_MAX = 600;
 
-function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder: string }) {
+// sortable (23 Nov, the PM's call): drag a chip onto another to put it there, for the order of sub-projects.
+function ChipsInput({ value, onChange, placeholder, sortable = false }: { value: string[]; onChange: (v: string[]) => void; placeholder: string; sortable?: boolean }) {
   const [draft, setDraft] = useState('');
+  const [dragged, setDragged] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+  const from = useRef<number | null>(null); // read on drop, so a quick drag never sees an old state
+  const drop = (to: number) => {
+    const at = from.current;
+    if (at === null || at === to) return;
+    const next = [...value];
+    const [moved] = next.splice(at, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
   const add = () => {
     const parts = draft.split(',').map((x) => x.trim()).filter(Boolean);
     if (parts.length) onChange([...new Set([...value, ...parts])]);
@@ -41,8 +53,16 @@ function ChipsInput({ value, onChange, placeholder }: { value: string[]; onChang
   };
   return (
     <div className="chips-input">
-      {value.map((v) => (
-        <span key={v} className="chip">{v}<button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(value.filter((x) => x !== v))}>×</button></span>
+      {value.map((v, i) => (
+        <span key={v} className={`chip${sortable ? ' chip-sort' : ''}${dragged === i ? ' dragging' : ''}${over === i && dragged !== null && dragged !== i ? ' drop-here' : ''}`}
+          draggable={sortable} title={sortable ? 'Drag to change the order' : undefined}
+          onDragStart={sortable ? (e) => { from.current = i; setDragged(i); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', v); } : undefined}
+          onDragOver={sortable ? (e) => { e.preventDefault(); setOver(i); } : undefined}
+          onDragLeave={sortable ? () => setOver((o) => (o === i ? null : o)) : undefined}
+          onDrop={sortable ? (e) => { e.preventDefault(); drop(i); from.current = null; setDragged(null); setOver(null); } : undefined}
+          onDragEnd={sortable ? () => { from.current = null; setDragged(null); setOver(null); } : undefined}>
+          {sortable && value.length > 1 && <span className="chip-grip" aria-hidden>⋮⋮</span>}{v}
+          <button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(value.filter((x) => x !== v))}>×</button></span>
       ))}
       <input value={draft} enterKeyHint="done" autoComplete="off" placeholder={value.length ? 'Add another' : placeholder} onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => { if (isRealEnter(e) || (e.key === ',' && !composing(e))) { e.preventDefault(); add(); } if (e.key === 'Backspace' && !draft && value.length) onChange(value.slice(0, -1)); }}
@@ -243,7 +263,7 @@ export function ProjectForm({ people, meId, initial, projectId, onDone, focus, a
                 )}
               </div>
             )}
-            <div className="f"><span>Sub-Projects</span><ChipsInput value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Design, Sourcing, Marketing, Launch. Press Enter after each" /></div>
+            <div className="f"><span>Sub-Projects</span><ChipsInput sortable value={f.workstreams} onChange={(v) => set('workstreams', v)} placeholder="e.g. Design, Sourcing, Marketing, Launch. Press Enter after each" /></div>
             {/* A task board can take a partner after it is made, or drop one (19 Nov, the PM's call). Adding one opens the same
                 Partner section a new partner project has; nothing changes until Save. An old plan board keeps its partner. */}
             {editing && !lock && f.kind === 'tasks' && (

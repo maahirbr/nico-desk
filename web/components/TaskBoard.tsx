@@ -174,7 +174,24 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const partnerIds = new Set(partnerIdList);
   const byWho = (t: Task) => !who || (who.startsWith('partner:') ? t.partnerOwner === who.slice(8) : t.ownerId === who);
   const visible = tasks.filter((t) => byWho(t) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
-  const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
+  // The sub-projects' order can be dragged in the side list (23 Nov, the PM's call) by whoever can change Settings.
+  const [wsOrder, setWsOrder] = useState(workstreams);
+  useEffect(() => { setWsOrder(workstreams); }, [workstreams.join('\u0000')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [wsDrag, setWsDrag] = useState<string | null>(null);
+  const wsFrom = useRef<string | null>(null); // read on drop, so a quick drag never sees an old state
+  const [wsOver, setWsOver] = useState<string | null>(null);
+  const canOrder = !readOnly && (isHead || isLead) && wsOrder.length > 1;
+  const dropWs = async (to: string) => {
+    const at = wsFrom.current;
+    if (!at || at === to || !wsOrder.includes(to)) return;
+    const before = wsOrder;
+    const next = before.filter((x) => x !== at);
+    next.splice(next.indexOf(to) + (before.indexOf(at) < before.indexOf(to) ? 1 : 0), 0, at);
+    setWsOrder(next);
+    try { await call(`/projects/${projectId}/workstreams`, 'POST', { names: next }); notify('Order saved'); router.refresh(); }
+    catch (e) { setWsOrder(before); notify((e as Error).message); }
+  };
+  const wsList = [...new Set([...wsOrder, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   // The sub-project panel folds away with the ☰ beside Tasks (the PM's call, 15 Nov). Open at first; this browser
   // remembers a fold (localStorage, always in try/catch).
   const [side, setSide] = useState(true);
@@ -351,11 +368,20 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         {wsList.length > 0 && side && (
           <aside className="card ws-side" aria-label="Sub-projects">
             <div className="ws-label">Sub-projects</div>
-            {['All', ...wsList].map((k) => (
-              <button key={k} className="ws-item" aria-pressed={ws === k} onClick={() => setWs(k)}>
-                <span>{k === 'All' ? 'All sub-projects' : k}</span><span className="n">{open.filter((t) => inWs(t, k)).length}</span>
-              </button>
-            ))}
+            {['All', ...wsList].map((k) => {
+              const drag = canOrder && wsOrder.includes(k);
+              return (
+                <button key={k} className={`ws-item${drag ? ' ws-drag' : ''}${wsDrag === k ? ' dragging' : ''}${wsOver === k && wsDrag && wsDrag !== k ? ' drop-here' : ''}`} aria-pressed={ws === k} onClick={() => setWs(k)}
+                  draggable={drag} title={drag ? 'Drag to change the order' : undefined}
+                  onDragStart={drag ? (e) => { wsFrom.current = k; setWsDrag(k); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', k); } : undefined}
+                  onDragOver={drag ? (e) => { e.preventDefault(); setWsOver(k); } : undefined}
+                  onDrop={drag ? (e) => { e.preventDefault(); void dropWs(k); wsFrom.current = null; setWsDrag(null); setWsOver(null); } : undefined}
+                  onDragEnd={drag ? () => { wsFrom.current = null; setWsDrag(null); setWsOver(null); } : undefined}>
+                  {drag && <span className="ws-grip" aria-hidden>⋮⋮</span>}
+                  <span>{k === 'All' ? 'All sub-projects' : k}</span><span className="n">{open.filter((t) => inWs(t, k)).length}</span>
+                </button>
+              );
+            })}
             {open.some((t) => !t.workstream) && (<><hr /><button className="ws-item none" aria-pressed={ws === '__none'} onClick={() => setWs('__none')}>
               <span>No sub-project</span><span className="n">{open.filter((t) => !t.workstream).length}</span></button></>)}
           </aside>

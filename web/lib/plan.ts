@@ -913,7 +913,16 @@ export async function updateProject(db: Db, meId: string, id: string, input: Pro
     const { rows } = await tx.query(`SELECT 1 FROM projects WHERE team_id = $1 AND lower(name) = lower($2) AND id <> $3`, [p.teamId, c.name, id]);
     if (rows.length) throw bad('invalid_body', 'A project with that name already exists.', 'name');
     // Plan pillars keep their keys, so lines stay in their pillar when one is renamed.
-    const named = c.ws.map((w, i) => p.pillars[i] ? { key: p.pillars[i].key, label: w } : { key: slug(w, i), label: w });
+    // A pillar keeps its key by name first, so reordering (23 Nov) leaves lines where they were; a renamed one keeps the key
+    // of the old name in its place.
+    const used = new Set<string>();
+    const named = c.ws.map((w, i) => {
+      const same = p.pillars.find((x) => x.label === w && !used.has(x.key));
+      const old = p.pillars[i] && !c.ws.includes(p.pillars[i].label) && !used.has(p.pillars[i].key) ? p.pillars[i] : null;
+      const key = same?.key ?? old?.key ?? slug(w, i);
+      used.add(key);
+      return { key, label: w };
+    });
     const pillars = p.kind === 'plan' ? (named.length ? named : [GENERAL]) : [];
     if (p.kind === 'plan') {
       const keep = new Set(pillars.map((x) => x.key));
@@ -1032,4 +1041,17 @@ export async function moveTargets(db: Tx, teamId: string, meId: string, all: boo
             OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id = pr.id AND m.person_id = $2))))
      ORDER BY pr.personal_for IS NULL, lower(pr.name)`, [teamId, meId, all]);
   return rows.map((r) => ({ id: r.id, name: r.personal_for ? 'Personal' : r.name, personal: !!r.personal_for }));
+}
+
+// The order of a task board's sub-projects (23 Nov, the PM's call), dragged on the project page. Same names, new order;
+// the project's owner, its lead or an admin, as for Settings. Tasks keep their sub-project.
+export async function reorderWorkstreams(db: Db, meId: string, id: string, names: string[]): Promise<string[]> {
+  const p = await getProject(db, id);
+  if ((await projectAccess(db, p, meId)) !== 'full') throw forbidden('Only the project owner, its lead or an admin can change the order.');
+  if (p.archivedAt) throw bad('project_archived', 'This project is archived. Restore it before changing it.');
+  if (p.kind !== 'tasks') throw bad('invalid_body', 'Change a plan board’s order in its Settings.');
+  const was = [...p.workstreams].sort().join('\u0000');
+  if ([...new Set(names)].length !== names.length || [...names].sort().join('\u0000') !== was) throw bad('invalid_body', 'The sub-projects changed. Reload and try again.', 'names');
+  await db.query(`UPDATE projects SET workstreams = $2::jsonb WHERE id = $1`, [id, JSON.stringify(names)]);
+  return names;
 }
