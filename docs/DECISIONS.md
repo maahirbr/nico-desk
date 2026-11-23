@@ -2560,3 +2560,8 @@ Rollback: git revert the commit.
 The PM's call. On Team, the project picker stops at 260px and ends a long name in "…", so Find a person stays on the same
 line; hovering it shows the full name, and the list shows each name in full (`.sel-cap`).
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Task panel: no "Open full page"
+The PM's call. The task panel already does everything the full task page does, so its footer link to that page is gone.
+The page stays for the links that still go there (a #task in a comment, Ledger names, a project's update log).
+Rollback: git revert the commit.

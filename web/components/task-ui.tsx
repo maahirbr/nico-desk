@@ -787,7 +787,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             <div className="drawer-foot">
               {/* No separate Drop task… since 23 Nov (the PM's call): Dropped is already one of the status buttons above. */}
               {!open && (isLead || t.projectHead || t.ownerId === meId) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
-              <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
+              {/* No "Open full page" since 23 Nov (the PM's call): this panel already does everything that page does. */}
             </div>
 
             <button className="log-toggle small-toggle" aria-expanded={showLog} onClick={() => setShowLog(!showLog)}>
