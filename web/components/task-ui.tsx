@@ -465,6 +465,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const readOnly = useReadOnly();
   const can = !readOnly && !!t && !t.readOnly && (t.ownerId === meId || isLead);
   const canEdit = !readOnly && !!t && !t.readOnly && (can || t.createdBy === meId);
+  const [moving, setMoving] = useState(false);
+  const [targets, setTargets] = useState<{ id: string; name: string; personal: boolean }[] | null>(null);
+  const [moveTo, setMoveTo] = useState('');
+  const openMove = async () => {
+    setMoving(true); setMoveTo(''); setErr(null);
+    if (targets) return;
+    try { setTargets(await api('/projects', 'GET')); } catch (e) { setTargets([]); setErr((e as Error).message); }
+  };
   const open = t?.statusCategory === 'open';
   const key = t ? statusKey(t) : 'todo';
   // Ask for an update: anyone but the owner, on an open task with a Nicobar owner. One open ask each.
@@ -551,6 +559,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
           <span className="small dim">
             {t && (t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId] ?? 'Project'}</Link> : oneOffWord(t, names, meId))}
             {t?.workstream && <> · {t.workstream}</>}
+            {/* Move to a project (23 Nov, the PM's call): a one-off that belongs to a project, or a task filed in the wrong one. */}
+            {t && canEdit && !moving && <> · <button type="button" className="linkbtn drawer-move" onClick={() => void openMove()}>{t.projectId ? 'Move' : 'Move to a project'}</button></>}
           </span>
           {t && <button className="mini-btn drawer-copy" type="button" onClick={async () => {
             try { await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?task=${t.id}`); notify('Link to this task copied'); }
@@ -558,6 +568,21 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
           }}>Copy link</button>}
           <button className="x" aria-label="Close" onClick={close}>×</button>
         </div>
+        {t && moving && (
+          <div className="drawer-moving">
+            {targets === null ? <span className="small dim">Loading projects…</span>
+              : targets.filter((x) => x.id !== t.projectId && (!x.personal || (t.createdBy === meId && t.ownerId === meId))).length === 0 ? <span className="small dim">No other project to move it to.</span>
+              : <>
+                <Select value={moveTo} aria-label="Move to project" onChange={setMoveTo}>
+                  <option value="" disabled>Pick a project</option>
+                  {targets.filter((x) => x.id !== t.projectId && (!x.personal || (t.createdBy === meId && t.ownerId === meId))).map((x) => <option key={x.id} value={x.id}>{x.personal ? 'Personal 🔒' : x.name}</option>)}
+                </Select>
+                <button type="button" className="btn" disabled={!moveTo || busy}
+                  onClick={async () => { const name = targets.find((x) => x.id === moveTo)?.name ?? 'the project'; if (await run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, projectId: moveTo, workstream: null }), `Moved to ${name}`)) setMoving(false); }}>Move</button>
+              </>}
+            <button type="button" className="act" onClick={() => setMoving(false)}>Cancel</button>
+          </div>
+        )}
         {!t ? <p className="empty">{err ?? 'Loading…'}</p> : (
           <>
             {canEdit && open

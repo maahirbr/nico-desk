@@ -1020,3 +1020,16 @@ export async function archiveNewsForMe(db: Tx, teamId: string, meId: string): Pr
 export async function markArchiveNewsSeen(db: Db, meId: string, askId: string): Promise<void> {
   await db.query(`UPDATE archive_asks SET seen_at = now() WHERE id = $1 AND asked_by = $2 AND outcome IS NOT NULL`, [askId, meId]);
 }
+
+// Where a task can be moved (23 Nov, the PM's call: a task filed in the wrong place, or a one-off that belongs to a
+// project). Open task boards the person is on (owner, lead or member), or any for Leadership and admins. Their own
+// Personal is in the list; whether a task may go there (made and owned by them) is checked when it moves (editTask).
+export async function moveTargets(db: Tx, teamId: string, meId: string, all: boolean): Promise<{ id: string; name: string; personal: boolean }[]> {
+  const { rows } = await db.query<{ id: string; name: string; personal_for: string | null }>(
+    `SELECT pr.id, pr.name, pr.personal_for FROM projects pr
+     WHERE pr.team_id = $1 AND pr.archived_at IS NULL AND pr.kind = 'tasks'
+       AND (pr.personal_for = $2 OR (pr.personal_for IS NULL AND ($3 OR pr.owner_id = $2 OR pr.lead_id = $2
+            OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id = pr.id AND m.person_id = $2))))
+     ORDER BY pr.personal_for IS NULL, lower(pr.name)`, [teamId, meId, all]);
+  return rows.map((r) => ({ id: r.id, name: r.personal_for ? 'Personal' : r.name, personal: !!r.personal_for }));
+}

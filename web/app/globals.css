@@ -2275,3 +2275,8 @@ table.board td.act-cell { width: 58px; padding-left: 0; padding-right: var(--spa
 table.board .row-actions { gap: 0; }
 .owner-partner { margin-top: 2px; padding-left: calc(var(--mark-size) + var(--space-xs)); } /* under the name, past the avatar */
 .ptm-hint a { color: var(--primary); font-weight: 500; }
+/* Move a task to a project (23 Nov): a small link by its project name, then a picker under the top line. */
+.drawer-move { font: inherit; color: var(--primary); background: none; border: 0; padding: 0; box-shadow: none; cursor: pointer; }
+.drawer-move:hover { text-decoration: underline; }
+.drawer-moving { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin: var(--space-xs) 0 var(--space-sm); }
+.drawer-moving .sel-btn { min-width: 220px; }

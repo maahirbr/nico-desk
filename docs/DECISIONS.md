@@ -2538,3 +2538,12 @@ Rollback: git revert the commit.
 The PM's call. The task panel's footer link "Drop task…" did what the Dropped status button above already does (asks for
 a reason, then drops it, for the same people), so it is gone. Dropped stays the status word: the five words name a state.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Move a task to a project
+The PM's call: a one-off that belongs to a project, or a task filed in the wrong one. The task panel's top line has "Move
+to a project" (or "Move" on a project task): pick one of the open task boards you are on (any, for Leadership and admins;
+`GET /api/v1/projects`, `lib/plan.ts moveTargets`), and the task moves with its owner, date, status and history; an owner
+not on that project joins it with their Roster job title, and the sub-project clears. Personal is offered only for a task
+you made and own, the rule editTask already keeps. The task's owner, the person who made it, Leadership and admins may
+move it; a partner never does. No schema change.
+Rollback: git revert the commit.
