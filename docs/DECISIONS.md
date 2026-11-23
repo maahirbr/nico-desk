@@ -2569,3 +2569,10 @@ Rollback: git revert the commit.
 ## 2026-11-23 · Opus 5.5 · New project: the partner option says "A task board with external partners."
 The PM's wording, in place of "The same task board, shared with an outside partner, like a brand collab or a consultant."
 Rollback: git revert the commit.
+
+## 2026-11-24 · Opus 5.5 · Feedback: screenshots on a reply
+The PM's call. A reply on the Feedback page takes up to three screenshots from a paperclip button beside Reply, shrunk in
+the browser and checked as a note's are (`lib/feedback.ts addReplyImage`, writer only). They show as thumbnails under the
+reply in the note's thread only, never on Home. Schema: new table feedback_reply_images, with RLS and a team_fence, added in
+`upgrade()`, so the hosted database needs `npm run db:upgrade` first.
+Rollback: git revert the commit (the table can stay).

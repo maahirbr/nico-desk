@@ -2296,3 +2296,9 @@ table.board .row-actions { gap: 0; }
 .sel-btn.sel-cap { max-width: 260px; }
 .sel-btn.sel-cap .sel-sizer { max-width: 100%; }
 .sel-pop .sel-opt { white-space: normal; }
+/* Screenshots on a feedback reply (23 Nov): the paperclip by Reply, and small thumbnails under the reply. */
+.fb-clip { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: var(--rule) solid var(--line-strong); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.fb-clip:hover { color: var(--ink); }
+.fb-clip:disabled { opacity: .4; cursor: default; }
+.fb-reply-shots { display: inline-flex; gap: var(--space-xs); flex-wrap: wrap; }
+.fb-reply-shots .mini-btn button { border: 0; background: none; margin-left: 4px; cursor: pointer; color: var(--ink-3); }

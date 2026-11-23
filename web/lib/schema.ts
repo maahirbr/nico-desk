@@ -269,6 +269,16 @@ CREATE TABLE feedback_replies (
 );
 CREATE INDEX feedback_replies_note ON feedback_replies (feedback_id, created_at);
 ALTER TABLE feedback_replies ENABLE ROW LEVEL SECURITY;
+-- 23 Nov: screenshots on a reply, up to three, added by its writer; shown only in the note's thread on the Feedback page.
+CREATE TABLE feedback_reply_images (
+  reply_id    text NOT NULL REFERENCES feedback_replies(id),
+  n           smallint NOT NULL CHECK (n BETWEEN 1 AND 3),
+  bytes       bytea NOT NULL,
+  mime        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (reply_id, n)
+);
+ALTER TABLE feedback_reply_images ENABLE ROW LEVEL SECURITY;
 -- 30 Oct: what changed on a note, for its writer and everyone who gave it +1, never the person who did it. Shown on
 -- Home until they open Feedback or press Mark seen. In-app only.
 CREATE TABLE feedback_news (
@@ -709,6 +719,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   feedback_images: inFeedback,
   feedback_votes: inFeedback,
   feedback_replies: inFeedback,
+  feedback_reply_images: `reply_id IN (SELECT id FROM feedback_replies)`,
   feedback_news: `${ON_TEAM} AND ${inFeedback}`,
 };
 

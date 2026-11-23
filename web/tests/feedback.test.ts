@@ -284,7 +284,7 @@ describe('done and not now', () => {
 
 describe('the upgrade', () => {
   it('adds the table with RLS on to an older database, and runs again safely', async () => {
-    await db.exec('DROP TABLE feedback_news, feedback_replies, feedback_votes, feedback_images, feedback');
+    await db.exec('DROP TABLE feedback_reply_images, feedback_news, feedback_replies, feedback_votes, feedback_images, feedback');
     await upgrade(db);
     await upgrade(db);
     await db.exec(FEEDBACK_UPGRADE);

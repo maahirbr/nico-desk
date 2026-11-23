@@ -12,7 +12,7 @@ import { newId, sniffImage } from './service';
 export const FEEDBACK_MAX = 4000;
 const PATH_MAX = 300;
 
-export type FeedbackReply = { id: string; authorName: string; body: string; createdAt: string };
+export type FeedbackReply = { id: string; authorName: string; body: string; createdAt: string; images?: number };
 export type FeedbackStatus = 'open' | 'done' | 'not_now';
 export type FeedbackKind = 'fix' | 'praise';
 export type FeedbackView = { id: string; personId: string; personName: string; path: string | null; body: string; createdAt: string; images: number; votes: number; mine: boolean; others: string[];
@@ -61,8 +61,9 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
       ORDER BY f.created_at DESC, f.id DESC`,
     [me.team.id, me.person.id],
   );
-  const replies = await db.query<{ id: string; feedback_id: string; author_name: string; body: string; created_at: string }>(
-    `SELECT r.id, r.feedback_id, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS author_name, r.body, r.created_at
+  const replies = await db.query<{ id: string; feedback_id: string; author_name: string; body: string; created_at: string; images: number }>(
+    `SELECT r.id, r.feedback_id, (COALESCE(p.nickname, p.display_name) || CASE WHEN p.active IS FALSE THEN ' (inactive)' ELSE '' END) AS author_name, r.body, r.created_at,
+            (SELECT count(*)::int FROM feedback_reply_images i WHERE i.reply_id = r.id) AS images
        FROM feedback_replies r JOIN people p ON p.id = r.author_id JOIN feedback f ON f.id = r.feedback_id
       WHERE f.person_id IN (SELECT person_id FROM team_members WHERE team_id = $1)
       ORDER BY r.created_at, r.id`, [me.team.id]);
@@ -77,7 +78,7 @@ export async function listFeedback(db: Db, me: Me): Promise<FeedbackView[]> {
   const byNote = new Map<string, FeedbackReply[]>();
   for (const r of replies.rows) {
     const list = byNote.get(r.feedback_id) ?? [];
-    list.push({ id: r.id, authorName: r.author_name, body: r.body, createdAt: r.created_at });
+    list.push({ id: r.id, authorName: r.author_name, body: r.body, createdAt: r.created_at, images: r.images });
     byNote.set(r.feedback_id, list);
   }
   return rows.map((r) => ({ id: r.id, personId: r.person_id, personName: r.person_name, path: r.path, body: r.body, createdAt: r.created_at, images: r.images, votes: r.votes, mine: r.mine, others: backers.get(r.id) ?? [],
@@ -114,6 +115,32 @@ export async function addFeedbackImage(db: Db, me: Me, id: string, bytes: Uint8A
 export async function getFeedbackImage(db: Db, me: Me, id: string, n: number): Promise<{ bytes: Uint8Array; mime: string } | null> {
   await noteOnTeam(db, me, id);
   const { rows } = await db.query<{ bytes: Uint8Array; mime: string }>(`SELECT bytes, mime FROM feedback_images WHERE feedback_id = $1 AND n = $2`, [id, n]);
+  return rows[0] ? { bytes: new Uint8Array(rows[0].bytes), mime: rows[0].mime } : null;
+}
+
+// Screenshots on a reply (23 Nov, the PM's call): up to three, added by the reply's writer, checked as a note's are.
+// Shown only in the note's thread on the Feedback page; anyone who can read the note sees them.
+export async function addReplyImage(db: Db, me: Me, id: string, replyId: string, bytes: Uint8Array, claimedMime: string): Promise<{ n: number }> {
+  assertNotViewing(me);
+  await noteOnTeam(db, me, id);
+  const { rows: [r] } = await db.query<{ author_id: string }>(`SELECT author_id FROM feedback_replies WHERE id = $1 AND feedback_id = $2`, [replyId, id]);
+  if (!r) throw notFound('No such reply.');
+  if (r.author_id !== me.person.id) throw forbidden('Only the person who wrote a reply adds pictures to it.');
+  if (bytes.length === 0) throw bad('invalid_body', 'Choose a picture.', 'image');
+  if (bytes.length > FEEDBACK_IMAGE_MAX) throw new ApiError(413, 'image_too_big', 'A picture must be under 600 KB.', 'image');
+  const mime = sniffImage(bytes);
+  if (!mime || mime !== claimedMime) throw new ApiError(415, 'image_type', 'Use a PNG, JPEG or WebP picture.', 'image');
+  const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM feedback_reply_images WHERE reply_id = $1`, [replyId]);
+  if (rows[0].n >= FEEDBACK_IMAGES) throw bad('too_many_images', `A reply holds ${FEEDBACK_IMAGES} pictures.`, 'image');
+  const n = rows[0].n + 1;
+  await db.query(`INSERT INTO feedback_reply_images (reply_id, n, bytes, mime) VALUES ($1,$2,$3,$4)`, [replyId, n, bytes, mime]);
+  return { n };
+}
+
+export async function getReplyImage(db: Db, me: Me, id: string, replyId: string, n: number): Promise<{ bytes: Uint8Array; mime: string } | null> {
+  await noteOnTeam(db, me, id);
+  const { rows } = await db.query<{ bytes: Uint8Array; mime: string }>(
+    `SELECT i.bytes, i.mime FROM feedback_reply_images i JOIN feedback_replies r ON r.id = i.reply_id WHERE r.feedback_id = $1 AND i.reply_id = $2 AND i.n = $3`, [id, replyId, n]);
   return rows[0] ? { bytes: new Uint8Array(rows[0].bytes), mime: rows[0].mime } : null;
 }
 
@@ -191,6 +218,7 @@ export async function deleteFeedback(db: Db, me: Me, id: string): Promise<{ ok: 
   if (note.status !== 'open' || k?.kind === 'praise') throw bad('cannot_delete', 'Only an open note can be deleted, not a resolved one or one that is working well.');
   await db.transaction(async (tx) => {
     await tx.query(`DELETE FROM feedback_news WHERE feedback_id = $1`, [id]);
+    await tx.query(`DELETE FROM feedback_reply_images WHERE reply_id IN (SELECT id FROM feedback_replies WHERE feedback_id = $1)`, [id]);
     await tx.query(`DELETE FROM feedback_replies WHERE feedback_id = $1`, [id]);
     await tx.query(`DELETE FROM feedback_votes WHERE feedback_id = $1`, [id]);
     await tx.query(`DELETE FROM feedback_images WHERE feedback_id = $1`, [id]);
