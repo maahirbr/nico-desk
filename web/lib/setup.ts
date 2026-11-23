@@ -37,8 +37,7 @@ export function setupSteps(i: SetupInput): SetupStep[] {
       button: plan ? 'Add a line' : 'Add a task',
     },
   ];
-  steps.push({ key: 'date', done: i.hasDate, action: 'settings', title: 'Set a date', button: 'Set the date',
-    hint: 'The date the project is working to. It is what At risk and Late are measured against.' });
+  // No date step since 23 Nov (the PM's call): a date is optional, so people and tasks are enough to start.
   if (plan || i.partnerName) {
     const named = !!i.partnerName?.trim() && i.partnerName.trim() !== DEFAULT_PARTNER;
     steps.push({ key: 'partner', done: named, title: 'Name the partner', hint: "The partner's people show beside yours on the plan.", button: 'Name the partner', action: 'settings' });

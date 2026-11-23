@@ -216,8 +216,9 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             {myProjects.map((p, i) => (
               <Fragment key={p.id}>
                 <Link href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b>{p.role && <span className="dim">{p.role}</span>}</Link>
-                {/* One-off tasks I gave (20 Nov): right after Personal, which comes first. */}
-                {i === 0 && p.name.startsWith('Personal') && oneOffOpen > 0 && <Link href="/one-off" className="my-project"><b>One-off tasks</b><span className="dim">{oneOffOpen} open</span>{oneOffLate > 0 && <span className="late-text small">{oneOffLate} late</span>}</Link>}
+                {/* One-off tasks I gave (20 Nov): right after Personal, which comes first. Always there since 23 Nov (the PM's
+                    call), open or not, as it also keeps the closed ones. */}
+                {i === 0 && p.name.startsWith('Personal') && <Link href="/one-off" className="my-project"><b>One-off tasks</b><span className="dim">{oneOffOpen ? `${oneOffOpen} open` : 'Nothing open'}</span>{oneOffLate > 0 && <span className="late-text small">{oneOffLate} overdue</span>}</Link>}
               </Fragment>
             ))}
           </div>

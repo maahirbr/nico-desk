@@ -2527,3 +2527,9 @@ people and the partner's people as "Name (Partner)"; a partner owner shows "(Par
 has both a Nicobar owner and a partner name shows the Nicobar owner; the partner name stays stored. ✎ and ✕ sit tighter.
 No schema change.
 Rollback: git revert the commit (links already made stay: the people stay on their projects and own their tasks).
+
+## 2026-11-23 · Opus 5.5 · Project setup: no date step; One-off tasks always on Home
+The PM's calls. A new project's setup list asks for its people and its first tasks only: a date is optional, so "Set a
+date" left the list (`lib/setup.ts`). On Home, One-off tasks sits after Personal even with nothing open ("Nothing open"),
+since it also keeps the closed ones; its late count says overdue, as the rest of the app does since ff56aec.
+Rollback: git revert the commit.
