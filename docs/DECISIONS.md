@@ -2533,3 +2533,8 @@ The PM's calls. A new project's setup list asks for its people and its first tas
 date" left the list (`lib/setup.ts`). On Home, One-off tasks sits after Personal even with nothing open ("Nothing open"),
 since it also keeps the closed ones; its late count says overdue, as the rest of the app does since ff56aec.
 Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Task panel: no separate "Drop task…"
+The PM's call. The task panel's footer link "Drop task…" did what the Dropped status button above already does (asks for
+a reason, then drops it, for the same people), so it is gone. Dropped stays the status word: the five words name a state.
+Rollback: git revert the commit.

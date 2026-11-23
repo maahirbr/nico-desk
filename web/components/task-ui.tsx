@@ -760,7 +760,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
 
             <div className="drawer-foot">
-              {open && can && <button className="act danger" onClick={() => setMode('drop')}>Drop task…</button>}
+              {/* No separate Drop task… since 23 Nov (the PM's call): Dropped is already one of the status buttons above. */}
               {!open && (isLead || t.projectHead || t.ownerId === meId) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
               <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
             </div>
