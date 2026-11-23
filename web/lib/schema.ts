@@ -470,6 +470,21 @@ CREATE TABLE task_links (
 );
 CREATE INDEX task_links_task ON task_links (task_id, created_at);
 
+-- Key documents on a project (23 Nov, the PM's call, from a teammate's feedback): links to its brief, plan or tracker,
+-- shown at the top of the project page. A pre-read is named as such in its name. On a partner project, nicobar_only keeps a link from
+-- the partner's people. The project's owner, its lead or an admin adds and removes them.
+CREATE TABLE project_links (
+  id            text PRIMARY KEY,
+  project_id    text NOT NULL REFERENCES projects(id),
+  url           text NOT NULL CHECK (char_length(url) <= 2000),
+  label         text CHECK (char_length(label) BETWEEN 1 AND 80),
+  nicobar_only  boolean NOT NULL DEFAULT false,
+  created_by    text REFERENCES people(id),
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX project_links_project ON project_links (project_id, created_at);
+ALTER TABLE project_links ENABLE ROW LEVEL SECURITY;
+
 -- Plan boards: lines of work with checkpoints, a partner's asks, and actions from meetings.
 -- A date moved later counts as a push and keeps the date first given (orig_due_on).
 
@@ -698,6 +713,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   plan_activity: inProject('project_id'),
   plan_checkpoints: `line_id IN (SELECT id FROM plan_lines)`,
   task_links: inTask('task_id'),
+  project_links: inProject('project_id'),
   update_asks: inTask('task_id'),
   handovers: `team_id = ${TEAM}`,
   personal_pages: `team_id = ${TEAM}`,

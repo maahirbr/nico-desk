@@ -2581,3 +2581,15 @@ Rollback: git revert the commit (the table can stay).
 The PM's call. A What's new note can carry an end date (`until`, the first day it no longer shows, Got it or not;
 `lib/news.ts`). The Personal note shows through 30 Nov and is gone for everyone from 1 Dec.
 Rollback: git revert the commit.
+
+## 2026-11-24 · Opus 5.5 · Key documents on a project
+The PM's call, from a teammate's feedback (attach key documents and the pre-read on the project page, as an earlier OKR
+tool had). A quiet grey "+ Key documents" sits under the project's people; anyone on the project adds a link (a Doc, Sheet,
+Slides or any web page) with a name, e.g. "Pre-read" or "MOMs", and the links show beside it in the order added. Whoever
+added a link, or the project's owner, its lead or an admin, removes it, after a "Remove …? Remove / Keep" check. On a
+partner project a link can be "Nicobar only", kept from the partner's people. Google's own sharing still decides who can
+open a file. Links only, no uploads: the files stay in Drive. `lib/projectLinks.ts`, `components/KeyDocs.tsx`.
+Schema: new table project_links, with RLS and a team_fence, added in `upgrade()`, so the hosted database needs
+`npm run db:upgrade` first.
+Rollback: git revert the commit (the table can stay).
+The link boxes (a task's links and Key documents) say "Paste a link: Doc, Sheet, Slides"; Figma left the hint.

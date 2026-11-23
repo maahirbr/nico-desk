@@ -850,7 +850,7 @@ export async function deleteProject(db: Db, meId: string, id: string, confirmNam
       [`DELETE FROM chat_messages WHERE id = ANY($1::text[])`, [messages]],
       [`DELETE FROM update_seen WHERE scope = ANY($1::text[])`, [tasks]],
       [`DELETE FROM task_links WHERE task_id = ANY($1::text[])`, [tasks]],
-      ...['plan_actions', 'plan_proposals', 'plan_asks', 'plan_parked', 'plan_activity', 'plan_lines', 'project_members', 'project_viewers', 'tasks']
+      ...['plan_actions', 'plan_proposals', 'plan_asks', 'plan_parked', 'plan_activity', 'plan_lines', 'project_links', 'project_members', 'project_viewers', 'tasks']
         .map((tbl): [string, unknown[]] => [`DELETE FROM ${tbl} WHERE project_id = $1`, [id]]),
       [`DELETE FROM projects WHERE id = $1`, [id]],
     ];

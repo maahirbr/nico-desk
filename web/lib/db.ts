@@ -128,6 +128,8 @@ export async function upgrade(db: Db) {
   // 20 Nov: a proposed task from meeting minutes keeps its description apart from its heading.
   await db.exec(`ALTER TABLE plan_proposals ADD COLUMN IF NOT EXISTS details text NOT NULL DEFAULT '';`);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
+  // 23 Nov: key documents on a project.
+  await db.exec(PROJECT_LINKS_UPGRADE);
   // 23 Nov: screenshots on a feedback reply.
   await db.exec(FEEDBACK_REPLY_IMAGES_UPGRADE);
   await db.exec(GOOGLE_LINKS_UPGRADE);
@@ -275,6 +277,21 @@ CREATE TABLE IF NOT EXISTS feedback_reply_images (
   PRIMARY KEY (reply_id, n)
 );
 ALTER TABLE feedback_reply_images ENABLE ROW LEVEL SECURITY;
+`;
+
+export const PROJECT_LINKS_UPGRADE = `
+-- 23 Nov: key documents on a project (links). RLS on, like every table.
+CREATE TABLE IF NOT EXISTS project_links (
+  id            text PRIMARY KEY,
+  project_id    text NOT NULL REFERENCES projects(id),
+  url           text NOT NULL CHECK (char_length(url) <= 2000),
+  label         text CHECK (char_length(label) BETWEEN 1 AND 80),
+  nicobar_only  boolean NOT NULL DEFAULT false,
+  created_by    text REFERENCES people(id),
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS project_links_project ON project_links (project_id, created_at);
+ALTER TABLE project_links ENABLE ROW LEVEL SECURITY;
 `;
 
 export const ARCHIVE_ASKS_UPGRADE = `

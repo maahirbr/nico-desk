@@ -2302,3 +2302,27 @@ table.board .row-actions { gap: 0; }
 .fb-clip:disabled { opacity: .4; cursor: default; }
 .fb-reply-shots { display: inline-flex; gap: var(--space-xs); flex-wrap: wrap; }
 .fb-reply-shots .mini-btn button { border: 0; background: none; margin-left: 4px; cursor: pointer; color: var(--ink-3); }
+/* Key documents on a project (23 Nov): one quiet row under the header, in the order added. */
+.keydocs { margin: 0 0 var(--space-md); }
+.keydocs-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+.keydocs-h { font: var(--type-small); font-weight: 600; color: var(--ink-2); margin-right: var(--space-xxs); }
+.keydoc { display: inline-flex; align-items: center; gap: 2px; padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); background: var(--pill); font: var(--type-small); }
+.keydoc-link { display: inline-flex; align-items: center; gap: var(--space-xxs); color: var(--ink); text-decoration: none; min-width: 0; }
+.keydoc-link:hover .lchip-text { text-decoration: underline; }
+.keydoc-own { font-size: 11px; color: var(--ink-3); margin-left: 4px; }
+.keydoc-x { width: 20px; height: 20px; margin-left: 2px; border: 0; border-radius: 50%; background: none; color: var(--ink-3); cursor: pointer; font-size: 14px; line-height: 1; display: inline-grid; place-items: center; }
+.keydoc-x:hover { background: var(--sunk); color: var(--ink); }
+.keydoc-ask { gap: var(--space-xs); padding-right: 4px; background: var(--late-soft); }
+.keydoc-yes, .keydoc-no { font: inherit; font-weight: 600; border: 0; background: none; cursor: pointer; padding: 2px 6px; border-radius: var(--radius-pill); }
+.keydoc-yes { color: var(--late); }
+.keydoc-no { color: var(--ink-2); }
+.keydoc-yes:hover, .keydoc-no:hover { background: var(--surface); }
+.keydocs-add { font: var(--type-small); color: var(--primary); background: none; border: 0; padding: 0; box-shadow: none; cursor: pointer; }
+.keydocs-add:hover { text-decoration: underline; }
+.keydocs-form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-top: var(--space-sm); }
+.keydocs-form input[aria-label="Link"] { flex: 2 1 280px; }
+.keydocs-form input[aria-label="Name"] { flex: 1 1 160px; }
+.keydocs-hint { flex-basis: 100%; margin: 0; }
+.keydocs-empty { color: var(--ink-3); }
+.keydocs-empty:hover { color: var(--ink-2); text-decoration: none; } /* stays grey on hover, never orange (24 Nov) */
+.keydocs-head { margin-right: var(--space-xxs); } /* grey like the empty one, always (24 Nov) */
