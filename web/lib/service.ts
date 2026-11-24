@@ -718,9 +718,11 @@ export async function orderPersonal(db: Db, meId: string, projectId: string, ids
 }
 
 // FR-21: a free update changes no field, so it takes no version.
+// An update holds up to 400 characters (24 Nov, the PM's call: 280 was too short). It is stored in the event's after.
+export const UPDATE_MAX = 400;
 export async function addUpdate(db: Db, meId: string, id: string, text: string): Promise<void> {
   const t = text.trim();
-  if (t.length < 1 || t.length > 280) throw bad('invalid_body', 'An update is 1 to 280 characters.', 'text');
+  if (t.length < 1 || t.length > UPDATE_MAX) throw bad('invalid_body', `An update is 1 to ${UPDATE_MAX} characters.`, 'text');
   await db.transaction(async (tx) => {
     const { rows } = await tx.query<TaskRow>(`SELECT * FROM tasks WHERE id = $1`, [id]);
     const row = rows[0];

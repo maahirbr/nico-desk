@@ -629,8 +629,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                   <div key={a.id} className="small"><b>{(names[a.askerId] ?? 'Someone').split(' ')[0]}</b> asked for an update{a.question ? <>: &ldquo;{a.question}&rdquo;</> : ''} <span className="dim">· {ago(a.askedAt, new Date())}</span></div>
                 ))}
                 <label className="f"><span>Your update</span>
-                  <SayBox value={reply} max={280} names={people.map((p) => p.name)} onChange={setReply}><textarea rows={2} maxLength={280} value={reply} aria-label="Your update" placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} /></SayBox>
-                  <Count value={reply} max={280} />
+                  <SayBox value={reply} max={400} names={people.map((p) => p.name)} onChange={setReply}><textarea rows={2} maxLength={400} value={reply} aria-label="Your update" placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} /></SayBox>
+                  <Count value={reply} max={400} />
                 </label>
                 <div className="row" style={{ alignItems: 'center' }}>
                   <button className="btn" disabled={busy || !reply.trim()} onClick={sendReply}>Send update</button>

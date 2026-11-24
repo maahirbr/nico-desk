@@ -2615,3 +2615,9 @@ keeps its own hints.
 Rollback: git revert the commit.
 And the message on moving someone else's task into Personal ends at "…can go in your Personal project." (it said "and it stays
 yours there" too).
+
+## 2026-11-24 · Opus 5.5 · A task update holds 400 characters
+The PM's call: 280 was too short for an update. The update box in the task panel and "Add an update" on the task page take
+up to 400 characters, and so does the server (`lib/service.ts UPDATE_MAX`; the status suggestion that reads it too). Other
+reasons (a moved date, a block, a drop) stay at 280. An update is stored in its event's after, so no schema change.
+Rollback: git revert the commit.
