@@ -2479,3 +2479,10 @@ Cool skin. And the list grew upward from its own row, so a long roster on a shor
 to the bottom of the account menu. Checked locally in Cool light and dark at 660px and 900px high. CSS only, no test
 change. Not pushed, not deployed.
 Rollback: git revert this commit.
+
+## 2026-11-28 · Fable 5.2 · Deployed the Cool skin flyout fix
+
+At the repo owner's word. VERIFY green first: evals, typecheck, 993 tests, build. `23e5c0c` pushed to `maahir/mvp` and
+fast-forwarded to `main`, which built production deployment `nico-desk-5mnlguznr`. No schema change, so no
+`db:upgrade`. Checked after: the live CSS holds both new rules, `/team` answers 200 and `/api/auth/google` 302.
+Rollback: `vercel promote https://nico-desk-829f1ircp-maahirbharatram-3547s-projects.vercel.app --yes`, or git revert `23e5c0c`.
