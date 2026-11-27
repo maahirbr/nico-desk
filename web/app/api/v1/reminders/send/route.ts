@@ -3,7 +3,7 @@ import { rateLimit, readBody, route } from '@/lib/http';
 import { notFound } from '@/lib/errors';
 import { gmailSendEnabled, gmailStatus, sendAsPerson } from '@/lib/gmailSend';
 import { resendSendEnabled, sendViaResend } from '@/lib/resendSend';
-import { assertOnTeam, assertStillOpen, logReminder, mayRemind } from '@/lib/reminders';
+import { assertItemsInProjects, assertMayRemind, assertOnTeam, assertStillOpen, logReminder, remindAccess } from '@/lib/reminders';
 
 // Sends one reminder: from the lead's own Gmail when they connected it, else through Resend when that is on (18 Nov).
 // The lead's press of Send is the yes; nothing else calls this. route() refuses it under View as, like every non-GET call.
@@ -19,9 +19,11 @@ export const POST = route(async ({ req, me, db }) => {
   const gmailOn = gmailSendEnabled();
   const resendOn = resendSendEnabled();
   if (!gmailOn && !resendOn) throw notFound();
-  mayRemind(me.person.appRoles);
+  const access = await remindAccess(db, me.team.id, me.person.id, me.person.appRoles);
+  assertMayRemind(access);
   rateLimit(`gmail-send:${me.realPerson.id}`, 20);
   const b = await readBody(req, Body);
+  if (!access.all) await assertItemsInProjects(db, b.itemKeys, access.projects); // a project's owner or lead: their projects only
   await assertOnTeam(db, me.team.id, b.personId); // before anything goes out
   await assertStillOpen(db, b.itemKeys); // and nothing in it was finished, dropped or archived since the page opened
   const fromName = me.realPerson.fullName ?? me.realPerson.displayName;

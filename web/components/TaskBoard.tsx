@@ -336,7 +336,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </button>
         )}Tasks{ws !== 'All' && <span className="count-badge">{ws === '__none' ? 'No sub-project' : ws}</span>}</h2>
         <span className="board-tools">
-          {isLead && <a className="btn ghost" href={`/reminders?project=${projectId}`}>Reminders</a>}
+          {(isLead || isHead) && <a className="btn ghost" href={`/reminders?project=${projectId}`}>Reminders</a>}
           {!readOnly && <button className="btn ghost" aria-expanded={importOpen} onClick={() => setImportOpen(!importOpen)}>{importOpen ? 'Close import' : 'Import minutes'}</button>}
           {!readOnly && <button className="btn" aria-expanded={addOpen} onClick={() => setAddOpen(!addOpen)}>{addOpen ? 'Close' : '+ Add task'}</button>}
         </span>

@@ -1,4 +1,3 @@
-import { mayOversee } from '@/lib/roles';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -6,7 +5,7 @@ import { requireStaff } from '@/lib/auth';
 import { lookups, one, type SP } from '@/lib/page';
 import { seenProjects } from '@/lib/visibility';
 import { seesProject } from '@/lib/sight';
-import { reminderDrafts } from '@/lib/reminders';
+import { mayRemindAny, reminderDrafts, remindAccess } from '@/lib/reminders';
 import { ReminderCards } from '@/components/Reminders';
 import { RemindFind } from '@/components/RemindFind';
 import { gmailSendEnabled, gmailStatus } from '@/lib/gmailSend';
@@ -26,13 +25,15 @@ const GMAIL_SAID: Record<string, string> = {
   google: 'Gmail was not connected: Google returned an error. Try again in a moment.',
   email: 'Gmail was not connected: Google did not confirm the address. Try again.',
   viewing_as: 'Gmail cannot be connected while you view as someone else.',
-  not_allowed: 'Only leadership or an admin can connect Gmail for reminders.',
+  not_allowed: 'Only leadership, an admin, or a project\'s owner or lead can connect Gmail for reminders.',
 };
 
 export default async function Reminders({ searchParams }: { searchParams: SP }) {
   const me = await requireStaff();
   const { d, sight, people } = await lookups(me);
-  if (!mayOversee(me.person.appRoles)) return (<><h1>Reminders</h1><p className="lede">Only leadership or an admin drafts reminders.</p></>);
+  // 27 Nov (the PM's call): a project's owner or lead reminds about the projects they own or lead, whatever their access.
+  const access = await remindAccess(d, me.team.id, me.person.id, me.person.appRoles);
+  if (!mayRemindAny(access)) return (<><h1>Reminders</h1><p className="lede">Only leadership, an admin, or a project&apos;s owner or lead sends reminders.</p></>);
   // Leadership reminds anyone (15 Nov, the PM's call): the drafts cover every team task, even on projects they cannot
   // open. They still open only their own projects; Personal tasks stay out (sight.hidden).
   const remindSight = me.person.appRoles.includes('leadership') ? { all: true as const, hidden: sight.hidden } : sight;
@@ -40,14 +41,14 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
   const mode = one(sp.mode) === 'window' ? 'window' : 'overdue';
   const days = Math.min(Math.max(Number(one(sp.days) ?? 2) || 2, 1), 30);
   const projectId = one(sp.project);
-  if (projectId && !seesProject(sight, projectId)) notFound(); // hidden reads as missing
+  if (projectId && (!seesProject(sight, projectId) || (!access.all && !access.projects.has(projectId)))) notFound(); // hidden reads as missing
   const h = await headers();
   const appUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost:3100'}/me`;
   const gmailOn = gmailSendEnabled() && !me.viewingAs;
   const resendOn = resendSendEnabled() && !me.viewingAs; // Send without Gmail, through Resend (18 Nov)
   const sendOn = gmailOn || resendOn;
   const [{ drafts, skipped }, projects, link] = await Promise.all([
-    reminderDrafts(d, me.team.id, { mode, days, projectId, sight: remindSight }, appUrl),
+    reminderDrafts(d, me.team.id, { mode, days, projectId, sight: remindSight, onlyProjects: access.all ? undefined : access.projects }, appUrl),
     seenProjects(d, me, sight),
     gmailOn ? gmailStatus(d, me.realPerson.id) : null,
   ]);
@@ -86,8 +87,8 @@ export default async function Reminders({ searchParams }: { searchParams: SP }) 
         <input type="hidden" name="mode" value={mode} />
         <label className="f" style={{ flex: '0 1 240px' }}><span>Project</span>
           <Select name="project" aria-label="Project" defaultValue={projectId ?? ''}>
-            <option value="">All projects</option>
-            {projects.filter((p) => !p.personalFor && !p.archivedAt).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            <option value="">{access.all ? 'All projects' : 'All my projects'}</option>
+            {projects.filter((p) => !p.personalFor && !p.archivedAt && (access.all || access.projects.has(p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </Select>
         </label>
         <button className="btn ghost">Apply</button>

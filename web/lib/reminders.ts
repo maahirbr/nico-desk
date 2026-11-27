@@ -28,7 +28,8 @@ export type ReminderDraft = {
   personId: string; name: string; to: string | null; items: RemindItem[]; subject: string; body: string; lastAt: string | null;
 };
 // sight: the lead's own (lib/sight.ts), so a draft never names a task or plan line the lead cannot see.
-export type RemindScope = { mode: 'overdue' | 'window'; days: number; projectId?: string; sight: Sight };
+// onlyProjects (27 Nov): for a project's owner or lead who is not leadership, a lead or an admin, the projects they head.
+export type RemindScope = { mode: 'overdue' | 'window'; days: number; projectId?: string; sight: Sight; onlyProjects?: Set<string> };
 
 export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope, appUrl: string, today = todayIst(), env?: Env): Promise<{ drafts: ReminderDraft[]; skipped: string[] }> {
   const { rows: people } = await db.query<{ id: string; display_name: string; nickname: string | null; email: string; contact_email: string | null; never_remind: boolean }>(
@@ -48,7 +49,8 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   // One-off tasks (no project) are not reminded either (20 Nov, the PM's call): the giver asks for an update instead.
   const archived = new Set(projects.filter((p) => p.archivedAt).map((p) => p.id));
   const tasks = (await teamTasks(db, teamId, today)).filter((t) =>
-    t.statusCategory === 'open' && !!t.projectId && !archived.has(t.projectId) && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId) && wanted(t.dueOn));
+    t.statusCategory === 'open' && !!t.projectId && !archived.has(t.projectId) && !t.readOnly && seesTask(scope.sight, t) && (!scope.projectId || t.projectId === scope.projectId)
+    && (!scope.onlyProjects || scope.onlyProjects.has(t.projectId)) && wanted(t.dueOn));
   const touched = await ownerTouched(db, tasks.map((t) => t.id), since);
   for (const t of tasks) {
     const flag = t.blocked?.onId && t.blocked.onId !== t.ownerId ? `Blocked, waiting on ${pnames[t.blocked.onId]?.split(' ')[0] ?? 'someone else'}`
@@ -60,7 +62,8 @@ export async function reminderDrafts(db: Tx, teamId: string, scope: RemindScope,
   // Roster names win; a nickname only fills a key that no roster name holds.
   const byName = new Map(people.filter((p) => p.nickname).map((p) => [p.nickname!.toLowerCase(), p.id] as const));
   for (const p of people) byName.set(p.display_name.toLowerCase(), p.id);
-  for (const p of projects.filter((x) => x.kind === 'plan' && !x.archivedAt && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId))) {
+  for (const p of projects.filter((x) => x.kind === 'plan' && !x.archivedAt && seesProject(scope.sight, x.id) && (!scope.projectId || x.id === scope.projectId)
+    && (!scope.onlyProjects || scope.onlyProjects.has(x.id)))) {
     const s = await planState(db, p.id);
     for (const l of s.lines) {
       if (!l.ownerId || l.status === 'Done') continue;
@@ -148,4 +151,30 @@ export async function logReminder(db: Tx, teamId: string, meId: string,
 
 export function mayRemind(appRoles: string[]): void {
   if (!mayOversee(appRoles)) throw forbidden('Only leadership or an admin can draft reminders.');
+}
+
+// Who may remind, and about which projects (27 Nov, the PM's call): leadership, a lead or an admin, as before; and the
+// owner or lead of a project, whatever their access level, for the live projects they own or lead.
+export type RemindAccess = { all: boolean; projects: Set<string> };
+export async function remindAccess(db: Tx, teamId: string, personId: string, appRoles: string[]): Promise<RemindAccess> {
+  if (mayOversee(appRoles)) return { all: true, projects: new Set() };
+  if (appRoles.includes('partner')) return { all: false, projects: new Set() };
+  const { rows } = await db.query<{ id: string }>(
+    `SELECT id FROM projects WHERE team_id = $1 AND archived_at IS NULL AND personal_for IS NULL AND (owner_id = $2 OR lead_id = $2)`, [teamId, personId]);
+  return { all: false, projects: new Set(rows.map((r) => r.id)) };
+}
+export const mayRemindAny = (a: RemindAccess) => a.all || a.projects.size > 0;
+export function assertMayRemind(a: RemindAccess, projectId?: string): void {
+  if (!mayRemindAny(a)) throw forbidden('Only leadership, an admin, or a project\'s owner or lead can send reminders.');
+  if (projectId && !a.all && !a.projects.has(projectId)) throw forbidden('You can send reminders for the projects you own or lead.');
+}
+// Before a project owner's or lead's reminder goes out: every item in it is on a project they own or lead.
+export async function assertItemsInProjects(db: Tx, itemKeys: string[], projects: Set<string>): Promise<void> {
+  const ids = (p: string) => itemKeys.filter((k) => k.startsWith(p)).map((k) => k.slice(p.length).split(':')[0]);
+  const [t, l, a] = [ids('task:'), ids('line:'), ids('action:')];
+  const { rows } = await db.query<{ project_id: string | null }>(
+    `SELECT project_id FROM tasks WHERE id = ANY($1) UNION ALL SELECT project_id FROM plan_lines WHERE id = ANY($2)
+     UNION ALL SELECT project_id FROM plan_actions WHERE id = ANY($3)`, [t, l, a]);
+  if (rows.length < t.length + l.length + a.length || rows.some((r) => !r.project_id || !projects.has(r.project_id)))
+    throw forbidden('You can send reminders only about the projects you own or lead.');
 }

@@ -2621,3 +2621,12 @@ The PM's call: 280 was too short for an update. The update box in the task panel
 up to 400 characters, and so does the server (`lib/service.ts UPDATE_MAX`; the status suggestion that reads it too). Other
 reasons (a moved date, a block, a drop) stay at 280. An update is stored in its event's after, so no schema change.
 Rollback: git revert the commit.
+
+## 2026-11-27 · Opus 5.5 · Project owners and leads send reminders for their projects
+The PM's call: a project's owner or lead can send reminders for the projects they own or lead, whatever their access
+level (a Member too). Leadership, leads and admins keep every project, as before. A member who owns or leads nothing
+still cannot. For an owner or lead without those roles, Reminders shows only their live projects ("All my projects"),
+the drafts cover only those, and a send is refused if any item in it is from another project (`lib/reminders.ts`
+`remindAccess`, `assertItemsInProjects`). They also see Reminders in the menu and on the project page, and may connect
+Gmail to send them. No schema change.
+Rollback: git revert the commit.

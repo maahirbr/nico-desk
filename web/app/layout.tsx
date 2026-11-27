@@ -5,7 +5,8 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { currentMe } from '@/lib/auth';
 import { mayReadActivity } from '@/lib/activity';
-import { isLeadOrAdmin, mayOversee } from '@/lib/roles';
+import { isLeadOrAdmin } from '@/lib/roles';
+import { mayRemindAny, remindAccess } from '@/lib/reminders';
 import { FeedbackLink, Nav, SwitchToOwner } from '@/components/client';
 import { HELP_COOKIE, helpOf } from '@/components/help';
 import { HelpProvider, HelpToggle } from '@/components/HelpMode';
@@ -78,6 +79,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         .map((p) => ({ id: p.id, name: p.displayName, roles: roleWord(p.appRoles) }))
     : [];
   const sight = me && d ? await sightFor(d, me) : null;
+  // Reminders in the menu (27 Nov): leadership, a lead or an admin, or anyone who owns or leads a live project.
+  const canRemind = !!me && !!d && mayRemindAny(await remindAccess(d, me.team.id, me.person.id, me.person.appRoles));
   const projectPeople = me && d && sight ? Object.fromEntries(Object.entries(await projectPeopleMap(d, me.team.id)).filter(([id]) => seesProject(sight, id))) : {};
   const mayAddTo = me && d && sight ? (await projectsMayAddTo(d, me.team.id, me.person.id, isLeadOrAdmin(me.person.appRoles))).filter((id) => seesProject(sight, id)) : [];
   const fresh = me && d ? await freshFor(me, d) : {};
@@ -108,7 +111,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="mark-sub mark-wordmark" role="img" aria-label="Nicobar" />
                 </span>
               </Link>
-              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} remind={mayOversee(me.person.appRoles)} activity={mayReadActivity(me)} partner={partner} />
+              <Nav isAdmin={me.person.appRoles.includes('admin')} isLead={isLeadOrAdmin(me.person.appRoles)} remind={canRemind} activity={mayReadActivity(me)} partner={partner} />
               {!me.viewingAs && ownerId && ownerId !== me.person.id && <SwitchToOwner id={ownerId} viewing={me.person.displayName} />}
               <ProfileMenu meId={me.person.id} name={me.person.displayName} email={me.person.email} role={me.adminHidden ? 'admin' : roleWord(me.person.appRoles)} initial={skin} initialTheme={theme}
                 viewPeople={realAdmin ? viewPeople : null} viewingId={me.viewingAs ? me.person.id : null}
