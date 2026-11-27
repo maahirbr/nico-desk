@@ -183,7 +183,7 @@ export function PlanBoard({ project, state, people, names, today }: {
   const TILES = [
     { key: 'open', label: 'Open', match: (l: PlanLine) => l.status !== 'Done' },
     { key: 'progress', label: 'In progress', match: (l: PlanLine) => l.status === 'In progress' },
-    { key: 'late', label: 'Late', match: (l: PlanLine) => lineLate(l, today), warn: true },
+    { key: 'late', label: 'Overdue', match: (l: PlanLine) => lineLate(l, today), warn: true },
     { key: 'pending', label: 'Pending', sub: 'owner missing', match: ownerPending, soft: true },
     { key: 'pushed', label: 'Pushed', sub: 'date moved later', match: (l: PlanLine) => l.status !== 'Done' && totalPushes(l) > 0, amber: true },
     { key: 'done', label: 'Done', match: (l: PlanLine) => l.status === 'Done' },

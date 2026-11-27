@@ -46,8 +46,8 @@ export function FeedbackAskCard({ ask, today, firstName }: { ask: FeedbackAsk; t
   };
   return (
     <section className="card card-pad fask" aria-label="Share feedback">
-      <h2>{firstName}, you’re one of NicoDesk’s first users 🙏</h2>
-      <p className="fask-lede">Thank you for being with us from the start. To get to V3, we need your help: share just <b>one thing</b>, something to improve or something that’s working well. It takes a minute and shapes what we build next.</p>
+      <h2>{firstName}, how’s NicoDesk working for you? 🙏</h2>
+      <p className="fask-lede">Share <b>one thing</b> to improve or one thing that works. It shapes what we build next.</p>
       <div className="fask-row">
         <div className="seg fask-kind" role="group" aria-label="What kind of note">
           <button type="button" aria-pressed={kind === 'fix'} onClick={() => setKind('fix')}>To improve</button>

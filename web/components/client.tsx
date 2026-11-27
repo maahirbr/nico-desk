@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Health, Task } from '@/lib/derive';
 import { Avatar } from './chips';
 import { CopyInvite, EmailInvite } from './CopyLink';
@@ -213,7 +213,7 @@ export function TaskActions({
       {open && may.block && !t.blocked && <BlockForm t={t} people={people.filter((p) => p.id !== t.ownerId)} />}
       {t.blocked && may.unblock && <UnblockForm t={t} needNote={!!may.unblockNote} />}
       {may.priority && <PriorityForm t={t} />}
-      {may.update && <ReasonForm say title="Add an update" path={`/tasks/${t.id}/updates`} label="Update (no field changes)" button="Add to log" min={1} body={(text) => ({ text })} after={suggest} />}
+      {may.update && <ReasonForm say title="Add an update" path={`/tasks/${t.id}/updates`} label="Update (no field changes)" button="Add to log" min={1} max={400} body={(text) => ({ text })} after={suggest} />}
       {nudge && open && mayMove(nudge.status) && <StatusNudge word={nudge.word} busy={moving} onAccept={accept} onDismiss={() => setNudge(null)} />}
       <Err e={moveErr} />
       {may.edit && <EditForm t={t} people={people} projects={projects} canReassign={may.reassign} />}
@@ -327,15 +327,15 @@ function PriorityForm({ t }: { t: Task }) {
   );
 }
 
-function ReasonForm({ say, title, path, label, button, body, min = 10, after }: { say?: boolean; title: string; path: string; label: string; button: string; body: (s: string) => unknown; min?: number; after?: (text: string) => void }) {
+function ReasonForm({ say, title, path, label, button, body, min = 10, max = 280, after }: { say?: boolean; title: string; path: string; label: string; button: string; body: (s: string) => unknown; min?: number; max?: number; after?: (text: string) => void }) {
   const { busy, error, run } = useSubmit();
   const [text, setText] = useState('');
   return (
     <form className="panel stack" onSubmit={async (e) => { e.preventDefault(); if (await run(path, 'POST', body(text))) { setText(''); after?.(text); } }}>
       <h3>{title}</h3>
       <label className="f"><span>{label}</span>{say
-        ? <SayBox value={text} max={280} onChange={setText}><textarea required minLength={min} maxLength={280} value={text} aria-label={label} onChange={(e) => setText(e.target.value)} /></SayBox>
-        : <textarea required minLength={min} maxLength={280} value={text} onChange={(e) => setText(e.target.value)} />}</label>
+        ? <SayBox value={text} max={max} onChange={setText}><textarea required minLength={min} maxLength={max} value={text} aria-label={label} onChange={(e) => setText(e.target.value)} /></SayBox>
+        : <textarea required minLength={min} maxLength={max} value={text} onChange={(e) => setText(e.target.value)} />}</label>
       <div><button className="btn" disabled={busy}>{button}</button></div>
       <Err e={error} />
     </form>
@@ -423,8 +423,17 @@ export function AddPersonForm({ teamId }: { teamId: string }) {
   const blank = { displayName: '', role: '', department: '', email: '', lead: false, admin: false, partner: false };
   const [f, setF] = useState(blank);
   const [added, setAdded] = useState<string | null>(null); // the email just added, for the Copy invite line
+  // Add to Roster from a partner team (23 Nov): /admin?add=Name&company=Firm fills in the name, the company and Partner.
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const name = q.get('add')?.trim();
+    if (!name) return;
+    setF((x) => ({ ...x, displayName: name.slice(0, 80), department: (q.get('company') ?? '').trim().slice(0, 80), partner: true, lead: false, admin: false }));
+    formRef.current?.scrollIntoView({ block: 'center' });
+  }, []);
   return (
-    <form className="card form-card stack" onSubmit={async (e) => {
+    <form ref={formRef} className="card form-card stack" onSubmit={async (e) => {
       e.preventDefault();
       const appRoles = rolesFor(accessOf(f));
       if (await run(`/teams/${teamId}/people`, 'POST', { displayName: f.displayName, role: f.role, department: f.department, email: f.email, appRoles })) { setAdded(f.email); setF(blank); }

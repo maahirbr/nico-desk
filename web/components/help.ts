@@ -37,7 +37,7 @@ export const HELP = {
   // Dates, blocks, people
   moved_in_time: 'Moved in time. The new date was logged on or before the date it replaced.',
   blocked_on: 'Blocked on. The task cannot go on until this is sorted out. The person it waits on can clear the block.',
-  project_owner: 'Project owner. The person accountable for the project. They, the project lead, and any team lead or admin, can change it and add people to it.',
+  project_owner: 'Project owner. The person accountable for the project. They, the project lead, leadership or an admin can change it and add people to it.',
   project_lead: 'Project lead. The person who runs the project day to day. When no separate lead is set, the owner is the lead.',
   view_as: 'View as. An admin sees the app as another person sees it. It is read-only, so nothing can be changed.',
 
@@ -139,7 +139,7 @@ export const HELP = {
   feedback_page: 'Page. Which screen your note is about, if it is about one. Pick it from the list, or leave it.',
   search_recent: 'Recent searches. Kept in this browser for you only. Clear removes them.',
   // Meetings
-  meeting_rhythm: 'Meeting rhythm. How often this project meets, and the next date. As needed has no automatic date. The project owner, its lead, a team lead or an admin can change it.',
+  meeting_rhythm: 'Meeting rhythm. How often this project meets, and the next date. As needed has no automatic date. The project owner/lead, leadership or an admin can change it.',
   meeting_agenda: 'Agenda. The app builds it from the board. It lists what is late, blocked or at risk, what is due before the next meeting, open asks, and what changed since the last meeting.',
   meeting_held: 'Meeting held. Records today as the last meeting and moves the next date on. You can do it once a day.',
   // Projects

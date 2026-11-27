@@ -127,6 +127,10 @@ export async function upgrade(db: Db) {
   await db.exec(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS personal_order integer;`);
   // 20 Nov: a proposed task from meeting minutes keeps its description apart from its heading.
   await db.exec(`ALTER TABLE plan_proposals ADD COLUMN IF NOT EXISTS details text NOT NULL DEFAULT '';`);
+  // 23 Nov: key documents on a project.
+  await db.exec(PROJECT_LINKS_UPGRADE);
+  // 23 Nov: screenshots on a feedback reply.
+  await db.exec(FEEDBACK_REPLY_IMAGES_UPGRADE);
   // 13 Oct: a lead's Google Meet link (encrypted refresh token).
   await db.exec(GOOGLE_LINKS_UPGRADE);
   // 13 Oct: team chat, with a message_id on notices for a mention in chat.
@@ -260,6 +264,34 @@ ALTER TABLE personal_notes ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 -- A note moved from the old single page could read as edited before it was made: make it start when it was last edited.
 UPDATE personal_notes SET created_at = updated_at WHERE updated_at < created_at;
 ALTER TABLE personal_notes ENABLE ROW LEVEL SECURITY;
+`;
+
+export const FEEDBACK_REPLY_IMAGES_UPGRADE = `
+-- 23 Nov: screenshots on a feedback reply, up to three. RLS on, like every table.
+CREATE TABLE IF NOT EXISTS feedback_reply_images (
+  reply_id    text NOT NULL REFERENCES feedback_replies(id),
+  n           smallint NOT NULL CHECK (n BETWEEN 1 AND 3),
+  bytes       bytea NOT NULL,
+  mime        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (reply_id, n)
+);
+ALTER TABLE feedback_reply_images ENABLE ROW LEVEL SECURITY;
+`;
+
+export const PROJECT_LINKS_UPGRADE = `
+-- 23 Nov: key documents on a project (links). RLS on, like every table.
+CREATE TABLE IF NOT EXISTS project_links (
+  id            text PRIMARY KEY,
+  project_id    text NOT NULL REFERENCES projects(id),
+  url           text NOT NULL CHECK (char_length(url) <= 2000),
+  label         text CHECK (char_length(label) BETWEEN 1 AND 80),
+  nicobar_only  boolean NOT NULL DEFAULT false,
+  created_by    text REFERENCES people(id),
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS project_links_project ON project_links (project_id, created_at);
+ALTER TABLE project_links ENABLE ROW LEVEL SECURITY;
 `;
 
 export const ARCHIVE_ASKS_UPGRADE = `

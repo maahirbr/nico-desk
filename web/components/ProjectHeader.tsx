@@ -13,13 +13,15 @@ import { ProjectForm } from './ProjectForm';
 import { OPEN_SETTINGS_EVENT } from './setupEvents';
 import { api, Modal, type Opt } from './task-ui';
 import { notify } from './toast';
+import type { RosterOpt } from './PartnerTeam';
 
 // The top of a project page: what it is, when it is due, who is on it. Settings edits all of it.
 
 // access (15 Nov): what this person may do in Settings, which everyone sees (lib/plan.ts projectAccess). full: change
 // anything; people: add people only; view: read only. canEdit (archive, restore) is full access.
 // archiveAsk (15 Nov): a member's open ask to archive it. Everyone on the project sees it; full access answers it.
-export function ProjectHeader({ project: p, members, viewers, names, people, meId, access, isAdmin = false, today, archiveAsk = null }: {
+export function ProjectHeader({ project: p, members, viewers, names, people, meId, access, isAdmin = false, today, archiveAsk = null, roster = [] }: {
+  roster?: RosterOpt[];
   project: Project; members: Member[]; viewers: string[]; names: Record<string, string>; people: Opt[]; meId: string; access: 'full' | 'people' | 'view'; isAdmin?: boolean; today: string; archiveAsk?: ArchiveAsk | null;
 }) {
   const canEdit = access === 'full';
@@ -183,7 +185,7 @@ export function ProjectHeader({ project: p, members, viewers, names, people, meI
       )}
       {editing && (
         <Modal title="Project Settings" onClose={() => setEditing(false)} wide>
-          <ProjectForm people={people} meId={meId} projectId={p.id} access={access} focus={focus} onDone={() => setEditing(false)} initial={{
+          <ProjectForm people={people} roster={roster} isAdmin={isAdmin} meId={meId} projectId={p.id} access={access} focus={focus} onDone={() => setEditing(false)} initial={{
             name: p.name, kind: p.kind, ownerId: p.ownerId, leadId: p.leadId, goal: p.intro ?? '', eyebrow: p.eyebrow ?? '', phase: p.phase ?? '',
             launchOn: p.launchOn ?? '', targetLabel: label, workstreams: p.kind === 'plan' ? p.pillars.filter((x) => x.key !== 'general').map((x) => x.label) : p.workstreams,
             members, partnerName: p.partnerName ?? '', partnerPeople: p.partnerPeople, viewers,

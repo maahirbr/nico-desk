@@ -2469,6 +2469,176 @@ change. The test in `tests/partner-access.test.ts` now also types a name in lowe
 VERIFY green: evals, typecheck, 993 tests, build. No schema change. Pushed to `main` with the two commits before it.
 Rollback: `vercel promote https://nico-desk-i0mace0hd-maahirbharatram-3547s-projects.vercel.app --yes`, or git revert the three commits.
 
+## 2026-11-22 · Opus 5.5 · Projects: sort by soonest date or by name
+The PM's call. The count line under Projects reads "7 projects · soonest date first ▾", and the words are a small drop-down
+that also offers "by name, A to Z". Personal stays first. The choice is kept per person in this browser with the list or grid
+choice (`components/ProjectsLayout.tsx`); A to Z only sets each card's CSS order (`--by-name`), so the page sends one list.
+Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Roster: the number of people under the title
+The PM's call. "24 people" in small grey type under the Roster title: the active people on the roster, for admins and
+leadership (`app/admin/page.tsx`). Who has signed in stays on Activity.
+Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Feedback: words for a wider team, not the first users
+The PM's call, now that more than the first users are on. The Feedback page reads "Tell us what’s working and what isn’t.
+We read every note." The Home card asks "{Name}, how’s NicoDesk working for you? 🙏" and "Share one thing to improve or one
+thing that works. It shapes what we build next." The Not now box suggests "e.g. Not right now, maybe later".
+Rollback: git revert the commit.
+
+## 2026-11-22 · Opus 5.5 · Person page: each word once
+The PM's call, from the phone check. The header showed "AI · AI", then "AI", then "AI (AI)" when job title, department and
+team were the same word. Now one line holds job title, department, team and access, each word once (Admin, Leadership
+written with a capital), and a project shows its role in brackets only when that differs from the project's name.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Words: overdue for counts, who may, Not signed in yet, Add task
+The PM's call, from a wording pass. One word per idea:
+- Counts say overdue everywhere ("3 open · 3 overdue", the Overdue tiles and Home heading, the status bar). Late stays only
+  as one task's own flag (the LATE tag, "2 days late") and the ledger's Closed late.
+- Who-may messages name the real rule: "the project owner/lead, leadership or an admin" (health check, meeting rhythm),
+  "the task’s owner, the project owner/lead or an admin" (reopen), "the task’s owner, leadership or an admin" (resume from
+  blocked, a pasted chat's change). The Lead role was retired on 15 Nov, so "a lead" read wrong.
+- Activity: Not signed in yet. Empty states: Add task, as the forms say.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · New task: a Personal task needs no date
+The PM's call. On New task, picking Personal makes Due Date not required (no *, and no "optional" word either), the same as
+adding on Personal itself; left empty it saves with no date (NO_DATE, which the server already took for Personal). Other
+projects still need a date. Priority shows without "(optional)" too.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Projects list: no "No date"
+The PM's call. Most projects have no date, so the list repeated "No date" down every row. In the list view a project with
+no date now shows nothing there; a date shows when one is set. The grid card keeps "No date".
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Partner team linked to the Roster; one owner per task
+The PM's call, after a partner typed on OKR AI's partner team was not linked to the same person on the Roster. A partner
+team name that matches exactly one active Roster person (their Roster name or nickname, any case) is that person
+(`lib/service.ts linkPartnerTeam`): they join the project, so they see it as soon as they sign in, and every task owned only
+by that name becomes theirs, logged as "Linked to the Roster". It runs when a project is saved, when a task is given to a
+partner name, and when someone is added to the Roster, so a name typed before they were added links then. Two people with
+the same name link no one. The partner team in Settings suggests Roster people as you type (that company's partners first,
+then other partners, then everyone); a linked name shows a tick, and a name not on the Roster says so, with an Add to
+Roster link for admins that opens the Roster form filled in (name, company, Partner).
+One owner per task (the PM's call): the board has one Owner column and the forms one Owner picker, listing the project's
+people and the partner's people as "Name (Partner)"; a partner owner shows "(Partner)" under their name. A task that already
+has both a Nicobar owner and a partner name shows the Nicobar owner; the partner name stays stored. ✎ and ✕ sit tighter.
+No schema change.
+Rollback: git revert the commit (links already made stay: the people stay on their projects and own their tasks).
+
+## 2026-11-23 · Opus 5.5 · Project setup: no date step; One-off tasks always on Home
+The PM's calls. A new project's setup list asks for its people and its first tasks only: a date is optional, so "Set a
+date" left the list (`lib/setup.ts`). On Home, One-off tasks sits after Personal even with nothing open ("Nothing open"),
+since it also keeps the closed ones; its late count says overdue, as the rest of the app does since ff56aec.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Task panel: no separate "Drop task…"
+The PM's call. The task panel's footer link "Drop task…" did what the Dropped status button above already does (asks for
+a reason, then drops it, for the same people), so it is gone. Dropped stays the status word: the five words name a state.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Move a task to a project
+The PM's call: a one-off that belongs to a project, or a task filed in the wrong one. The task panel's top line has "Move
+to a project" (or "Move" on a project task): pick one of the open task boards you are on (any, for Leadership and admins;
+`GET /api/v1/projects`, `lib/plan.ts moveTargets`), and the task moves with its owner, date, status and history; an owner
+not on that project joins it with their Roster job title, and the sub-project clears. Personal is offered only for a task
+you made and own, the rule editTask already keeps. The task's owner, the person who made it, Leadership and admins may
+move it; a partner never does. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Sub-projects: drag to change their order
+The PM's call. On a task board's page, whoever can change Settings (the project's owner, its lead or an admin) drags a
+sub-project in the side list to a new place; it saves at once (`POST /api/v1/projects/:id/workstreams`, `lib/plan.ts
+reorderWorkstreams`: same names, new order). In Settings, a Sub-Project chip can be dragged onto another and saves with the
+project. One order for both, and for the Sub-Project pickers. Tasks keep their sub-project; a plan board's pillars now keep
+their key by name, so reordering them leaves lines where they were. No drag on a phone. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Team: a long project name stays on one line
+The PM's call. On Team, the project picker stops at 260px and ends a long name in "…", so Find a person stays on the same
+line; hovering it shows the full name, and the list shows each name in full (`.sel-cap`).
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · Task panel: no "Open full page"
+The PM's call. The task panel already does everything the full task page does, so its footer link to that page is gone.
+The page stays for the links that still go there (a #task in a comment, Ledger names, a project's update log).
+Rollback: git revert the commit.
+
+## 2026-11-23 · Opus 5.5 · New project: the partner option says "A task board with external partners."
+The PM's wording, in place of "The same task board, shared with an outside partner, like a brand collab or a consultant."
+Rollback: git revert the commit.
+
+## 2026-11-24 · Opus 5.5 · Feedback: screenshots on a reply
+The PM's call. A reply on the Feedback page takes up to three screenshots from a paperclip button beside Reply, shrunk in
+the browser and checked as a note's are (`lib/feedback.ts addReplyImage`, writer only). They show as thumbnails under the
+reply in the note's thread only, never on Home. Schema: new table feedback_reply_images, with RLS and a team_fence, added in
+`upgrade()`, so the hosted database needs `npm run db:upgrade` first.
+Rollback: git revert the commit (the table can stay).
+
+## 2026-11-24 · Opus 5.5 · What's new: the Personal note ends on 1 Dec
+The PM's call. A What's new note can carry an end date (`until`, the first day it no longer shows, Got it or not;
+`lib/news.ts`). The Personal note shows through 30 Nov and is gone for everyone from 1 Dec.
+Rollback: git revert the commit.
+
+## 2026-11-24 · Opus 5.5 · Key documents on a project
+The PM's call, from a teammate's feedback (attach key documents and the pre-read on the project page, as an earlier OKR
+tool had). A quiet grey "+ Key documents" sits under the project's people; anyone on the project adds a link (a Doc, Sheet,
+Slides or any web page) with a name, e.g. "Pre-read" or "MOMs", and the links show beside it in the order added. Whoever
+added a link, or the project's owner, its lead or an admin, removes it, after a "Remove …? Remove / Keep" check. On a
+partner project a link can be "Nicobar only", kept from the partner's people. Google's own sharing still decides who can
+open a file. Links only, no uploads: the files stay in Drive. `lib/projectLinks.ts`, `components/KeyDocs.tsx`.
+Schema: new table project_links, with RLS and a team_fence, added in `upgrade()`, so the hosted database needs
+`npm run db:upgrade` first.
+Rollback: git revert the commit (the table can stay).
+The link boxes (a task's links and Key documents) say "Paste a link: Doc, Sheet, Slides"; Figma left the hint.
+
+## 2026-11-24 · Opus 5.5 · What's new: Personal through Friday 27 Nov, then Key documents 30 Nov to 4 Dec
+The PM's call. One note at a time, so they never stack: the Personal note shows through Friday 27 Nov (replacing its
+1 Dec end), nothing over the weekend, then a Key documents note from Monday 30 Nov to Friday 4 Dec: "Key documents: keep a
+project's brief, pre-read and MOMs in one place. Press + Key documents on any project to save the links." A note can now
+carry a start date (`from`) as well as an end (`until`), `lib/news.ts`.
+Rollback: git revert the commit.
+
+## 2026-11-24 · Opus 5.5 · Home updates: "assigned it to you" without the date
+The PM's call, from what a teammate saw: "<name> assigned it to you, due 4 Dec" sat beside "Due 4 Dec", the same date
+twice. The line now says "assigned it to you"; the row's own Due shows the date, and a later move still reads "then moved
+it to … (was …)" (`lib/updates.ts`).
+Rollback: git revert the commit.
+The feedback card on Home ends at the end of Sunday 29 Nov (IST), not Monday 30 Nov, so Monday shows only the Key
+documents note (`lib/feedbackAsk.ts`, the PM's call).
+
+## 2026-11-24 · Opus 5.5 · Task links: "Paste a link" and "Link name"
+The PM's call: the task panel's link boxes read just "Paste a link" and "Link name", for a cleaner look. Key documents
+keeps its own hints.
+Rollback: git revert the commit.
+And the message on moving someone else's task into Personal ends at "…can go in your Personal project." (it said "and it stays
+yours there" too).
+
+## 2026-11-24 · Opus 5.5 · A task update holds 400 characters
+The PM's call: 280 was too short for an update. The update box in the task panel and "Add an update" on the task page take
+up to 400 characters, and so does the server (`lib/service.ts UPDATE_MAX`; the status suggestion that reads it too). Other
+reasons (a moved date, a block, a drop) stay at 280. An update is stored in its event's after, so no schema change.
+Rollback: git revert the commit.
+
+## 2026-11-27 · Opus 5.5 · Project owners and leads send reminders for their projects
+The PM's call: a project's owner or lead can send reminders for the projects they own or lead, whatever their access
+level (a Member too). Leadership, leads and admins keep every project, as before. A member who owns or leads nothing
+still cannot. For an owner or lead without those roles, Reminders shows only their live projects ("All my projects"),
+the drafts cover only those, and a send is refused if any item in it is from another project (`lib/reminders.ts`
+`remindAccess`, `assertItemsInProjects`). They also see Reminders in the menu and on the project page, and may connect
+Gmail to send them. No schema change.
+Rollback: git revert the commit.
+
+## 2026-11-27 · Opus 5.5 · Add links while making a task
+The PM's call: a new task (the New Task page and "+ Add task" on a project) can take links before it is created. Most tasks
+need none, so it starts as a small grey "Add link" pill (unlike the orange "+ Add another task"); a click opens "Paste a
+link" and "Link name", up to ten per task, each shown as a chip with ×. The links are added right after the task is made,
+through the same rules as the task panel; one that is refused does not stop the task, and the message says how many to
+add from the task. No schema change.
+Rollback: git revert the commit.
+
 ## 2026-11-28 · Fable 5.2 · Cool skin: the account menu flyouts are solid, and the View as list stays below the top bar
 
 From a screenshot by the repo owner: on the Roster page the View as list showed the page text through it, and its top
@@ -2486,3 +2656,27 @@ At the repo owner's word. VERIFY green first: evals, typecheck, 993 tests, build
 fast-forwarded to `main`, which built production deployment `nico-desk-5mnlguznr`. No schema change, so no
 `db:upgrade`. Checked after: the live CSS holds both new rules, `/team` answers 200 and `/api/auth/google` 302.
 Rollback: `vercel promote https://nico-desk-829f1ircp-maahirbharatram-3547s-projects.vercel.app --yes`, or git revert `23e5c0c`.
+
+## 2026-11-28 · Fable 5.2 · Merged the PM's 22-27 Nov batch, and closed a gap in who a project head can email
+
+At the repo owner's word, after a review of the 25 commits on `mvp-local-desk-look` (to `978909f`): Projects sort,
+Roster count, word changes, the partner team linked to the Roster, move a task, drag sub-projects, key documents,
+screenshots on a feedback reply, 400-character updates, links while making a task, and reminders for a project's owner
+or lead. Only this log conflicted. Both sides are kept, in date order.
+
+One fix on top. Since 27 Nov a project's owner or lead can send reminders, and anyone on the team can start a project.
+The send route took the addresses and the text from the request, and its project check passed an empty item list or a
+key of an unknown kind. So any member could have sent free text to any address from the company sender.
+`lib/reminders.ts`: `assertItemsInProjects` refuses an empty list and unknown kinds, and the new `assertTeamRecipients`
+holds a project head's To to the reminded person's own addresses and Cc and Bcc to people on the team.
+`app/api/v1/reminders/send/route.ts` calls both. Leadership, leads and admins send as before. One new test in
+`tests/remind-heads.test.ts`. Read from the code, not shown by a live send. Two comments corrected (`lib/schema.ts`,
+`lib/db.ts`).
+
+Left open for the repo owner and the PM: the standing rule that only a lead's press of Send sends anything is now
+wider (project owners and leads), and `linkPartnerTeam` matches a typed partner name against everyone on the Roster,
+staff included.
+
+VERIFY green: evals, typecheck, 1009 tests, build. Schema change: `project_links` and `feedback_reply_images`, so the
+hosted database needs `npm run db:upgrade` before this build is promoted. Not pushed, not deployed.
+Rollback: git revert -m 1 this merge commit. The two new tables can stay; nothing older reads them.

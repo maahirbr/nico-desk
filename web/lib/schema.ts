@@ -269,6 +269,16 @@ CREATE TABLE feedback_replies (
 );
 CREATE INDEX feedback_replies_note ON feedback_replies (feedback_id, created_at);
 ALTER TABLE feedback_replies ENABLE ROW LEVEL SECURITY;
+-- 23 Nov: screenshots on a reply, up to three, added by its writer; shown only in the note's thread on the Feedback page.
+CREATE TABLE feedback_reply_images (
+  reply_id    text NOT NULL REFERENCES feedback_replies(id),
+  n           smallint NOT NULL CHECK (n BETWEEN 1 AND 3),
+  bytes       bytea NOT NULL,
+  mime        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (reply_id, n)
+);
+ALTER TABLE feedback_reply_images ENABLE ROW LEVEL SECURITY;
 -- 30 Oct: what changed on a note, for its writer and everyone who gave it +1, never the person who did it. Shown on
 -- Home until they open Feedback or press Mark seen. In-app only.
 CREATE TABLE feedback_news (
@@ -459,6 +469,21 @@ CREATE TABLE task_links (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX task_links_task ON task_links (task_id, created_at);
+
+-- Key documents on a project (23 Nov, the PM's call, from a teammate's feedback): links to its brief, plan or tracker,
+-- shown at the top of the project page. A pre-read is named as such in its name. On a partner project, nicobar_only keeps a link from
+-- the partner's people. Anyone on the project adds one; whoever added it, the owner, the lead or an admin removes it.
+CREATE TABLE project_links (
+  id            text PRIMARY KEY,
+  project_id    text NOT NULL REFERENCES projects(id),
+  url           text NOT NULL CHECK (char_length(url) <= 2000),
+  label         text CHECK (char_length(label) BETWEEN 1 AND 80),
+  nicobar_only  boolean NOT NULL DEFAULT false,
+  created_by    text REFERENCES people(id),
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX project_links_project ON project_links (project_id, created_at);
+ALTER TABLE project_links ENABLE ROW LEVEL SECURITY;
 
 -- Plan boards: lines of work with checkpoints, a partner's asks, and actions from meetings.
 -- A date moved later counts as a push and keeps the date first given (orig_due_on).
@@ -688,6 +713,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   plan_activity: inProject('project_id'),
   plan_checkpoints: `line_id IN (SELECT id FROM plan_lines)`,
   task_links: inTask('task_id'),
+  project_links: inProject('project_id'),
   update_asks: inTask('task_id'),
   handovers: `team_id = ${TEAM}`,
   personal_pages: `team_id = ${TEAM}`,
@@ -709,6 +735,7 @@ export const FENCE: Record<string, string | [string, string]> = {
   feedback_images: inFeedback,
   feedback_votes: inFeedback,
   feedback_replies: inFeedback,
+  feedback_reply_images: `reply_id IN (SELECT id FROM feedback_replies)`,
   feedback_news: `${ON_TEAM} AND ${inFeedback}`,
 };
 

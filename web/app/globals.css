@@ -2247,3 +2247,88 @@ table.roster tr[hidden], .remind-card[hidden] { display: none; }
    wrapper is display: contents so the pill still lands in the list's status column. */
 .pcard-pill { display: contents; }
 :root .pview[data-pview="list"] .pcard-pill-ok { display: none; }
+/* Projects sort (22 Nov): a small drop-down inside the count line, "soonest date first ▾". A to Z only reorders the cards. */
+.inline-sort select { field-sizing: content; appearance: none; -webkit-appearance: none; font: inherit; color: inherit; background: transparent; border: 0; padding: 0 16px 0 0;
+  cursor: pointer; text-decoration: underline dotted; text-decoration-color: var(--line-strong); text-underline-offset: 4px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 5px top 55%, right 1px top 55%; background-size: 4px 4px; background-repeat: no-repeat; }
+.inline-sort select:hover { color: var(--ink); }
+.inline-sort select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+.pview[data-psort="name"] .pcard { order: var(--by-name, 0); }
+.pview[data-psort="name"] .pcard-personal { order: -1; }
+/* Roster (22 Nov): the people count under the title. */
+.roster-count { margin: var(--space-xxs) 0 0; }
+/* Projects list (23 Nov, the PM's call): a project with no date shows nothing there; the grid card keeps No date. */
+:root .pview[data-pview="list"] .pcard-nodate { display: none; }
+/* Partner team picker (23 Nov): Roster names show as you type; a linked name has a tick, one not on the Roster is dashed. */
+.ptm-box { position: relative; }
+.ptm-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface); border: var(--rule) solid var(--line-strong);
+  border-radius: var(--radius-control); box-shadow: var(--card-shadow); padding: 4px; display: flex; flex-direction: column; }
+.ptm-opt { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); text-align: left; padding: 7px 10px; border: 0; background: none;
+  border-radius: 6px; cursor: pointer; font: inherit; color: var(--ink); }
+.ptm-opt:hover, .ptm-opt:focus-visible { background: var(--sunk); }
+.ptm-opt b { font-weight: 500; }
+.chip-linked { background: var(--primary-soft); }
+.chip-tick { color: var(--primary); font-size: 11px; margin-right: 2px; }
+.chip-loose { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.ptm-hint { margin-top: var(--space-xs); }
+/* Task board (23 Nov): ✎ and ✕ sit tight at the right edge, so the task name has the room. */
+table.board td.act-cell { width: 58px; padding-left: 0; padding-right: var(--space-xs); }
+table.board .row-actions { gap: 0; }
+.owner-partner { margin-top: 2px; padding-left: calc(var(--mark-size) + var(--space-xs)); } /* under the name, past the avatar */
+.ptm-hint a { color: var(--primary); font-weight: 500; }
+/* Move a task to a project (23 Nov): a small link by its project name, then a picker under the top line. */
+.drawer-move { font: inherit; color: var(--primary); background: none; border: 0; padding: 0; box-shadow: none; cursor: pointer; }
+.drawer-move:hover { text-decoration: underline; }
+.drawer-moving { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin: var(--space-xs) 0 var(--space-sm); }
+.drawer-moving .sel-btn { min-width: 220px; }
+/* Sub-projects in order (23 Nov): drag a chip onto another to move it there. */
+.chip-sort { cursor: grab; }
+.chip-sort.dragging { opacity: .4; }
+.chip-sort.drop-here { box-shadow: inset 2px 0 0 var(--primary); }
+.chip-grip { color: var(--ink-3); font-size: 10px; letter-spacing: -2px; margin-right: 4px; }
+/* Sub-project side list (23 Nov): drag a row to change the order; the grip shows on hover. Not on a phone. */
+.ws-item.ws-drag { position: relative; cursor: grab; }
+.ws-grip { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); color: var(--ink-3); font-size: 10px; letter-spacing: -2px; opacity: 0; transition: opacity var(--dur-state) var(--ease); }
+.ws-item.ws-drag:hover .ws-grip { opacity: 1; }
+.ws-item.dragging { opacity: .4; }
+.ws-item.drop-here { box-shadow: inset 0 2px 0 var(--primary); }
+@media (max-width: 640px) { .ws-grip { display: none; } }
+/* A picker that may hold a long project name (23 Nov): it stops at 260px and ends in …; the list shows each name in full. */
+.sel-btn.sel-cap { max-width: 260px; }
+.sel-btn.sel-cap .sel-sizer { max-width: 100%; }
+.sel-pop .sel-opt { white-space: normal; }
+/* Screenshots on a feedback reply (23 Nov): the paperclip by Reply, and small thumbnails under the reply. */
+.fb-clip { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: var(--rule) solid var(--line-strong); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.fb-clip:hover { color: var(--ink); }
+.fb-clip:disabled { opacity: .4; cursor: default; }
+.fb-reply-shots { display: inline-flex; gap: var(--space-xs); flex-wrap: wrap; }
+.fb-reply-shots .mini-btn button { border: 0; background: none; margin-left: 4px; cursor: pointer; color: var(--ink-3); }
+/* Key documents on a project (23 Nov): one quiet row under the header, in the order added. */
+.keydocs { margin: 0 0 var(--space-md); }
+.keydocs-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+.keydocs-h { font: var(--type-small); font-weight: 600; color: var(--ink-2); margin-right: var(--space-xxs); }
+.keydoc { display: inline-flex; align-items: center; gap: 2px; padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); background: var(--pill); font: var(--type-small); }
+.keydoc-link { display: inline-flex; align-items: center; gap: var(--space-xxs); color: var(--ink); text-decoration: none; min-width: 0; }
+.keydoc-link:hover .lchip-text { text-decoration: underline; }
+.keydoc-own { font-size: 11px; color: var(--ink-3); margin-left: 4px; }
+.keydoc-x { width: 20px; height: 20px; margin-left: 2px; border: 0; border-radius: 50%; background: none; color: var(--ink-3); cursor: pointer; font-size: 14px; line-height: 1; display: inline-grid; place-items: center; }
+.keydoc-x:hover { background: var(--sunk); color: var(--ink); }
+.keydoc-ask { gap: var(--space-xs); padding-right: 4px; background: var(--late-soft); }
+.keydoc-yes, .keydoc-no { font: inherit; font-weight: 600; border: 0; background: none; cursor: pointer; padding: 2px 6px; border-radius: var(--radius-pill); }
+.keydoc-yes { color: var(--late); }
+.keydoc-no { color: var(--ink-2); }
+.keydoc-yes:hover, .keydoc-no:hover { background: var(--surface); }
+.keydocs-add { font: var(--type-small); color: var(--primary); background: none; border: 0; padding: 0; box-shadow: none; cursor: pointer; }
+.keydocs-add:hover { text-decoration: underline; }
+.keydocs-form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-top: var(--space-sm); }
+.keydocs-form input[aria-label="Link"] { flex: 2 1 280px; }
+.keydocs-form input[aria-label="Name"] { flex: 1 1 160px; }
+.keydocs-hint { flex-basis: 100%; margin: 0; }
+.keydocs-empty { color: var(--ink-3); }
+.keydocs-empty:hover { color: var(--ink-2); text-decoration: none; } /* stays grey on hover, never orange (24 Nov) */
+.keydocs-head { margin-right: var(--space-xxs); } /* grey like the empty one, always (24 Nov) */
+/* Add link while making a task (27 Nov): a quiet grey pill, unlike the orange "+ Add another task". */
+.draft-link-open { justify-self: start; align-self: start; display: inline-flex; align-items: center; gap: 6px; background: var(--sunk); border: var(--rule) solid var(--hairline);
+  border-radius: var(--radius-pill); padding: 5px 12px; cursor: pointer; font: 500 13px/1.2 var(--font-sans); color: var(--ink-2); }
+.draft-link-open:hover { color: var(--ink); border-color: var(--line-strong); }

@@ -8,7 +8,7 @@ import { taskFor } from '@/lib/visibility';
 // refuses it with the other POSTs. The person applies a suggestion with the normal status calls.
 // Off, slow or unsure: { suggestion: null } and nothing else changes.
 export const POST = route<{ id: string }>(async ({ req, params, me, db }) => {
-  const { text } = await readBody(req, z.object({ text: z.string().max(280) }).strict());
+  const { text } = await readBody(req, z.object({ text: z.string().max(400) }).strict());
   const t = await taskFor(db, me, params.id);
   if (!jevOn()) return { suggestion: null };
   try { rateLimit(`jev-s:${me.realPerson.id}`, 20); } catch { return { suggestion: null }; }

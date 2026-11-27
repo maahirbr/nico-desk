@@ -1,12 +1,15 @@
 import type { Db } from './db';
 import { bad } from './errors';
+import { today } from './time';
 
 // What's new (13 Nov): one short note from the NicoDesk team at the top of Home, until the person presses Got it.
 // Got it is kept per person in update_seen under the scope "news:<id>", so it holds on every device. In the app only:
 // nothing is sent anywhere. To announce something new, add a note to NOTES (a new id shows it again); none shows nothing.
 // `mark` is the words shown highlighted (the feature's name); `link` turns other words in the body into a link.
 // `admins` (19 Nov): a note only admins see. One note shows at a time, the first in NOTES not yet seen.
-export type News = { id: string; title: string; body: string; mark: string | null; link: { text: string; href: string } | null; admins?: boolean };
+// `until` (24 Nov): the first day (IST) a note no longer shows, Got it or not.
+// `from` (24 Nov): the first day (IST) a note shows.
+export type News = { id: string; title: string; body: string; mark: string | null; link: { text: string; href: string } | null; admins?: boolean; from?: string; until?: string };
 export const NOTES: News[] = [
   {
     id: 'hide-admin-19nov',
@@ -17,11 +20,21 @@ export const NOTES: News[] = [
     admins: true,
   },
   {
+    // 24 Nov, the PM's call: Key documents, which a teammate asked for.
+    id: 'keydocs-24nov',
+    title: '✨ New in NicoDesk',
+    body: 'Key documents: keep a project’s brief, pre-read and MOMs in one place. Press + Key documents on any project to save the links.',
+    mark: 'Key documents',
+    link: null,
+    from: '2026-11-30', until: '2026-12-05', // the PM's call (24 Nov): Monday 30 Nov to Friday 4 Dec
+  },
+  {
     id: 'personal-13nov',
     title: '✨ New in NicoDesk',
     body: 'Personal 🔒 is here: a private corner just for you, for quick to-dos, meeting jots, ideas and your own tasks. You’ll find it under Projects.',
     mark: 'Personal 🔒',
     link: { text: 'Projects', href: '/projects' },
+    until: '2026-11-28', // the PM's call (24 Nov): it shows through Friday 27 Nov
   },
 ];
 // The note everyone sees (kept for callers that want the main one).
@@ -31,11 +44,13 @@ const scope = (id: string) => `news:${id}`;
 
 // The note for this person, or null once they have pressed Got it on every note meant for them.
 export async function newsFor(db: Db, personId: string, isAdmin = false): Promise<News | null> {
-  const mine = NOTES.filter((n) => !n.admins || isAdmin);
+  const now = today();
+  const mine = NOTES.filter((n) => (!n.admins || isAdmin) && (!n.from || now >= n.from) && (!n.until || now < n.until));
   if (!mine.length) return null;
   const { rows } = await db.query<{ scope: string }>(`SELECT scope FROM update_seen WHERE person_id = $1 AND scope = ANY($2::text[])`, [personId, mine.map((n) => scope(n.id))]);
   const seen = new Set(rows.map((r) => r.scope));
-  return mine.find((n) => !seen.has(scope(n.id))) ?? null;
+  const n = mine.find((x) => !seen.has(scope(x.id))) ?? null;
+  return n;
 }
 
 export async function markNewsSeen(db: Db, personId: string, id: string): Promise<void> {

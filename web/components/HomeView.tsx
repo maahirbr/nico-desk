@@ -111,7 +111,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
   const sub = (t: Task) => [isNew.has(t.id) ? 'New' : '', t.projectId ? projectNames[t.projectId] : oneOffWord(t, names, meId), t.workstream ?? '', t.note ?? ''].filter(Boolean).join(' · ');
   const nextWeekEnd = addDays(weekEnd, 7);
   const groups = [
-    { key: 'late', label: 'Late', items: mine.filter((t) => t.dueOn < today) },
+    { key: 'late', label: 'Overdue', items: mine.filter((t) => t.dueOn < today) },
     { key: 'today', label: 'Today', items: mine.filter((t) => t.dueOn === today) },
     { key: 'week', label: 'This week', items: mine.filter((t) => t.dueOn > today && t.dueOn <= weekEnd) },
     // Next week (the PM's call, 3 Nov): Monday to Sunday after this one. Later is anything after that.
@@ -139,7 +139,7 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
         <div>
           <h1>{greeting}</h1>
           <p className="summary">
-            {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text"><Help term="overdue">{overdue} late</Help></span></>}</> : 'Nothing open'}
+            {mine.length ? <>{mine.length} open{overdue > 0 && <> · <span className="late-text"><Help term="overdue">{overdue} overdue</Help></span></>}</> : 'Nothing open'}
             {waiting.length > 0 && <> · {waiting.length} <Help term="waiting_on_you">waiting on you</Help></>}
             <span className="dim"> · {weekdayName(today)}, {fmtDate(today)}</span>
             <NewNotices known={noticeIds} />
@@ -216,8 +216,9 @@ export function HomeView({ greeting, today, weekEnd, meId, isLead, updates, mine
             {myProjects.map((p, i) => (
               <Fragment key={p.id}>
                 <Link href={`/projects/${p.id}`} className="my-project"><b>{p.name}</b>{p.role && <span className="dim">{p.role}</span>}</Link>
-                {/* One-off tasks I gave (20 Nov): right after Personal, which comes first. */}
-                {i === 0 && p.name.startsWith('Personal') && oneOffOpen > 0 && <Link href="/one-off" className="my-project"><b>One-off tasks</b><span className="dim">{oneOffOpen} open</span>{oneOffLate > 0 && <span className="late-text small">{oneOffLate} late</span>}</Link>}
+                {/* One-off tasks I gave (20 Nov): right after Personal, which comes first. Always there since 23 Nov (the PM's
+                    call), open or not, as it also keeps the closed ones. */}
+                {i === 0 && p.name.startsWith('Personal') && <Link href="/one-off" className="my-project"><b>One-off tasks</b><span className="dim">{oneOffOpen ? `${oneOffOpen} open` : 'Nothing open'}</span>{oneOffLate > 0 && <span className="late-text small">{oneOffLate} overdue</span>}</Link>}
               </Fragment>
             ))}
           </div>

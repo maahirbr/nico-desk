@@ -15,6 +15,8 @@ import { fmtStamp, istDate, today } from '@/lib/time';
 import { groupLog } from '@/components/logText';
 import { PlanBoard } from '@/components/PlanBoard';
 import { ProjectHeader } from '@/components/ProjectHeader';
+import { KeyDocs } from '@/components/KeyDocs';
+import { projectLinks } from '@/lib/projectLinks';
 import { ProjectHealth } from '@/components/ProjectHealth';
 import { SetupList } from '@/components/SetupList';
 import { TaskBoard } from '@/components/TaskBoard';
@@ -29,7 +31,7 @@ export const dynamic = 'force-dynamic';
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const me = await requireMe();
   const { id } = await params;
-  const { d, names, people, projectNames, activeOpts, isLead, isAdmin, readOnly } = await lookups(me);
+  const { d, names, people, projectNames, activeOpts, rosterOpts, isLead, isAdmin, readOnly } = await lookups(me);
   let p: Project;
   try {
     p = await projectFor(d, me, id); // hidden or on another team reads as missing
@@ -74,20 +76,26 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const split = plan ? lineSplit(plan.lines, now) : taskSplit(tasks, now);
   // View-only (15 Nov): they see everything and can copy the link, but add nothing (lib/sight.ts viewOnlyProjects).
   const viewOnly = (await viewOnlyProjects(d, me.team.id, me.person.id)).has(p.id);
+  const access = readOnly ? 'view' : await projectAccess(d, p, me.person.id);
+  const partnerViewer = me.person.appRoles.includes('partner');
+  const keyDocs = await projectLinks(d, p.id, partnerViewer); // key documents (23 Nov); a partner never sees a Nicobar-only one
 
   return (
     <>
       <Link className="crumb" href="/projects">← All projects</Link>
-      <ProjectHeader project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id} isAdmin={!readOnly && isAdmin}
-        access={readOnly ? 'view' : await projectAccess(d, p, me.person.id)} today={now} archiveAsk={await openArchiveAsk(d, p.id)} />
+      <ProjectHeader roster={rosterOpts} project={p} members={members} viewers={viewers} names={names} people={opts} meId={me.person.id} isAdmin={!readOnly && isAdmin}
+        access={access} today={now} archiveAsk={await openArchiveAsk(d, p.id)} />
       {viewOnly && !p.archivedAt && <p className="small dim view-only-note">You can view this project. To add to it, ask its owner or lead to add you.</p>}
       {/* An archived project is read-only: the board hides its write controls, as it does in View as, and for view-only people. */}
       <ReadOnlyProvider readOnly={readOnly || !!p.archivedAt || viewOnly}>
+      <KeyDocs projectId={p.id} links={keyDocs} canAdd={access !== 'view' && !partnerViewer} canRemoveAny={access === 'full' && !partnerViewer} meId={me.person.id} partner={!!p.partnerName} />
       {setup && <SetupList projectId={p.id} steps={setup} />}
       {p.kind === 'plan' ? (
         <PlanBoard project={p} state={plan!} people={active} names={names} meId={me.person.id} today={now} />
       ) : (
         <TaskBoard
+          // The partner team's people on the Roster (23 Nov): their tasks say (the partner) under their name.
+          partnerIds={p.partnerName ? people.filter((x) => p.partnerPeople.some((n) => [x.fullName, x.displayName, x.nickname].some((k) => k && k.trim().toLowerCase() === n.trim().toLowerCase()))).map((x) => x.id) : []}
           projectId={p.id}
           tasks={tasks}
           people={active}

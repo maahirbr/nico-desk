@@ -1,19 +1,21 @@
 import { z } from 'zod';
 import { readBody, route } from '@/lib/http';
-import { logReminder, mayRemind, reminderDrafts } from '@/lib/reminders';
+import { assertMayRemind, logReminder, reminderDrafts, remindAccess } from '@/lib/reminders';
 import { projectFor, sightFor } from '@/lib/visibility';
 
 // GET: the drafts (leadership and admins). POST: record that they opened or copied one to send it themselves.
 export const GET = route(async ({ req, me, db }) => {
-  mayRemind(me.person.appRoles);
+  const access = await remindAccess(db, me.team.id, me.person.id, me.person.appRoles);
   const u = new URL(req.url);
   const mode = u.searchParams.get('mode') === 'window' ? 'window' : 'overdue';
   const days = Math.min(Math.max(Number(u.searchParams.get('days') ?? 2) || 2, 1), 30);
   const projectId = u.searchParams.get('project') ?? undefined;
+  assertMayRemind(access, projectId); // a project's owner or lead: only the projects they own or lead (27 Nov)
   if (projectId) await projectFor(db, me, projectId); // hidden or on another team reads as missing
   const sight = await sightFor(db, me);
   // Leadership reminds anyone (15 Nov): every team task, Personal left out, as on the Reminders page.
-  return reminderDrafts(db, me.team.id, { mode, days, projectId, sight: me.person.appRoles.includes('leadership') ? { all: true, hidden: sight.hidden } : sight }, u.origin);
+  return reminderDrafts(db, me.team.id, { mode, days, projectId, sight: me.person.appRoles.includes('leadership') ? { all: true, hidden: sight.hidden } : sight,
+    onlyProjects: access.all ? undefined : access.projects }, u.origin);
 });
 
 const Body = z.object({
@@ -22,7 +24,7 @@ const Body = z.object({
 }).strict();
 
 export const POST = route(async ({ req, me, db }) => {
-  mayRemind(me.person.appRoles);
+  assertMayRemind(await remindAccess(db, me.team.id, me.person.id, me.person.appRoles));
   await logReminder(db, me.team.id, me.person.id, await readBody(req, Body));
   return new Response(null, { status: 204 });
 });

@@ -281,7 +281,7 @@ export function shapeProposals(reply: string, ctx: Ctx): PasteProposal[] {
     const task = ref ? ctx.tasks[Number(ref[1]) - 1] : undefined;
     if (!task) continue;
     const may = task.ownerId === me.id || lead;
-    const gate = may ? {} : { whyNot: 'Only the owner or a lead can change this task.' };
+    const gate = may ? {} : { whyNot: 'Only the task’s owner, leadership or an admin can change this task.' };
     const base = { ...common, taskId: task.id, taskTitle: task.title, version: task.version, mayApply: may, ...gate };
 
     if (x.kind === 'note') {

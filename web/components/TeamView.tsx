@@ -70,7 +70,7 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
         <div>
           <h1>Team</h1>
           <p className="summary">
-            {open.length} open this week{overdue > 0 && <span className="late-text"> · {overdue} late</span>}
+            {open.length} open this week{overdue > 0 && <span className="late-text"> · {overdue} overdue</span>}
           </p>
         </div>
       </header>
@@ -87,7 +87,8 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           <Help term="team_by_status" host><Link className={`seg-link${view === 'status' ? ' on' : ''}`} href={href({ view: 'status' })}>By status</Link></Help>
           <Help term="team_by_person" host><Link className={`seg-link${view === 'person' ? ' on' : ''}`} href={href({ view: 'person' })}>By person</Link></Help>
         </span>
-        <Select value={project} aria-label="Project" onChange={setProject}>
+        {/* Capped (23 Nov): a long project name no longer pushes Find a person onto its own line; it ends in … */}
+        <Select value={project} aria-label="Project" onChange={setProject} className="sel-cap" title={projects.find((p) => p.id === project)?.name}>
           <option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>
         <input className="find-person" type="search" value={q} placeholder="Find a person" aria-label="Find a person by name or role"
@@ -96,9 +97,9 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
 
       {needle && people.filter(found).length === 0 && <div className="empty-state"><EmptyMark d={ICON['/search']} /><p>No one matches “{q.trim()}”.</p><button className="btn ghost" onClick={() => setQ('')}>Clear search</button></div>}
       {view === 'person' && shownPeople.length === 0 && (needle ? people.filter(found).length > 0 : true) && (
-        <div className="empty-state"><EmptyMark d={ICON[needle ? '/search' : '/status']} /><p>{needle ? 'No tasks for that search.' : 'Nothing open or coming up.'}</p>{needle ? <button className="btn ghost" onClick={() => setQ('')}>Clear search</button> : <Link className="btn" href="/tasks/new">Add a task</Link>}</div>
+        <div className="empty-state"><EmptyMark d={ICON[needle ? '/search' : '/status']} /><p>{needle ? 'No tasks for that search.' : 'Nothing open or coming up.'}</p>{needle ? <button className="btn ghost" onClick={() => setQ('')}>Clear search</button> : <Link className="btn" href="/tasks/new">Add task</Link>}</div>
       )}
-      {!needle && view === 'status' && open.length === 0 && <div className="empty-state"><EmptyMark d={ICON['/week']} /><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add a task</Link></div>}
+      {!needle && view === 'status' && open.length === 0 && <div className="empty-state"><EmptyMark d={ICON['/week']} /><p>Nothing due this week.</p><Link className="btn" href="/tasks/new">Add task</Link></div>}
 
       {view === 'person' ? shownPeople.map((p) => {
         const o = list.filter((t) => t.ownerId === p.id && t.statusCategory === 'open');
@@ -111,9 +112,9 @@ export function TeamView({ tasks, later, weekStart, thisWeek, today, view, peopl
           <section key={p.id} className="group">
             <h2 className="person-h">
               <PersonLink id={p.id} className="person-cell"><Avatar id={p.id} name={p.name} />{p.name}</PersonLink><span className="dim role">{p.role}</span>
-              <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} late</span>}</span>
+              <span className="n">{counts.open} open{counts.late > 0 && <span className="late-text"> · {counts.late} overdue</span>}</span>
             </h2>
-            {overdueN.length > 0 && <><h3 className="next-h late-text"><Help term="late">Late</Help></h3><Stagger id="team" className="tlist">{overdueN.map((t) => row(t))}</Stagger></>}
+            {overdueN.length > 0 && <><h3 className="next-h late-text"><Help term="late">Overdue</Help></h3><Stagger id="team" className="tlist">{overdueN.map((t) => row(t))}</Stagger></>}
             {week.length > 0 && <><h3 className="next-h"><Help term="group_this_week">{weekStart === thisWeek ? 'This week' : 'That week'}</Help></h3><Stagger id="team" className="tlist">{week.map((t) => row(t))}</Stagger></>}
             {soon.length > 0 && (
               <>

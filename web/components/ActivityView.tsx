@@ -18,7 +18,7 @@ const STATUS: Record<AdoptionStatus, { label: string; tone: string; help: string
   daily: { label: 'Daily', tone: 'done', help: 'Opened it every weekday (Mon\u2060–\u2060Fri) this past week' },
   some: { label: 'Some days', tone: 'active', help: 'Opened it this past week, but not every weekday' },
   quiet: { label: 'Gone quiet', tone: 'late', help: 'Signed in before, but not this past week' },
-  never: { label: 'Never signed in', tone: 'idle', help: 'Has not signed in yet' },
+  never: { label: 'Not signed in yet', tone: 'idle', help: 'Added, but has not opened NicoDesk yet' },
 };
 const ORDER: AdoptionStatus[] = ['daily', 'some', 'quiet', 'never'];
 

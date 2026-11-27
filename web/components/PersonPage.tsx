@@ -46,20 +46,21 @@ export function PersonPage({ personId, email, phone, teamName, appRoles, name, f
           <Avatar id={personId} name={name} lg you={mine} />
           <div>
             <h1>{name}{mine && <span className="dim"> (you)</span>}</h1>
-            <p className="person-meta">{[fullName && fullName !== name ? fullName : '', role, department, active ? '' : 'Not active'].filter(Boolean).join(' · ')}</p>
-            <p className="person-meta">{[teamName, ...appRoles.filter((r) => r !== 'member')].filter(Boolean).join(' · ')}</p>
+            {/* One line, each word once (22 Nov, the PM's call): job title, department and team were often the same word. */}
+            <p className="person-meta">{[...new Map([fullName && fullName !== name ? fullName : '', role, department, teamName, ...appRoles.filter((r) => r !== 'member').map((r) => r[0].toUpperCase() + r.slice(1)), active ? '' : 'Not active']
+              .filter(Boolean).map((w) => [w.trim().toLowerCase(), w] as const)).values()].join(' · ')}</p>
             <p className="person-contact">
               <span className="pc-email">{email}</span> <CopyEmail email={email} />
               {phone && <> <span className="dim" aria-hidden>·</span> <a className="rlink" href={`tel:${phone.replace(/[^0-9+]/g, '')}`}>{phone}</a></>}
             </p>
             {projects.length > 0 && (
-              <p className="person-meta">{projects.map((p, i) => <span key={p.id}>{i > 0 && ' · '}<Link className="rlink" href={`/projects/${p.id}`}>{p.name}</Link> ({p.role})</span>)}</p>
+              <p className="person-meta">{projects.map((p, i) => <span key={p.id}>{i > 0 && ' · '}<Link className="rlink" href={`/projects/${p.id}`}>{p.name}</Link>{p.role && p.role.trim().toLowerCase() !== p.name.trim().toLowerCase() && ` (${p.role})`}</span>)}</p>
             )}
           </div>
         </div>
         <div className="head-side">
         <p className="summary">
-          {open.length ? <>{open.length} open{late > 0 && <> · <span className="late-text">{late} late</span></>}</> : 'Nothing open'}
+          {open.length ? <>{open.length} open{late > 0 && <> · <span className="late-text">{late} overdue</span></>}</> : 'Nothing open'}
           {waitingOnThem.length > 0 && <> · {waitingOnThem.length} waiting on {first}</>}
         </p>
           <CopyLink path={`/people/${personId}`} what="person" />

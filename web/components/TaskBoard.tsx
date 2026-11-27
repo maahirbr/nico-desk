@@ -24,7 +24,7 @@ import { WhenTip } from './WhenTip';
 import { Select } from './Select';
 import { SortPick } from './SortPick';
 import { canMoveTo } from './statusRules';
-import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, statusWhen, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
+import { addDraftLinks, DraftLinks, FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, statusWhen, TaskDrawer, type DraftLink, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
@@ -88,7 +88,8 @@ function bringIntoView(selector: string) {
 const importIntoView = () => bringIntoView('.imp-panel');
 
 // isHead (15 Nov): I own or lead this project, so I may drop any task in it (and reopen it from its panel).
-export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, isHead = false, today, log, workstreams = [], proposals = [], partnerPeople = [], partnerName = null }: {
+export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, meId, isLead, isHead = false, today, log, workstreams = [], proposals = [], partnerPeople = [], partnerName = null, partnerIds: partnerIdList = [] }: {
+  partnerIds?: string[];
   projectId: string; tasks: Task[]; people: P[]; names: Record<string, string>; projectNames?: Record<string, string>;
   meId: string; isLead: boolean; isHead?: boolean; today: string; log: LogItem[]; workstreams?: string[]; proposals?: Proposal[];
   partnerPeople?: string[]; partnerName?: string | null; // a partner project (1 Nov): tasks have a Nicobar owner, a partner owner, or both
@@ -166,13 +167,31 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
     { key: 'open', label: 'Open', help: 'tile_open' as const, n: open.length, match: (t: Task) => t.statusCategory === 'open' },
     { key: 'doing', label: 'In progress', help: 'status_doing' as const, n: open.filter((t) => statusKey(t) === 'doing').length, match: (t: Task) => t.statusCategory === 'open' && statusKey(t) === 'doing' },
     { key: 'at_risk', label: 'At risk', help: 'at_risk' as const, n: open.filter((t) => flagOf(t, today)?.key === 'at_risk').length, match: (t: Task) => flagOf(t, today)?.key === 'at_risk', warn: true },
-    { key: 'overdue', label: 'Late', help: 'late' as const, n: tasks.filter((t) => t.overdue).length, match: (t: Task) => t.overdue, warn: true },
+    { key: 'overdue', label: 'Overdue', help: 'late' as const, n: tasks.filter((t) => t.overdue).length, match: (t: Task) => t.overdue, warn: true },
     { key: 'done', label: 'Done', help: 'status_done' as const, n: tasks.filter((t) => t.statusCategory === 'done').length, match: (t: Task) => t.statusCategory === 'done' },
   ];
   const inWs = (t: Task, k: string) => k === 'All' || (k === '__none' ? !t.workstream : t.workstream === k);
+  const partnerIds = new Set(partnerIdList);
   const byWho = (t: Task) => !who || (who.startsWith('partner:') ? t.partnerOwner === who.slice(8) : t.ownerId === who);
   const visible = tasks.filter((t) => byWho(t) && inWs(t, ws) && (!tile || tiles.find((x) => x.key === tile)!.match(t)) && inAdded(t));
-  const wsList = [...new Set([...workstreams, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
+  // The sub-projects' order can be dragged in the side list (23 Nov, the PM's call) by whoever can change Settings.
+  const [wsOrder, setWsOrder] = useState(workstreams);
+  useEffect(() => { setWsOrder(workstreams); }, [workstreams.join('\u0000')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [wsDrag, setWsDrag] = useState<string | null>(null);
+  const wsFrom = useRef<string | null>(null); // read on drop, so a quick drag never sees an old state
+  const [wsOver, setWsOver] = useState<string | null>(null);
+  const canOrder = !readOnly && (isHead || isLead) && wsOrder.length > 1;
+  const dropWs = async (to: string) => {
+    const at = wsFrom.current;
+    if (!at || at === to || !wsOrder.includes(to)) return;
+    const before = wsOrder;
+    const next = before.filter((x) => x !== at);
+    next.splice(next.indexOf(to) + (before.indexOf(at) < before.indexOf(to) ? 1 : 0), 0, at);
+    setWsOrder(next);
+    try { await call(`/projects/${projectId}/workstreams`, 'POST', { names: next }); notify('Order saved'); router.refresh(); }
+    catch (e) { setWsOrder(before); notify((e as Error).message); }
+  };
+  const wsList = [...new Set([...wsOrder, ...tasks.map((t) => t.workstream).filter((x): x is string => !!x)])];
   // The sub-project panel folds away with the ☰ beside Tasks (the PM's call, 15 Nov). Open at first; this browser
   // remembers a fold (localStorage, always in try/catch).
   const [side, setSide] = useState(true);
@@ -240,10 +259,11 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
             })()}
             {t.links.length > 0 && <div className="sub"><TaskLinkChips links={t.links} onMore={() => { setOpenId(t.id); setStartStatus(undefined); }} /></div>}
           </td>
-          <td data-label={partnerName ? 'Nicobar Owner' : 'Owner'}>{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} /> : <span className="dim">—</span>}
-            {/* A project that had a partner and went internal (19 Nov): its tasks still say which partner person shared them. */}
-            {!partnerName && t.partnerOwner && <div className="sub dim">with {t.partnerOwner} (partner)</div>}</td>
-          {partnerName && <td data-label={`${partnerName} Owner`}>{t.partnerOwner ? <span className="person-cell"><Avatar name={t.partnerOwner} />{t.partnerOwner}</span> : <span className="dim">—</span>}</td>}
+          {/* One Owner column on a partner project too (23 Nov, the PM's call): the task name gets the room. A partner owner
+              shows under the Nicobar owner, or in its place when only the partner owns it. */}
+          <td data-label="Owner">{t.ownerId ? <Person id={t.ownerId} name={names[t.ownerId] ?? t.ownerId} />
+            : t.partnerOwner ? <span className="person-cell"><Avatar name={t.partnerOwner} />{t.partnerOwner}</span> : <span className="dim">—</span>}
+            {partnerName && (t.ownerId ? partnerIds.has(t.ownerId) : !!t.partnerOwner) && <div className="sub dim owner-partner">({partnerName})</div>}</td>
           <td className={`due${t.overdue ? ' late' : ''}`} data-label="Due">
             <MovedDate value={t.dueOn} text={fmtDate(t.dueOn)} fmt={fmtDate} />
             {t.dateMoves > 0 && t.statusCategory === 'open' && (
@@ -290,8 +310,8 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
   const table = (rows: Task[], empty: React.ReactNode) => (
     <div className="card table-card">
       <table className="stacked board sticky-head">
-        <thead><tr><th aria-label="Done" /><th>Task</th>{partnerName ? <><th>Nicobar Owner</th><th>{partnerName} Owner</th></> : <th>Owner</th>}<th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
-        <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={7} className="empty-cell">{empty}</td></tr>}</tbody>
+        <thead><tr><th aria-label="Done" /><th>Task</th><th>Owner</th><th>Due date</th><th>Status</th><th aria-label="Actions" /></tr></thead>
+        <tbody>{rows.length ? rows.map(row) : <tr><td colSpan={6} className="empty-cell">{empty}</td></tr>}</tbody>
       </table>
     </div>
   );
@@ -316,7 +336,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           </button>
         )}Tasks{ws !== 'All' && <span className="count-badge">{ws === '__none' ? 'No sub-project' : ws}</span>}</h2>
         <span className="board-tools">
-          {isLead && <a className="btn ghost" href={`/reminders?project=${projectId}`}>Reminders</a>}
+          {(isLead || isHead) && <a className="btn ghost" href={`/reminders?project=${projectId}`}>Reminders</a>}
           {!readOnly && <button className="btn ghost" aria-expanded={importOpen} onClick={() => setImportOpen(!importOpen)}>{importOpen ? 'Close import' : 'Import minutes'}</button>}
           {!readOnly && <button className="btn" aria-expanded={addOpen} onClick={() => setAddOpen(!addOpen)}>{addOpen ? 'Close' : '+ Add task'}</button>}
         </span>
@@ -348,11 +368,20 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
         {wsList.length > 0 && side && (
           <aside className="card ws-side" aria-label="Sub-projects">
             <div className="ws-label">Sub-projects</div>
-            {['All', ...wsList].map((k) => (
-              <button key={k} className="ws-item" aria-pressed={ws === k} onClick={() => setWs(k)}>
-                <span>{k === 'All' ? 'All sub-projects' : k}</span><span className="n">{open.filter((t) => inWs(t, k)).length}</span>
-              </button>
-            ))}
+            {['All', ...wsList].map((k) => {
+              const drag = canOrder && wsOrder.includes(k);
+              return (
+                <button key={k} className={`ws-item${drag ? ' ws-drag' : ''}${wsDrag === k ? ' dragging' : ''}${wsOver === k && wsDrag && wsDrag !== k ? ' drop-here' : ''}`} aria-pressed={ws === k} onClick={() => setWs(k)}
+                  draggable={drag} title={drag ? 'Drag to change the order' : undefined}
+                  onDragStart={drag ? (e) => { wsFrom.current = k; setWsDrag(k); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', k); } : undefined}
+                  onDragOver={drag ? (e) => { e.preventDefault(); setWsOver(k); } : undefined}
+                  onDrop={drag ? (e) => { e.preventDefault(); void dropWs(k); wsFrom.current = null; setWsDrag(null); setWsOver(null); } : undefined}
+                  onDragEnd={drag ? () => { wsFrom.current = null; setWsDrag(null); setWsOver(null); } : undefined}>
+                  {drag && <span className="ws-grip" aria-hidden>⋮⋮</span>}
+                  <span>{k === 'All' ? 'All sub-projects' : k}</span><span className="n">{open.filter((t) => inWs(t, k)).length}</span>
+                </button>
+              );
+            })}
             {open.some((t) => !t.workstream) && (<><hr /><button className="ws-item none" aria-pressed={ws === '__none'} onClick={() => setWs('__none')}>
               <span>No sub-project</span><span className="n">{open.filter((t) => !t.workstream).length}</span></button></>)}
           </aside>
@@ -370,7 +399,7 @@ export function TaskBoard({ projectId, tasks, people, names, projectNames = {}, 
           ) : (<>
             {table(openRows, filtered
               ? <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No open tasks match these filters.</p><button className="btn ghost" onClick={clearAll}>Clear filters</button></div>
-              : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add a task</button>}</div>)}
+              : <div className="empty-block"><DitherArt field="bands" className="dither-empty" fade /><p>No tasks in this project yet.</p>{!readOnly && <button className="btn" onClick={() => setAddOpen(true)}>Add task</button>}</div>)}
             {closedRows.length > 0 && (
               <>
                 <div className="list-head" style={{ marginTop: 22 }}>
@@ -439,7 +468,7 @@ function PromptRow({ p, people, today, busy, onCancel, onGo }: {
     status: 'Back to “Not started”. Why did work stop?',
     blocked: 'Why is it blocked?',
     remove: 'Reason to drop the task',
-    reopen: 'Why reopen it? Only a lead can reopen.',
+    reopen: 'Why reopen it? Only the task’s owner, the project owner/lead or an admin can reopen.',
   }[p.kind];
   const ok = text.trim().length > 0;
   return (
@@ -499,21 +528,15 @@ function EditRow({ t, people, partnerPeople, partnerName, workstreams, today, bu
         <div className="edit-grid">
           <label className="f wide"><span>Task</span><input value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           <label className="f wide"><span>What it’s about</span><textarea rows={2} value={f.description} maxLength={600} placeholder="A line or two: what this involves and what done looks like" onChange={(e) => setF({ ...f, description: e.target.value })} /><Count value={f.description} max={600} /></label>
-          <label className="f"><span>{partnerName ? 'Nicobar Owner' : 'Owner'}</span>
-            <OwnerPicker projectId={t.projectId} value={f.ownerId} people={people} disabled={!canReassign} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
+          {/* One owner (23 Nov, the PM's call): a Nicobar person or a partner person, in one picker. */}
+          <label className="f"><span>Owner</span>
+            <OwnerPicker projectId={t.projectId} value={f.ownerId} people={people} disabled={!canReassign} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole, partnerOwner: '' })}
+              partners={partnerName ? partnerPeople : []} firm={partnerName ?? ''} partnerValue={f.partnerOwner} onPartner={partnerName ? (n) => setF({ ...f, ownerId: '', ownerRole: undefined, partnerOwner: n }) : undefined} />
           </label>
-          {partnerName && f.ownerId && canReassign && <button type="button" className="mini-btn" onClick={() => setF({ ...f, ownerId: '', ownerRole: undefined })}>No Nicobar owner</button>}
           {workstreams.length > 0 && (
             <label className="f"><span>Sub-Project</span>
               <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
                 <option value="">None</option>{workstreams.map((w) => <option key={w}>{w}</option>)}
-              </Select>
-            </label>
-          )}
-          {(partnerPeople.length > 0 || t.partnerOwner) && (
-            <label className="f"><span>{partnerName ?? 'Partner'} Owner</span>
-              <Select value={f.partnerOwner} onChange={(v) => setF({ ...f, partnerOwner: v })}>
-                <option value="">No one</option>{[...new Set([...partnerPeople, ...(t.partnerOwner ? [t.partnerOwner] : [])])].map((n) => <option key={n}>{n}</option>)}
               </Select>
             </label>
           )}
@@ -541,6 +564,7 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
   const inProject = (useProjectPeople()[projectId] ?? []).includes(meId);
   const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs, partnerOwner: '' };
   const [f, setF] = useState(blank);
+  const [links, setLinks] = useState<DraftLink[]>([]); // links while making the task (27 Nov), added once it exists
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Quick add (components/QuickAdd.tsx) fills the date and owner here; the project is this one.
@@ -565,9 +589,10 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
       e.preventDefault(); setBusy(true); setError(null);
       try {
         const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...(f.ownerId ? ownerFields(f.ownerId, f.ownerRole) : { ownerId: null }), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null, partnerOwner: f.partnerOwner || null });
+        const refused = made?.id ? await addDraftLinks(made.id, links) : 0;
         if (made?.id) arrivals.add(made.id);
-        notify('Task added');
-        setF(blank); router.refresh(); onDone();
+        notify(refused ? `Task added. ${refused} link${refused === 1 ? ' was' : 's were'} not added: add ${refused === 1 ? 'it' : 'them'} from the task` : 'Task added');
+        setF(blank); setLinks([]); router.refresh(); onDone();
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     }}>
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
@@ -575,16 +600,10 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
       <label className="f"><span>Task <span className="req" aria-hidden="true">*</span></span><input ref={titleRef} required minLength={3} maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
       <label className="f"><span>Details</span><SayBox value={f.description} max={600} names={people.map((p) => p.name)} onChange={(v) => setF((x) => ({ ...x, description: v }))}><textarea rows={2} maxLength={600} value={f.description} aria-label="Details" placeholder="Anything the owner should know" onChange={(e) => setF({ ...f, description: e.target.value })} /></SayBox><Count value={f.description} max={600} /></label>
       <div className="row">
-        <label className="f"><span>{partnerName ? 'Nicobar Owner' : <>Owner <span className="req" aria-hidden="true">*</span></>}</span>
-          <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole })} />
+        <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
+          <OwnerPicker projectId={projectId} value={f.ownerId} people={people} onChange={(ownerId, ownerRole) => setF({ ...f, ownerId, ownerRole, partnerOwner: '' })}
+            partners={partnerName ? partnerPeople : []} firm={partnerName ?? ''} partnerValue={f.partnerOwner} onPartner={partnerName ? (n) => setF({ ...f, ownerId: '', ownerRole: undefined, partnerOwner: n }) : undefined} />
         </label>
-        {partnerName && (
-          <label className="f"><span>{partnerName} Owner</span>
-            <Select value={f.partnerOwner} onChange={(v) => setF({ ...f, partnerOwner: v })}>
-              <option value="">No one</option>{partnerPeople.map((n) => <option key={n}>{n}</option>)}
-            </Select>
-          </label>
-        )}
         {workstreams.length > 0 && (
           <label className="f"><span>Sub-Project</span>
             <Select value={f.workstream} onChange={(v) => setF({ ...f, workstream: v })}>
@@ -594,7 +613,7 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
         )}
         <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
-      {partnerName && <p className="hint" style={{ margin: 0 }}>Pick at least one owner.</p>}
+      <DraftLinks links={links} onChange={setLinks} />
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>

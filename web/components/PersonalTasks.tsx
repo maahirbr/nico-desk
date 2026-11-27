@@ -45,7 +45,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
     { key: 'open', label: 'Open', help: 'tile_open' as const, match: (t: Task) => t.statusCategory === 'open' },
     { key: 'doing', label: 'In progress', help: 'status_doing' as const, match: (t: Task) => t.statusCategory === 'open' && statusKey(t) === 'doing' },
     { key: 'at_risk', label: 'At risk', help: 'at_risk' as const, match: (t: Task) => t.statusCategory === 'open' && flagOf(t, today)?.key === 'at_risk', warn: true },
-    { key: 'overdue', label: 'Late', help: 'late' as const, match: (t: Task) => t.overdue, warn: true },
+    { key: 'overdue', label: 'Overdue', help: 'late' as const, match: (t: Task) => t.overdue, warn: true },
     { key: 'done', label: 'Done', help: 'status_done' as const, match: (t: Task) => t.statusCategory === 'done' },
   ].map((x) => ({ ...x, n: tasks.filter(x.match).length }));
   const picked = tile ? tiles.find((x) => x.key === tile)! : null;
@@ -119,7 +119,7 @@ export function PersonalTasks({ tasks, projectId, teamId, meId, meName, today }:
             <input autoFocus value={title} maxLength={200} placeholder="Task name" aria-label="New task" onChange={(e) => setTitle(e.target.value)} />
             <input className="ptask-details" maxLength={600} value={details} placeholder="Details" aria-label="Details" onChange={(e) => setDetails(e.target.value)} />
           </div>
-          <DateField noQuick min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date (optional)" />
+          <DateField noQuick min={today} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
           <PrioPick value={prio} onChange={setPrio} />
           <button className="btn" disabled={busy || title.trim().length < 3}>Add</button>
         </form>

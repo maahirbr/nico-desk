@@ -39,6 +39,8 @@ export async function lookups(me: Me) {
     // A Personal project is stored under a unique name; it shows as "Personal".
     projectNames: Object.fromEntries(projects.map((p) => [p.id, p.personalFor ? PERSONAL_NAME : p.name])) as Record<string, string>,
     activeOpts: people.filter((p) => p.active && mayGive(p)).map((p) => ({ id: p.id, name: p.displayName, role: p.role })),
+    // The Roster for a partner team's picker (23 Nov): every active person, partners marked, with their company.
+    rosterOpts: partner ? [] : people.filter((p) => p.active).map((p) => ({ id: p.id, name: p.displayName, full: p.fullName ?? p.displayName, dept: p.department, partner: p.appRoles.includes('partner') })),
     isLead: isLeadOrAdmin(me.person.appRoles), // lead or admin: the same rule the service applies
     isAdmin: me.person.appRoles.includes('admin'),
     // View as (15 Nov, option B): controls show as the viewed person sees them; components/ViewAsGuard.tsx stops the

@@ -31,7 +31,7 @@ export function Card({ title, href, link, summary, wide, children }: { title: st
 }
 
 export function WeekBar({ s }: { s: WeekSplit }) {
-  const parts = [['done', s.done, 'Done'], ['open', s.open, 'Open'], ['late', s.late, 'Late']] as const;
+  const parts = [['done', s.done, 'Done'], ['open', s.open, 'Open'], ['late', s.late, 'Overdue']] as const;
   return (
     <div aria-hidden>
       <div className="glance-track glance-split">
@@ -90,7 +90,7 @@ function LoadBar({ open, late, max }: { open: number; late: number; max: number 
 }
 
 const counts = (open: number, late: number) => (
-  <span className="glance-n">{open} open{late > 0 && <> <span className="late-text">· {late} late</span></>}</span>
+  <span className="glance-n">{open} open{late > 0 && <> <span className="late-text">· {late} overdue</span></>}</span>
 );
 
 function LoadList({ rows }: { rows: LoadRow[] }) {
@@ -122,7 +122,7 @@ function TeamTable({ rows }: { rows: TeamRow[] }) {
   const shown = rows.slice(0, TEAM_ROWS);
   return (
     <table className="glance-table">
-      <caption className="glance-sr">Open and late tasks per person</caption>
+      <caption className="glance-sr">Open and overdue tasks per person</caption>
       <tbody>
         {shown.map((r) => (
           <tr key={r.id}>

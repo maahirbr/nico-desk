@@ -42,7 +42,10 @@ beforeEach(async () => {
   process.env.NICO_TOKEN_KEY = 'gmail-test-token-key';
   const people = await s.listPeople(db, TEAM_ID);
   leadEmail = people.find((p) => p.id === LEAD)!.email;
-  target = people.find((p) => p.active && p.id !== LEAD && p.appRoles.includes('member'))!.id;
+  // A member who owns or leads no project: since 27 Nov a project's owner or lead may send reminders for it.
+  const { rows: heads } = await db.query<{ id: string }>(`SELECT owner_id AS id FROM projects UNION SELECT lead_id FROM projects WHERE lead_id IS NOT NULL`);
+  const headIds = new Set(heads.map((h) => h.id));
+  target = people.find((p) => p.active && p.id !== LEAD && p.appRoles.includes('member') && !p.appRoles.some((r) => ['lead', 'admin', 'leadership'].includes(r)) && !headIds.has(p.id))!.id;
 });
 afterEach(() => {
   vi.unstubAllGlobals();

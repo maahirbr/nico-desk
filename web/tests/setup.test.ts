@@ -44,24 +44,23 @@ const doneOf = (steps: { key: string; done: boolean }[] | null) => Object.fromEn
 const none: SetupInput = { kind: 'tasks', hasMembers: false, hasWork: false, hasDate: false, partnerName: null };
 
 describe('setupSteps', () => {
-  it('lists the people, the first tasks and a date on a task board, in that order (13 Nov: no minutes, no rhythm)', () => {
-    expect(keys(setupSteps(none))).toEqual(['members', 'work', 'date']);
+  it('lists the people and the first tasks on a task board, in that order (23 Nov: no date step)', () => {
+    expect(keys(setupSteps(none))).toEqual(['members', 'work']);
   });
 
   it('adds the partner step on a plan board and on a partner task board', () => {
-    expect(keys(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual(['members', 'work', 'date', 'partner']);
-    expect(keys(setupSteps({ ...none, partnerName: 'Acme' }))).toEqual(['members', 'work', 'date', 'partner']);
+    expect(keys(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual(['members', 'work', 'partner']);
+    expect(keys(setupSteps({ ...none, partnerName: 'Acme' }))).toEqual(['members', 'work', 'partner']);
     expect(keys(setupSteps(none))).not.toContain('partner');
   });
 
   it('ticks each step from its own input', () => {
     const all = setupSteps({ kind: 'plan', hasMembers: true, hasWork: true, hasDate: true, partnerName: 'Acme' });
     expect(all.every((x) => x.done)).toBe(true);
-    expect(doneOf(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual({ members: false, work: false, date: false, partner: false });
-    expect(doneOf(setupSteps({ ...none, hasMembers: true }))).toMatchObject({ members: true, work: false, date: false });
+    expect(doneOf(setupSteps({ ...none, kind: 'plan', partnerName: 'Partner' }))).toEqual({ members: false, work: false, partner: false });
+    expect(doneOf(setupSteps({ ...none, hasMembers: true }))).toMatchObject({ members: true, work: false });
     expect(doneOf(setupSteps({ ...none, hasWork: true }))).toMatchObject({ members: false, work: true });
-    expect(doneOf(setupSteps({ ...none, hasDate: true }))).toMatchObject({ date: true });
-    expect(setupSteps(none)[2]).toMatchObject({ title: 'Set a date', action: 'settings' });
+    expect(keys(setupSteps({ ...none, hasDate: true }))).not.toContain('date');
   });
 
   it('counts an empty or default partner name as not named', () => {
@@ -81,8 +80,8 @@ describe('setupSteps', () => {
 describe('setupState', () => {
   it('shows a new task project with nothing done to its lead and its owner', async () => {
     const p = await mk();
-    expect(doneOf(await setupState(db, await meAs(LEAD), p.id))).toEqual({ members: false, work: false, date: false });
-    expect(keys(await setupState(db, await meAs(OWNER), p.id))).toEqual(['members', 'work', 'date']);
+    expect(doneOf(await setupState(db, await meAs(LEAD), p.id))).toEqual({ members: false, work: false });
+    expect(keys(await setupState(db, await meAs(OWNER), p.id))).toEqual(['members', 'work']);
   });
 
   it('shows it to an admin and to the project lead, and hides it from a plain member', async () => {
@@ -139,11 +138,9 @@ describe('setupState', () => {
     expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).work).toBe(true);
   });
 
-  it('ticks the date step once the project has its date', async () => {
+  it('never asks for a date: a project with no date is set up once it has people and tasks (23 Nov)', async () => {
     const p = await mk();
-    expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).date).toBe(false);
-    await db.query(`UPDATE projects SET launch_on = '2026-11-30' WHERE id = $1`, [p.id]);
-    expect(doneOf(await setupState(db, await meAs(LEAD), p.id)).date).toBe(true);
+    expect(keys(await setupState(db, await meAs(LEAD), p.id))).not.toContain('date');
   });
 
   it('ticks the partner step once the plan names one', async () => {

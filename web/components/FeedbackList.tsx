@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { shrinkImage } from './shrinkImage';
 import { useReadOnly } from './readonly';
 import { api } from './task-ui';
 import { PAGES } from './FeedbackForm';
@@ -33,7 +34,7 @@ function Agreed({ votes, names }: { votes: number; names: string[] }) {
 export type FeedbackRow = { id: string; personId: string; personName: string; stamp: string; path: string | null; body: string; images: number; votes: number; mine: boolean; others: string[];
   kind: 'fix' | 'praise'; workingById: string | null; workingByName: string | null;
   status: 'open' | 'done' | 'not_now'; closedByName: string | null; closedAt: string | null; closedStamp: string | null; closedNote: string | null;
-  replies: { id: string; authorName: string; body: string; stamp: string }[] };
+  replies: { id: string; authorName: string; body: string; stamp: string; images?: number }[] };
 
 // isAdmin (19 Nov): an admin may delete any note; the writer may delete their own.
 export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: FeedbackRow[]; hasNews: boolean; meId: string; isAdmin?: boolean }) {
@@ -50,6 +51,8 @@ export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: F
     notify('Deleted'); router.refresh();
   }
   const [replying, setReplying] = useState<string | null>(null);
+  const [shots, setShots] = useState<Blob[]>([]); // screenshots for the reply being written (23 Nov)
+  const shotInput = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [notNow, setNotNow] = useState<string | null>(null); // the note whose Not now reason box is open
@@ -74,7 +77,15 @@ export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: F
   async function reply(id: string) {
     if (!draft.trim() || sending) return;
     setSending(true);
-    try { await api(`/feedback/${id}/replies`, 'POST', { body: draft.trim() }); setDraft(''); setReplying(null); router.refresh(); }
+    try {
+      const { id: rid } = await api(`/feedback/${id}/replies`, 'POST', { body: draft.trim() });
+      // Screenshots (23 Nov): sent after the reply, one by one; a failed one says so and the reply stays.
+      for (const b of shots) {
+        const res = await fetch(`/api/v1/feedback/${id}/replies/${rid}/images`, { method: 'POST', headers: { 'content-type': b.type }, body: b }).catch(() => null);
+        if (!res?.ok) notify('The reply went, but a screenshot did not. Try adding it again.');
+      }
+      setDraft(''); setShots([]); setReplying(null); router.refresh();
+    }
     catch (e) { notify((e as Error).message); }
     finally { setSending(false); }
   }
@@ -155,7 +166,16 @@ export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: F
         {r.replies.length > 0 && (
           <ul className="fb-replies">
             {r.replies.map((x) => (
-              <li key={x.id} id={`reply-${x.id}`}><div className="fb-meta small"><b>{x.authorName}</b><span className="dim">{x.stamp}</span></div><p className="fb-body">{x.body}</p></li>
+              <li key={x.id} id={`reply-${x.id}`}><div className="fb-meta small"><b>{x.authorName}</b><span className="dim">{x.stamp}</span></div><p className="fb-body">{x.body}</p>
+                {(x.images ?? 0) > 0 && (
+                  <div className="fb-shots">
+                    {Array.from({ length: x.images ?? 0 }, (_, i) => (
+                      <a key={i} className="fb-shot" href={`/api/v1/feedback/${r.id}/replies/${x.id}/images/${i + 1}`} target="_blank" rel="noopener noreferrer" aria-label={`Open screenshot ${i + 1} from ${x.authorName}`}>
+                        <img src={`/api/v1/feedback/${r.id}/replies/${x.id}/images/${i + 1}`} alt={`Screenshot ${i + 1} from ${x.authorName}`} loading="lazy" />
+                      </a>
+                    ))}
+                  </div>
+                )}</li>
             ))}
           </ul>
         )}
@@ -164,14 +184,24 @@ export function FeedbackList({ rows, hasNews, meId, isAdmin = false }: { rows: F
             <textarea rows={3} maxLength={2000} value={draft} autoFocus aria-label={`Reply to ${r.personName}`} placeholder="Write a reply"
               onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { setReplying(null); setDraft(''); } }} />
             <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>
-              <button type="button" className="btn ghost" onClick={() => { setReplying(null); setDraft(''); }}>Cancel</button>
+              {/* Screenshots on a reply (23 Nov, the PM's call): up to three, shown only here in the thread. */}
+              {shots.length > 0 && <span className="fb-reply-shots">{shots.map((_, i) => <span key={i} className="mini-btn">Screenshot {i + 1}<button type="button" aria-label={`Remove screenshot ${i + 1}`} onClick={() => setShots((s) => s.filter((_, j) => j !== i))}>×</button></span>)}</span>}
+              <input ref={shotInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={async (e) => {
+                const files = Array.from(e.target.files ?? []); e.target.value = '';
+                for (const f of files) { try { const b = await shrinkImage(f); setShots((s) => [...s, b].slice(0, 3)); } catch (err) { notify((err as Error).message); } }
+              }} />
+              <button type="button" className="fb-clip" title="Add a screenshot" aria-label="Add a screenshot" disabled={shots.length >= 3} onClick={() => shotInput.current?.click()}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" /></svg>
+              </button>
+              <span style={{ flex: 1 }} />
+              <button type="button" className="btn ghost" onClick={() => { setReplying(null); setDraft(''); setShots([]); }}>Cancel</button>
               <button type="submit" className="btn" disabled={sending || !draft.trim()}>{sending ? 'Sending…' : 'Reply'}</button>
             </div>
           </form>
         ) : notNow === r.id ? (
           <form className="fb-reply-form stack" onSubmit={(e) => { e.preventDefault(); void move(r.id, 'not_now', reason.trim()); }}>
             <label className="f"><span>Why not now?</span>
-              <input value={reason} maxLength={280} autoFocus placeholder="e.g. Not for the pilot, maybe later"
+              <input value={reason} maxLength={280} autoFocus placeholder="e.g. Not right now, maybe later"
                 onChange={(e) => setReason(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { setNotNow(null); setReason(''); } }} />
             </label>
             <div className="row" style={{ justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>

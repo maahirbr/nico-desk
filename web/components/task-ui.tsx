@@ -14,7 +14,7 @@ import { fmtDate, fmtStamp, istDate, NO_DATE } from '@/lib/time';
 import { Avatar, PersonLink, type Tone } from './chips';
 import { LinkChip, TaskLinkChips } from './TaskLinks';
 import { StatusNudge } from './StatusNudge';
-import { LINKS_PER_TASK } from '@/lib/links';
+import { checkLinkUrl, LINK_LABEL_MAX, LINK_URL_MAX, LINKS_PER_TASK } from '@/lib/links';
 import { groupLog } from './logText';
 import { canMoveTo } from './statusRules';
 import { arrivals, drawerMotion, focusOnDesktop, modalMotion, useClosing, usePreviousWhileChanging } from './motion';
@@ -465,6 +465,14 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   const readOnly = useReadOnly();
   const can = !readOnly && !!t && !t.readOnly && (t.ownerId === meId || isLead);
   const canEdit = !readOnly && !!t && !t.readOnly && (can || t.createdBy === meId);
+  const [moving, setMoving] = useState(false);
+  const [targets, setTargets] = useState<{ id: string; name: string; personal: boolean }[] | null>(null);
+  const [moveTo, setMoveTo] = useState('');
+  const openMove = async () => {
+    setMoving(true); setMoveTo(''); setErr(null);
+    if (targets) return;
+    try { setTargets(await api('/projects', 'GET')); } catch (e) { setTargets([]); setErr((e as Error).message); }
+  };
   const open = t?.statusCategory === 'open';
   const key = t ? statusKey(t) : 'todo';
   // Ask for an update: anyone but the owner, on an open task with a Nicobar owner. One open ask each.
@@ -551,6 +559,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
           <span className="small dim">
             {t && (t.projectId ? <Link className="rlink" href={`/projects/${t.projectId}`}>{projectNames[t.projectId] ?? 'Project'}</Link> : oneOffWord(t, names, meId))}
             {t?.workstream && <> · {t.workstream}</>}
+            {/* Move to a project (23 Nov, the PM's call): a one-off that belongs to a project, or a task filed in the wrong one. */}
+            {t && canEdit && !moving && <> · <button type="button" className="linkbtn drawer-move" onClick={() => void openMove()}>{t.projectId ? 'Move' : 'Move to a project'}</button></>}
           </span>
           {t && <button className="mini-btn drawer-copy" type="button" onClick={async () => {
             try { await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?task=${t.id}`); notify('Link to this task copied'); }
@@ -558,6 +568,21 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
           }}>Copy link</button>}
           <button className="x" aria-label="Close" onClick={close}>×</button>
         </div>
+        {t && moving && (
+          <div className="drawer-moving">
+            {targets === null ? <span className="small dim">Loading projects…</span>
+              : targets.filter((x) => x.id !== t.projectId && (!x.personal || (t.createdBy === meId && t.ownerId === meId))).length === 0 ? <span className="small dim">No other project to move it to.</span>
+              : <>
+                <Select value={moveTo} aria-label="Move to project" onChange={setMoveTo}>
+                  <option value="" disabled>Pick a project</option>
+                  {targets.filter((x) => x.id !== t.projectId && (!x.personal || (t.createdBy === meId && t.ownerId === meId))).map((x) => <option key={x.id} value={x.id}>{x.personal ? 'Personal 🔒' : x.name}</option>)}
+                </Select>
+                <button type="button" className="btn" disabled={!moveTo || busy}
+                  onClick={async () => { const name = targets.find((x) => x.id === moveTo)?.name ?? 'the project'; if (await run((v) => api(`/tasks/${t.id}`, 'PATCH', { version: v, projectId: moveTo, workstream: null }), `Moved to ${name}`)) setMoving(false); }}>Move</button>
+              </>}
+            <button type="button" className="act" onClick={() => setMoving(false)}>Cancel</button>
+          </div>
+        )}
         {!t ? <p className="empty">{err ?? 'Loading…'}</p> : (
           <>
             {canEdit && open
@@ -604,8 +629,8 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                   <div key={a.id} className="small"><b>{(names[a.askerId] ?? 'Someone').split(' ')[0]}</b> asked for an update{a.question ? <>: &ldquo;{a.question}&rdquo;</> : ''} <span className="dim">· {ago(a.askedAt, new Date())}</span></div>
                 ))}
                 <label className="f"><span>Your update</span>
-                  <SayBox value={reply} max={280} names={people.map((p) => p.name)} onChange={setReply}><textarea rows={2} maxLength={280} value={reply} aria-label="Your update" placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} /></SayBox>
-                  <Count value={reply} max={280} />
+                  <SayBox value={reply} max={400} names={people.map((p) => p.name)} onChange={setReply}><textarea rows={2} maxLength={400} value={reply} aria-label="Your update" placeholder="Where it stands, in a line" onChange={(e) => setReply(e.target.value)} /></SayBox>
+                  <Count value={reply} max={400} />
                 </label>
                 <div className="row" style={{ alignItems: 'center' }}>
                   <button className="btn" disabled={busy || !reply.trim()} onClick={sendReply}>Send update</button>
@@ -743,7 +768,7 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
                 {canEdit && t.links.length < LINKS_PER_TASK && (
                   <form className="link-add" noValidate onSubmit={(e) => { e.preventDefault(); addLink(); }}>
                     <input type="url" inputMode="url" enterKeyHint="done" autoComplete="off" maxLength={2000} value={linkForm.url} aria-label="Link address"
-                      placeholder="Paste a link: Doc, Sheet, Figma…" onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
+                      placeholder="Paste a link" onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
                     <input maxLength={80} enterKeyHint="done" autoComplete="off" value={linkForm.label} aria-label="Link name" placeholder="Link name"
                       onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} />
                     <button className="btn" disabled={busy || !linkForm.url.trim()}>Add link</button>
@@ -760,9 +785,9 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
             )}
 
             <div className="drawer-foot">
-              {open && can && <button className="act danger" onClick={() => setMode('drop')}>Drop task…</button>}
+              {/* No separate Drop task… since 23 Nov (the PM's call): Dropped is already one of the status buttons above. */}
               {!open && (isLead || t.projectHead || t.ownerId === meId) && !readOnly && <button className="act" onClick={() => setMode('reopen')}>Reopen…</button>}
-              <Link className="act" href={`/tasks/${t.id}`}>Open full page</Link>
+              {/* No "Open full page" since 23 Nov (the PM's call): this panel already does everything that page does. */}
             </div>
 
             <button className="log-toggle small-toggle" aria-expanded={showLog} onClick={() => setShowLog(!showLog)}>
@@ -785,7 +810,55 @@ export function TaskDrawer({ id, meId, isLead, people, workstreams = [], project
   );
 }
 
-type TaskDraft = { key: string; title: string; description: string; ownerId: string; ownerRole: string | undefined; dueOn: string; note: string; workstream: string; projectId: string; priority?: PrioValue | '' };
+type TaskDraft = { key: string; title: string; description: string; ownerId: string; ownerRole: string | undefined; dueOn: string; note: string; workstream: string; projectId: string; priority?: PrioValue | '';
+  links?: DraftLink[] };
+
+// Links while a task is being made (27 Nov, the PM's call): the same "Paste a link" and "Link name" as the task panel. They
+// are added right after the task is created; one that is refused then does not stop the task.
+export type DraftLink = { url: string; label: string };
+export function DraftLinks({ links, onChange }: { links: DraftLink[]; onChange: (l: DraftLink[]) => void }) {
+  const [f, setF] = useState({ url: '', label: '' });
+  const [err, setErr] = useState<string | null>(null);
+  // Hidden until asked for (27 Nov, the PM's call): most tasks need no link, so it starts as one quiet "Add link".
+  const [open, setOpen] = useState(links.length > 0);
+  const add = () => {
+    const c = checkLinkUrl(f.url);
+    if ('error' in c) { setErr(c.error); return; }
+    if (links.some((l) => l.url === c.url)) { setErr('That link is already here.'); return; }
+    setErr(null); onChange([...links, { url: c.url, label: f.label.trim() }]); setF({ url: '', label: '' });
+  };
+  const enter = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); add(); } };
+  const [focusNow, setFocusNow] = useState(false);
+  // A quiet grey "Add link" with a link mark, so it reads as part of this task, not like the orange "+ Add another task".
+  if (!open) return (
+    <button type="button" className="draft-link-open" onClick={() => { setOpen(true); setFocusNow(true); }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg>
+      Add link
+    </button>
+  );
+  return (
+    <div className="f draft-links"><span>Links</span>
+      {links.length > 0 && <div className="lchips">{links.map((l, i) => <LinkChip key={l.url} l={{ url: l.url, label: l.label || null }} onRemove={() => onChange(links.filter((_, j) => j !== i))} />)}</div>}
+      {links.length < LINKS_PER_TASK && (
+        <div className="link-add">
+          <input type="url" inputMode="url" enterKeyHint="done" autoComplete="off" autoFocus={focusNow} maxLength={LINK_URL_MAX} value={f.url} aria-label="Link address" placeholder="Paste a link"
+            onChange={(e) => { setF({ ...f, url: e.target.value }); setErr(null); }} onKeyDown={enter} />
+          <input maxLength={LINK_LABEL_MAX} enterKeyHint="done" autoComplete="off" value={f.label} aria-label="Link name" placeholder="Link name" onChange={(e) => setF({ ...f, label: e.target.value })} onKeyDown={enter} />
+          <button type="button" className="btn ghost" disabled={!f.url.trim()} onClick={add}>Add link</button>
+        </div>
+      )}
+      {err && <span className="err small" role="alert">{err}</span>}
+    </div>
+  );
+}
+// After a task is made: its links, one by one. Returns how many were refused, so the form can say so.
+export async function addDraftLinks(taskId: string, links: DraftLink[] | undefined): Promise<number> {
+  let refused = 0;
+  for (const l of links ?? []) {
+    try { await api(`/tasks/${taskId}/links`, 'POST', { url: l.url, label: l.label || null }); } catch { refused++; }
+  }
+  return refused;
+}
 
 // Priority in Personal (20 Nov, from a teammate's ask): P1, P2 or P3 on your own Personal tasks, optional, none by default.
 // P1: do now (today); P2: once the P1s are done; P3: good to have. Stored as high, normal and low.
@@ -802,7 +875,7 @@ export function PrioTag({ t }: { t: Pick<Task, 'priority'> }) {
 // The pick: P1 · P2 · P3; pressing the one already chosen clears it.
 export function PrioPick({ value, onChange, disabled = false }: { value: PrioValue | '' | null; onChange: (v: PrioValue | '') => void; disabled?: boolean }) {
   return (
-    <span className="prio-pick" role="group" aria-label="Priority (optional)">
+    <span className="prio-pick" role="group" aria-label="Priority">
       {(['high', 'normal', 'low'] as const).map((v) => (
         <button key={v} type="button" disabled={disabled} title={PRIO_HELP[v]} className={`prio-opt prio-opt-${PRIO_WORD[v].toLowerCase()}`} aria-pressed={value === v}
           onClick={() => onChange(value === v ? '' : v)}>{PRIO_WORD[v]}</button>
@@ -825,7 +898,10 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
         <label className="f"><span>Owner <span className="req" aria-hidden="true">*</span></span>
           <OwnerPicker key={d.projectId} projectId={d.projectId || null} value={d.ownerId} people={people} onChange={(ownerId, ownerRole) => set({ ...d, ownerId, ownerRole })} />
         </label>
-        <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>
+        {/* A Personal task needs no date (23 Nov, the PM's call), the same as adding it on Personal itself: no *, no "optional". */}
+        {projects && isPersonalName(projects.find((p) => p.id === d.projectId)?.name)
+          ? <label className="f"><span>Due Date</span><DateField min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>
+          : <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={d.dueOn} onChange={(e) => set({ ...d, dueOn: e.target.value })} /></label>}
       </div>
       {afterDates}
       {(projects || workstreams.length > 0) && (
@@ -848,8 +924,9 @@ function TaskFields({ d, set, people, today, projects, workstreams, titleRef, on
       )}
       {/* Priority shows once the task is going into Personal (20 Nov): optional, none to start. */}
       {projects && isPersonalName(projects.find((p) => p.id === d.projectId)?.name) && (
-        <div className="f"><span>Priority <span className="dim small">(optional)</span></span><PrioPick value={d.priority ?? ''} onChange={(v) => set({ ...d, priority: v })} /></div>
+        <div className="f"><span>Priority</span><PrioPick value={d.priority ?? ''} onChange={(v) => set({ ...d, priority: v })} /></div>
       )}
+      <DraftLinks links={d.links ?? []} onChange={(links) => set({ ...d, links })} />
       {/* No Note field (15 Nov): Details already holds anything the owner should know. */}
     </>
   );
@@ -924,14 +1001,14 @@ export function AddTaskForm({ people, meId, today, projectId, projects, workstre
       if (missing >= 0) { setErr(`Pick an owner for task ${missing + 1}.`); return; }
       setBusy(true);
       // One by one, in order. If one is refused, the ones before it stay added and leave the form; the rest stay to fix.
-      let added = 0;
+      let added = 0, refusedLinks = 0;
       try {
         for (const d of all) {
-          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn, projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null, ...(d.priority ? { priority: d.priority } : {}) });
-          if (made?.id) arrivals.add(made.id);
+          const made = await api('/tasks', 'POST', { title: d.title, description: d.description || null, ...ownerFields(d.ownerId, d.ownerRole), dueOn: d.dueOn || (isPersonalName(projects?.find((p) => p.id === d.projectId)?.name) ? NO_DATE : d.dueOn), projectId: d.projectId || null, note: d.note || null, workstream: d.workstream || null, ...(d.priority ? { priority: d.priority } : {}) });
+          if (made?.id) { arrivals.add(made.id); refusedLinks += await addDraftLinks(made.id, d.links); }
           added++;
         }
-        notify(added === 1 ? 'Task added' : `${added} tasks added`);
+        notify(`${added === 1 ? 'Task added' : `${added} tasks added`}${refusedLinks ? `. ${refusedLinks} link${refusedLinks === 1 ? ' was' : 's were'} not added: add ${refusedLinks === 1 ? 'it' : 'them'} from the task` : ''}`);
         router.refresh(); onDone();
       } catch (er) {
         if (added > 0) {

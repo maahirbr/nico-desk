@@ -33,7 +33,7 @@ describe('updates for you, grouped', () => {
     const out = g(e, 'bo', ts);
     expect(out.map((x) => x.name)).toEqual(['Gift hampers', 'One-off tasks']);
     expect(out[0].rows).toEqual([expect.objectContaining({
-      title: 'Draft copy', summary: 'Meera assigned it to you, due 10 Oct, then moved it to 12 Oct (was 10 Oct), “samples late”', due: { label: 'Due today', tone: 'soon' },
+      title: 'Draft copy', summary: 'Meera assigned it to you, then moved it to 12 Oct (was 10 Oct), “samples late”', due: { label: 'Due today', tone: 'soon' },
     })]);
     expect(out[1].rows[0].summary).toBe('Ananya marked it done');
   });

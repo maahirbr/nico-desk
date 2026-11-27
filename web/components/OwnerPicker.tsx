@@ -26,8 +26,13 @@ export function roleFor(people: Opt[], role: string, fromId: string, toId: strin
 }
 
 // onChange gets the owner, and a role when that person is joining the project (empty until typed).
-export function OwnerPicker({ projectId, value, onChange, people, disabled = false }: {
+// partners (23 Nov, the PM's call: one owner per task): on a partner project, the partner team's names that are not on the
+// Roster are owners too, listed after the project's people as "Asha (TheCRUX)". Picking one calls onPartner with the name;
+// partnerValue is the partner name that owns the task now.
+const PARTNER = 'partner:';
+export function OwnerPicker({ projectId, value, onChange, people, disabled = false, partners = [], firm = '', partnerValue = '', onPartner }: {
   projectId?: string | null; value: string; onChange: (ownerId: string, role?: string) => void; people: Opt[]; disabled?: boolean;
+  partners?: string[]; firm?: string; partnerValue?: string; onPartner?: (name: string) => void;
 }) {
   const map = useContext(ProjectPeople);
   const mayAdd = useContext(MayAddTo).includes(projectId ?? '');
@@ -61,13 +66,18 @@ export function OwnerPicker({ projectId, value, onChange, people, disabled = fal
       </div>
     );
   }
+  const loose = onPartner ? partners.filter((n) => n.trim() && !inProject.some((p) => p.name.trim().toLowerCase() === n.trim().toLowerCase())) : [];
+  const shown = !value && partnerValue ? `${PARTNER}${partnerValue}` : value;
   return (
-    <Select value={value} disabled={disabled} onChange={(v) => {
+    <Select value={shown} disabled={disabled} onChange={(v) => {
       if (v === ADD) { setBefore(value); setAdding(true); onChange('', ''); return; }
+      if (v.startsWith(PARTNER) && onPartner) { onPartner(v.slice(PARTNER.length)); return; }
       onChange(v);
     }}>
-      {!inProject.some((p) => p.id === value) && <option value="" disabled>Choose a person</option>}
-      {inProject.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      {!inProject.some((p) => p.id === value) && !(partnerValue && !value) && <option value="" disabled>Choose a person</option>}
+      {inProject.map((p) => <option key={p.id} value={p.id}>{firm && partners.some((n) => n.trim().toLowerCase() === p.name.trim().toLowerCase()) ? `${p.name} (${firm})` : p.name}</option>)}
+      {loose.map((n) => <option key={n} value={`${PARTNER}${n}`}>{firm ? `${n} (${firm})` : n}</option>)}
+      {partnerValue && !value && !loose.includes(partnerValue) && <option value={`${PARTNER}${partnerValue}`}>{firm ? `${partnerValue} (${firm})` : partnerValue}</option>}
       {others.length > 0 && <option value={ADD}>+ Add someone to this project</option>}
     </Select>
   );

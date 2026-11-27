@@ -17,7 +17,7 @@ export default async function Feedback() {
   return (
     <>
       <h1>Feedback</h1>
-      <p className="lede">You are one of NicoDesk's first users, and we would love your thoughts.</p>
+      <p className="lede">Tell us what’s working and what isn’t. We read every note.</p>
       <FeedbackForm />
       <section>
         <h2>From the team</h2>
@@ -25,7 +25,7 @@ export default async function Feedback() {
           rows={rows.map((r) => ({ id: r.id, personId: r.personId, personName: r.personName, stamp: fmtStamp(r.createdAt), path: r.path, body: r.body, images: r.images, votes: r.votes, mine: r.mine, others: r.others,
             kind: r.kind, workingById: r.workingById, workingByName: r.workingByName,
             status: r.status, closedByName: r.closedByName, closedAt: r.closedAt ? new Date(r.closedAt).toISOString() : null, closedStamp: r.closedAt ? fmtStamp(r.closedAt) : null, closedNote: r.closedNote,
-            replies: r.replies.map((x) => ({ id: x.id, authorName: x.authorName, body: x.body, stamp: fmtStamp(x.createdAt) })) }))} />
+            replies: r.replies.map((x) => ({ id: x.id, authorName: x.authorName, body: x.body, stamp: fmtStamp(x.createdAt), images: x.images ?? 0 })) }))} />
       </section>
     </>
   );

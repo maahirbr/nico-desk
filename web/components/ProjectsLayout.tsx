@@ -2,16 +2,28 @@
 
 import { useRemembered } from './remember';
 
-// Projects as cards or as a list (19 Nov, the PM's call). The choice is kept per person in this browser.
+// Projects as cards or as a list (19 Nov, the PM's call), soonest date first or A to Z (22 Nov). Both choices are kept per
+// person in this browser. The page sends the cards by date, each with its A to Z place (--by-name); the sort only sets CSS order.
 type View = 'grid' | 'list';
+type Sort = 'date' | 'name';
 
-export function ProjectsLayout({ title, action, children }: { title: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
-  const [kept, keep] = useRemembered('projects', { view: 'grid' as View }, (raw): { view?: View } => (raw.view === 'list' || raw.view === 'grid' ? { view: raw.view } : {}));
-  const view = kept.view;
+// summary: the count line under the title; the sort reads on in it as a small drop-down ("7 projects · soonest date first ▾").
+export function ProjectsLayout({ title, summary, action, children }: { title: React.ReactNode; summary?: string; action?: React.ReactNode; children: React.ReactNode }) {
+  const [kept, keep] = useRemembered('projects', { view: 'grid' as View, sort: 'date' as Sort }, (raw): { view?: View; sort?: Sort } => ({
+    ...(raw.view === 'list' || raw.view === 'grid' ? { view: raw.view } : {}),
+    ...(raw.sort === 'date' || raw.sort === 'name' ? { sort: raw.sort } : {}),
+  }));
+  const { view, sort } = kept;
   return (
     <>
       <header className="page-head">
-        {title}
+        <div>{title}
+          {summary && <p className="summary">{summary} · <label className="inline-sort"><span className="sr-only">Sort projects</span>
+            <select value={sort} onChange={(e) => keep('sort', e.target.value === 'name' ? 'name' : 'date')}>
+              <option value="date">soonest date first</option>
+              <option value="name">by name, A to Z</option>
+            </select></label></p>}
+        </div>
         {action}
       </header>
       <div className="pview-bar">
@@ -24,7 +36,7 @@ export function ProjectsLayout({ title, action, children }: { title: React.React
           </button>
         </span>
       </div>
-      <div className="pview" data-pview={view}>{children}</div>
+      <div className="pview" data-pview={view} data-psort={sort}>{children}</div>
     </>
   );
 }
