@@ -2468,3 +2468,14 @@ goes back exactly as it was typed. `lib/sentenceRead.ts` sets it on everyone a p
 change. The test in `tests/partner-access.test.ts` now also types a name in lower case and an address in upper case.
 VERIFY green: evals, typecheck, 993 tests, build. No schema change. Pushed to `main` with the two commits before it.
 Rollback: `vercel promote https://nico-desk-i0mace0hd-maahirbharatram-3547s-projects.vercel.app --yes`, or git revert the three commits.
+
+## 2026-11-28 · Fable 5.2 · Cool skin: the account menu flyouts are solid, and the View as list stays below the top bar
+
+From a screenshot by the repo owner: on the Roster page the View as list showed the page text through it, and its top
+sat under the search bar. Two causes. The flyout was glass, but a blur nested in the glass account menu cannot see the
+page behind it, so only the 90% tint was left. `app/tokens.css`: `.pm-flyout` is solid `--surface` with no blur in the
+Cool skin. And the list grew upward from its own row, so a long roster on a short window rose under the top bar and hid
+"Myself". `app/globals.css`: the row that holds the View as list is `position: static` on desktop, so the list anchors
+to the bottom of the account menu. Checked locally in Cool light and dark at 660px and 900px high. CSS only, no test
+change. Not pushed, not deployed.
+Rollback: git revert this commit.

@@ -1558,6 +1558,8 @@ body[data-viewing] .topbar { top: var(--banner-h); }
 /* "View as" inside the account menu: a flyout like Appearance, scrolling when the roster is long. */
 .pm-flyout.va-menu { left: calc(100% + var(--space-xs)); right: auto; top: auto; bottom: 0; }
 @media (max-width: 860px)  { .pm-flyout.va-menu { position: static; max-height: 50vh; } }
+/* The list anchors to the bottom of the account menu, not to its own row, so a long roster stays below the top bar. */
+@media (min-width: 861px) { .profile-menu > .pm-looks:has(> .va-menu) { position: static; } }
 
 .owner-add { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
 .owner-add > select, .owner-add > input, .owner-add > .sel-btn { flex: 1 1 150px; min-width: 0; }
