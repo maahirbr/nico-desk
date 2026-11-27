@@ -2630,3 +2630,11 @@ the drafts cover only those, and a send is refused if any item in it is from ano
 `remindAccess`, `assertItemsInProjects`). They also see Reminders in the menu and on the project page, and may connect
 Gmail to send them. No schema change.
 Rollback: git revert the commit.
+
+## 2026-11-27 · Opus 5.5 · Add links while making a task
+The PM's call: a new task (the New Task page and "+ Add task" on a project) can take links before it is created. Most tasks
+need none, so it starts as a small grey "Add link" pill (unlike the orange "+ Add another task"); a click opens "Paste a
+link" and "Link name", up to ten per task, each shown as a chip with ×. The links are added right after the task is made,
+through the same rules as the task panel; one that is refused does not stop the task, and the message says how many to
+add from the task. No schema change.
+Rollback: git revert the commit.

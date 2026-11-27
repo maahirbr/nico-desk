@@ -2326,3 +2326,7 @@ table.board .row-actions { gap: 0; }
 .keydocs-empty { color: var(--ink-3); }
 .keydocs-empty:hover { color: var(--ink-2); text-decoration: none; } /* stays grey on hover, never orange (24 Nov) */
 .keydocs-head { margin-right: var(--space-xxs); } /* grey like the empty one, always (24 Nov) */
+/* Add link while making a task (27 Nov): a quiet grey pill, unlike the orange "+ Add another task". */
+.draft-link-open { justify-self: start; align-self: start; display: inline-flex; align-items: center; gap: 6px; background: var(--sunk); border: var(--rule) solid var(--hairline);
+  border-radius: var(--radius-pill); padding: 5px 12px; cursor: pointer; font: 500 13px/1.2 var(--font-sans); color: var(--ink-2); }
+.draft-link-open:hover { color: var(--ink); border-color: var(--line-strong); }

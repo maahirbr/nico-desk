@@ -24,7 +24,7 @@ import { WhenTip } from './WhenTip';
 import { Select } from './Select';
 import { SortPick } from './SortPick';
 import { canMoveTo } from './statusRules';
-import { FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, statusWhen, TaskDrawer, type RowAction, type StatusKey } from './task-ui';
+import { addDraftLinks, DraftLinks, FlagChip, flagOf, formFor, PICK, quickMove, STATUS, StatusIcon, statusKey, statusWhen, TaskDrawer, type DraftLink, type RowAction, type StatusKey } from './task-ui';
 import { notify } from './toast';
 import { editFields, statusFields, type UndoField } from '@/lib/undo';
 import { useUndo } from './undo';
@@ -564,6 +564,7 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
   const inProject = (useProjectPeople()[projectId] ?? []).includes(meId);
   const blank = { title: '', description: '', ownerId: inProject ? meId : '', ownerRole: undefined as string | undefined, dueOn: '', note: '', workstream: defaultWs, partnerOwner: '' };
   const [f, setF] = useState(blank);
+  const [links, setLinks] = useState<DraftLink[]>([]); // links while making the task (27 Nov), added once it exists
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Quick add (components/QuickAdd.tsx) fills the date and owner here; the project is this one.
@@ -588,9 +589,10 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
       e.preventDefault(); setBusy(true); setError(null);
       try {
         const made = await call('/tasks', 'POST', { title: f.title, description: f.description || null, ...(f.ownerId ? ownerFields(f.ownerId, f.ownerRole) : { ownerId: null }), dueOn: f.dueOn, projectId, note: f.note || null, workstream: f.workstream || null, partnerOwner: f.partnerOwner || null });
+        const refused = made?.id ? await addDraftLinks(made.id, links) : 0;
         if (made?.id) arrivals.add(made.id);
-        notify('Task added');
-        setF(blank); router.refresh(); onDone();
+        notify(refused ? `Task added. ${refused} link${refused === 1 ? ' was' : 's were'} not added: add ${refused === 1 ? 'it' : 'them'} from the task` : 'Task added');
+        setF(blank); setLinks([]); router.refresh(); onDone();
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     }}>
       <QuickAddField today={today} people={people} hasTitle={!!f.title.trim()} apply={applyQuick} focusAfter={() => focusOnDesktop(titleRef.current)} onMany={setMany} />
@@ -611,6 +613,7 @@ function AddTask({ projectId, people, partnerPeople, partnerName, meId, today, w
         )}
         <label className="f"><span>Due Date <span className="req" aria-hidden="true">*</span></span><DateField required min={today} value={f.dueOn} onChange={(e) => setF({ ...f, dueOn: e.target.value })} /></label>
       </div>
+      <DraftLinks links={links} onChange={setLinks} />
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         {error && <p className="err" role="alert" style={{ marginRight: 'auto' }}>{error}</p>}
         <button type="button" className="btn ghost" onClick={onDone}>Cancel</button>
